@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="ng-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d5e3dc"/>
+      <stop offset="100%" stop-color="#edf2eb" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ng-ridge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b9075" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#4a6b55" stop-opacity="0.18"/>
+    </linearGradient>
+    <linearGradient id="ng-leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a8c4ae"/>
+      <stop offset="100%" stop-color="#52775c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="160" fill="url(#ng-sky)"/>
+
+  <!-- Soft mountain ridges -->
+  <path d="M0 118 C48 96 86 88 128 98 C176 110 210 78 258 86 C308 95 348 68 392 82 C448 100 492 74 540 90 C580 102 610 96 640 108 V160 H0Z" fill="url(#ng-ridge)"/>
+  <path d="M0 138 C70 122 120 128 170 120 C230 110 270 132 330 124 C390 116 450 136 510 126 C560 118 600 130 640 124 V160 H0Z" fill="#365b46" opacity="0.22"/>
+
+  <!-- Left leaf cluster -->
+  <g opacity="0.7">
+    <path d="M72 118
+      C58 96 52 72 62 52
+      C74 74 78 96 72 118Z" fill="url(#ng-leaf)"/>
+    <path d="M72 118
+      C86 94 98 72 108 54
+      C92 74 82 96 72 118Z" fill="#7b9e87" opacity="0.85"/>
+    <path d="M72 118
+      C66 98 70 78 82 62
+      C78 82 74 100 72 118Z" fill="#5f8269" opacity="0.75"/>
+    <path d="M72 52 C72 78 72 100 72 118" stroke="#244b38" stroke-width="1" stroke-opacity="0.25" stroke-linecap="round"/>
+  </g>
+
+  <!-- Right leaf cluster -->
+  <g opacity="0.7">
+    <path d="M568 116
+      C554 94 546 72 556 52
+      C568 74 572 96 568 116Z" fill="url(#ng-leaf)"/>
+    <path d="M568 116
+      C582 92 596 70 606 52
+      C590 74 578 96 568 116Z" fill="#88a487" opacity="0.8"/>
+    <path d="M568 116
+      C562 96 564 76 576 60
+      C572 80 570 98 568 116Z" fill="#52775c" opacity="0.75"/>
+    <path d="M568 52 C568 76 568 98 568 116" stroke="#244b38" stroke-width="1" stroke-opacity="0.25" stroke-linecap="round"/>
+  </g>
+
+  <!-- Small centre leaf accents -->
+  <g opacity="0.4" fill="#5f8269">
+    <path d="M302 128 C296 116 294 104 300 96 C304 106 304 116 302 128Z"/>
+    <path d="M338 126 C344 114 350 104 344 96 C340 106 338 116 338 126Z"/>
+  </g>
+</svg>

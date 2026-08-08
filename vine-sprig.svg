@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 120" aria-hidden="true">
+  <path d="M24 4 Q18 28 22 52 Q26 38 24 4Z" fill="#8faf98" opacity="0.55"/>
+  <path d="M24 4 Q30 28 26 52" fill="none" stroke="#4a6b55" stroke-width="1" opacity="0.4"/>
+  <path d="M22 52 Q14 72 18 92 Q22 78 26 58" fill="#7b9e87" opacity="0.45"/>
+  <path d="M26 58 Q34 78 30 98 Q28 82 24 62" fill="#6b9075" opacity="0.4"/>
+  <path d="M24 62 Q24 88 24 112" fill="none" stroke="#5f8269" stroke-width="1.2" stroke-linecap="round" opacity="0.35"/>
+  <circle cx="24" cy="112" r="2" fill="#5f8269" opacity="0.4"/>
+</svg>

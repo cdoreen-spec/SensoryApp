@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b9075"/>
+      <stop offset="55%" stop-color="#4a6b55"/>
+      <stop offset="100%" stop-color="#2f4538"/>
+    </linearGradient>
+    <linearGradient id="leftGlow" x1="0.2" y1="0.2" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#c5e0cc" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#5f8269" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="rightGlow" x1="0.8" y1="0.15" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#f0d2b0" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8a6f5c" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="pathLeft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8f2ea"/>
+      <stop offset="100%" stop-color="#a8c4ae"/>
+    </linearGradient>
+    <linearGradient id="pathRight" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5e6d4"/>
+      <stop offset="100%" stop-color="#c4a882"/>
+    </linearGradient>
+    <linearGradient id="pathStem" x1="0.5" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#dce6d8"/>
+      <stop offset="100%" stop-color="#b8c9b4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Soft atmosphere washes -->
+  <ellipse cx="250" cy="180" rx="220" ry="160" fill="url(#leftGlow)"/>
+  <ellipse cx="660" cy="170" rx="230" ry="150" fill="url(#rightGlow)"/>
+
+  <!-- Stylized tree silhouettes -->
+  <g opacity="0.28" fill="#1e2e24">
+    <path d="M70 420 L95 220 L120 420Z"/>
+    <path d="M130 440 L160 180 L190 440Z"/>
+    <path d="M40 450 L55 300 L75 450Z"/>
+    <path d="M720 430 L755 160 L790 430Z"/>
+    <path d="M780 445 L810 250 L840 445Z"/>
+    <path d="M680 450 L700 290 L725 450Z"/>
+    <path d="M200 430 L220 260 L245 430Z"/>
+    <path d="M660 435 L675 270 L695 435Z"/>
+  </g>
+
+  <!-- Decorative leaf bursts -->
+  <g stroke-linecap="round" opacity="0.55">
+    <path d="M160 120 C140 150 145 190 165 210" stroke="#8faf98" stroke-width="3"/>
+    <path d="M165 210 C145 200 125 205 110 220" stroke="#a8c4ae" stroke-width="2.5"/>
+    <path d="M165 210 C155 225 160 245 175 255" stroke="#7b9e87" stroke-width="2.5"/>
+    <path d="M740 110 C760 145 755 185 735 210" stroke="#c4a882" stroke-width="3"/>
+    <path d="M735 210 C755 205 780 215 795 235" stroke="#d4b896" stroke-width="2.5"/>
+    <path d="M735 210 C740 230 730 250 715 260" stroke="#a89070" stroke-width="2.5"/>
+  </g>
+
+  <!-- Forked path: stem -->
+  <path d="M420 520 C430 470 435 430 450 390 C465 350 470 330 450 310"
+        stroke="url(#pathStem)" stroke-width="28" stroke-linecap="round" fill="none"/>
+  <path d="M420 520 C430 470 435 430 450 390 C465 350 470 330 450 310"
+        stroke="#2a332c" stroke-width="2" stroke-dasharray="7 11" stroke-linecap="round" fill="none" opacity="0.35"/>
+
+  <!-- Left fork -->
+  <path class="fork-left" d="M450 310 C400 285 320 250 240 200 C180 165 130 140 95 115"
+        stroke="url(#pathLeft)" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <path d="M450 310 C400 285 320 250 240 200 C180 165 130 140 95 115"
+        stroke="#3d5a47" stroke-width="1.8" stroke-dasharray="6 10" stroke-linecap="round" fill="none" opacity="0.4"/>
+
+  <!-- Right fork -->
+  <path class="fork-right" d="M450 310 C500 285 580 245 660 195 C720 158 775 130 820 108"
+        stroke="url(#pathRight)" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <path d="M450 310 C500 285 580 245 660 195 C720 158 775 130 820 108"
+        stroke="#6b5648" stroke-width="1.8" stroke-dasharray="6 10" stroke-linecap="round" fill="none" opacity="0.4"/>
+
+  <!-- Junction stone -->
+  <circle cx="450" cy="318" r="18" fill="#eef4ef" opacity="0.95"/>
+  <circle cx="450" cy="318" r="12" fill="none" stroke="#5f8269" stroke-width="2"/>
+  <circle cx="450" cy="318" r="4" fill="#3d5a47"/>
+
+  <!-- Tiny trail markers -->
+  <g fill="#eef4ef" opacity="0.7">
+    <circle cx="360" cy="275" r="3"/>
+    <circle cx="290" cy="235" r="3"/>
+    <circle cx="200" cy="180" r="3"/>
+    <circle cx="540" cy="270" r="3"/>
+    <circle cx="620" cy="225" r="3"/>
+    <circle cx="710" cy="170" r="3"/>
+  </g>
+</svg>

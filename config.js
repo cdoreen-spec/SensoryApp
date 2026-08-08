@@ -1,0 +1,43 @@
+/**
+ * Soulful Sensory OT — delivery & clinician settings
+ *
+ * Change CLINICIAN_PIN before sharing the clinician link with anyone.
+ * Email delivery uses FormSubmit (https://formsubmit.co) — the first
+ * real submission sends a confirmation email to CLINICIAN_EMAIL; click
+ * Confirm once, then every completed adult / teen / parent screening
+ * emails the detailed report (subject includes the completer’s name).
+ */
+const APP_CONFIG = {
+  clinicianEmail: "soulfulsensoryot@gmail.com",
+  /** PIN for the clinician share page (?clinician=1). Change this. */
+  clinicianPin: "soulfulot",
+  /**
+   * FormSubmit AJAX endpoint. Uses clinicianEmail above.
+   * Or set a Web3Forms access key and switch deliveryProvider to "web3forms".
+   */
+  deliveryProvider: "formsubmit", // "formsubmit" | "web3forms" | "none"
+  web3formsAccessKey: "",
+  /**
+   * Show the Pain pathway button on the home screen.
+   * Set to true when ready to bring the pain trail back.
+   */
+  showPainPathway: false,
+
+  /** Seeded admin account (created automatically on first load). Change the password. */
+  adminName: "Cayley Alberts",
+  adminEmail: "soulfulsensoryot@gmail.com",
+  adminPassword: "SoulfulAdmin2026!",
+  adminPhone: "068 901 4209",
+  practiceName: "Soulful Sensory OT",
+  allowPatientSignup: true,
+  allowTherapistSignup: true,
+  /** Therapist signups stay pending until you approve them in Settings. */
+  requireTherapistApproval: true,
+
+  /**
+   * While building the app: let admin/therapist open a full sample report
+   * without completing the questionnaire (dashboard button + ?preview=report).
+   * Set to false before sharing with patients.
+   */
+  devAllowSampleReport: true,
+};

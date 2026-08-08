@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 440" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6d8f7a"/>
+      <stop offset="40%" stop-color="#4f6f5a"/>
+      <stop offset="100%" stop-color="#2f4538"/>
+    </linearGradient>
+    <linearGradient id="trunk" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3a2f28"/>
+      <stop offset="45%" stop-color="#5a4a3d"/>
+      <stop offset="100%" stop-color="#2e2620"/>
+    </linearGradient>
+    <radialGradient id="sunbreak" cx="0.35" cy="0.2" r="0.55">
+      <stop offset="0%" stop-color="#d8e8dc" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#a8c4ae" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#4a6b55" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="leafA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9bb89f"/>
+      <stop offset="55%" stop-color="#5f8269"/>
+      <stop offset="100%" stop-color="#3d5a47"/>
+    </linearGradient>
+    <linearGradient id="leafB" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b7ceb8"/>
+      <stop offset="50%" stop-color="#6b9075"/>
+      <stop offset="100%" stop-color="#4a6b55"/>
+    </linearGradient>
+    <linearGradient id="leafC" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#c5d9c9"/>
+      <stop offset="100%" stop-color="#5f8269"/>
+    </linearGradient>
+    <linearGradient id="groundFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eef4ef" stop-opacity="0"/>
+      <stop offset="70%" stop-color="#eef4ef" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#eef4ef" stop-opacity="0.98"/>
+    </linearGradient>
+    <!-- reusable realistic leaf -->
+    <symbol id="leaf" viewBox="0 0 40 70">
+      <path d="M20 2 C8 18 4 38 12 58 C16 66 20 68 20 68 C20 68 24 66 28 58 C36 38 32 18 20 2Z" fill="currentColor"/>
+      <path d="M20 10 C20 28 20 46 20 64" fill="none" stroke="#2a4033" stroke-width="1" stroke-opacity="0.35"/>
+      <path d="M20 22 C14 26 12 30 11 34 M20 34 C26 38 28 42 29 46 M20 46 C15 49 13 52 12 55" fill="none" stroke="#2a4033" stroke-width="0.7" stroke-opacity="0.28"/>
+    </symbol>
+  </defs>
+
+  <rect width="1000" height="440" fill="url(#sky)"/>
+  <rect width="1000" height="440" fill="url(#sunbreak)"/>
+
+  <!-- distant soft canopy haze -->
+  <ellipse cx="200" cy="160" rx="260" ry="90" fill="#6b9075" opacity="0.25"/>
+  <ellipse cx="780" cy="140" rx="280" ry="100" fill="#5f8269" opacity="0.22"/>
+
+  <!-- far tree silhouettes with softer foliage masses -->
+  <g opacity="0.4">
+    <ellipse cx="60" cy="210" rx="48" ry="90" fill="#2f4538"/>
+    <ellipse cx="120" cy="190" rx="55" ry="110" fill="#334d3d"/>
+    <ellipse cx="190" cy="205" rx="42" ry="85" fill="#2f4538"/>
+    <ellipse cx="280" cy="175" rx="70" ry="130" fill="#2a4033"/>
+    <ellipse cx="380" cy="195" rx="50" ry="100" fill="#334d3d"/>
+    <ellipse cx="500" cy="170" rx="78" ry="140" fill="#2a4033"/>
+    <ellipse cx="620" cy="190" rx="55" ry="105" fill="#2f4538"/>
+    <ellipse cx="720" cy="165" rx="72" ry="135" fill="#2a4033"/>
+    <ellipse cx="820" cy="195" rx="48" ry="95" fill="#334d3d"/>
+    <ellipse cx="910" cy="180" rx="60" ry="120" fill="#2f4538"/>
+    <ellipse cx="980" cy="200" rx="45" ry="90" fill="#2a4033"/>
+  </g>
+
+  <!-- midground trunks -->
+  <g>
+    <rect x="95" y="250" width="10" height="120" rx="3" fill="url(#trunk)" opacity="0.75"/>
+    <rect x="250" y="230" width="12" height="145" rx="3" fill="url(#trunk)" opacity="0.8"/>
+    <rect x="730" y="235" width="11" height="140" rx="3" fill="url(#trunk)" opacity="0.8"/>
+    <rect x="880" y="245" width="10" height="125" rx="3" fill="url(#trunk)" opacity="0.75"/>
+  </g>
+
+  <!-- mid foliage masses -->
+  <g>
+    <ellipse cx="100" cy="210" rx="78" ry="95" fill="#3d5a47" opacity="0.85"/>
+    <ellipse cx="70" cy="230" rx="55" ry="70" fill="#4a6b55" opacity="0.7"/>
+    <ellipse cx="140" cy="225" rx="50" ry="65" fill="#5f8269" opacity="0.55"/>
+
+    <ellipse cx="255" cy="185" rx="95" ry="115" fill="#3d5a47" opacity="0.88"/>
+    <ellipse cx="210" cy="210" rx="60" ry="75" fill="#4a6b55" opacity="0.7"/>
+    <ellipse cx="300" cy="205" rx="58" ry="72" fill="#5f8269" opacity="0.58"/>
+
+    <ellipse cx="735" cy="190" rx="92" ry="112" fill="#3d5a47" opacity="0.88"/>
+    <ellipse cx="690" cy="215" rx="58" ry="70" fill="#4a6b55" opacity="0.7"/>
+    <ellipse cx="780" cy="210" rx="55" ry="68" fill="#5f8269" opacity="0.55"/>
+
+    <ellipse cx="885" cy="205" rx="80" ry="98" fill="#3d5a47" opacity="0.85"/>
+    <ellipse cx="930" cy="225" rx="52" ry="65" fill="#4a6b55" opacity="0.65"/>
+  </g>
+
+  <!-- detailed foreground leaves left -->
+  <g>
+    <use href="#leaf" x="20" y="150" width="38" height="66" fill="url(#leafA)" transform="rotate(-28 39 183)" opacity="0.9"/>
+    <use href="#leaf" x="48" y="175" width="34" height="60" fill="url(#leafB)" transform="rotate(18 65 205)" opacity="0.85"/>
+    <use href="#leaf" x="12" y="210" width="30" height="54" fill="url(#leafC)" transform="rotate(-8 27 237)" opacity="0.8"/>
+    <use href="#leaf" x="70" y="200" width="32" height="56" fill="url(#leafA)" transform="rotate(32 86 228)" opacity="0.75"/>
+    <use href="#leaf" x="35" y="235" width="28" height="50" fill="url(#leafB)" transform="rotate(-40 49 260)" opacity="0.7"/>
+  </g>
+
+  <!-- detailed foreground leaves right -->
+  <g>
+    <use href="#leaf" x="920" y="155" width="40" height="70" fill="url(#leafB)" transform="rotate(24 940 190)" opacity="0.9"/>
+    <use href="#leaf" x="945" y="185" width="34" height="60" fill="url(#leafA)" transform="rotate(-20 962 215)" opacity="0.85"/>
+    <use href="#leaf" x="900" y="200" width="32" height="56" fill="url(#leafC)" transform="rotate(12 916 228)" opacity="0.8"/>
+    <use href="#leaf" x="960" y="220" width="30" height="52" fill="url(#leafB)" transform="rotate(-35 975 246)" opacity="0.75"/>
+  </g>
+
+  <!-- scattered mid leaves -->
+  <g opacity="0.65">
+    <use href="#leaf" x="180" y="250" width="26" height="46" fill="url(#leafC)" transform="rotate(40 193 273)"/>
+    <use href="#leaf" x="420" y="255" width="24" height="42" fill="url(#leafA)" transform="rotate(-25 432 276)"/>
+    <use href="#leaf" x="560" y="248" width="28" height="48" fill="url(#leafB)" transform="rotate(15 574 272)"/>
+    <use href="#leaf" x="650" y="260" width="22" height="40" fill="url(#leafC)" transform="rotate(-30 661 280)"/>
+  </g>
+
+  
+
+
+  <!-- logo flowers (from brand) -->
+  <image href="assets/logo-flowers.png" x="110" y="40" width="140" height="100" opacity="0.95"/>
+  <image href="assets/logo-flower.png" x="470" y="70" width="58" height="58" opacity="0.88"/>
+  <image href="assets/logo-flowers.png" x="740" y="35" width="130" height="93" opacity="0.92"/>
+
+  <!-- soft ground mist -->
+  <rect y="250" width="1000" height="190" fill="url(#groundFade)"/>
+  <path d="M0 310 Q220 280 500 305 T1000 295 L1000 440 L0 440Z" fill="#eef4ef" opacity="0.9"/>
+</svg>
