@@ -2827,7 +2827,7 @@ function renderHome() {
               : `<p class="home-hero__tagline">${
                   isPainPathwayEnabled()
                     ? "Gentle pathways into sensory understanding, and into living more fully with pain."
-                    : "A gentle guide to understanding your sensory world."
+                    : "Exploring and understanding your sensory world."
                 }</p>
           <a class="home-hero__scroll" href="#pathways">Choose a pathway</a>`
           }
@@ -2841,10 +2841,7 @@ function renderHome() {
         <h2 id="ot-heading" class="home-section__title">Occupational therapy</h2>
         <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
         <p class="home-section__lead">
-          Occupational therapy helps people take part more fully in the meaningful activities of everyday life —
-          from work and rest to relationships and self-care. By understanding how body, mind and sensory systems
-          work together${isPainPathwayEnabled() ? " — and how pain can shape movement, energy and participation" : ""} — OT supports greater comfort,
-          regulation and ease in the world around you.
+          Occupational therapy looks at how your sensory systems affect the way you experience and respond to the world around you. For adults and adolescents, this can help make sense of things like feeling overwhelmed, struggling to focus, needing movement, becoming drained by certain environments, or finding everyday life more difficult than it seems. By understanding your unique sensory patterns, OT can help you find practical ways to feel more regulated, comfortable and able to engage in the things that matter to you.
         </p>
       </section>
 
