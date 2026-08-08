@@ -2745,7 +2745,7 @@ function renderHome() {
             <button type="button" class="trail-row trail-row--sensory" data-action="start-sensory" role="listitem">
               <span class="trail-row__text">
                 <span class="trail-row__top">
-                  <span class="trail-row__name">Sensory</span>
+                  <span class="trail-row__name">Sensory questionnaire</span>
                   <span class="trail-row__meta">${hasSensoryDraft() ? "Saved progress" : "10–15 min"}</span>
                 </span>
                 <span class="trail-row__desc">${
@@ -2845,12 +2845,172 @@ function renderHome() {
         </p>
       </section>
 
-      <section class="home-section home-quote" aria-label="A note for the journey">
-        <blockquote class="home-quote__block">
-          <p>
-            Discover the hidden patterns that shape your everyday life
+      <section class="home-helps" aria-labelledby="helps-heading">
+        <div class="home-helps__atmosphere" aria-hidden="true">
+          <div class="home-helps__ridge home-helps__ridge--far"></div>
+          <div class="home-helps__ridge home-helps__ridge--mid"></div>
+          <div class="home-helps__ridge home-helps__ridge--near"></div>
+          <div class="home-helps__contours"></div>
+        </div>
+        <div class="home-helps__inner">
+          <p class="home-section__eyebrow">The sensory questionnaire</p>
+          <h2 id="helps-heading" class="home-section__title">What this can help with</h2>
+          <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+          <p class="home-section__lead home-helps__lead">
+            One main path — seven side trails into the places sensory understanding can take you.
           </p>
-        </blockquote>
+
+          <div class="home-helps__map" role="list" aria-label="Side trails from the sensory questionnaire">
+            <svg class="home-helps__routes" viewBox="0 0 640 920" preserveAspectRatio="xMidYMin meet" aria-hidden="true">
+              <defs>
+                <linearGradient id="helpsTrailFade" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#52775c" stop-opacity="0.15" />
+                  <stop offset="8%" stop-color="#365b46" stop-opacity="0.85" />
+                  <stop offset="92%" stop-color="#365b46" stop-opacity="0.85" />
+                  <stop offset="100%" stop-color="#52775c" stop-opacity="0.15" />
+                </linearGradient>
+                <symbol id="helpsMiniPeak" viewBox="0 0 36 18">
+                  <path d="M2 16 L10 5 L15 11 L22 2 L34 16 Z" fill="currentColor" />
+                </symbol>
+              </defs>
+
+              <!-- Main hiking trail (winding) -->
+              <path
+                class="home-helps__main-path"
+                d="M320 30
+                   C335 72, 300 98, 324 128
+                   C348 168, 295 198, 318 238
+                   C342 282, 298 312, 322 352
+                   C348 396, 292 426, 316 468
+                   C342 512, 296 542, 320 584
+                   C346 628, 290 658, 318 700
+                   C344 744, 298 774, 320 816
+                   C332 858, 312 882, 320 908"
+              />
+
+              <!-- Curvy side trails — stop short of the wording -->
+              <path class="home-helps__branch home-helps__branch--1" d="M324 128 C295 82, 255 175, 242 138 C236 122, 230 112, 232 118" />
+              <path class="home-helps__branch home-helps__branch--2" d="M318 238 C352 188, 395 295, 410 252 C416 234, 424 222, 422 230" />
+              <path class="home-helps__branch home-helps__branch--3" d="M322 352 C288 308, 250 405, 240 368 C234 352, 228 338, 230 344" />
+              <path class="home-helps__branch home-helps__branch--4" d="M316 468 C355 418, 398 530, 414 490 C420 472, 428 452, 426 460" />
+              <path class="home-helps__branch home-helps__branch--5" d="M320 584 C285 536, 248 640, 238 600 C232 584, 226 568, 228 574" />
+              <path class="home-helps__branch home-helps__branch--6" d="M318 700 C358 648, 402 765, 418 722 C424 704, 432 686, 430 694" />
+              <path class="home-helps__branch home-helps__branch--7" d="M320 816 C286 770, 252 872, 240 834 C234 818, 228 802, 230 808" />
+
+              <!-- Branch end peaks (sit between trail and text) -->
+              <g class="home-helps__end-peaks" fill="#365b46">
+                <use href="#helpsMiniPeak" x="214" y="108" width="28" height="14" opacity="0.55" />
+                <use href="#helpsMiniPeak" x="410" y="220" width="28" height="14" opacity="0.55" />
+                <use href="#helpsMiniPeak" x="212" y="334" width="28" height="14" opacity="0.55" />
+                <use href="#helpsMiniPeak" x="414" y="450" width="28" height="14" opacity="0.55" />
+                <use href="#helpsMiniPeak" x="210" y="564" width="28" height="14" opacity="0.55" />
+                <use href="#helpsMiniPeak" x="418" y="684" width="28" height="14" opacity="0.55" />
+                <use href="#helpsMiniPeak" x="212" y="798" width="28" height="14" opacity="0.55" />
+              </g>
+
+              <!-- Junction cairns on the main trail -->
+              <circle class="home-helps__junction" cx="324" cy="128" r="5.5" />
+              <circle class="home-helps__junction" cx="318" cy="238" r="5.5" />
+              <circle class="home-helps__junction" cx="322" cy="352" r="5.5" />
+              <circle class="home-helps__junction" cx="316" cy="468" r="5.5" />
+              <circle class="home-helps__junction" cx="320" cy="584" r="5.5" />
+              <circle class="home-helps__junction" cx="318" cy="700" r="5.5" />
+              <circle class="home-helps__junction" cx="320" cy="816" r="5.5" />
+
+              <circle class="home-helps__trailhead" cx="320" cy="30" r="7" />
+              <circle class="home-helps__trailend" cx="320" cy="908" r="4.5" />
+            </svg>
+
+            <p class="home-helps__trailhead-label" aria-hidden="true">Trailhead</p>
+
+            <article class="home-helps__dest home-helps__dest--1" role="listitem" style="--i:1">
+              <div class="home-helps__sign">
+                <span class="home-helps__peaks" aria-hidden="true">
+                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
+                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
+                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
+                  </svg>
+                </span>
+                <h3 class="home-helps__title">Understand yourself</h3>
+                <p class="home-helps__text">Your sensory patterns and how they shape everyday life.</p>
+              </div>
+            </article>
+            <article class="home-helps__dest home-helps__dest--2" role="listitem" style="--i:2">
+              <div class="home-helps__sign">
+                <span class="home-helps__peaks" aria-hidden="true">
+                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
+                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
+                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
+                  </svg>
+                </span>
+                <h3 class="home-helps__title">Relationships &amp; conflict</h3>
+                <p class="home-helps__text">How different needs show up in communication and conflict.</p>
+              </div>
+            </article>
+            <article class="home-helps__dest home-helps__dest--3" role="listitem" style="--i:3">
+              <div class="home-helps__sign">
+                <span class="home-helps__peaks" aria-hidden="true">
+                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
+                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
+                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
+                  </svg>
+                </span>
+                <h3 class="home-helps__title">Work &amp; burnout</h3>
+                <p class="home-helps__text">Energy, stress, and a work setup that fits you better.</p>
+              </div>
+            </article>
+            <article class="home-helps__dest home-helps__dest--4" role="listitem" style="--i:4">
+              <div class="home-helps__sign">
+                <span class="home-helps__peaks" aria-hidden="true">
+                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
+                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
+                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
+                  </svg>
+                </span>
+                <h3 class="home-helps__title">School &amp; studying</h3>
+                <p class="home-helps__text">What helps you feel regulated and ready to learn.</p>
+              </div>
+            </article>
+            <article class="home-helps__dest home-helps__dest--5" role="listitem" style="--i:5">
+              <div class="home-helps__sign">
+                <span class="home-helps__peaks" aria-hidden="true">
+                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
+                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
+                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
+                  </svg>
+                </span>
+                <h3 class="home-helps__title">Attention &amp; focus</h3>
+                <p class="home-helps__text">What supports concentration — and what gets in the way.</p>
+              </div>
+            </article>
+            <article class="home-helps__dest home-helps__dest--6" role="listitem" style="--i:6">
+              <div class="home-helps__sign">
+                <span class="home-helps__peaks" aria-hidden="true">
+                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
+                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
+                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
+                  </svg>
+                </span>
+                <h3 class="home-helps__title">Stress &amp; anxiety</h3>
+                <p class="home-helps__text">Sensory factors behind overwhelm, and ways to settle.</p>
+              </div>
+            </article>
+            <article class="home-helps__dest home-helps__dest--7" role="listitem" style="--i:7">
+              <div class="home-helps__sign">
+                <span class="home-helps__peaks" aria-hidden="true">
+                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
+                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
+                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
+                  </svg>
+                </span>
+                <h3 class="home-helps__title">Sensory overload</h3>
+                <p class="home-helps__text">What tips you over — and how to recover.</p>
+              </div>
+            </article>
+
+            <p class="home-helps__trailend-label" aria-hidden="true">Keep walking</p>
+          </div>
+        </div>
       </section>
 
       <section class="home-pathways" id="pathways" aria-labelledby="pathways-heading">
@@ -2910,7 +3070,15 @@ function renderSensoryLanding() {
   const places = SENSORY_AREAS.map(
     (area, i) => `
       <li class="sensory-flow__place sensory-flow__place--${escapeHtml(area.id)}" style="--i:${i}">
-        <div class="sensory-flow__bubble">
+        <span class="sensory-flow__marker" aria-hidden="true"></span>
+        <div class="sensory-flow__stop">
+          <span class="sensory-flow__peaks" aria-hidden="true">
+            <svg viewBox="0 0 52 22" width="40" height="16" fill="none">
+              <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.35"/>
+              <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.7"/>
+            </svg>
+          </span>
+          <span class="sensory-flow__mile">Stop ${i + 1}</span>
           <span class="sensory-flow__place-name">${escapeHtml(area.name)}</span>
           <span class="sensory-flow__place-desc">${escapeHtml(area.desc)}</span>
           <span class="sensory-flow__place-detail">${escapeHtml(area.detail)}</span>
@@ -2934,7 +3102,7 @@ function renderSensoryLanding() {
               : `<button type="button" class="sensory-flow__back" data-action="back-home">← Back to home</button>`
           }
           <p class="sensory-flow__eyebrow">${isPatientInvite() ? "Patient screening" : "Pathway"}</p>
-          <h1 id="sensory-heading" class="sensory-flow__brand">Sensory</h1>
+          <h1 id="sensory-heading" class="sensory-flow__brand">Sensory questionnaire</h1>
           ${
             isPatientInvite()
               ? `<p class="invite-banner invite-banner--hero" role="status">${escapeHtml(inviteBannerText())}</p>`
@@ -2954,8 +3122,13 @@ function renderSensoryLanding() {
         </header>
 
         <div class="sensory-flow__places" aria-labelledby="places-heading">
-          <p class="sensory-flow__label">Places &amp; spaces</p>
-          <h2 id="places-heading" class="sensory-flow__title">Impacted by sensory systems</h2>
+          <div class="sensory-flow__places-scene" aria-hidden="true">
+            <svg class="sensory-flow__places-backdrop" viewBox="0 0 960 160" preserveAspectRatio="xMidYMax meet">
+              <path class="sensory-flow__places-line" d="M0 130 L120 95 L200 118 L320 55 L420 105 L520 70 L640 115 L760 80 L880 110 L960 95" />
+            </svg>
+          </div>
+          <p class="sensory-flow__label">Along the trail</p>
+          <h2 id="places-heading" class="sensory-flow__title">Places your senses shape</h2>
           <ol class="sensory-flow__trail" aria-label="Places and spaces">
             ${places}
           </ol>
