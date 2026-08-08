@@ -10,16 +10,22 @@ const QUESTIONNAIRE_UI = {
       "In this questionnaire you will simply answer yes or no questions. You may need to generalise a little — if you are unsure, ask yourself: if I had to choose, would this be a yes or a no?",
     introModalPurpose:
       "The idea is to identify sensory preferences — what you (or your child) tend to prefer and how the senses respond — so we can see how best to support you going forward.",
-    introModalNote: "There are no right or wrong answers. Take your time, and go with your first instinct.",
+    introModalNote:
+      "There are no right or wrong answers. It is also fine if some of your answers seem to pull in opposite directions — sensory preferences are often mixed. Take your time, and go with your first instinct.",
     introModalCta: "Got it — let’s begin",
     chooseRespondent: "Who is completing this questionnaire?",
     chooseRespondentDesc: "Choose the option that best describes you. The questions will adjust to suit your age and perspective.",
     adult: "I'm an adult",
     adultDesc: "I am answering about my own sensory experiences.",
     teen: "I'm a teenager",
-    teenDesc: "I am answering about my own sensory experiences.",
+    teenDesc: "I am answering about my own sensory experiences at home and at school.",
     parent: "I'm a parent",
     parentDesc: "I am answering about my child’s sensory experiences.",
+    answerMixedNote:
+      "It is completely fine to say yes to questions that seem opposite. You might enjoy both high-impact and low-impact sport, or like a busy environment as well as your own quiet space. Answer each question on its own — mixed preferences are common and expected.",
+    answerMixedNoteParent:
+      "It is completely fine to say yes to questions that seem opposite. Your child might enjoy both high-impact and low-impact sport, or like a busy environment as well as their own quiet space. Answer each question on its own — mixed preferences are common and expected.",
+    answerMixedNoteLabel: "A note about answering",
     language: "Language",
     english: "English",
     afrikaans: "Afrikaans",
@@ -35,16 +41,17 @@ const QUESTIONNAIRE_UI = {
     draftAutoSaveHint: "Progress is saved on this device — you can close and continue later.",
     consent: "Consent",
     consentTag: "Trailhead · Before we begin",
-    consentDesc: "Please read and tick every required statement. Sharing permissions below are optional.",
+    consentDesc:
+      "You may only continue once the required consent below has been given. You may also select who is permitted to have access to your results.",
     consentDescWork:
-      "Please read and tick every required statement, including permission for Soulful Sensory OT to access your results. Sharing with your workplace is optional.",
+      "You may only continue once the required consent below has been given, including permission for Soulful Sensory OT to access your results. You may also choose whether your workplace may have access — that option is voluntary.",
     consentRequiredHeading: "Required consent",
-    consentSharingHeading: "Permission to share (optional)",
+    consentSharingHeading: "Who may access your results (optional)",
     consentSharingDesc:
-      "Under POPIA, we only share personal or health-related information with others when you give permission below, or when the law requires it. Tick only the options you agree to. You can continue without ticking any of these.",
-    consentSharingHeadingWork: "Permission to share",
+      "Select who you give permission to access your results. Under POPIA, we only share personal or health-related information with others when you give permission below, or when the law requires it. You may continue without selecting any of these options.",
+    consentSharingHeadingWork: "Who may access your results",
     consentSharingDescWork:
-      "Soulful Sensory OT needs permission to access your results. Sharing with your workplace or employer is optional — you may leave that unticked and still continue.",
+      "Soulful Sensory OT requires permission to access your results. Sharing with your workplace or employer is optional — you may leave that unticked and still continue.",
     consentPrivacyNote:
       "Soulful Sensory OT processes personal information in line with the Protection of Personal Information Act 4 of 2013 (POPIA). You may request access to, correction of, or withdrawal of consent regarding your information by contacting us.",
     sharingSummaryTitle: "Sharing permissions",
@@ -71,22 +78,43 @@ const QUESTIONNAIRE_UI = {
     screening: "Screening",
     viewpoint: "Viewpoint",
     progressAria: "Questionnaire progress",
-    requiredConsent: "Please read and agree to all required consent statements before continuing.",
+    requiredConsent: "Required consent must be given before you can continue.",
     consentGateTitle: "Consent required to continue",
     consentGateDisclaimer:
-      "You cannot continue with this assessment until every required consent statement below is ticked. Optional sharing permissions do not unlock the Continue button.",
+      "You can only continue once every required consent statement below has been ticked. Choosing who may access your results is separate and optional — those choices do not unlock Continue.",
     consentGateDisclaimerWork:
-      "You cannot continue until every required consent statement is ticked, including permission for Soulful Sensory OT to access your results. Workplace sharing is optional.",
+      "You can only continue once every required consent statement has been ticked, including permission for Soulful Sensory OT to access your results. Workplace access remains optional.",
     requiredRespondent: "Please choose who is completing the questionnaire.",
     requiredContext: "Please choose which setting this screening is most about.",
     requiredField: "Please complete the",
     validEmail: "Please enter a valid email address.",
     answerAll: "Please answer all questions before continuing",
     unanswered: "is unanswered",
+    idealSaturdayTag: "Almost there",
+    idealSaturdayTitle: "One last reflection",
+    idealSaturdayTitleTeen: "One last question",
+    idealSaturdayPromptAdult:
+      "Please describe what your best Saturday would look like. Money and other people’s plans do not matter this time — if you could shape the day entirely around what you enjoy, how would it unfold from morning to evening?",
+    idealSaturdayPromptTeen:
+      "What would your absolute best Saturday look like? Don’t worry about money or what anyone else wants — if you could do anything you like, how would your day go from morning to night?",
+    idealSaturdayPromptParent:
+      "Please describe what your child’s best Saturday would look like. Money and other people’s plans do not matter this time — if the day could be shaped entirely around what they enjoy, how would it unfold from morning to evening?",
+    idealSaturdayHintAdult:
+      "There is no right answer. Include the pace, places, people (or solitude), movement, sounds, and anything else that would make the day feel like yours.",
+    idealSaturdayHintTeen:
+      "Be as real as you like — sleep-ins, sport, friends, gaming, being outside, music, food, chill time… whatever would make it your day.",
+    idealSaturdayHintParent:
+      "Include the pace, places, people, play, rest, and sensory feel of a day that would truly suit your child.",
+    idealSaturdayPlaceholderAdult: "Start with the morning, then walk through the rest of the day…",
+    idealSaturdayPlaceholderTeen: "Start with how you’d wake up, then what you’d do next…",
+    idealSaturdayPlaceholderParent: "Start with their morning, then how the rest of their day would go…",
+    idealSaturdayRequired: "Please share a little about that best Saturday before continuing.",
+    idealSaturdayResultsTitle: "Best Saturday",
+    idealSaturdayResultsIntro: "A free-text snapshot of what an ideal day looks like — useful sensory clues beyond the yes/no scores.",
     contextTag: "Your setting",
     chooseContext: "Where should we focus?",
     chooseContextAdultDesc: "Choose whether these results should lean more toward work, or toward family and home life. Your summary, sense-by-sense readings and sensory diet ideas will all be written for the setting you choose.",
-    chooseContextTeenDesc: "Choose whether these results should lean more toward family and home, or toward school. Your summary, sense-by-sense readings and sensory diet ideas will all be written for the setting you choose.",
+    chooseContextTeenDesc: "Your results cover both family / home life and school — questions, summaries and sensory diet ideas reflect both parts of your day.",
     contextWork: "Work",
     contextWorkDesc: "Focus, meetings, open-plan noise, screens and the pace of your working day.",
     contextHome: "Family / home",
@@ -94,13 +122,19 @@ const QUESTIONNAIRE_UI = {
     contextHomeTeenDesc: "Home routines, rest, shared spaces and family life.",
     contextSchool: "School",
     contextSchoolDesc: "Classrooms, assemblies, homework, friends and the school day.",
+    contextHomeSchool: "Home & school",
+    contextHomeSchoolDesc: "Family life at home and your school day — classrooms, homework, rest and shared spaces.",
     focusedOn: "Focused on",
     contextResultsNote:
       "Because you chose {setting}, the overall pattern, score table and recommendations below are written for that part of your life.",
+    contextResultsNoteTeen:
+      "Your overall pattern, score table and recommendations below are written for both home and school life.",
     contextDetailsNote: "Each sense also shows what the pattern can look like {setting}, and what tends to help there.",
+    contextDetailsNoteTeen: "Each sense also shows what the pattern can look like at home and at school, and what tends to help in both places.",
     contextHelps: "What helps here:",
     settingGuideDomainHints: "Extra notes from your strongest sense patterns",
     dietContextNote: "The first ideas under each sense are chosen for {setting}. The rest work anywhere in your day.",
+    dietContextNoteTeen: "The first ideas under each sense are chosen for home and school. The rest work anywhere in your day.",
     dietEverywhere: "Anytime, anywhere",
     profileTitle: "Your sensory profile",
     profileTitleParent: "Your child’s sensory profile",
@@ -271,6 +305,36 @@ const QUESTIONNAIRE_UI = {
     teenCheatFrustratedHint: "Ground yourself first, then go back to the task.",
     teenCheatOverload: "Too much / overloaded",
     teenCheatOverloadHint: "Turn the volume of the world down before anything else.",
+    teenCrewKicker: "Your trail role",
+    teenCrewTitle: "Meet your sensory character",
+    teenCrewIntro:
+      "Your overall sensory threshold matches one of three trail characters. None is better than the others — on a real adventure, you need the whole crew.",
+    teenCrewYouAre: "You are",
+    teenCrewBadge: "That’s you",
+    teenCrewCrewTitle: "The full adventure crew",
+    teenCrewCrewIntro:
+      "On a high trail you need one of each. High-threshold courage up front, low-threshold awareness on the path, and a medium-threshold adaptor holding the middle.",
+    teenCrewWhyTitle: "Why every summit needs all three",
+    teenCrewWhyBody:
+      "The Sensory Explorer (higher sensory threshold) has the courage and energy to go first — checking the route ahead and seeing if it’s safe to climb. The Sensory Observer (lower sensory threshold) picks up the animals, the weather shift, new smells, how the trail snacks taste, and any holes or loose stones before the crew steps into them — and may need steadier breaks along the way. The Sensory Adaptor (medium / mixed threshold) reads the group and fits where they are needed — surging forward, slowing down, or holding the middle of the rope so the whole crew stays together.",
+    teenCrewExplorerName: "The Sensory Explorer",
+    teenCrewExplorerTag: "Higher threshold · first on the path",
+    teenCrewExplorerBody:
+      "Your sensory threshold sits higher — you often like more sensory input, not less. Busy days, new places, movement, sound and fresh sights tend to wake you up. Stillness can feel flat, so you go looking for the next thing to do and see. On the mountain you are the one who hikes ahead with plenty of energy, can keep going for a good stretch, tests the route, and comes back with the report: it’s wild up there — and worth it.",
+    teenCrewExplorerRole:
+      "Higher-threshold scout — loves input, busyness and new terrain; has the energy to keep going and check if the path ahead is safe.",
+    teenCrewAdaptorName: "The Sensory Adaptor",
+    teenCrewAdaptorTag: "Medium threshold · holds the middle of the rope",
+    teenCrewAdaptorBody:
+      "Your sensory threshold sits in the flexible middle — sometimes you want more input, sometimes you need less. You shift with the classroom, the house, the weather on the trail and the people around you. On the mountain you can climb with the explorers when the day asks for energy, or slow down with the observers when it asks for care — you fit where the crew needs you, and that keeps everyone moving.",
+    teenCrewAdaptorRole:
+      "Medium-threshold middle — reads the group, matches the pace, and keeps high- and low-threshold hikers walking as one crew.",
+    teenCrewObserverName: "The Sensory Observer",
+    teenCrewObserverTag: "Lower threshold · sees what others walk past",
+    teenCrewObserverBody:
+      "Your sensory threshold sits lower — you are very aware and pick things up quickly. A change in the weather, a new smell on the breeze, how the trail snacks taste, a bird call, a loose stone underfoot: it all registers. That awareness is a real strength on the mountain. You may also need more regular breaks during the hike so your system can settle before the next stretch — and when you do, the whole crew notices what they would have missed.",
+    teenCrewObserverRole:
+      "Lower-threshold lookout — spots detail fast (weather, smells, tastes, hazards) and benefits from steadier breaks along the trail.",
     pathwaysTitle: "Sensory pathways",
     pathwaysHelp: "Follow each sense down the trail. Leaves show highlighted answers; the dial shows whether that sense leans sensitive or seeking.",
     responseMosaic: "Response mosaic",
@@ -420,16 +484,22 @@ const QUESTIONNAIRE_UI = {
       "In hierdie vraelys hoef jy net ja/nee-vrae te beantwoord. Jy sal dalk ’n bietjie moet veralgemeen — as jy onseker is, vra jouself: as ek moet kies, sou dit ’n ja of ’n nee wees?",
     introModalPurpose:
       "Die doel is om sensoriese voorkeure te identifiseer — wat jy (of jou kind) verkies en hoe die sintuie reageer — sodat ons kan sien hoe om jou vorentoe die beste te ondersteun.",
-    introModalNote: "Daar is geen regte of verkeerde antwoorde nie. Neem jou tyd, en volg jou eerste intuïsie.",
+    introModalNote:
+      "Daar is geen regte of verkeerde antwoorde nie. Dit is ook reg as party antwoorde in teenoorgestelde rigtings lyk trek — sensoriese voorkeure is dikwels gemeng. Neem jou tyd, en volg jou eerste intuïsie.",
     introModalCta: "Ek verstaan — kom ons begin",
     chooseRespondent: "Wie voltooi hierdie vraelys?",
     chooseRespondentDesc: "Kies die opsie wat jou die beste beskryf. Die vrae sal by jou ouderdom en perspektief aanpas.",
     adult: "Ek is ’n volwassene",
     adultDesc: "Ek antwoord oor my eie sensoriese ervarings.",
     teen: "Ek is ’n tiener",
-    teenDesc: "Ek antwoord oor my eie sensoriese ervarings.",
+    teenDesc: "Ek antwoord oor my eie sensoriese ervarings by die huis én by die skool.",
     parent: "Ek is ’n ouer",
     parentDesc: "Ek antwoord oor my kind se sensoriese ervarings.",
+    answerMixedNote:
+      "Dit is heeltemal reg om ja te sê op vrae wat teenoorgesteld lyk. Jy kan byvoorbeeld van beide hoë-impak- en lae-impaksport hou, of van ’n besige omgewing én van jou eie stil ruimte. Beantwoord elke vraag op sy eie — gemengde voorkeure is algemeen en verwag.",
+    answerMixedNoteParent:
+      "Dit is heeltemal reg om ja te sê op vrae wat teenoorgesteld lyk. Jou kind kan byvoorbeeld van beide hoë-impak- en lae-impaksport hou, of van ’n besige omgewing én van hulle eie stil ruimte. Beantwoord elke vraag op sy eie — gemengde voorkeure is algemeen en verwag.",
+    answerMixedNoteLabel: "’n Nota oor antwoorde",
     language: "Taal",
     english: "Engels",
     afrikaans: "Afrikaans",
@@ -445,16 +515,17 @@ const QUESTIONNAIRE_UI = {
     draftAutoSaveHint: "Vordering word op hierdie toestel gestoor — jy kan toemaak en later voortgaan.",
     consent: "Toestemming",
     consentTag: "Beginpunt · Voordat ons begin",
-    consentDesc: "Lees asseblief en merk elke vereiste stelling. Delingstoestemmings hieronder is opsioneel.",
+    consentDesc:
+      "Jy kan slegs voortgaan sodra die vereiste toestemming hieronder gegee is. Jy mag ook kies wie toegang tot jou resultate mag hê.",
     consentDescWork:
-      "Lees asseblief en merk elke vereiste stelling, insluitend toestemming dat Soulful Sensory OT toegang tot jou resultate mag hê. Deling met jou werkplek is opsioneel.",
+      "Jy kan slegs voortgaan sodra die vereiste toestemming hieronder gegee is, insluitend toestemming dat Soulful Sensory OT toegang tot jou resultate mag hê. Jy mag ook kies of jou werkplek toegang mag hê — daardie opsie is vrywillig.",
     consentRequiredHeading: "Vereiste toestemming",
-    consentSharingHeading: "Toestemming om te deel (opsioneel)",
+    consentSharingHeading: "Wie mag toegang tot jou resultate hê (opsioneel)",
     consentSharingDesc:
-      "Kragtens POPIA deel ons persoonlike of gesondheidsverwante inligting slegs met ander wanneer jy hieronder toestemming gee, of wanneer die wet dit vereis. Merk slegs die opsies waarmee jy saamstem. Jy kan voortgaan sonder om enige hiervan te merk.",
-    consentSharingHeadingWork: "Toestemming om te deel",
+      "Kies wie jy toestemming gee om toegang tot jou resultate te hê. Kragtens POPIA deel ons persoonlike of gesondheidsverwante inligting slegs met ander wanneer jy hieronder toestemming gee, of wanneer die wet dit vereis. Jy mag voortgaan sonder om enige van hierdie opsies te kies.",
+    consentSharingHeadingWork: "Wie mag toegang tot jou resultate hê",
     consentSharingDescWork:
-      "Soulful Sensory OT het toestemming nodig om toegang tot jou resultate te hê. Deling met jou werkplek of werkgewer is opsioneel — jy mag dit ongemerk laat en steeds voortgaan.",
+      "Soulful Sensory OT benodig toestemming om toegang tot jou resultate te hê. Deling met jou werkplek of werkgewer is opsioneel — jy mag dit ongemerk laat en steeds voortgaan.",
     consentPrivacyNote:
       "Soulful Sensory OT verwerk persoonlike inligting in ooreenstemming met die Wet op die Beskerming van Persoonlike Inligting 4 van 2013 (POPIA). Jy mag toegang tot, regstelling van, of die terugtrekking van toestemming rakende jou inligting versoek deur ons te kontak.",
     sharingSummaryTitle: "Delingstoestemmings",
@@ -481,22 +552,43 @@ const QUESTIONNAIRE_UI = {
     screening: "Sifting",
     viewpoint: "Uitsigpunt",
     progressAria: "Vraelysvordering",
-    requiredConsent: "Lees en aanvaar asseblief al die vereiste toestemmingsverklarings voordat jy voortgaan.",
+    requiredConsent: "Vereiste toestemming moet gegee word voordat jy kan voortgaan.",
     consentGateTitle: "Toestemming word vereis om voort te gaan",
     consentGateDisclaimer:
-      "Jy kan nie met hierdie assessering voortgaan nie totdat elke vereiste toestemmingsverklaring hieronder gemerk is. Opsionele delingstoestemmings maak nie die Gaan voort-knoppie oop nie.",
+      "Jy kan slegs voortgaan sodra elke vereiste toestemmingsverklaring hieronder gemerk is. Om te kies wie toegang tot jou resultate mag hê, is apart en opsioneel — daardie keuses maak nie Gaan voort oop nie.",
     consentGateDisclaimerWork:
-      "Jy kan nie voortgaan nie totdat elke vereiste toestemmingsverklaring gemerk is, insluitend toestemming dat Soulful Sensory OT toegang tot jou resultate mag hê. Werkplekdeling is opsioneel.",
+      "Jy kan slegs voortgaan sodra elke vereiste toestemmingsverklaring gemerk is, insluitend toestemming dat Soulful Sensory OT toegang tot jou resultate mag hê. Werkplektoegang bly opsioneel.",
     requiredRespondent: "Kies asseblief wie die vraelys voltooi.",
     requiredContext: "Kies asseblief die omgewing waarop hierdie sifting die meeste fokus.",
     requiredField: "Voltooi asseblief die",
     validEmail: "Voer asseblief ’n geldige e-posadres in.",
     answerAll: "Beantwoord asseblief al die vrae voordat jy voortgaan",
     unanswered: "is onbeantwoord",
+    idealSaturdayTag: "Amper klaar",
+    idealSaturdayTitle: "Een laaste nadenke",
+    idealSaturdayTitleTeen: "Een laaste vraag",
+    idealSaturdayPromptAdult:
+      "Beskryf asseblief hoe jou beste Saterdag sou lyk. Geld en ander mense se planne tel nie hierdie keer nie — as jy die dag heeltemal om dit wat jy geniet kon bou, hoe sou dit van oggend tot aand ontvou?",
+    idealSaturdayPromptTeen:
+      "Hoe sou jou absolute beste Saterdag lyk? Moenie bekommerd wees oor geld of wat enige iemand anders wil hê nie — as jy enigiets kon doen waarvan jy hou, hoe sou jou dag van oggend tot aand lyk?",
+    idealSaturdayPromptParent:
+      "Beskryf asseblief hoe jou kind se beste Saterdag sou lyk. Geld en ander mense se planne tel nie hierdie keer nie — as die dag heeltemal om dit wat hulle geniet gebou kon word, hoe sou dit van oggend tot aand ontvou?",
+    idealSaturdayHintAdult:
+      "Daar is geen regte antwoord nie. Sluit die tempo, plekke, mense (of alleenheid), beweging, klanke, en enigiets anders in wat die dag joune sou laat voel.",
+    idealSaturdayHintTeen:
+      "Wees so eerlik as jy wil — uitslaap, sport, vriende, speletjies, buite wees, musiek, kos, ontspan… wat ook al dit jou dag sou maak.",
+    idealSaturdayHintParent:
+      "Sluit die tempo, plekke, mense, speel, rus, en die sensoriese gevoel van ’n dag in wat regtig by jou kind sou pas.",
+    idealSaturdayPlaceholderAdult: "Begin by die oggend, en stap dan deur die res van die dag…",
+    idealSaturdayPlaceholderTeen: "Begin by hoe jy sou wakker word, en wat jy dan volgende sou doen…",
+    idealSaturdayPlaceholderParent: "Begin by hulle oggend, en hoe die res van hulle dag sou verloop…",
+    idealSaturdayRequired: "Deel asseblief ’n bietjie oor daardie beste Saterdag voordat jy voortgaan.",
+    idealSaturdayResultsTitle: "Beste Saterdag",
+    idealSaturdayResultsIntro: "’n Vryteks-oomblik van hoe ’n ideale dag lyk — nuttige sensoriese leidrade buite die ja/nee-tellings.",
     contextTag: "Jou omgewing",
     chooseContext: "Waarop moet ons fokus?",
     chooseContextAdultDesc: "Kies of hierdie resultate meer na werk, of na familie- en huislike lewe moet neig. Jou opsomming, sintuig-vir-sintuig lesings en sensoriese dieet-idees sal alles vir die omgewing wat jy kies, geskryf word.",
-    chooseContextTeenDesc: "Kies of hierdie resultate meer na familie en huis, of na skool moet neig. Jou opsomming, sintuig-vir-sintuig lesings en sensoriese dieet-idees sal alles vir die omgewing wat jy kies, geskryf word.",
+    chooseContextTeenDesc: "Jou resultate dek beide familie- / huislike lewe en skool — vrae, opsommings en sensoriese dieet-idees weerspieël albei dele van jou dag.",
     contextWork: "Werk",
     contextWorkDesc: "Fokus, vergaderings, oopplan-geraas, skerms en die tempo van jou werksdag.",
     contextHome: "Familie / huis",
@@ -504,13 +596,19 @@ const QUESTIONNAIRE_UI = {
     contextHomeTeenDesc: "Huisroetines, rus, gedeelde ruimtes en familielewe.",
     contextSchool: "Skool",
     contextSchoolDesc: "Klaskamers, byeenkomste, huiswerk, vriende en die skooldag.",
+    contextHomeSchool: "Huis & skool",
+    contextHomeSchoolDesc: "Familielewe by die huis en jou skooldag — klaskamers, huiswerk, rus en gedeelde ruimtes.",
     focusedOn: "Gefokus op",
     contextResultsNote:
       "Omdat jy {setting} gekies het, is die algehele patroon, telling-tabel en aanbevelings hieronder vir daardie deel van jou lewe geskryf.",
+    contextResultsNoteTeen:
+      "Jou algehele patroon, telling-tabel en aanbevelings hieronder is vir beide huis- én skoollewe geskryf.",
     contextDetailsNote: "Elke sintuig wys ook hoe die patroon {setting} kan lyk, en wat daar geneig is om te help.",
+    contextDetailsNoteTeen: "Elke sintuig wys ook hoe die patroon by die huis en by die skool kan lyk, en wat op albei plekke geneig is om te help.",
     contextHelps: "Wat hier help:",
     settingGuideDomainHints: "Ekstra notas uit jou sterkste sintuigpatrone",
     dietContextNote: "Die eerste idees onder elke sintuig is vir {setting} gekies. Die res werk enige plek in jou dag.",
+    dietContextNoteTeen: "Die eerste idees onder elke sintuig is vir huis en skool gekies. Die res werk enige plek in jou dag.",
     dietEverywhere: "Enige tyd, enige plek",
     profileTitle: "Jou sensoriese profiel",
     profileTitleParent: "Jou kind se sensoriese profiel",
@@ -681,6 +779,36 @@ const QUESTIONNAIRE_UI = {
     teenCheatFrustratedHint: "Anker jouself eers, gaan dan terug na die taak.",
     teenCheatOverload: "Te veel / oorstimuleer",
     teenCheatOverloadHint: "Draai eers die wêreld se volume af voor enigiets anders.",
+    teenCrewKicker: "Jou roeterol",
+    teenCrewTitle: "Ontmoet jou sensoriese karakter",
+    teenCrewIntro:
+      "Jou algehele sensoriese drempel pas by een van drie roetekarakters. Geeneen is beter as die ander nie — op ’n regte avontuur het jy die hele span nodig.",
+    teenCrewYouAre: "Jy is",
+    teenCrewBadge: "Dis jy",
+    teenCrewCrewTitle: "Die volle avontuurspan",
+    teenCrewCrewIntro:
+      "Op ’n hoë roete het jy een van elkeen nodig. Hoë-drempel moed voor, lae-drempel bewustheid op die pad, en ’n medium-drempel aanpasser wat die middel hou.",
+    teenCrewWhyTitle: "Hoekom elke piek al drie nodig het",
+    teenCrewWhyBody:
+      "Die Sensoriese Verkenner (hoër sensoriese drempel) het die moed en energie om eerste te gaan — om die roete vooruit te toets en te sien of dit veilig is om te klim. Die Sensoriese Waarnemer (laer sensoriese drempel) merk die diere, die weerverskuiwing, nuwe reuke, hoe die roetesnacks smaak, en enige gate of los klippe op voordat die span daarin stap — en mag meer gereelde pouses langs die pad nodig hê. Die Sensoriese Aanpasser (medium / gemengde drempel) lees die groep en pas in waar hulle nodig is — vorentoe, stadiger, of in die middel van die tou sodat die hele span saam bly.",
+    teenCrewExplorerName: "Die Sensoriese Verkenner",
+    teenCrewExplorerTag: "Hoër drempel · eerste op die pad",
+    teenCrewExplorerBody:
+      "Jou sensoriese drempel sit hoër — jy hou dikwels van meer sensoriese insette, nie minder nie. Besige dae, nuwe plekke, beweging, klank en vars uitsigte wek jou gewoonlik op. Stilte kan flou voel, so jy soek die volgende ding om te doen en te sien. Op die berg is jy die een wat met baie energie vooruit stap, ’n goeie ruk kan aanhou, die roete toets, en terugkom met die berig: dit is wild daar bo — en die moeite werd.",
+    teenCrewExplorerRole:
+      "Hoër-drempel verkenner — hou van insette, besigheid en nuwe terrein; het die energie om aan te hou en te kyk of die pad vooruit veilig is.",
+    teenCrewAdaptorName: "Die Sensoriese Aanpasser",
+    teenCrewAdaptorTag: "Medium drempel · hou die middel van die tou",
+    teenCrewAdaptorBody:
+      "Jou sensoriese drempel sit in die buigsame middel — partykeer wil jy meer insette hê, partykeer minder. Jy verskuif saam met die klas, die huis, die weer op die roete en die mense om jou. Op die berg kan jy saam met die verkenners klim wanneer die dag energie vra, of saam met die waarnemers stadiger word wanneer dit omsigtigheid vra — jy pas in waar die span jou nodig het, en dit hou almal aan die gang.",
+    teenCrewAdaptorRole:
+      "Medium-drempel middel — lees die groep, pas die tempo, en hou hoë- en lae-drempel stappers as een span.",
+    teenCrewObserverName: "Die Sensoriese Waarnemer",
+    teenCrewObserverTag: "Laer drempel · sien wat ander verbyloop",
+    teenCrewObserverBody:
+      "Jou sensoriese drempel sit laer — jy is baie bewus en merk dinge vinnig op. ’n Verandering in die weer, ’n nuwe reuk op die wind, hoe die roetesnacks smaak, ’n voëlroep, ’n los klip onder jou voet: dit alles registreer. Daardie bewustheid is ’n regte krag op die berg. Jy mag ook meer gereelde pouses tydens die stap nodig hê sodat jou stelsel kan sak voor die volgende stuk — en wanneer jy dit doen, merk die hele span wat hulle sou misgeloop het.",
+    teenCrewObserverRole:
+      "Laer-drempel uitkyk — merk detail vinnig (weer, reuke, smake, gevare) en baat by meer gereelde pouses op die roete.",
     pathwaysTitle: "Sensoriese paaie",
     pathwaysHelp: "Volg elke sintuig langs die roete. Blare wys uitgeligte antwoorde; die wyser wys of die sintuig sensitief of soekend neig.",
     responseMosaic: "Reaksiemosaïek",
@@ -1050,13 +1178,13 @@ const DOMAIN_DEFINITIONS = [
           "I often hum, sing, tap, whistle or click without really thinking about it.",
         ],
         teen: [
-          "Loud or busy places can quickly feel like too much for me.",
-          "Background noise easily pulls my attention away.",
-          "I struggle to focus when lots of sounds are happening around me.",
+          "Loud or busy places at home or school can quickly feel like too much for me.",
+          "Background noise at home or in class easily pulls my attention away.",
+          "I struggle to focus at home or at school when lots of sounds are happening around me.",
           "I turn the volume down, close doors or use headphones when I need less noise.",
           "I would rather be somewhere quiet than somewhere busy and noisy.",
-          "I sometimes avoid places because they are too loud.",
-          "I like having music, TV, a podcast or people talking in the background while I study or chill.",
+          "I sometimes avoid places at school or at home because they are too loud.",
+          "I like having music, TV, a podcast or people talking in the background while I study, do homework or chill.",
           "I often hum, sing, tap, whistle or make clicking sounds without noticing.",
         ],
         parent: [
@@ -1082,13 +1210,13 @@ const DOMAIN_DEFINITIONS = [
           "Ek neurie, sing, tik, fluit of klik dikwels sonder om werklik daarvan bewus te wees.",
         ],
         teen: [
-          "Harde of besige plekke voel gou vir my te veel.",
-          "Agtergrondgeraas trek maklik my aandag af.",
-          "Ek sukkel om te fokus wanneer baie klanke rondom my gebeur.",
+          "Harde of besige plekke by die huis of skool voel gou vir my te veel.",
+          "Agtergrondgeraas by die huis of in die klas trek maklik my aandag af.",
+          "Ek sukkel om by die huis of by die skool te fokus wanneer baie klanke rondom my gebeur.",
           "Ek draai die volume af, maak deure toe of gebruik oorfone wanneer ek minder geraas nodig het.",
           "Ek sal eerder op ’n stil plek wees as op ’n besige, lawaaierige plek.",
-          "Ek vermy soms plekke omdat dit te hard is.",
-          "Ek hou daarvan om musiek, TV, ’n potgooi of mense se stemme in die agtergrond te hê terwyl ek leer of ontspan.",
+          "Ek vermy soms plekke by die skool of by die huis omdat dit te hard is.",
+          "Ek hou daarvan om musiek, TV, ’n potgooi of mense se stemme in die agtergrond te hê terwyl ek leer, huiswerk doen of ontspan.",
           "Ek neurie, sing, tik, fluit of maak klikgeluide sonder dat ek dit altyd agterkom.",
         ],
         parent: [
@@ -1134,10 +1262,10 @@ const DOMAIN_DEFINITIONS = [
           "I avoid certain foods because their texture feels unpleasant.",
         ],
         teen: [
-          "Scratchy, tight or certain types of clothes feel uncomfortable on my skin.",
+          "Scratchy, tight or certain types of clothes feel uncomfortable on my skin at home and at school.",
           "Labels or seams in my clothes bother me, and I often want them removed.",
           "I am okay with people being in my personal space.",
-          "Queues or crowded places feel uncomfortable when people stand too close to me.",
+          "Queues or crowded places at school or with family feel uncomfortable when people stand too close to me.",
           "I do not like getting my hands messy with things like paint, sand, glue or food.",
           "I enjoy hugs or other appropriate touch from people I trust.",
           "I avoid some foods because I cannot stand how they feel in my mouth.",
@@ -1163,10 +1291,10 @@ const DOMAIN_DEFINITIONS = [
           "Ek vermy sekere kosse omdat die tekstuur onaangenaam voel.",
         ],
         teen: [
-          "Krapperige, stywe of sekere soorte klere voel ongemaklik op my vel.",
+          "Krapperige, stywe of sekere soorte klere voel ongemaklik op my vel by die huis én by die skool.",
           "Etikette of nate in my klere pla my, en ek wil dit dikwels laat uithaal.",
           "Ek is gemaklik wanneer mense in my persoonlike ruimte is.",
-          "Rye of oorvol plekke voel ongemaklik wanneer mense te naby aan my staan.",
+          "Rye of oorvol plekke by die skool of saam met familie voel ongemaklik wanneer mense te naby aan my staan.",
           "Ek hou nie daarvan om my hande vuil te maak met goed soos verf, sand, gom of kos nie.",
           "Ek geniet drukkies of ander gepaste aanraking van mense wat ek vertrou.",
           "Ek vermy sekere kosse omdat ek nie hou van hoe dit in my mond voel nie.",
@@ -1233,7 +1361,7 @@ const DOMAIN_DEFINITIONS = [
           "Movement or exercise helps me feel calmer and more focused.",
         ],
         teen: [
-          "I struggle to sit still for a long time and often feel fidgety or restless.",
+          "I struggle to sit still for a long time in class or at home and often feel fidgety or restless.",
           "I enjoy sport, exercise or being physically active.",
           "I enjoy chilled activities like reading, drawing, writing or watching a series.",
           "I enjoy heavy physical effort, like pushing, pulling, carrying, climbing or jumping.",
@@ -1243,7 +1371,7 @@ const DOMAIN_DEFINITIONS = [
           "I like keeping my feet on the ground and tend to avoid rides, swings or things that tip or lift me.",
           "I enjoy spinning, swinging, rocking or moving fast.",
           "I enjoy exciting or adventurous activities that give me a rush.",
-          "Moving or exercising helps me feel calmer and focus better.",
+          "Moving or exercising helps me feel calmer and focus better at school and at home.",
         ],
         parent: [
           "My child finds it difficult to sit still for long periods and often appears restless.",
@@ -1274,7 +1402,7 @@ const DOMAIN_DEFINITIONS = [
           "Beweging of oefening help my om kalmer te voel en beter te fokus.",
         ],
         teen: [
-          "Ek sukkel om lank stil te sit en voel dikwels kriewelrig of rusteloos.",
+          "Ek sukkel om lank stil te sit in die klas of by die huis en voel dikwels kriewelrig of rusteloos.",
           "Ek geniet sport, oefening of om fisiek aktief te wees.",
           "Ek geniet rustige aktiwiteite soos lees, teken, skryf of om ’n reeks te kyk.",
           "Ek geniet swaar fisieke inspanning, soos stoot, trek, dra, klim of spring.",
@@ -1284,7 +1412,7 @@ const DOMAIN_DEFINITIONS = [
           "Ek hou daarvan om my voete op die grond te hou en vermy gewoonlik ritte, swaai of goed wat my kantel of optel.",
           "Ek geniet dit om te tol, swaai, wieg of vinnig te beweeg.",
           "Ek geniet opwindende of avontuurlustige aktiwiteite wat my ’n adrenalienstormloop gee.",
-          "Beweging of oefening help my om kalmer te voel en beter te fokus.",
+          "Beweging of oefening help my om by die skool én by die huis kalmer te voel en beter te fokus.",
         ],
         parent: [
           "My kind sukkel om vir lang tye stil te sit en lyk dikwels rusteloos.",
@@ -1332,11 +1460,11 @@ const DOMAIN_DEFINITIONS = [
           "I enjoy opening curtains or blinds to let in natural light.",
         ],
         teen: [
-          "I like keeping my room or workspace organised and tidy.",
-          "Bright lights, fluorescent lights or glare bother me.",
+          "I like keeping my room at home or my desk at school organised and tidy.",
+          "Bright lights, fluorescent lights or glare bother me at home or at school.",
           "When dressing or decorating, I enjoy bright colours and bold patterns.",
           "When dressing or decorating, I prefer calm, neutral colours like beige, white, green or navy.",
-          "I get distracted when there is a lot to look at around me.",
+          "I get distracted when there is a lot to look at around me at home or at school.",
           "I feel more comfortable in rooms with softer or dimmer light.",
           "I like opening curtains or blinds to let natural light in.",
         ],
@@ -1361,11 +1489,11 @@ const DOMAIN_DEFINITIONS = [
           "Ek geniet dit om gordyne of blindings oop te maak sodat natuurlike lig kan inkom.",
         ],
         teen: [
-          "Ek hou daarvan om my kamer of werkplek georganiseerd en netjies te hou.",
-          "Helder ligte, fluoresserende lig of glans pla my.",
+          "Ek hou daarvan om my kamer by die huis of my lessenaar by die skool georganiseerd en netjies te hou.",
+          "Helder ligte, fluoresserende lig of glans pla my by die huis of by die skool.",
           "Wanneer ek aantrek of dekor, geniet ek helder kleure en opvallende patrone.",
           "Wanneer ek aantrek of dekor, verkies ek kalm, neutrale kleure soos beige, wit, groen of vlootblou.",
-          "Ek raak afgelei wanneer daar baie rondom my is om na te kyk.",
+          "Ek raak afgelei wanneer daar by die huis of by die skool baie rondom my is om na te kyk.",
           "Ek voel gemakliker in vertrekke met sagter of dowwer lig.",
           "Ek hou daarvan om gordyne of blindings oop te maak sodat natuurlike lig kan inkom.",
         ],
@@ -1412,7 +1540,7 @@ const DOMAIN_DEFINITIONS = [
           "I like trying new tastes and flavours, and get bored when food feels too bland.",
         ],
         teen: [
-          "Strong smells like perfume, cleaning products or cooking can quickly feel like too much for me.",
+          "Strong smells like perfume, cleaning products or cooking can quickly feel like too much for me at home or at school.",
           "I notice smells that other people often miss, and they can distract or bother me.",
           "I avoid some foods because the taste or aftertaste feels too strong or unpleasant.",
           "I prefer mild or familiar flavours and find very spicy, bitter or intense tastes uncomfortable.",
@@ -1444,7 +1572,7 @@ const DOMAIN_DEFINITIONS = [
           "Ek hou daarvan om nuwe smake te probeer, en raak verveeld wanneer kos te flou voel.",
         ],
         teen: [
-          "Sterk reuke soos parfuum, skoonmaakprodukte of kook kan vinnig vir my te veel voel.",
+          "Sterk reuke soos parfuum, skoonmaakprodukte of kook kan vinnig vir my te veel voel by die huis of by die skool.",
           "Ek merk reuke op wat ander mense dikwels mis, en dit kan my aflei of pla.",
           "Ek vermy sommige kosse omdat die smaak of nasmaak te sterk of onaangenaam voel.",
           "Ek verkies sagte of bekende smake en vind baie pittige, bitter of intense smake ongemaklik.",
@@ -1493,10 +1621,10 @@ const DOMAIN_DEFINITIONS = [
           "After spending time in a busy environment, I usually need quiet time to recharge.",
         ],
         teen: [
-          "Busy places like shopping centres or restaurants leave me feeling tired or drained.",
-          "I enjoy being around lots of people and social activity.",
+          "Busy places like the school hall, shopping centres or restaurants leave me feeling tired or drained.",
+          "I enjoy being around lots of people and social activity at school or at home.",
           "I prefer quiet places or spending time with one or two people instead of a big group.",
-          "After being somewhere busy, I usually need some quiet time to recharge.",
+          "After a busy school day or busy time at home, I usually need some quiet time to recharge.",
         ],
         parent: [
           "Busy places, such as shopping centres or restaurants, leave my child feeling tired or drained.",
@@ -1513,10 +1641,10 @@ const DOMAIN_DEFINITIONS = [
           "Nadat ek tyd in ’n besige omgewing deurgebring het, het ek gewoonlik stilte nodig om te herlaai.",
         ],
         teen: [
-          "Besige plekke soos winkelsentrums of restaurante laat my moeg of uitgeput voel.",
-          "Ek geniet dit om tussen baie mense en sosiale aktiwiteit te wees.",
+          "Besige plekke soos die skoolsaal, winkelsentrums of restaurante laat my moeg of uitgeput voel.",
+          "Ek geniet dit om by die skool of by die huis tussen baie mense en sosiale aktiwiteit te wees.",
           "Ek verkies stil plekke of om met een of twee mense te kuier eerder as met ’n groot groep.",
-          "Nadat ek êrens besig was, het ek gewoonlik stiltetyd nodig om te herlaai.",
+          "Ná ’n besige skooldag of besige tyd by die huis het ek gewoonlik stiltetyd nodig om te herlaai.",
         ],
         parent: [
           "Besige plekke, soos winkelsentrums of restaurante, laat my kind moeg of uitgeput voel.",
@@ -1547,10 +1675,17 @@ function getConsentItems(language = "en", respondent = "adult") {
 
 function getSharingConsentItems(language = "en", respondent = "adult", lifeContext = null) {
   const bundle = getConsentBundle(language, respondent);
-  if (respondent === "adult" && lifeContext === "work" && Array.isArray(bundle.sharingWork)) {
-    return bundle.sharingWork;
+  let items =
+    respondent === "adult" && lifeContext === "work" && Array.isArray(bundle.sharingWork)
+      ? bundle.sharingWork
+      : bundle.sharing || [];
+
+  // Parent / school sharing applies to teenagers only — never show these for adult self-report.
+  if (respondent === "adult") {
+    items = items.filter((item) => item.id !== "parents" && item.id !== "school");
   }
-  return bundle.sharing || [];
+
+  return items;
 }
 
 function createEmptySharingConsent(language = "en", respondent = "adult", lifeContext = null) {

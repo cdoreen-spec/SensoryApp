@@ -9,13 +9,15 @@ const state = {
   /** Shown once at the start of a fresh questionnaire (adult, teen, or parent). */
   showIntroModal: false,
   respondent: null,
-  lifeContext: null, // work | home | school
+  lifeContext: null, // work | home | school | homeSchool
   consent: [],
   sharingConsent: { parents: false, school: false, treatingTeam: false },
   demographics: { name: "", age: "", email: "", occupation: "", parentName: "" },
   /** ISO timestamp set when results are first shown — used on the print cover. */
   completedAt: null,
   answers: Object.fromEntries(SENSORY_DOMAIN_IDS.map((id) => [id, []])),
+  /** Free-text closing reflection (ideal Saturday). */
+  idealSaturday: "",
   contactPreference: null,
   showSensoryDiet: false,
   showWorkReport: false,
@@ -98,6 +100,7 @@ const STEPS = [
   { type: "consent" },
   { type: "demographics" },
   ...SENSORY_DOMAIN_IDS.map((domainId) => ({ type: "domain", domainId })),
+  { type: "idealSaturday" },
   { type: "results" },
 ];
 
@@ -316,6 +319,7 @@ function buildAssessmentRecord() {
       parentName: state.demographics?.parentName || "",
     },
     answers: cloneAnswers(state.answers),
+    idealSaturday: state.idealSaturday || "",
     sharingConsent: { ...(state.sharingConsent || {}) },
     contactPreference: state.contactPreference,
     inviteMode: Boolean(state.inviteMode),
@@ -362,7 +366,7 @@ function applyAssessmentRecord(record) {
   state.language = LANGUAGES.includes(record.language) ? record.language : "en";
   document.documentElement.lang = state.language;
   state.respondent = RESPONDENT_TYPES.includes(record.respondent) ? record.respondent : "adult";
-  state.lifeContext = record.lifeContext || null;
+  state.lifeContext = normalizeRespondentLifeContext(state.respondent, record.lifeContext || null);
   state.demographics = {
     name: record.demographics?.name || "",
     age: record.demographics?.age || "",
@@ -371,6 +375,7 @@ function applyAssessmentRecord(record) {
     parentName: record.demographics?.parentName || "",
   };
   state.answers = cloneAnswers(record.answers);
+  state.idealSaturday = record.idealSaturday || "";
   state.sharingConsent = { ...(record.sharingConsent || {}) };
   state.contactPreference = record.contactPreference || null;
   state.inviteMode = false;
@@ -406,6 +411,7 @@ function exitArchivedReport() {
   state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "" };
   state.completedAt = null;
   state.answers = emptyAnswers();
+  state.idealSaturday = "";
   state.contactPreference = null;
   state.showSensoryDiet = false;
   state.showWorkReport = false;
@@ -424,8 +430,15 @@ function isSampleReportPreviewEnabled() {
 function canOfferSettingReportFor(respondent, lifeContext) {
   return (
     (respondent === "adult" && lifeContext === "work") ||
-    (respondent === "teen" && lifeContext === "school")
+    (respondent === "teen" && (lifeContext === "school" || lifeContext === "homeSchool"))
   );
+}
+
+/** Teens always use a combined home + school setting. */
+function normalizeRespondentLifeContext(respondent, lifeContext) {
+  if (respondent === "teen") return "homeSchool";
+  if (respondent === "parent") return null;
+  return lifeContext || null;
 }
 
 /**
@@ -476,7 +489,7 @@ function normalizeSamplePreviewOptions(options = {}) {
   if (respondent === "adult") {
     lifeContext = ["work", "home", "school"].includes(lifeContext) ? lifeContext : "work";
   } else if (respondent === "teen") {
-    lifeContext = ["school", "home"].includes(lifeContext) ? lifeContext : "school";
+    lifeContext = "homeSchool";
   } else {
     lifeContext = null;
   }
@@ -526,7 +539,7 @@ function buildSampleAssessmentRecord(options = {}) {
           reasonForReferral: "Difficulty concentrating in an open-plan office; fatigue after meetings",
           additionalNotes: "Sample preview data for layout and print checks.",
         }
-      : respondent === "teen" && lifeContext === "school"
+      : respondent === "teen" && (lifeContext === "school" || lifeContext === "homeSchool")
         ? {
             name: demographics.name,
             jobTitle: demographics.occupation,
@@ -546,6 +559,12 @@ function buildSampleAssessmentRecord(options = {}) {
     lifeContext,
     demographics,
     answers,
+    idealSaturday:
+      respondent === "teen"
+        ? "Sleep in, then mountain biking with friends, loud music in the afternoon, and a chill evening with a series and snacks — no rush, just what feels good."
+        : respondent === "parent"
+          ? "A slow morning at home, then the park and playground, a favourite lunch, swimming or messy play, and a calm evening routine with soft lights and familiar stories."
+          : "A slow coffee outdoors, a long trail walk, cooking something fragrant, an afternoon of focused creative work with music, and an unhurried evening with people I enjoy.",
     sharingConsent,
     contactPreference: "yes",
     inviteMode: false,
@@ -579,7 +598,7 @@ function renderSampleReportPreviewControls() {
       <div class="sample-preview-controls__actions">
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="adult" data-sample-context="work">Adult · work</button>
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="adult" data-sample-context="home">Adult · home</button>
-        <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="teen" data-sample-context="school">Teen · school</button>
+        <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="teen" data-sample-context="homeSchool">Teen · home &amp; school</button>
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="parent">Parent / child</button>
       </div>
     </div>
@@ -860,6 +879,7 @@ function buildSensoryDraft() {
       parentName: state.demographics?.parentName || "",
     },
     answers: cloneAnswers(state.answers),
+    idealSaturday: state.idealSaturday || "",
     sensoryArea: state.sensoryArea,
     contactPreference: state.contactPreference,
   };
@@ -924,7 +944,11 @@ function applySensoryDraft(draft) {
   state.language = LANGUAGES.includes(draft.language) ? draft.language : "en";
   document.documentElement.lang = state.language;
   state.respondent = RESPONDENT_TYPES.includes(draft.respondent) ? draft.respondent : null;
-  state.lifeContext = draft.lifeContext || null;
+  state.lifeContext = normalizeRespondentLifeContext(state.respondent, draft.lifeContext || null);
+  // Teens no longer use the home/school choice step — skip it if a draft landed there.
+  if (state.respondent === "teen" && STEPS[state.step]?.type === "context") {
+    state.step += 1;
+  }
   state.consent = Array.isArray(draft.consent) ? draft.consent.map(Boolean) : [];
   if (state.respondent) {
     const emptySharing = createEmptySharingConsent(
@@ -950,6 +974,7 @@ function applySensoryDraft(draft) {
     parentName: draft.demographics?.parentName || "",
   };
   state.answers = cloneAnswers(draft.answers);
+  state.idealSaturday = draft.idealSaturday || "";
   state.sensoryArea = draft.sensoryArea || null;
   state.contactPreference = draft.contactPreference || null;
   if (isPatientInvite() && draft.patientResultsAccess) {
@@ -979,6 +1004,7 @@ function resetSensoryQuestionnaireProgress() {
   state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "" };
   state.completedAt = null;
   state.answers = emptyAnswers();
+  state.idealSaturday = "";
   state.contactPreference = null;
   state.showSensoryDiet = false;
   state.showWorkReport = false;
@@ -1095,6 +1121,28 @@ function buildResultsReport() {
     "— Overall pattern —",
     `Profile: ${profileLabelPlain(metrics.meta)}`,
     metrics.leanHeadline,
+    ...(state.respondent === "teen"
+      ? (() => {
+          const copy = currentUi();
+          const roster = getTeenCrewRoster(copy);
+          const you = roster.find((m) => m.id === getTeenCrewId(metrics.lean));
+          return you
+            ? [
+                "",
+                "— Your trail role —",
+                `${copy.teenCrewYouAre}: ${you.name}`,
+                you.tag,
+                you.body,
+                "",
+                copy.teenCrewWhyTitle,
+                copy.teenCrewWhyBody,
+              ]
+            : [];
+        })()
+      : []),
+    ...(state.idealSaturday?.trim()
+      ? ["", "— Best Saturday —", state.idealSaturday.trim()]
+      : []),
     `Questions asked: ${metrics.scored}`,
     `Sensitive / avoiding: ${metrics.sensitive}`,
     `Sensory neutral: ${metrics.neutral ?? 0}`,
@@ -1340,7 +1388,7 @@ function respondentLabel(respondent) {
 }
 
 function lifeContextDisplay(context) {
-  const map = { work: "Work", home: "Home", school: "School" };
+  const map = { work: "Work", home: "Home", school: "School", homeSchool: "Home & school" };
   return map[context] || (context ? String(context) : "");
 }
 
@@ -2318,7 +2366,7 @@ function getJourneyPhaseIndex(stepIndex) {
 }
 
 function needsLifeContext(respondent = state.respondent) {
-  return respondent === "adult" || respondent === "teen";
+  return respondent === "adult";
 }
 
 function canOfferWorkReport() {
@@ -2326,7 +2374,7 @@ function canOfferWorkReport() {
 }
 
 function canOfferSchoolReport() {
-  return state.respondent === "teen" && state.lifeContext === "school";
+  return state.respondent === "teen" && (state.lifeContext === "school" || state.lifeContext === "homeSchool");
 }
 
 function canOfferSettingReport() {
@@ -2615,12 +2663,6 @@ function getLifeContextOptions() {
       { id: "home", label: copy.contextHome, desc: copy.contextHomeDesc },
     ];
   }
-  if (state.respondent === "teen") {
-    return [
-      { id: "home", label: copy.contextHome, desc: copy.contextHomeTeenDesc },
-      { id: "school", label: copy.contextSchool, desc: copy.contextSchoolDesc },
-    ];
-  }
   return [];
 }
 
@@ -2629,6 +2671,7 @@ function lifeContextLabel() {
   if (state.lifeContext === "work") return copy.contextWork;
   if (state.lifeContext === "school") return copy.contextSchool;
   if (state.lifeContext === "home") return copy.contextHome;
+  if (state.lifeContext === "homeSchool") return copy.contextHomeSchool;
   return "";
 }
 
@@ -4157,15 +4200,12 @@ function renderPainSummaryScreen() {
 function respondentNatureIcon() {
   return `
     <svg class="respondent-option__icon-svg" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-      <path d="M8 36 L20 18 L28 28 L40 12 L46 36Z" fill="#5f8269" opacity="0.28"/>
-      <path d="M6 38 C18 28 24 22 24 22 C24 22 32 30 42 38" fill="none" stroke="#244b38" stroke-width="1.7" stroke-linejoin="round"/>
-      <path d="M24 34
-        C18 24 16 14 22 6
-        C28 14 30 24 24 34Z" fill="#88a487" opacity="0.85"/>
-      <path d="M24 34
-        C28 24 34 16 40 10
-        C32 18 28 26 24 34Z" fill="#5f8269" opacity="0.7"/>
-      <path d="M24 8 C24 18 24 26 24 34" stroke="#244b38" stroke-width="1" stroke-opacity="0.35" stroke-linecap="round"/>
+      <circle cx="35" cy="13" r="5" fill="#f3e6b8"/>
+      <path d="M5 39 L17 21 L23 29 L31 13 L43 39Z" fill="#8aab90"/>
+      <path d="M31 13 L34 19 L31.5 17.8 L29.5 20.8 L28 18.6 L25.5 22Z" fill="#f8f5ec"/>
+      <path d="M3 39 L15 27 L21 33 L27 21 L37 31 L45 39Z" fill="#3f5f4a"/>
+      <path d="M27 21 L29.4 25.2 L27.4 24.1 L25.9 26.3 L24.8 24.8 L22.8 27.5Z" fill="#edf2ea" opacity="0.85"/>
+      <path d="M3 39 H45" stroke="#244b38" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
     </svg>
   `;
 }
@@ -4393,11 +4433,75 @@ function renderDemographics() {
   );
 }
 
+function domainNatureAccent(domainId) {
+  const motifs = {
+    auditory: "mountains",
+    tactile: "flowers",
+    movement: "mountains",
+    visual: "flowers",
+    smellTaste: "flowers",
+    everyday: "mountains",
+  };
+  const motif = motifs[domainId] || "mountains";
+
+  if (motif === "flowers") {
+    return `
+      <svg class="domain-accent__svg" viewBox="0 0 120 72" aria-hidden="true" focusable="false">
+        <path d="M78 60 C76 44 84 32 92 24" fill="none" stroke="#6b9075" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
+        <path d="M78 46 C70 40 62 42 56 48" fill="none" stroke="#7b9e87" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+        <path d="M84 38 C90 34 98 36 102 42" fill="none" stroke="#8faf98" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+        <g transform="translate(92 24)">
+          <ellipse cx="0" cy="-8" rx="4.2" ry="7.6" fill="#c5d4c0" opacity="0.9"/>
+          <ellipse cx="0" cy="-8" rx="4.2" ry="7.6" fill="#a8c4ae" opacity="0.85" transform="rotate(60)"/>
+          <ellipse cx="0" cy="-8" rx="4.2" ry="7.6" fill="#88a487" opacity="0.8" transform="rotate(120)"/>
+          <ellipse cx="0" cy="-8" rx="4.2" ry="7.6" fill="#c5d4c0" opacity="0.85" transform="rotate(180)"/>
+          <ellipse cx="0" cy="-8" rx="4.2" ry="7.6" fill="#a8c4ae" opacity="0.85" transform="rotate(240)"/>
+          <ellipse cx="0" cy="-8" rx="4.2" ry="7.6" fill="#88a487" opacity="0.8" transform="rotate(300)"/>
+          <circle cx="0" cy="0" r="3.2" fill="#d8c48a"/>
+        </g>
+        <g transform="translate(56 50) scale(0.72)">
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#b8cbb8" opacity="0.9"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#88a487" opacity="0.85" transform="rotate(60)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#6b9075" opacity="0.8" transform="rotate(120)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#b8cbb8" opacity="0.85" transform="rotate(180)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#88a487" opacity="0.85" transform="rotate(240)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#6b9075" opacity="0.8" transform="rotate(300)"/>
+          <circle cx="0" cy="0" r="2.8" fill="#e2d4a8"/>
+        </g>
+        <g transform="translate(104 44) scale(0.55)">
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#d5e3dc" opacity="0.95"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#a8c4ae" opacity="0.9" transform="rotate(60)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#7b9e87" opacity="0.85" transform="rotate(120)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#d5e3dc" opacity="0.9" transform="rotate(180)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#a8c4ae" opacity="0.9" transform="rotate(240)"/>
+          <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#7b9e87" opacity="0.85" transform="rotate(300)"/>
+          <circle cx="0" cy="0" r="2.6" fill="#f0e2b8"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  return `
+    <svg class="domain-accent__svg" viewBox="0 0 120 72" aria-hidden="true" focusable="false">
+      <circle cx="96" cy="18" r="8" fill="#f0e2b8" opacity="0.85"/>
+      <circle cx="96" cy="18" r="4.5" fill="#f7efd0"/>
+      <path d="M8 62 L32 28 L46 44 L62 18 L92 50 L112 34 L118 62Z" fill="#8aab90" opacity="0.55"/>
+      <path d="M62 18 L67 28 L63 26 L60 31 L58 28 L54 34Z" fill="#f7f4ea" opacity="0.9"/>
+      <path d="M4 62 L28 40 L42 52 L58 30 L78 48 L98 38 L118 62Z" fill="#4a6b55" opacity="0.72"/>
+      <path d="M58 30 L62 37 L59 35 L57 39 L55 36 L52 41Z" fill="#eef3ea" opacity="0.8"/>
+      <path d="M4 62 H118" stroke="#244b38" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+    </svg>
+  `;
+}
+
 function renderDomain(domain) {
   const copy = currentUi();
   const answers = state.answers[domain.id];
   const answeredCount = answers.filter((a) => typeof a === "boolean").length;
   const questionTotal = domain.questions.length;
+  const mixedNote =
+    state.respondent === "parent" ? copy.answerMixedNoteParent : copy.answerMixedNote;
+  const showMixedNote = STEPS[state.step - 1]?.type !== "domain";
   const questions = domain.questions
     .map((q, i) => {
       const val = answers[i];
@@ -4437,9 +4541,24 @@ function renderDomain(domain) {
   return renderShell(
     `
       ${state.error ? `<div class="error-banner">${escapeHtml(state.error)}</div>` : ""}
-      <span class="section-tag">${domain.icon} ${escapeHtml(domain.title)}</span>
-      <h2 class="step-title">${escapeHtml(domain.title)}</h2>
-      <p class="step-desc">${escapeHtml(domain.description)}</p>
+      <span class="section-tag">${domain.icon} ${escapeHtml(domain.shortTitle || domain.title)}</span>
+      <header class="domain-heading">
+        <div class="domain-heading__text">
+          <h2 class="step-title domain-heading__title">${escapeHtml(domain.title)}</h2>
+          <p class="step-desc domain-heading__desc">${escapeHtml(domain.description)}</p>
+        </div>
+        <div class="domain-accent" aria-hidden="true">
+          ${domainNatureAccent(domain.id)}
+        </div>
+      </header>
+      ${
+        showMixedNote
+          ? `<aside class="answer-mixed-note" aria-label="${escapeHtml(copy.answerMixedNoteLabel)}">
+        <p class="answer-mixed-note__label">${escapeHtml(copy.answerMixedNoteLabel)}</p>
+        <p>${escapeHtml(mixedNote)}</p>
+      </aside>`
+          : ""
+      }
       <div class="question-list">${questions}</div>
       <div class="actions">
         <button type="button" class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
@@ -4449,6 +4568,87 @@ function renderDomain(domain) {
     renderProgress({ questionProgressHtml }),
     { stepType: "domain", domainId: domain.id }
   );
+}
+
+function idealSaturdayCopy(copy = currentUi()) {
+  const respondent = state.respondent || "adult";
+  if (respondent === "teen") {
+    return {
+      title: copy.idealSaturdayTitleTeen,
+      prompt: copy.idealSaturdayPromptTeen,
+      hint: copy.idealSaturdayHintTeen,
+      placeholder: copy.idealSaturdayPlaceholderTeen,
+    };
+  }
+  if (respondent === "parent") {
+    return {
+      title: copy.idealSaturdayTitle,
+      prompt: copy.idealSaturdayPromptParent,
+      hint: copy.idealSaturdayHintParent,
+      placeholder: copy.idealSaturdayPlaceholderParent,
+    };
+  }
+  return {
+    title: copy.idealSaturdayTitle,
+    prompt: copy.idealSaturdayPromptAdult,
+    hint: copy.idealSaturdayHintAdult,
+    placeholder: copy.idealSaturdayPlaceholderAdult,
+  };
+}
+
+function renderIdealSaturday() {
+  const copy = currentUi();
+  const fields = idealSaturdayCopy(copy);
+  return renderShell(
+    `
+      ${state.error ? `<div class="error-banner">${escapeHtml(state.error)}</div>` : ""}
+      <span class="section-tag">${escapeHtml(copy.idealSaturdayTag)}</span>
+      <header class="domain-heading">
+        <div class="domain-heading__text">
+          <h2 class="step-title domain-heading__title">${escapeHtml(fields.title)}</h2>
+          <p class="step-desc domain-heading__desc">${escapeHtml(fields.prompt)}</p>
+        </div>
+        <div class="domain-accent" aria-hidden="true">
+          ${domainNatureAccent("everyday")}
+        </div>
+      </header>
+      <p class="ideal-saturday__hint">${escapeHtml(fields.hint)}</p>
+      <label class="ideal-saturday__label" for="ideal-saturday">
+        <span class="visually-hidden">${escapeHtml(fields.title)}</span>
+        <textarea
+          id="ideal-saturday"
+          class="ideal-saturday__input"
+          data-ideal-saturday
+          rows="8"
+          placeholder="${escapeHtml(fields.placeholder)}"
+        >${escapeHtml(state.idealSaturday || "")}</textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
+        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(copy.seeResults || copy.continue)}</button>
+      </div>
+    `,
+    renderProgress(),
+    { stepType: "idealSaturday" }
+  );
+}
+
+function renderIdealSaturdayResults() {
+  const text = (state.idealSaturday || "").trim();
+  if (!text) return "";
+  const copy = currentUi();
+  return `
+    <section class="profile-section ideal-saturday-results" aria-labelledby="ideal-saturday-results-title">
+      <p class="profile-kicker">${escapeHtml(copy.idealSaturdayTag)}</p>
+      <h3 id="ideal-saturday-results-title">${escapeHtml(copy.idealSaturdayResultsTitle)}</h3>
+      ${printMountainRule("section")}
+      <p class="profile-section__summary">${escapeHtml(copy.idealSaturdayResultsIntro)}</p>
+      <blockquote class="ideal-saturday-results__quote">
+        <p>${escapeHtml(text)}</p>
+      </blockquote>
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
 }
 
 const DOMAIN_COLORS = {
@@ -4603,13 +4803,83 @@ function renderAdultSenseGlance(rows, copy) {
     </div>`;
 }
 
+/** Split long interpret copy into scannable bullets / labeled sections. */
+function splitInterpretSentences(text) {
+  const cleaned = String(text || "").replace(/\s+/g, " ").trim();
+  if (!cleaned) return [];
+  const parts = cleaned.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) || [cleaned];
+  return parts.map((part) => part.trim()).filter(Boolean);
+}
+
+function parseInterpretContent(text) {
+  const cleaned = String(text || "").replace(/\s+/g, " ").trim();
+  if (!cleaned) return [];
+
+  const labelRe = /(At school|At home|By die skool|By die huis)\s*:\s*/gi;
+  if (labelRe.test(cleaned)) {
+    labelRe.lastIndex = 0;
+    const chunks = cleaned.split(labelRe);
+    const sections = [];
+    for (let i = 1; i < chunks.length; i += 2) {
+      const heading = chunks[i].trim();
+      const body = (chunks[i + 1] || "").trim();
+      if (!body) continue;
+      sections.push({
+        heading,
+        points: splitInterpretSentences(body),
+      });
+    }
+    if (sections.length) return sections;
+  }
+
+  const points = splitInterpretSentences(cleaned);
+  if (points.length <= 1) {
+    return [{ heading: null, points: [cleaned] }];
+  }
+  return [{ heading: null, points }];
+}
+
+function renderInterpretContent(text) {
+  const sections = parseInterpretContent(text);
+  if (!sections.length) return "";
+
+  return sections
+    .map((section) => {
+      const heading = section.heading
+        ? `<p class="sense-interpret__section-title">${escapeHtml(section.heading)}</p>`
+        : "";
+      const points = section.points
+        .map((point) => `<li>${escapeHtml(point)}</li>`)
+        .join("");
+      return `
+        <div class="sense-interpret__section">
+          ${heading}
+          <ul class="sense-interpret__points">${points}</ul>
+        </div>`;
+    })
+    .join("");
+}
+
+function senseInterpretTrail() {
+  return `
+    <div class="sense-interpret__trail" aria-hidden="true">
+      <svg viewBox="0 0 200 28" fill="none" focusable="false">
+        <path d="M4 22 L28 10 L42 18 L58 6 L78 16 L98 8 L118 18 L138 10 L158 16 L180 8 L196 22" stroke="#7b9e87" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+        <path d="M58 6 L62 12 L59 11 L57 14 L55 12 L52 16Z" fill="#f7f4ea" opacity="0.85"/>
+        <circle cx="100" cy="12" r="2.2" fill="#d8c48a" opacity="0.9"/>
+        <path d="M4 22 H196" stroke="#244b38" stroke-width="1" stroke-linecap="round" opacity="0.18"/>
+      </svg>
+    </div>`;
+}
+
 function renderSenseInterpretCard(row, index, copy, { detailed = false } = {}) {
   const meansBlock = detailed
     ? `
         <div class="sense-interpret__block sense-interpret__block--means">
-          <p class="sense-interpret__label">${escapeHtml(copy.scoreColImplication)}</p>
-          <p class="sense-interpret__text">${escapeHtml(row.implication)}</p>
+          <h5 class="sense-interpret__label">${escapeHtml(copy.scoreColImplication)}</h5>
+          <div class="sense-interpret__content">${renderInterpretContent(row.implication)}</div>
         </div>
+        ${senseInterpretTrail()}
         ${printMountainRule("sense")}`
     : "";
 
@@ -4650,8 +4920,8 @@ function renderSenseInterpretCard(row, index, copy, { detailed = false } = {}) {
         <div class="sense-interpret__body">
           ${meansBlock}
           <div class="sense-interpret__block sense-interpret__block--help">
-            <p class="sense-interpret__label">${escapeHtml(copy.scoreColRecommendation)}</p>
-            <p class="sense-interpret__text">${escapeHtml(row.recommendation)}</p>
+            <h5 class="sense-interpret__label">${escapeHtml(copy.scoreColRecommendation)}</h5>
+            <div class="sense-interpret__content">${renderInterpretContent(row.recommendation)}</div>
           </div>
         </div>
         <div class="sense-interpret__print-footer print-only" aria-hidden="true">
@@ -4766,6 +5036,411 @@ function renderOverallSummary(metrics) {
       </div>`
           : ""
       }
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
+}
+
+function getTeenCrewId(lean) {
+  if (lean === "seeking") return "explorer";
+  if (lean === "sensitive") return "observer";
+  return "adaptor";
+}
+
+function getTeenCrewRoster(copy) {
+  return [
+    {
+      id: "explorer",
+      lean: "seeking",
+      name: copy.teenCrewExplorerName,
+      tag: copy.teenCrewExplorerTag,
+      body: copy.teenCrewExplorerBody,
+      role: copy.teenCrewExplorerRole,
+    },
+    {
+      id: "adaptor",
+      lean: "neutral",
+      name: copy.teenCrewAdaptorName,
+      tag: copy.teenCrewAdaptorTag,
+      body: copy.teenCrewAdaptorBody,
+      role: copy.teenCrewAdaptorRole,
+    },
+    {
+      id: "observer",
+      lean: "sensitive",
+      name: copy.teenCrewObserverName,
+      tag: copy.teenCrewObserverTag,
+      body: copy.teenCrewObserverBody,
+      role: copy.teenCrewObserverRole,
+    },
+  ];
+}
+
+function teenCrewCharacterArt(id, suffix = id) {
+  const skyId = `crewSky-${suffix}`;
+  const skinId = `crewSkin-${suffix}`;
+  const skinShadeId = `crewSkinShade-${suffix}`;
+  const clothId = `crewCloth-${suffix}`;
+  const clothDeepId = `crewClothDeep-${suffix}`;
+  const ropeId = `crewRope-${suffix}`;
+  const groundId = `crewGround-${suffix}`;
+
+  if (id === "explorer") {
+    return `
+      <svg class="teen-crew__art teen-crew__art--explorer" viewBox="0 0 280 300" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="${skyId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f7edd0"/>
+            <stop offset="45%" stop-color="#e8efd8"/>
+            <stop offset="100%" stop-color="#d4e2c4" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="${skinId}" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#efc8a0"/>
+            <stop offset="100%" stop-color="#c89464"/>
+          </linearGradient>
+          <linearGradient id="${skinShadeId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e0b488"/>
+            <stop offset="100%" stop-color="#b07850"/>
+          </linearGradient>
+          <linearGradient id="${clothId}" x1="0" y1="0" x2="0.3" y2="1">
+            <stop offset="0%" stop-color="#e8bd62"/>
+            <stop offset="100%" stop-color="#b07e2c"/>
+          </linearGradient>
+          <linearGradient id="${clothDeepId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3d4a38"/>
+            <stop offset="100%" stop-color="#243028"/>
+          </linearGradient>
+          <linearGradient id="${ropeId}" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#d4b070"/>
+            <stop offset="50%" stop-color="#e8c888"/>
+            <stop offset="100%" stop-color="#b88840"/>
+          </linearGradient>
+          <radialGradient id="${groundId}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#244b38" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="#244b38" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="280" height="300" fill="url(#${skyId})"/>
+        <circle cx="214" cy="48" r="30" fill="#f0e2b8" opacity="0.85"/>
+        <circle cx="214" cy="48" r="16" fill="#faf6e0"/>
+        <path d="M6 248 L42 178 L72 210 L118 108 L168 188 L208 142 L274 248Z" fill="#8faf98" opacity="0.4"/>
+        <path d="M2 248 L58 194 L96 224 L138 142 L184 204 L274 248Z" fill="#3f5f4a" opacity="0.52"/>
+        <path d="M118 108 L130 136 L122 132 L116 146 L110 136 L98 154Z" fill="#f7f4ea"/>
+        <ellipse cx="148" cy="262" rx="64" ry="14" fill="url(#${groundId})"/>
+        <!-- motion dust -->
+        <ellipse cx="72" cy="248" rx="18" ry="5" fill="#8a9a78" opacity="0.25"/>
+        <ellipse cx="98" cy="252" rx="10" ry="3" fill="#8a9a78" opacity="0.2"/>
+        <!-- trailing ropes behind -->
+        <path d="M176 156 C204 146 228 168 252 152 C262 144 272 154 264 164 C248 182 216 170 196 180 C184 186 176 176 176 166Z" fill="none" stroke="url(#${ropeId})" stroke-width="4" stroke-linecap="round"/>
+        <path d="M182 166 C206 158 230 178 250 164" fill="none" stroke="#a88440" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+        <path d="M236 156 C244 150 254 156 250 168 C242 164 238 162 234 164" fill="none" stroke="#c4a060" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M248 160 C256 156 262 164 258 172 C252 168 250 166 248 168" fill="none" stroke="#d4b070" stroke-width="2.4" stroke-linecap="round"/>
+        <!-- rear leg drive -->
+        <path d="M118 188 C102 206 82 226 68 242 L86 248 C96 230 116 210 128 196Z" fill="url(#${clothDeepId})"/>
+        <path d="M118 188 C110 200 104 208 100 214" fill="none" stroke="#1a2420" stroke-width="1.5" opacity="0.35"/>
+        <path d="M62 238 L92 246 L88 262 L52 254Z" fill="#6b4a1e"/>
+        <path d="M56 250 L86 256" fill="none" stroke="#4a3210" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- front stride leg -->
+        <path d="M142 186 C162 198 186 210 208 218 L202 236 C176 226 154 212 136 198Z" fill="url(#${clothDeepId})"/>
+        <path d="M196 214 L224 222 L216 240 L186 230Z" fill="#7a5a1e"/>
+        <path d="M200 226 L216 230" fill="none" stroke="#4a3210" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- torso lean -->
+        <path d="M108 122 C100 154 108 186 138 194 C170 186 178 150 170 118 C156 112 122 114 108 122Z" fill="url(#${clothId})"/>
+        <path d="M120 138 C136 130 156 134 164 148" fill="none" stroke="#8a6420" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+        <path d="M124 158 C140 152 156 156 162 168" fill="none" stroke="#8a6420" stroke-width="1.6" stroke-linecap="round" opacity="0.3"/>
+        <!-- collar / zipper -->
+        <path d="M132 120 L140 120 L138 136 L134 136Z" fill="#c99440"/>
+        <path d="M136 122 L138 168" fill="none" stroke="#8a6420" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
+        <!-- backpack -->
+        <path d="M158 124 C180 130 190 158 180 188 C170 180 162 156 158 124Z" fill="#8a5824"/>
+        <path d="M162 136 C176 140 182 160 176 178" fill="none" stroke="#5e3a14" stroke-width="2.2" stroke-linecap="round"/>
+        <rect x="166" y="148" width="14" height="10" rx="2.5" fill="#d8c48a"/>
+        <path d="M168 152 L178 152" stroke="#8a6a30" stroke-width="1.2"/>
+        <path d="M148 128 C156 126 162 130 164 138" fill="none" stroke="#6b4518" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M140 148 C150 146 158 152 160 162" fill="none" stroke="#6b4518" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- harness coil at hip -->
+        <ellipse cx="148" cy="178" rx="13" ry="9" fill="#c4a060" stroke="#8a6a30" stroke-width="1.8"/>
+        <path d="M138 178 C144 172 154 172 158 178 C154 184 144 184 138 178Z" fill="none" stroke="#8a6a30" stroke-width="1.4"/>
+        <path d="M140 178 C146 174 152 174 156 178" fill="none" stroke="#e8d4a0" stroke-width="1.2" opacity="0.7"/>
+        <path d="M132 172 C126 166 122 170 126 176" fill="none" stroke="#b88840" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- back arm pumping -->
+        <path d="M112 136 C88 146 70 164 60 184 L78 190 C86 172 102 156 120 148Z" fill="url(#${skinId})"/>
+        <ellipse cx="58" cy="186" rx="8" ry="7.5" fill="url(#${skinShadeId})"/>
+        <path d="M54 184 C50 180 48 184 52 188" fill="none" stroke="#a07050" stroke-width="1.2" opacity="0.5"/>
+        <!-- front arm reaching + rope end -->
+        <path d="M164 132 C186 118 212 110 234 104 L238 120 C214 126 190 136 168 148Z" fill="url(#${skinId})"/>
+        <ellipse cx="236" cy="110" rx="8.5" ry="8" fill="url(#${skinShadeId})"/>
+        <path d="M234 110 C250 98 266 110 260 126 C248 118 240 114 234 118" fill="none" stroke="url(#${ropeId})" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M256 118 C262 122 260 130 254 128" fill="none" stroke="#a88440" stroke-width="2" stroke-linecap="round"/>
+        <!-- neck + head -->
+        <path d="M130 114 L146 112 L144 126 L132 126Z" fill="url(#${skinId})"/>
+        <ellipse cx="140" cy="92" rx="22" ry="24" fill="url(#${skinId})"/>
+        <ellipse cx="128" cy="96" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.55"/>
+        <ellipse cx="152" cy="94" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.35"/>
+        <!-- hair windblown -->
+        <path d="M120 86 C124 60 148 52 164 64 C170 78 164 96 154 102 C140 92 126 92 120 86Z" fill="#3a4f38"/>
+        <path d="M152 66 C166 58 182 70 184 88" fill="none" stroke="#3a4f38" stroke-width="6" stroke-linecap="round"/>
+        <path d="M158 72 C170 68 178 78 176 90" fill="none" stroke="#2a3a2c" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
+        <!-- face -->
+        <path d="M128 84 C132 82 138 82 142 84" fill="none" stroke="#2f4230" stroke-width="1.6" stroke-linecap="round" opacity="0.4"/>
+        <path d="M146 82 C150 80 156 80 160 83" fill="none" stroke="#2f4230" stroke-width="1.6" stroke-linecap="round" opacity="0.4"/>
+        <ellipse cx="134" cy="90" rx="2.6" ry="3" fill="#2a332c"/>
+        <ellipse cx="150" cy="88" rx="2.6" ry="3" fill="#2a332c"/>
+        <circle cx="133.2" cy="89" r="0.7" fill="#f5efe6"/>
+        <circle cx="149.2" cy="87" r="0.7" fill="#f5efe6"/>
+        <path d="M140 92 C142 96 144 96 146 93" fill="none" stroke="#a07050" stroke-width="1.3" stroke-linecap="round"/>
+        <path d="M136 104 C144 110 154 108 160 100" fill="none" stroke="#a06a55" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+  }
+
+  if (id === "observer") {
+    return `
+      <svg class="teen-crew__art teen-crew__art--observer" viewBox="0 0 280 300" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="${skyId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d4e4ee"/>
+            <stop offset="50%" stop-color="#e2edeb"/>
+            <stop offset="100%" stop-color="#eef2ea" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="${skinId}" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#efc8a0"/>
+            <stop offset="100%" stop-color="#c89464"/>
+          </linearGradient>
+          <linearGradient id="${skinShadeId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e0b488"/>
+            <stop offset="100%" stop-color="#b07850"/>
+          </linearGradient>
+          <linearGradient id="${clothId}" x1="0" y1="0" x2="0.2" y2="1">
+            <stop offset="0%" stop-color="#92acc8"/>
+            <stop offset="100%" stop-color="#4e6788"/>
+          </linearGradient>
+          <linearGradient id="${clothDeepId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a4c58"/>
+            <stop offset="100%" stop-color="#243038"/>
+          </linearGradient>
+          <radialGradient id="${groundId}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#244b38" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#244b38" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="280" height="300" fill="url(#${skyId})"/>
+        <path d="M178 36 C198 24 224 34 222 58 C242 52 254 74 234 88 C244 108 218 122 196 110 C174 128 146 106 160 84 C138 76 146 48 178 36Z" fill="#c5d4de" opacity="0.88"/>
+        <path d="M8 250 L52 182 L88 214 L132 124 L180 196 L222 156 L272 250Z" fill="#9bb8c4" opacity="0.35"/>
+        <path d="M4 250 L66 196 L106 228 L148 152 L198 210 L272 250Z" fill="#4a6b7a" opacity="0.45"/>
+        <ellipse cx="140" cy="264" rx="58" ry="13" fill="url(#${groundId})"/>
+        <!-- distant bird -->
+        <path d="M214 112 C224 102 238 104 242 118 C232 124 222 120 214 112Z" fill="#6b8f9c"/>
+        <path d="M242 118 C252 112 262 122 256 132" fill="none" stroke="#4a6b7a" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- wildflower left -->
+        <g transform="translate(42 200)">
+          <path d="M0 28 C0 14 2 4 2 0" stroke="#52775c" stroke-width="2.2" fill="none"/>
+          <circle cx="2" cy="-2" r="5.5" fill="#e8c96a"/>
+          <circle cx="-6" cy="-4" r="4.5" fill="#88a487"/>
+          <circle cx="9" cy="-5" r="4.5" fill="#a8c4ae"/>
+          <circle cx="8" cy="4" r="4" fill="#7b9e87"/>
+          <circle cx="-4" cy="4" r="3.8" fill="#c5d4c0"/>
+        </g>
+        <!-- legs rooted -->
+        <path d="M118 198 L108 248 L128 252 L134 202Z" fill="url(#${clothDeepId})"/>
+        <path d="M150 198 L146 248 L168 252 L166 202Z" fill="#2a3844"/>
+        <path d="M102 248 L132 252 L134 266 L96 262Z" fill="#1a2c36"/>
+        <path d="M140 248 L172 252 L174 266 L136 262Z" fill="#1a2c36"/>
+        <!-- jacket torso -->
+        <path d="M112 132 C106 168 114 200 140 208 C168 200 178 166 172 132 C158 124 126 124 112 132Z" fill="url(#${clothId})"/>
+        <path d="M124 148 C140 138 160 142 168 158" fill="none" stroke="#3e5678" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
+        <path d="M128 170 C144 162 160 166 166 178" fill="none" stroke="#3e5678" stroke-width="1.6" stroke-linecap="round" opacity="0.3"/>
+        <!-- jacket lapels -->
+        <path d="M132 134 L142 134 L140 156 L134 156Z" fill="#6a86a8"/>
+        <path d="M142 134 L152 136 L148 156 L140 156Z" fill="#5a7698"/>
+        <!-- chest camera strap + camera -->
+        <path d="M124 130 C136 156 148 156 160 132" fill="none" stroke="#1e262c" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M126 132 C138 154 150 154 158 134" fill="none" stroke="#4a5560" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+        <rect x="124" y="156" width="34" height="24" rx="5" fill="#1e262c"/>
+        <rect x="128" y="160" width="26" height="16" rx="3" fill="#3a4650"/>
+        <circle cx="141" cy="168" r="7.5" fill="#12181e" stroke="#7a8a98" stroke-width="1.8"/>
+        <circle cx="141" cy="168" r="4" fill="#8eb0c4"/>
+        <circle cx="141" cy="168" r="1.8" fill="#cfe0ea"/>
+        <rect x="150" y="158" width="5" height="6" rx="1.2" fill="#d4b070"/>
+        <rect x="128" y="158" width="8" height="3" rx="1" fill="#5a6874"/>
+        <!-- left arm bracing binoculars -->
+        <path d="M116 140 C92 148 74 160 64 178 L84 186 C92 170 106 158 122 152Z" fill="url(#${skinId})"/>
+        <ellipse cx="62" cy="180" rx="8" ry="7.5" fill="url(#${skinShadeId})"/>
+        <!-- right arm lifting binoculars -->
+        <path d="M164 138 C184 120 202 104 220 94 L228 110 C208 120 190 136 170 152Z" fill="url(#${skinId})"/>
+        <ellipse cx="224" cy="100" rx="8" ry="7.5" fill="url(#${skinShadeId})"/>
+        <!-- neck + head angled to horizon -->
+        <path d="M134 122 L152 118 L150 134 L136 134Z" fill="url(#${skinId})"/>
+        <ellipse cx="146" cy="98" rx="21" ry="23" fill="url(#${skinId})"/>
+        <ellipse cx="134" cy="102" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.5"/>
+        <!-- hair -->
+        <path d="M128 92 C132 68 152 60 168 70 C172 84 164 102 154 108 C140 98 130 98 128 92Z" fill="#2f4638"/>
+        <path d="M156 72 C168 66 180 78 178 94" fill="none" stroke="#243830" stroke-width="4.5" stroke-linecap="round" opacity="0.65"/>
+        <!-- face (partially behind binoculars) -->
+        <path d="M136 90 C140 88 146 88 150 90" fill="none" stroke="#2f4230" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/>
+        <path d="M138 110 C146 116 156 114 162 106" fill="none" stroke="#a06a55" stroke-width="1.9" stroke-linecap="round"/>
+        <!-- binoculars raised to eyes — clear twin barrels -->
+        <g transform="translate(176 86) rotate(-16)">
+          <rect x="-2" y="2" width="46" height="18" rx="5" fill="#152830"/>
+          <rect x="0" y="0" width="20" height="22" rx="6" fill="#1f3640"/>
+          <rect x="24" y="0" width="20" height="22" rx="6" fill="#1f3640"/>
+          <rect x="18" y="6" width="8" height="10" rx="2" fill="#2a4a55"/>
+          <circle cx="10" cy="11" r="6.5" fill="#b8d8e8"/>
+          <circle cx="34" cy="11" r="6.5" fill="#b8d8e8"/>
+          <circle cx="10" cy="11" r="3.2" fill="#4a7890"/>
+          <circle cx="34" cy="11" r="3.2" fill="#4a7890"/>
+          <circle cx="10" cy="11" r="1.2" fill="#e8f4fa"/>
+          <circle cx="34" cy="11" r="1.2" fill="#e8f4fa"/>
+          <path d="M4 -6 C12 -14 32 -14 40 -6" fill="none" stroke="#1f3640" stroke-width="3" stroke-linecap="round"/>
+          <path d="M6 22 C10 28 34 28 38 22" fill="none" stroke="#152830" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+        </g>
+      </svg>`;
+  }
+
+  return `
+    <svg class="teen-crew__art teen-crew__art--adaptor" viewBox="0 0 280 300" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="${skyId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#dcefdc"/>
+          <stop offset="50%" stop-color="#e8f2e8"/>
+          <stop offset="100%" stop-color="#eef2ea" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="${skinId}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#efc8a0"/>
+          <stop offset="100%" stop-color="#c89464"/>
+        </linearGradient>
+        <linearGradient id="${skinShadeId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e0b488"/>
+          <stop offset="100%" stop-color="#b07850"/>
+        </linearGradient>
+        <linearGradient id="${clothId}" x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0%" stop-color="#a4c4a2"/>
+          <stop offset="100%" stop-color="#568a5e"/>
+        </linearGradient>
+        <linearGradient id="${clothDeepId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3d4a38"/>
+          <stop offset="100%" stop-color="#2a342c"/>
+        </linearGradient>
+        <linearGradient id="${ropeId}" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#d4a04a"/>
+          <stop offset="50%" stop-color="#ecc070"/>
+          <stop offset="100%" stop-color="#b88038"/>
+        </linearGradient>
+        <radialGradient id="${groundId}" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#244b38" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#244b38" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="280" height="300" fill="url(#${skyId})"/>
+      <path d="M10 250 L54 178 L90 208 L138 116 L186 194 L228 154 L274 250Z" fill="#a8c4ae" opacity="0.4"/>
+      <path d="M6 250 L68 194 L108 226 L150 142 L200 208 L274 250Z" fill="#52775c" opacity="0.48"/>
+      <ellipse cx="142" cy="264" rx="58" ry="13" fill="url(#${groundId})"/>
+      <!-- long rope held across -->
+      <path d="M22 146 C72 122 116 136 142 150 C170 134 214 120 262 146" fill="none" stroke="url(#${ropeId})" stroke-width="4.2" stroke-linecap="round"/>
+      <path d="M22 150 C72 128 116 140 142 154 C170 140 214 126 262 150" fill="none" stroke="#a87830" stroke-width="1.8" stroke-linecap="round" opacity="0.55"/>
+      <path d="M22 146 C16 136 8 136 4 144" stroke="url(#${ropeId})" stroke-width="3" stroke-linecap="round"/>
+      <path d="M262 146 C270 138 278 140 276 152" stroke="url(#${ropeId})" stroke-width="3" stroke-linecap="round"/>
+      <!-- balanced stance legs -->
+      <path d="M120 200 L110 248 L132 252 L138 204Z" fill="url(#${clothDeepId})"/>
+      <path d="M152 200 L148 248 L172 252 L170 204Z" fill="#354232"/>
+      <path d="M104 248 L136 252 L138 266 L98 262Z" fill="#243028"/>
+      <path d="M142 248 L176 252 L178 266 L138 262Z" fill="#243028"/>
+      <!-- torso -->
+      <path d="M114 132 C108 168 116 200 142 208 C170 200 180 166 174 132 C160 124 128 124 114 132Z" fill="url(#${clothId})"/>
+      <path d="M126 148 C144 138 162 144 170 160" fill="none" stroke="#3f6a48" stroke-width="2.2" stroke-linecap="round" opacity="0.45"/>
+      <path d="M130 168 C146 160 162 166 168 178" fill="none" stroke="#3f6a48" stroke-width="1.6" stroke-linecap="round" opacity="0.3"/>
+      <!-- collar -->
+      <path d="M134 134 L144 134 L142 152 L136 152Z" fill="#7aa67c"/>
+      <!-- belt + badge -->
+      <rect x="128" y="178" width="28" height="10" rx="2.5" fill="#3d5a47"/>
+      <circle cx="142" cy="183" r="4.2" fill="#f0e2b8" stroke="#7a5a1e" stroke-width="1.4"/>
+      <circle cx="142" cy="183" r="1.6" fill="#c4a060"/>
+      <!-- arms open holding rope -->
+      <path d="M118 140 C84 134 54 128 36 134 L40 152 C60 146 90 152 120 156Z" fill="url(#${skinId})"/>
+      <path d="M164 140 C196 132 226 124 246 132 L242 150 C222 142 194 150 162 156Z" fill="url(#${skinId})"/>
+      <ellipse cx="34" cy="140" rx="9" ry="8.5" fill="url(#${skinShadeId})"/>
+      <ellipse cx="248" cy="136" rx="9" ry="8.5" fill="url(#${skinShadeId})"/>
+      <!-- neck + head -->
+      <path d="M132 122 L150 122 L148 136 L134 136Z" fill="url(#${skinId})"/>
+      <ellipse cx="142" cy="98" rx="21" ry="23" fill="url(#${skinId})"/>
+      <ellipse cx="130" cy="102" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.5"/>
+      <ellipse cx="154" cy="100" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.35"/>
+      <!-- hair -->
+      <path d="M124 92 C128 68 148 60 164 70 C168 84 160 102 150 108 C136 98 126 98 124 92Z" fill="#243d2e"/>
+      <path d="M152 72 C164 66 176 78 174 94" fill="none" stroke="#1a2e22" stroke-width="4.5" stroke-linecap="round" opacity="0.65"/>
+      <!-- face -->
+      <path d="M130 88 C134 86 140 86 144 88" fill="none" stroke="#2f4230" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <path d="M148 86 C152 84 158 84 162 88" fill="none" stroke="#2f4230" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <ellipse cx="136" cy="96" rx="2.5" ry="2.9" fill="#2a332c"/>
+      <ellipse cx="152" cy="95" rx="2.5" ry="2.9" fill="#2a332c"/>
+      <circle cx="135.2" cy="95" r="0.65" fill="#f5efe6"/>
+      <circle cx="151.2" cy="94" r="0.65" fill="#f5efe6"/>
+      <path d="M142 98 C144 102 146 102 148 99" fill="none" stroke="#a07050" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M134 110 C142 116 152 116 158 108" fill="none" stroke="#a06a55" stroke-width="1.9" stroke-linecap="round"/>
+    </svg>`;
+}
+
+function renderTeenCrewSummary(metrics) {
+  if (state.respondent !== "teen") return "";
+
+  const copy = currentUi();
+  const youId = getTeenCrewId(metrics.lean);
+  const roster = getTeenCrewRoster(copy);
+  const you = roster.find((member) => member.id === youId) || roster[1];
+
+  const crewCards = roster
+    .map((member) => {
+      const isYou = member.id === youId;
+      return `
+        <article class="teen-crew__member teen-crew__member--${member.id}${isYou ? " is-you" : ""}" data-crew="${member.id}">
+          <div class="teen-crew__member-art">${teenCrewCharacterArt(member.id, `card-${member.id}`)}</div>
+          <div class="teen-crew__member-copy">
+            ${isYou ? `<span class="teen-crew__you-pill">${escapeHtml(copy.teenCrewBadge)}</span>` : ""}
+            <h4 class="teen-crew__member-name">${escapeHtml(member.name)}</h4>
+            <p class="teen-crew__member-tag">${escapeHtml(member.tag)}</p>
+            <p class="teen-crew__member-role">${escapeHtml(member.role)}</p>
+          </div>
+        </article>`;
+    })
+    .join("");
+
+  return `
+    <section class="profile-section teen-crew" aria-labelledby="teen-crew-title" data-crew-you="${youId}">
+      <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
+      <h3 id="teen-crew-title">${escapeHtml(copy.teenCrewTitle)}</h3>
+      ${printMountainRule("section")}
+      <p class="profile-section__summary">${escapeHtml(copy.teenCrewIntro)}</p>
+
+      <div class="teen-crew__hero teen-crew__hero--${youId}">
+        <div class="teen-crew__hero-art" aria-hidden="true">
+          ${teenCrewCharacterArt(youId, `hero-${youId}`)}
+          <div class="teen-crew__hero-ridge"></div>
+        </div>
+        <div class="teen-crew__hero-copy">
+          <p class="teen-crew__you-label">${escapeHtml(copy.teenCrewYouAre)}</p>
+          <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
+          <p class="teen-crew__hero-tag">${escapeHtml(you.tag)}</p>
+          <p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>
+        </div>
+      </div>
+
+      <div class="teen-crew__why">
+        <div class="teen-crew__why-ornament" aria-hidden="true">
+          <svg viewBox="0 0 220 36" fill="none" focusable="false">
+            <path d="M4 28 L28 12 L44 22 L64 8 L88 20 L110 10 L132 22 L156 10 L180 20 L204 8 L216 28" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+            <circle cx="110" cy="14" r="3" fill="#d8c48a"/>
+          </svg>
+        </div>
+        <h4 class="teen-crew__why-title">${escapeHtml(copy.teenCrewWhyTitle)}</h4>
+        <p class="teen-crew__why-body">${escapeHtml(copy.teenCrewWhyBody)}</p>
+      </div>
+
+      <div class="teen-crew__roster">
+        <h4 class="teen-crew__roster-title">${escapeHtml(copy.teenCrewCrewTitle)}</h4>
+        <p class="teen-crew__roster-intro">${escapeHtml(copy.teenCrewCrewIntro)}</p>
+        <div class="teen-crew__grid">
+          ${crewCards}
+        </div>
+      </div>
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
@@ -5139,7 +5814,14 @@ function renderScoreTable(scores) {
         <h3 id="scores-title">${escapeHtml(title)}</h3>
         ${printMountainRule("section")}
         <p class="profile-section__summary">${escapeHtml(intro)}${
-          framing ? ` ${escapeHtml(copy.contextDetailsNote.replace("{setting}", framing.atSetting))}` : ""
+          framing
+            ? ` ${escapeHtml(
+                (state.lifeContext === "homeSchool"
+                  ? copy.contextDetailsNoteTeen
+                  : copy.contextDetailsNote
+                ).replace("{setting}", framing.atSetting)
+              )}`
+            : ""
         }</p>
         <ul class="sense-interpret-key" aria-label="${escapeHtml(copy.scoreColThreshold)}">
           <li class="sense-interpret-key__item sense-interpret-key__item--sensitive">
@@ -5514,7 +6196,7 @@ function renderSensoryDiet(scores) {
         class="sensory-diet__panel${open ? " is-open" : ""}"
         ${open ? "" : "hidden"}
       >
-        <p class="sensory-diet__intro">${escapeHtml(isParent ? copy.dietIntroChild : copy.dietIntro)}${framing ? ` ${escapeHtml(copy.dietContextNote.replace("{setting}", framing.settingName))}` : ""}</p>
+        <p class="sensory-diet__intro">${escapeHtml(isParent ? copy.dietIntroChild : copy.dietIntro)}${framing ? ` ${escapeHtml((state.lifeContext === "homeSchool" ? copy.dietContextNoteTeen : copy.dietContextNote).replace("{setting}", framing.settingName))}` : ""}</p>
         <div class="sensory-diet__grid">
           ${sections || `<p class="sensory-diet__empty">${escapeHtml(copy.dietEmpty)}</p>`}
         </div>
@@ -5572,6 +6254,8 @@ function renderResultsSummary() {
 
         ${renderSharingPermissionsSummary()}
         ${renderOverallSummary(metrics)}
+        ${renderTeenCrewSummary(metrics)}
+        ${renderIdealSaturdayResults()}
 
         <section class="results-summary__next" aria-labelledby="summary-next-title">
           <h3 id="summary-next-title">${escapeHtml(copy.summaryNextTitle)}</h3>
@@ -5679,7 +6363,11 @@ function renderResults() {
           context
             ? `<p class="results-intro__context">
           <span class="context-chip">${escapeHtml(copy.focusedOn)} · ${escapeHtml(context)}</span>
-          <span class="results-intro__context-text">${escapeHtml(copy.contextResultsNote.replace("{setting}", framing ? framing.choiceName : context))}</span>
+          <span class="results-intro__context-text">${escapeHtml(
+            state.lifeContext === "homeSchool"
+              ? copy.contextResultsNoteTeen
+              : copy.contextResultsNote.replace("{setting}", framing ? framing.choiceName : context)
+          )}</span>
         </p>`
             : ""
         }
@@ -5688,6 +6376,8 @@ function renderResults() {
 
       ${renderSharingPermissionsSummary()}
       ${renderOverallSummary(metrics)}
+      ${renderTeenCrewSummary(metrics)}
+      ${renderIdealSaturdayResults()}
       ${renderScoreTable(scores)}
       ${renderAdultSettingGuide(scores, metrics)}
       ${renderSensoryDiet(scores)}
@@ -5840,6 +6530,9 @@ function render({ scrollToTop = false } = {}) {
         html = domain ? renderDomain(domain) : renderRespondent();
         break;
       }
+      case "idealSaturday":
+        html = renderIdealSaturday();
+        break;
       case "results":
         try {
           const access = getPatientResultsAccess();
@@ -5981,6 +6674,13 @@ function validateStep() {
     }
   }
 
+  if (step.type === "idealSaturday") {
+    if (!(state.idealSaturday || "").trim()) {
+      state.error = copy.idealSaturdayRequired;
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -6091,7 +6791,7 @@ function bindEvents() {
       const nextRespondent = respondentBtn.dataset.respondent;
       if (state.respondent !== nextRespondent) {
         state.respondent = nextRespondent;
-        state.lifeContext = null;
+        state.lifeContext = nextRespondent === "teen" ? "homeSchool" : null;
         state.consent = getConsentItems(state.language, nextRespondent).map(() => false);
         state.sharingConsent = createEmptySharingConsent(
           state.language,
@@ -6101,6 +6801,7 @@ function bindEvents() {
         state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "" };
         state.completedAt = null;
         state.answers = emptyAnswers();
+        state.idealSaturday = "";
         state.contactPreference = null;
         state.showWorkReport = false;
         state.workReportDeclined = false;
@@ -6109,8 +6810,10 @@ function bindEvents() {
         state.schoolReportNotesEnabled = false;
       }
       state.error = null;
-      updateChoiceSelection(respondentBtn, "data-respondent");
+      moveStep(1);
+      state.view = "questionnaire";
       saveSensoryDraft();
+      render({ scrollToTop: true });
       return;
     }
 
@@ -6770,6 +7473,12 @@ function bindEvents() {
       saveSensoryDraft();
     }
 
+    if (e.target.matches("[data-ideal-saturday]")) {
+      state.idealSaturday = e.target.value;
+      state.error = null;
+      saveSensoryDraft();
+    }
+
     if (e.target.matches("[data-invite-results]")) {
       state.clinicianDraftResultsAccess = normalizeResultsAccess(e.target.value);
       sessionStorage.setItem(CLINICIAN_PREF_KEY, state.clinicianDraftResultsAccess);
@@ -6870,6 +7579,13 @@ function bindEvents() {
 
     if (e.target.matches("[data-demo]")) {
       state.demographics[e.target.dataset.demo] = e.target.value;
+      state.error = null;
+      saveSensoryDraft();
+      return;
+    }
+
+    if (e.target.matches("[data-ideal-saturday]")) {
+      state.idealSaturday = e.target.value;
       state.error = null;
       saveSensoryDraft();
       return;

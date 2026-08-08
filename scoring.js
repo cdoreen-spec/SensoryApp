@@ -2164,8 +2164,37 @@ domains: {
   },
 };
 
+function getCombinedLifeContexts(lifeContext) {
+  if (lifeContext === "homeSchool") return ["school", "home"];
+  return lifeContext ? [lifeContext] : [];
+}
+
 function getContextPack(lifeContext, language = "en") {
   if (!lifeContext) return null;
+  if (lifeContext === "homeSchool") {
+    const home = getContextPack("home", language);
+    const school = getContextPack("school", language);
+    if (!home && !school) return null;
+    const isAf = language === "af";
+    return {
+      inSetting: isAf ? "By die huis en by die skool" : "At home and at school",
+      atSetting: isAf ? "by die huis en by die skool" : "at home and at school",
+      settingName: isAf ? "huis- en skoollewe" : "home and school life",
+      choiceName: isAf ? "huis en skool" : "home and school",
+      overall: {
+        sensitive: isAf
+          ? "Lees dit as ’n prentjie van jou lewe by die huis én by die skool. Wanneer jou drempel laer is, kan klaskamergeraas, gange, pouses én die lawaai of besigheid tuis almal swaar weeg — en moegheid na skool is dikwels herstel, nie houding nie."
+          : "Read this as a picture of your life at home and at school. When your threshold is lower, classroom noise, corridors and break can take real effort — and home noise, clutter or family bustle can tip you over the edge after school. Feeling tired or short-tempered is often recovery, not attitude.",
+        seeking: isAf
+          ? "Lees dit as ’n prentjie van jou lewe by die huis én by die skool. Wanneer jou drempel hoër is, is lang stil sit in die klas dikwels die swaarste deel — en stil aande tuis kan jou rusteloos of op skerms laat voel totdat jy genoeg beweging of insette gekry het."
+          : "Read this as a picture of your life at home and at school. When your threshold is higher, long still lessons are often the hardest part of the day — and quiet evenings at home can leave you restless or scrolling until you get enough movement or input.",
+        neutral: isAf
+          ? "Lees dit as ’n prentjie van jou lewe by die huis én by die skool. ’n Gemengde patroon beteken gewoonlik dat verskillende lesse, dae en aande verskillende dinge van jou vra — partykeer stiller fokusgereedskap, partykeer meer beweging of insette."
+          : "Read this as a picture of your life at home and at school. A mixed pattern usually means different lessons, days and evenings ask different things of you — sometimes quieter focus tools, sometimes more movement or input.",
+      },
+      domains: {},
+    };
+  }
   const pack = SENSORY_CONTEXT_INSIGHTS[language] || SENSORY_CONTEXT_INSIGHTS.en;
   return pack[lifeContext] || SENSORY_CONTEXT_INSIGHTS.en[lifeContext] || null;
 }
@@ -2188,6 +2217,22 @@ function getContextOverview(lifeContext, lean, language = "en") {
 }
 
 function getContextInsight(domainId, profile, lifeContext, language = "en") {
+  if (lifeContext === "homeSchool") {
+    const school = getContextInsight(domainId, profile, "school", language);
+    const home = getContextInsight(domainId, profile, "home", language);
+    if (!school && !home) return null;
+    const isAf = language === "af";
+    const parts = (schoolPart, homePart) =>
+      [schoolPart && (isAf ? `By die skool: ${schoolPart}` : `At school: ${schoolPart}`), homePart && (isAf ? `By die huis: ${homePart}` : `At home: ${homePart}`)]
+        .filter(Boolean)
+        .join(" ");
+    return {
+      inSetting: isAf ? "By die huis en by die skool" : "At home and at school",
+      atSetting: isAf ? "by die huis en by die skool" : "at home and at school",
+      looksLike: parts(school?.looksLike, home?.looksLike),
+      helps: parts(school?.helps, home?.helps),
+    };
+  }
   const entry = getContextPack(lifeContext, language);
   if (!entry) return null;
   const domain = entry.domains[domainId];
@@ -3648,10 +3693,17 @@ function getSensoryDietPlan(domainId, profile, language = "en", lifeContext = nu
   if (!lifeContext) return { contextual: [], general };
 
   const contextPack = SENSORY_DIET_CONTEXT[language] || SENSORY_DIET_CONTEXT.en;
-  const contextual =
-    contextPack[lifeContext]?.[domainId]?.[profile] ||
-    contextPack[lifeContext]?.[domainId]?.neutral ||
-    [];
+  const contexts = getCombinedLifeContexts(lifeContext);
+  const contextual = [];
+  for (const context of contexts) {
+    const ideas =
+      contextPack[context]?.[domainId]?.[profile] ||
+      contextPack[context]?.[domainId]?.neutral ||
+      [];
+    for (const idea of ideas) {
+      if (!contextual.includes(idea)) contextual.push(idea);
+    }
+  }
 
   if (!contextual.length) return { contextual: [], general };
   return { contextual, general: general.slice(0, 3) };
