@@ -8361,8 +8361,19 @@ body:not(.is-home) .account-chrome__link {
   font-weight: 500;
 }
 
+.home-account {
+  padding-top: 2rem;
+  padding-bottom: 1.75rem;
+  text-align: center;
+}
+
+.home-account .botanical-divider {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .home-account-links {
-  margin-top: 1.75rem;
+  margin-top: 0.35rem;
 }
 
 .home-account-links__lead,

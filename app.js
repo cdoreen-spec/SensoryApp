@@ -2793,6 +2793,20 @@ function renderHome() {
     `
     : "";
 
+  const signedIn = !!currentAuthUser();
+  const accountSection = invite
+    ? ""
+    : `
+      <section class="home-section home-account" aria-labelledby="account-heading">
+        <p class="home-section__eyebrow">${signedIn ? "Your account" : "Get started"}</p>
+        <h2 id="account-heading" class="home-section__title">${signedIn ? "Welcome back" : "Sign in"}</h2>
+        <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+        <div class="home-account-links">
+          ${renderHomeAccountLinks()}
+        </div>
+      </section>
+    `;
+
   return `
     <div class="home${invite ? " home--invite" : ""}">
       <section class="home-hero" aria-labelledby="home-brand">
@@ -2819,6 +2833,8 @@ function renderHome() {
           }
         </div>
       </section>
+
+      ${accountSection}
 
       <section class="home-section home-ot" aria-labelledby="ot-heading">
         <p class="home-section__eyebrow">About the practice</p>
@@ -2874,13 +2890,6 @@ function renderHome() {
           <a class="home-contact__email" href="mailto:soulfulsensoryot@gmail.com">soulfulsensoryot@gmail.com</a>
         </div>
         <p class="home-contact__hint">Questions or bookings — message anytime on WhatsApp.</p>
-        ${
-          invite
-            ? ""
-            : `<div class="home-account-links">
-          ${renderHomeAccountLinks()}
-        </div>`
-        }
       </section>
 
       ${inviteStart}
