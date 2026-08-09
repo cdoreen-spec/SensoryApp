@@ -5772,10 +5772,34 @@ function renderInterpretGlossary(copy) {
   `;
 }
 
+function renderInterpretOurSenses(copy) {
+  return `
+    <section class="interpret-senses" aria-labelledby="interpret-senses-title">
+      <header class="interpret-senses__header no-print">
+        <p class="profile-kicker">${escapeHtml(copy.interpretSensesKicker)}</p>
+        <h3 id="interpret-senses-title">${escapeHtml(copy.interpretSensesTitle)}</h3>
+        ${printMountainRule("section")}
+        <p class="interpret-senses__subtitle">${escapeHtml(copy.interpretSensesSubtitle)}</p>
+      </header>
+      <figure class="interpret-senses__figure">
+        <img
+          class="interpret-senses__image"
+          src="assets/our-senses-infographic.png?v=20260809h"
+          alt="${escapeHtml(copy.interpretSensesAria)}"
+          width="2339"
+          height="3508"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+    </section>
+  `;
+}
+
 function renderInterpretSensoryWorld(copy) {
   return `
     <section class="interpret-world" aria-labelledby="interpret-world-title">
-      <header class="interpret-world__header">
+      <header class="interpret-world__header no-print">
         <p class="profile-kicker">${escapeHtml(copy.interpretWorldKicker)}</p>
         <h3 id="interpret-world-title">${escapeHtml(copy.interpretWorldTitle)}</h3>
         ${printMountainRule("section")}
@@ -5783,10 +5807,10 @@ function renderInterpretSensoryWorld(copy) {
       <figure class="interpret-world__figure">
         <img
           class="interpret-world__image"
-          src="assets/sensory-infographic.png?v=20260727c"
+          src="assets/sensory-infographic.png?v=20260809d"
           alt="${escapeHtml(copy.interpretWorldAria)}"
-          width="682"
-          height="1024"
+          width="2131"
+          height="3200"
           loading="lazy"
           decoding="async"
         />
@@ -6347,6 +6371,7 @@ function renderResults() {
 
       ${renderInterpretCover(copy)}
       ${renderInterpretGlossary(copy)}
+      ${renderInterpretOurSenses(copy)}
       ${renderInterpretSensoryWorld(copy)}
 
       <div class="results-intro">

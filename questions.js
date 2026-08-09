@@ -277,6 +277,11 @@ const QUESTIONNAIRE_UI = {
           "What your nervous system requires — more, less, or different kinds of input — to feel regulated and able to function. For example, a person might need a quieter environment, softer clothing, or regular movement breaks.",
       },
     ],
+    interpretSensesKicker: "Meet the senses",
+    interpretSensesTitle: "Our senses",
+    interpretSensesSubtitle: "Seven ways we experience and navigate the world.",
+    interpretSensesAria:
+      "Infographic: Our senses — seven ways we experience and navigate the world. Visual, taste, touch, smell, hearing, movement and body awareness, and everyday sensory experiences — each with a short plain-language description.",
     interpretWorldKicker: "How it works",
     interpretWorldTitle: "Our sensory world",
     interpretWorldAria:
@@ -751,6 +756,11 @@ const QUESTIONNAIRE_UI = {
           "Wat jou senuweestelsel nodig het — meer, minder, of ander soorte insette — om gereguleerd te voel en te kan funksioneer. Byvoorbeeld, iemand mag ’n stiller omgewing, sagter klere, of gereelde bewegingspouses nodig hê.",
       },
     ],
+    interpretSensesKicker: "Ontmoet die sintuie",
+    interpretSensesTitle: "Ons sintuie",
+    interpretSensesSubtitle: "Sewe maniere waarop ons die wêreld ervaar en navigeer.",
+    interpretSensesAria:
+      "Infografika: Ons sintuie — sewe maniere waarop ons die wêreld ervaar en navigeer. Visueel, smaak, tas, reuk, gehoor, beweging en liggaamsbewustheid, en alledaagse sensoriese ervarings — elkeen met ’n kort, eenvoudige beskrywing.",
     interpretWorldKicker: "Hoe dit werk",
     interpretWorldTitle: "Ons sensoriese wêreld",
     interpretWorldAria:

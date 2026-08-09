@@ -4058,6 +4058,7 @@ body.is-pain-screen .site-footer {
 .card--results .results-intro,
 .card--results .interpret-cover,
 .card--results .interpret-glossary,
+.card--results .interpret-senses,
 .card--results .interpret-world,
 .card--results .sharing-summary,
 .card--results .profile-section,
@@ -4889,6 +4890,69 @@ body.is-pain-screen .site-footer {
   }
 }
 
+.interpret-senses {
+  margin: 0 0 1.75rem;
+  padding: 1.35rem 1.15rem 1.45rem;
+  background:
+    linear-gradient(165deg, rgba(250, 252, 248, 0.98), rgba(226, 236, 228, 0.92));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.interpret-senses__header {
+  text-align: center;
+  margin: 0 0 1rem;
+}
+
+.interpret-senses__header h3 {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  line-height: 1.25;
+  color: var(--forest);
+}
+
+.interpret-senses__subtitle {
+  margin: 0.55rem auto 0;
+  max-width: 28rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+  line-height: 1.4;
+}
+
+.interpret-senses__figure {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+}
+
+.interpret-senses__image {
+  display: block;
+  width: 100%;
+  max-width: 42rem;
+  height: auto;
+  border-radius: 12px;
+  background: var(--warm-white);
+  image-rendering: auto;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media (max-width: 520px) {
+  .interpret-senses {
+    padding: 1.15rem 0.7rem 1.25rem;
+  }
+
+  .interpret-senses__image {
+    border-radius: 8px;
+  }
+}
+
 .interpret-world {
   margin: 0 0 1.75rem;
   padding: 1.35rem 1.15rem 1.45rem;
@@ -4921,9 +4985,11 @@ body.is-pain-screen .site-footer {
 .interpret-world__image {
   display: block;
   width: 100%;
-  max-width: 36rem;
+  max-width: 42rem;
   height: auto;
   border-radius: 12px;
+  background: var(--warm-white);
+  image-rendering: auto;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -7705,9 +7771,10 @@ body.is-pain-screen .site-footer {
     box-shadow: none;
   }
 
-  /* Sensory results packet: cover → glossary → sensory world → scores */
+  /* Sensory results packet: cover → glossary → our senses → sensory world → scores */
   body:not(.print-work-report) .interpret-cover,
   body:not(.print-work-report) .interpret-glossary,
+  body:not(.print-work-report) .interpret-senses,
   body:not(.print-work-report) .interpret-world {
     display: block !important;
     visibility: visible !important;
@@ -8038,21 +8105,76 @@ body.is-pain-screen .site-footer {
     height: 9mm;
   }
 
-  /* —— Sensory world infographic: one A4 page —— */
+  /* —— Our senses infographic: full A4 page —— */
+  .interpret-senses {
+    break-after: page;
+    page-break-after: always;
+    box-sizing: border-box;
+    width: calc(100% + 24mm);
+    max-width: none;
+    height: 263mm;
+    min-height: 263mm;
+    max-height: 263mm;
+    margin: -16mm -12mm 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    background: #f3f1ea;
+    display: flex;
+    flex-direction: column;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .interpret-senses__header {
+    display: none !important;
+  }
+
+  .interpret-senses__figure {
+    flex: 1;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .interpret-senses__image {
+    display: block;
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center center;
+    margin: 0 auto;
+    border-radius: 0;
+    background: #f3f1ea;
+    image-rendering: auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* —— Sensory world infographic: full A4 page —— */
   .interpret-world {
     break-after: page;
     page-break-after: always;
     box-sizing: border-box;
-    min-height: 240mm;
-    margin: 0;
-    padding: 3mm 1mm 4mm;
+    width: calc(100% + 24mm);
+    max-width: none;
+    height: 263mm;
+    min-height: 263mm;
+    max-height: 263mm;
+    margin: -16mm -12mm 0;
+    padding: 0;
     border: none;
     border-radius: 0;
     box-shadow: none;
-    overflow: visible;
-    background:
-      radial-gradient(ellipse 60% 30% at 50% 0%, rgba(154, 186, 158, 0.14), transparent 70%),
-      #fff;
+    overflow: hidden;
+    background: #f9f9f4;
     display: flex;
     flex-direction: column;
     -webkit-print-color-adjust: exact;
@@ -8060,35 +8182,30 @@ body.is-pain-screen .site-footer {
   }
 
   .interpret-world__header {
-    margin-bottom: 5mm;
-  }
-
-  .interpret-world__header .profile-kicker {
-    font-size: 8.5pt;
-    letter-spacing: 0.16em;
-    font-weight: 700;
-  }
-
-  .interpret-world__header h3 {
-    font-family: var(--font-serif);
-    font-size: 22pt;
-    font-weight: 700;
-    color: #244b38;
-    margin: 1.5mm 0 0;
+    display: none !important;
   }
 
   .interpret-world__figure {
     flex: 1;
-    align-content: center;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
   }
 
   .interpret-world__image {
-    max-width: 100%;
-    max-height: 210mm;
-    width: auto;
-    height: auto;
-    margin: 0 auto;
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+    object-position: center center;
+    margin: 0;
     border-radius: 0;
+    background: #f9f9f4;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -8722,6 +8839,7 @@ body.is-pain-screen .site-footer {
   body.print-work-report .results-intro,
   body.print-work-report .interpret-cover,
   body.print-work-report .interpret-glossary,
+  body.print-work-report .interpret-senses,
   body.print-work-report .interpret-world,
   body.print-work-report .profile-section,
   body.print-work-report .sensory-diet,
