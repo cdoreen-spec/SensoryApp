@@ -4592,6 +4592,11 @@ body.is-pain-screen .site-footer {
   display: none;
 }
 
+.interpret-cover__studio,
+.interpret-cover__report-title {
+  display: none;
+}
+
 .interpret-cover__brand-logo {
   width: 2.4rem;
   height: 2.4rem;
@@ -4886,11 +4891,18 @@ body.is-pain-screen .site-footer {
 .interpret-glossary__bullet {
   display: grid;
   place-items: center;
-  width: 0.9rem;
-  height: 0.9rem;
-  margin-top: 0.38rem;
-  color: #4f7a58;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-top: 0.32rem;
+  color: #5a7d58;
   flex-shrink: 0;
+}
+
+.interpret-glossary__leaf-icon {
+  width: 0.82rem;
+  height: 0.82rem;
+  display: block;
+  transform: rotate(-18deg);
 }
 
 .interpret-glossary__arrow {
@@ -4915,6 +4927,88 @@ body.is-pain-screen .site-footer {
   font-size: 0.94rem;
   line-height: 1.5;
   color: #465349;
+}
+
+.interpret-glossary__foliage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.interpret-glossary__photo {
+  position: absolute;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.interpret-glossary__photo--sprig-top {
+  top: -4%;
+  right: -2%;
+  width: min(38%, 15rem);
+  height: auto;
+  max-height: 42%;
+  object-position: center top;
+  opacity: 0.42;
+  filter: saturate(0.78) brightness(1.05) contrast(0.95);
+  mask-image: linear-gradient(180deg, #000 0%, #000 42%, transparent 92%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 42%, transparent 92%);
+  transform: rotate(4deg);
+}
+
+.interpret-glossary__photo--floor-tl {
+  top: -6%;
+  left: -8%;
+  width: min(48%, 17rem);
+  height: min(34%, 12rem);
+  object-position: 35% 40%;
+  opacity: 0.34;
+  filter: saturate(0.72) brightness(1.08) hue-rotate(-4deg);
+  mask-image: radial-gradient(ellipse 70% 65% at 30% 25%, #000 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 65% at 30% 25%, #000 0%, transparent 72%);
+  transform: rotate(-6deg);
+}
+
+.interpret-glossary__photo--floor-br {
+  right: -10%;
+  bottom: -8%;
+  width: min(52%, 18rem);
+  height: min(36%, 13rem);
+  object-position: 55% 60%;
+  opacity: 0.3;
+  filter: saturate(0.7) brightness(1.06) hue-rotate(2deg);
+  mask-image: radial-gradient(ellipse 72% 68% at 70% 75%, #000 0%, transparent 74%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 70% 75%, #000 0%, transparent 74%);
+  transform: rotate(8deg);
+}
+
+.interpret-glossary__photo--sprig-side {
+  left: -6%;
+  bottom: 8%;
+  width: min(28%, 11rem);
+  height: auto;
+  max-height: 38%;
+  object-position: left center;
+  opacity: 0.28;
+  filter: saturate(0.75) brightness(1.04);
+  mask-image: linear-gradient(90deg, #000 0%, #000 40%, transparent 90%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 40%, transparent 90%);
+  transform: scaleX(-1) rotate(-12deg);
+}
+
+.interpret-glossary > .profile-kicker,
+.interpret-glossary > h3,
+.interpret-glossary > .print-nature-rule,
+.interpret-glossary > .profile-section__summary,
+.interpret-glossary > .interpret-glossary__list,
+.interpret-glossary > .report-page-number,
+.interpret-glossary > .print-page-motif {
+  position: relative;
+  z-index: 1;
 }
 
 .interpret-glossary__scenery {
@@ -4946,13 +5040,20 @@ body.is-pain-screen .site-footer {
   color: #4a6d62;
 }
 
-.interpret-glossary__scenery--birds {
-  color: #5a6f63;
+.interpret-glossary__scenery--leavesOval {
+  color: #4f7356;
 }
 
-.interpret-glossary__scenery--rabbit,
-.interpret-glossary__scenery--deer {
+.interpret-glossary__scenery--leavesSprig {
   color: #5c7a52;
+}
+
+.interpret-glossary__scenery--leavesMaple {
+  color: #8f7644;
+}
+
+.interpret-glossary__scenery--leavesOak {
+  color: #6d7350;
 }
 
 .interpret-glossary__scenery--sun .interpret-glossary__scenery-art svg {
@@ -4963,8 +5064,14 @@ body.is-pain-screen .site-footer {
   height: 1.95rem;
 }
 
-.interpret-glossary__scenery--birds .interpret-glossary__scenery-art svg {
-  height: 1.45rem;
+.interpret-glossary__scenery--leavesOval .interpret-glossary__scenery-art svg,
+.interpret-glossary__scenery--leavesSprig .interpret-glossary__scenery-art svg {
+  height: 1.85rem;
+}
+
+.interpret-glossary__scenery--leavesMaple .interpret-glossary__scenery-art svg,
+.interpret-glossary__scenery--leavesOak .interpret-glossary__scenery-art svg {
+  height: 2rem;
 }
 
 @media (min-width: 720px) {
@@ -4990,8 +5097,33 @@ body.is-pain-screen .site-footer {
     height: 2.15rem;
   }
 
-  .interpret-glossary__scenery--birds .interpret-glossary__scenery-art svg {
-    height: 1.55rem;
+  .interpret-glossary__scenery--leavesOval .interpret-glossary__scenery-art svg,
+  .interpret-glossary__scenery--leavesSprig .interpret-glossary__scenery-art svg {
+    height: 2.05rem;
+  }
+
+  .interpret-glossary__scenery--leavesMaple .interpret-glossary__scenery-art svg,
+  .interpret-glossary__scenery--leavesOak .interpret-glossary__scenery-art svg {
+    height: 2.25rem;
+  }
+
+  .interpret-glossary__photo--sprig-top {
+    width: min(34%, 16rem);
+    opacity: 0.4;
+  }
+
+  .interpret-glossary__photo--floor-tl {
+    width: min(42%, 18rem);
+    height: min(30%, 13rem);
+  }
+
+  .interpret-glossary__photo--floor-br {
+    width: min(46%, 19rem);
+    height: min(32%, 14rem);
+  }
+
+  .interpret-glossary__photo--sprig-side {
+    width: min(24%, 12rem);
   }
 }
 
@@ -7641,7 +7773,7 @@ body.is-pain-screen .site-footer {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 16mm 12mm 18mm;
+    margin: 7mm 7mm 9mm;
   }
 
   .site-header,
@@ -7657,6 +7789,7 @@ body.is-pain-screen .site-footer {
   .results-atmosphere,
   .results-contact:not(.work-report),
   .submission-status,
+  .print-brand--header,
   body:not(.print-work-report) .hero {
     display: none !important;
   }
@@ -7665,109 +7798,49 @@ body.is-pain-screen .site-footer {
   body {
     background: #fff !important;
     color: #1c2a22;
+    orphans: 3;
+    widows: 3;
   }
 
-  /* Brand on every printed page */
-  .print-brand {
+  /* Centered brand mark on every printed page */
+  .print-brand--footer {
     display: flex !important;
     visibility: visible !important;
-    align-items: center;
     position: fixed;
-    left: 0;
-    right: 0;
+    left: 50%;
+    right: auto;
+    bottom: 1.5mm;
     z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    gap: 2.2mm;
+    width: max-content;
+    max-width: calc(100% - 24mm);
+    padding: 1.2mm 3.5mm;
     box-sizing: border-box;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    border: 0.5pt solid rgba(54, 91, 70, 0.14);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .print-brand--header {
-    top: 0;
-    gap: 0.55rem;
-    padding: 2.5mm 0 2.5mm;
-    background:
-      linear-gradient(180deg, #f7faf6 0%, #fff 100%);
-    border-bottom: 1.5px solid rgba(54, 91, 70, 0.28);
-  }
-
-  .print-brand--header::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1.5mm;
-    height: 1.5mm;
-    background:
-      linear-gradient(90deg, transparent 0%, rgba(54, 91, 70, 0.18) 20%, rgba(54, 91, 70, 0.18) 80%, transparent 100%);
-    clip-path: polygon(0 100%, 8% 0, 18% 100%, 28% 20%, 40% 100%, 52% 10%, 64% 100%, 76% 30%, 88% 100%, 100% 40%, 100% 100%);
-    opacity: 0.55;
-  }
-
-  .print-brand__logo {
-    width: 8.5mm;
-    height: 8.5mm;
+  .print-brand__footer-logo {
+    width: 5.5mm;
+    height: 5.5mm;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
   }
 
-  .print-brand__text {
-    min-width: 0;
-  }
-
-  .print-brand__name {
-    margin: 0;
-    font-family: var(--font-serif);
-    font-size: 11pt;
-    font-weight: 700;
-    line-height: 1.15;
-    color: #244b38;
-    letter-spacing: 0.01em;
-  }
-
-  .print-brand__tag {
-    margin: 0.5mm 0 0;
-    font-size: 7pt;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #52775c;
-  }
-
-  .print-brand--footer {
-    bottom: 0;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    padding: 2mm 0 0;
-    background: #fff;
-    border-top: 1.5px solid rgba(54, 91, 70, 0.22);
-    font-size: 7.5pt;
-    color: #52775c;
-  }
-
   .print-brand__footer-mark {
     font-family: var(--font-serif);
+    font-size: 7.5pt;
     font-weight: 700;
-    color: #244b38;
-    letter-spacing: 0.02em;
-  }
-
-  .print-brand__footer-sep {
-    opacity: 0.55;
-  }
-
-  .print-brand__footer-note {
-    margin-left: 0;
     letter-spacing: 0.04em;
-    flex: 1;
-    min-width: 0;
-  }
-
-  /* Reserve the bottom-right corner for per-page numbers */
-  .print-brand__footer-page-slot {
-    display: block;
-    width: 22mm;
-    flex-shrink: 0;
+    color: #244b38;
+    line-height: 1;
   }
 
   .app {
@@ -7885,257 +7958,208 @@ body.is-pain-screen .site-footer {
     box-shadow: none;
   }
 
+  /* Keep headings with the content that follows; avoid orphan lead-ins */
+  h2, h3, h4, h5,
+  .profile-kicker,
+  .sense-interpret__label,
+  .sense-interpret__print-kicker,
+  .profile-section__summary,
+  .results-intro .step-desc,
+  .sensory-diet__intro,
+  .print-nature-rule {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
   /* Sensory results packet: cover → contents → glossary → our senses → sensory world → scores */
   body:not(.print-work-report) .interpret-cover,
   body:not(.print-work-report) .interpret-toc,
   body:not(.print-work-report) .interpret-glossary,
   body:not(.print-work-report) .interpret-senses,
   body:not(.print-work-report) .interpret-world {
-    display: block !important;
     visibility: visible !important;
   }
 
-  /* —— Cover: full-bleed nature scene —— */
+  body:not(.print-work-report) .interpret-toc,
+  body:not(.print-work-report) .interpret-glossary,
+  body:not(.print-work-report) .interpret-senses,
+  body:not(.print-work-report) .interpret-world {
+    display: block !important;
+  }
+
+  body:not(.print-work-report) .interpret-cover {
+    display: grid !important;
+  }
+
+  /* —— Cover: full-bleed mountain landscape + person details only —— */
   .interpret-cover {
     break-after: page;
     page-break-after: always;
     position: relative;
+    display: grid !important;
+    place-items: center;
     box-sizing: border-box;
-    width: calc(100% + 24mm);
+    width: calc(100% + 14mm);
     max-width: none;
-    height: 263mm;
-    min-height: 263mm;
-    max-height: 263mm;
-    margin: -16mm -12mm 0;
+    height: 281mm;
+    min-height: 281mm;
+    max-height: 281mm;
+    margin: -7mm -7mm 0;
     padding: 0;
     border-radius: 0;
     box-shadow: none;
     overflow: hidden;
-    place-items: end stretch;
-    background: #eef4ee;
+    background: #1a3228;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .interpret-cover__media,
-  .interpret-cover__veil,
-  .interpret-cover__image {
+  .interpret-cover__print-scene {
     display: none !important;
   }
 
-  .interpret-cover__print-scene {
-    display: block;
+  .interpret-cover__media {
+    display: block !important;
     position: absolute;
     inset: 0;
     z-index: 0;
+  }
+
+  .interpret-cover__image {
+    display: block !important;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 42%;
+  }
+
+  .interpret-cover__veil {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
     background:
-      radial-gradient(ellipse 55% 38% at 78% 12%, rgba(214, 196, 140, 0.28), transparent 62%),
-      radial-gradient(ellipse 70% 42% at 18% 0%, rgba(154, 186, 158, 0.22), transparent 60%),
-      linear-gradient(180deg, #f4f8f4 0%, #e8f0e6 42%, #d5e4d4 72%, #c5d6c4 100%);
+      linear-gradient(90deg, rgba(17, 39, 30, 0.62) 0%, rgba(25, 52, 40, 0.42) 48%, rgba(27, 52, 52, 0.28) 100%),
+      linear-gradient(180deg, rgba(25, 48, 59, 0.18) 0%, rgba(20, 45, 32, 0.28) 48%, rgba(14, 32, 24, 0.72) 78%, rgba(12, 28, 20, 0.88) 100%);
   }
 
-  .interpret-cover__print-sky {
-    position: absolute;
-    inset: 0 0 36% 0;
+  .interpret-cover__brand,
+  .interpret-cover__kicker,
+  .interpret-cover__title,
+  .interpret-cover__quote,
+  .interpret-cover__credit,
+  .interpret-cover .report-page-number {
+    display: none !important;
   }
 
-  .interpret-cover__print-sun {
-    position: absolute;
-    top: 28mm;
-    right: 28mm;
-    width: 22mm;
-    height: 22mm;
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 40% 40%, rgba(255, 248, 220, 0.95), rgba(214, 196, 140, 0.55) 55%, transparent 72%);
-    box-shadow: 0 0 0 6mm rgba(214, 196, 140, 0.12);
-  }
-
-  .interpret-cover__print-birds {
-    position: absolute;
-    top: 36mm;
-    left: 22mm;
-    width: 42mm;
-    color: rgba(54, 91, 70, 0.45);
-  }
-
-  .interpret-cover__print-mountain {
-    position: absolute;
-    left: -6%;
-    width: 112%;
-    pointer-events: none;
-    clip-path: polygon(0 100%, 0 66%, 8% 58%, 15% 70%, 23% 46%, 30% 65%, 39% 36%, 48% 63%, 58% 44%, 66% 68%, 76% 49%, 84% 64%, 92% 42%, 100% 62%, 100% 100%);
-  }
-
-  .interpret-cover__print-mountain--far {
-    height: 48%;
-    bottom: 0;
-    background: rgba(120, 146, 123, 0.22);
-  }
-
-  .interpret-cover__print-mountain--mid {
-    height: 36%;
-    bottom: 0;
-    background: rgba(86, 118, 96, 0.28);
-    transform: scaleX(-1);
-  }
-
-  .interpret-cover__print-mountain--near {
-    height: 24%;
-    bottom: -1px;
-    background: rgba(36, 75, 56, 0.34);
-  }
-
-  .interpret-cover__print-trees {
-    position: absolute;
-    left: 8%;
-    bottom: 8%;
-    width: 28%;
-    height: 14%;
-    background:
-      radial-gradient(ellipse 18% 70% at 18% 100%, rgba(36, 75, 56, 0.35) 0 55%, transparent 56%),
-      radial-gradient(ellipse 14% 55% at 38% 100%, rgba(54, 91, 70, 0.32) 0 55%, transparent 56%),
-      radial-gradient(ellipse 16% 62% at 58% 100%, rgba(36, 75, 56, 0.3) 0 55%, transparent 56%),
-      radial-gradient(ellipse 12% 48% at 78% 100%, rgba(54, 91, 70, 0.28) 0 55%, transparent 56%);
-    opacity: 0.85;
-  }
-
-  .interpret-cover__print-trail {
-    position: absolute;
-    bottom: -4%;
-    left: 48%;
-    width: 11%;
-    min-width: 28px;
-    height: 30%;
-    border-radius: 50%;
-    border-left: 2px solid rgba(250, 252, 248, 0.55);
-    transform: rotate(9deg);
-  }
-
-  .interpret-cover__print-fog {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 42%;
-    background: linear-gradient(180deg, transparent 0%, rgba(247, 250, 246, 0.55) 48%, rgba(247, 250, 246, 0.92) 100%);
-  }
-
-  .interpret-cover__brand {
-    display: flex !important;
-    top: 16mm;
-    left: 14mm;
-    right: auto;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    backdrop-filter: none;
-    color: var(--forest);
-    gap: 0.95rem;
-    align-items: center;
-  }
-
-  .interpret-cover__brand-logo {
-    width: 20mm;
-    height: 20mm;
-    box-shadow: none;
-    background: #fff;
-    border: 1.5px solid rgba(54, 91, 70, 0.18);
-  }
-
-  .interpret-cover__brand-name {
-    color: var(--forest);
-    font-size: 16pt;
+  .interpret-cover__studio {
+    display: block !important;
+    margin: 0 0 4mm;
+    font-family: var(--font-serif);
+    font-size: 12pt;
     font-weight: 700;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.08em;
+    color: rgba(250, 252, 248, 0.92);
+    text-shadow: 0 1px 8px rgba(8, 22, 16, 0.45);
   }
 
-  .interpret-cover__brand-tag {
-    color: rgba(36, 75, 56, 0.62);
-    letter-spacing: 0.12em;
-    font-size: 8pt;
+  .interpret-cover__report-title {
+    display: block !important;
+    margin: 0 0 12mm;
+    max-width: 150mm;
+    font-family: var(--font-serif);
+    font-size: 28pt;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    color: #fafcf8;
+    text-wrap: balance;
+    text-shadow:
+      0 1px 2px rgba(8, 22, 16, 0.55),
+      0 4px 18px rgba(8, 22, 16, 0.35);
   }
 
   .interpret-cover__content {
     position: relative;
-    z-index: 1;
-    max-width: 158mm;
-    padding: 0 16mm 20mm;
-    color: var(--ink);
-  }
-
-  .interpret-cover__kicker {
-    color: rgba(36, 75, 56, 0.72);
-    font-size: 9pt;
-    letter-spacing: 0.16em;
-    font-weight: 700;
-  }
-
-  .interpret-cover__title {
-    color: var(--forest);
-    font-size: 30pt;
-    font-weight: 700;
-    line-height: 1.12;
-    margin-bottom: 8mm;
-  }
-
-  .interpret-cover__quote {
-    border-left: 3px solid rgba(54, 91, 70, 0.4);
-    padding-left: 5mm;
-  }
-
-  .interpret-cover__quote p {
-    color: var(--ink-soft);
-    font-size: 12.5pt;
-    line-height: 1.5;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    padding: 18mm 16mm 28mm;
+    text-align: center;
+    color: #fafcf8;
   }
 
   .interpret-cover__meta {
-    gap: 8mm 14mm;
-    margin-top: 12mm;
-    padding-top: 8mm;
-    border-top: 1.5px solid rgba(54, 91, 70, 0.22);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 7mm 16mm;
+    margin: 0;
+    padding: 0;
+    border: none;
+    width: min(100%, 148mm);
+  }
+
+  .interpret-cover__meta-block {
+    min-width: 0;
+  }
+
+  .interpret-cover__meta-block--wide {
+    flex: 1 1 100%;
   }
 
   .interpret-cover__meta-label {
-    color: rgba(36, 75, 56, 0.58);
-    font-size: 7.5pt;
-    letter-spacing: 0.14em;
-    font-weight: 700;
+    margin: 0 0 2.5mm;
+    color: rgba(232, 240, 232, 0.72);
+    font-size: 8.5pt;
+    letter-spacing: 0.2em;
+    font-weight: 600;
+    text-transform: uppercase;
   }
 
   .interpret-cover__meta-name,
   .interpret-cover__meta-date {
-    color: var(--forest);
-    font-size: 17pt;
+    margin: 0;
+    color: #fafcf8;
+    font-family: var(--font-serif);
+    font-size: 26pt;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    text-shadow:
+      0 1px 2px rgba(8, 22, 16, 0.55),
+      0 4px 18px rgba(8, 22, 16, 0.35);
   }
 
   .interpret-cover__meta-parent {
-    margin: 0;
+    margin: 2mm 0 0;
     font-family: var(--font-serif);
-    font-size: 12pt;
-    font-weight: 700;
-    color: var(--forest);
+    font-size: 13pt;
+    font-weight: 400;
+    color: rgba(244, 248, 244, 0.88);
   }
 
-  .interpret-cover__credit {
-    margin-top: 10mm;
-    color: rgba(36, 75, 56, 0.55);
-    font-size: 8pt;
-    letter-spacing: 0.08em;
+  .interpret-cover__meta-block:last-child:not(:only-child) {
+    flex: 1 1 100%;
+    width: min(100%, 78mm);
+    margin: 2mm auto 0;
+    padding-top: 8mm;
+    border-top: 1px solid rgba(244, 248, 244, 0.28);
   }
 
   /* —— Contents: after cover —— */
   .interpret-toc {
     break-after: page;
     page-break-after: always;
-    break-inside: avoid;
-    page-break-inside: avoid;
     box-sizing: border-box;
-    min-height: 240mm;
+    min-height: 0;
     margin: 0;
-    padding: 4mm 2mm 10mm;
+    padding: 2mm 2mm 10mm;
     border: none;
     border-radius: 0;
     background:
@@ -8198,7 +8222,7 @@ body.is-pain-screen .site-footer {
     gap: 0.35em;
     position: absolute;
     right: 0;
-    bottom: -12mm;
+    bottom: -4mm;
     z-index: 10002;
     margin: 0;
     padding: 1mm 0 0;
@@ -8208,7 +8232,7 @@ body.is-pain-screen .site-footer {
     letter-spacing: 0.04em;
     line-height: 1;
     color: #244b38;
-    background: #fff;
+    background: transparent;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -8231,10 +8255,9 @@ body.is-pain-screen .site-footer {
   }
 
   /* Full-bleed pages clip overflow — keep the number inside the sheet */
-  .interpret-cover .report-page-number,
   .interpret-senses .report-page-number,
   .interpret-world .report-page-number {
-    right: 12mm;
+    right: 7mm;
     bottom: 4mm;
     background: rgba(255, 255, 255, 0.92);
     padding: 1mm 2mm;
@@ -8256,17 +8279,17 @@ body.is-pain-screen .site-footer {
   .sense-interpret-intro .report-page-number,
   .sense-glance .report-page-number {
     right: 0;
-    bottom: -12mm;
+    bottom: -4mm;
   }
 
-  /* —— Glossary: full A4 with nature accents —— */
+  /* —— Glossary —— */
   .interpret-glossary {
     break-after: page;
     page-break-after: always;
     box-sizing: border-box;
-    min-height: 240mm;
+    min-height: 0;
     margin: 0;
-    padding: 4mm 2mm 6mm;
+    padding: 2mm 2mm 10mm;
     border: none;
     border-radius: 0;
     box-shadow: none;
@@ -8338,9 +8361,44 @@ body.is-pain-screen .site-footer {
     print-color-adjust: exact;
   }
 
+  .interpret-glossary__leaf-icon {
+    width: 3.2mm;
+    height: 3.2mm;
+  }
+
   .interpret-glossary__arrow {
     width: 0.75rem;
     height: 0.75rem;
+  }
+
+  .interpret-glossary__photo--sprig-top {
+    top: -2mm;
+    right: -2mm;
+    width: 48mm;
+    opacity: 0.38;
+  }
+
+  .interpret-glossary__photo--floor-tl {
+    top: -3mm;
+    left: -4mm;
+    width: 55mm;
+    height: 38mm;
+    opacity: 0.3;
+  }
+
+  .interpret-glossary__photo--floor-br {
+    right: -5mm;
+    bottom: 4mm;
+    width: 58mm;
+    height: 40mm;
+    opacity: 0.28;
+  }
+
+  .interpret-glossary__photo--sprig-side {
+    left: -3mm;
+    bottom: 10mm;
+    width: 36mm;
+    opacity: 0.26;
   }
 
   .interpret-glossary__scenery {
@@ -8353,17 +8411,27 @@ body.is-pain-screen .site-footer {
     height: 9mm;
   }
 
+  .interpret-glossary__scenery--leavesOval .interpret-glossary__scenery-art svg,
+  .interpret-glossary__scenery--leavesSprig .interpret-glossary__scenery-art svg {
+    height: 9.5mm;
+  }
+
+  .interpret-glossary__scenery--leavesMaple .interpret-glossary__scenery-art svg,
+  .interpret-glossary__scenery--leavesOak .interpret-glossary__scenery-art svg {
+    height: 10.5mm;
+  }
+
   /* —— Our senses infographic: full A4 page —— */
   .interpret-senses {
     break-after: page;
     page-break-after: always;
     box-sizing: border-box;
-    width: calc(100% + 24mm);
+    width: calc(100% + 14mm);
     max-width: none;
-    height: 263mm;
-    min-height: 263mm;
-    max-height: 263mm;
-    margin: -16mm -12mm 0;
+    height: 281mm;
+    min-height: 281mm;
+    max-height: 281mm;
+    margin: -7mm -7mm 0;
     padding: 0;
     border: none;
     border-radius: 0;
@@ -8411,12 +8479,12 @@ body.is-pain-screen .site-footer {
     break-after: page;
     page-break-after: always;
     box-sizing: border-box;
-    width: calc(100% + 24mm);
+    width: calc(100% + 14mm);
     max-width: none;
-    height: 263mm;
-    min-height: 263mm;
-    max-height: 263mm;
-    margin: -16mm -12mm 0;
+    height: 281mm;
+    min-height: 281mm;
+    max-height: 281mm;
+    margin: -7mm -7mm 0;
     padding: 0;
     border: none;
     border-radius: 0;
@@ -8495,12 +8563,28 @@ body.is-pain-screen .site-footer {
     print-color-adjust: exact;
   }
 
-  /* —— Profile intro + overall: fuller A4 pages —— */
+  /* —— Profile intro + overall: keep related content together —— */
   body.print-sensory-results .results-intro {
     break-after: avoid;
     page-break-after: avoid;
-    margin: 0 0 6mm;
-    padding: 3mm 0 0;
+    margin: 0 0 4mm;
+    padding: 2mm 0 0;
+  }
+
+  body.print-sensory-results .results-intro .profile-kicker,
+  body.print-sensory-results .profile-section .profile-kicker,
+  body.print-sensory-results .sense-interpret-intro .profile-kicker,
+  body.print-sensory-results h2,
+  body.print-sensory-results h3,
+  body.print-sensory-results h4,
+  body.print-sensory-results h5,
+  body.print-sensory-results .sense-interpret__label,
+  body.print-sensory-results .profile-section__summary,
+  body.print-sensory-results .results-intro .step-desc {
+    break-after: avoid;
+    page-break-after: avoid;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   body.print-sensory-results .results-intro .profile-kicker {
@@ -8535,7 +8619,9 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .sharing-summary {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin: 0 0 6mm;
+    break-after: avoid;
+    page-break-after: avoid;
+    margin: 0 0 5mm;
     padding: 4mm 4.5mm;
     background: linear-gradient(160deg, #f7faf6, #eef4ee);
     border: 1px solid rgba(54, 91, 70, 0.18);
@@ -8563,19 +8649,26 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .profile-section:not(.profile-section--scores) {
     break-after: page;
     page-break-after: always;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: auto;
+    page-break-inside: auto;
     box-sizing: border-box;
-    min-height: 230mm;
+    min-height: 0;
     margin: 0;
-    padding: 3mm 0 8mm;
+    padding: 2mm 0 10mm;
     border: none;
     border-radius: 0;
     background:
       radial-gradient(ellipse 55% 28% at 100% 0%, rgba(154, 186, 158, 0.12), transparent 65%),
       transparent;
-    display: flex;
-    flex-direction: column;
+    display: block;
+  }
+
+  /* Avoid a blank sheet between the setting guide and the sensory diet */
+  body.print-sensory-results .profile-section--setting-guide {
+    break-before: page;
+    page-break-before: always;
+    break-after: auto;
+    page-break-after: auto;
   }
 
   body.print-sensory-results .profile-section:not(.profile-section--scores) .profile-kicker {
@@ -8600,9 +8693,21 @@ body.is-pain-screen .site-footer {
     margin-bottom: 5mm;
   }
 
+  body.print-sensory-results .overall-score,
+  body.print-sensory-results .context-reading,
+  body.print-sensory-results .setting-guide__block,
+  body.print-sensory-results .setting-guide__hints,
+  body.print-sensory-results .teen-crew__hero,
+  body.print-sensory-results .teen-crew__member,
+  body.print-sensory-results .teen-crew__why,
+  body.print-sensory-results .interpret-glossary__item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   body.print-sensory-results .overall-score {
-    margin: 0 0 6mm;
-    padding: 6mm 6mm;
+    margin: 0 0 5mm;
+    padding: 5mm 5mm;
     border-radius: 10px;
     border: 1px solid rgba(54, 91, 70, 0.18);
     background: linear-gradient(165deg, #fafcf8, #eef4ee);
@@ -8622,8 +8727,6 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .teen-crew__hero {
-    break-inside: avoid;
-    page-break-inside: avoid;
     box-shadow: none;
   }
 
@@ -8650,18 +8753,15 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .teen-crew__member,
   body.print-sensory-results .teen-crew__why {
-    break-inside: avoid;
-    page-break-inside: avoid;
     box-shadow: none;
   }
 
   body.print-sensory-results .setting-guide {
-    gap: 4.5mm;
-    flex: 1;
+    gap: 4mm;
   }
 
   body.print-sensory-results .setting-guide__block {
-    padding: 4.5mm 5mm;
+    padding: 4mm 4.5mm;
     background: linear-gradient(160deg, rgba(250, 252, 248, 0.9), rgba(236, 244, 234, 0.65));
     border: 1px solid rgba(54, 91, 70, 0.14);
     border-radius: 8px;
@@ -8681,7 +8781,7 @@ body.is-pain-screen .site-footer {
     line-height: 1.45;
   }
 
-  /* —— Sense-by-sense: one full A4 page each —— */
+  /* —— Sense-by-sense: keep each category intact —— */
   body.print-sensory-results .profile-section--scores {
     break-before: auto;
     margin: 0;
@@ -8697,11 +8797,10 @@ body.is-pain-screen .site-footer {
     break-inside: avoid;
     page-break-inside: avoid;
     box-sizing: border-box;
-    min-height: 230mm;
+    min-height: 0;
     margin: 0;
-    padding: 3mm 2mm 8mm;
-    display: flex;
-    flex-direction: column;
+    padding: 2mm 2mm 10mm;
+    display: block;
     position: relative;
     background:
       radial-gradient(ellipse 60% 35% at 0% 0%, rgba(154, 186, 158, 0.16), transparent 60%),
@@ -8725,18 +8824,20 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .sense-interpret-intro .profile-section__summary {
     font-size: 10.5pt;
     line-height: 1.5;
-    margin-bottom: 6mm;
+    margin-bottom: 5mm;
   }
 
   body.print-sensory-results .sense-interpret-key {
     gap: 3mm;
-    margin-top: auto;
+    margin-top: 4mm;
   }
 
   body.print-sensory-results .sense-interpret-key__item {
     padding: 3.5mm 4mm;
     font-size: 10pt;
     border-radius: 8px;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   body.print-sensory-results .sense-glance,
@@ -8745,8 +8846,8 @@ body.is-pain-screen .site-footer {
     page-break-after: always;
     break-inside: avoid;
     page-break-inside: avoid;
-    min-height: 220mm;
-    padding: 4mm 2mm;
+    min-height: 0;
+    padding: 3mm 2mm 10mm;
     box-sizing: border-box;
     position: relative;
   }
@@ -8763,9 +8864,9 @@ body.is-pain-screen .site-footer {
     box-sizing: border-box;
     break-inside: avoid;
     page-break-inside: avoid;
-    min-height: 240mm;
+    min-height: 0;
     margin: 0;
-    padding: 0 0 14mm;
+    padding: 0 0 12mm;
     border-radius: 0;
     border: none;
     animation: none !important;
@@ -8972,26 +9073,33 @@ body.is-pain-screen .site-footer {
     clip-path: polygon(0 100%, 0 68%, 18% 50%, 36% 72%, 54% 48%, 72% 70%, 88% 54%, 100% 66%, 100% 100%);
   }
 
-  /* One detailed adult card per A4 page so nothing clips mid-card */
+  /* One detailed adult card per page; no trailing blank page after the last */
   body.print-sensory-results .profile-section--scores-adult .sense-interpret:not(:last-child) {
     break-after: page;
     page-break-after: always;
   }
 
   body.print-sensory-results .profile-section--scores-adult .sense-interpret:last-child {
-    break-after: page;
-    page-break-after: always;
+    break-after: auto;
+    page-break-after: auto;
   }
 
   /* Two shorter cards per page for teen / parent */
   body.print-sensory-results .profile-section--scores:not(.profile-section--scores-adult) .sense-interpret {
-    min-height: 110mm;
-    padding-bottom: 12mm;
+    min-height: 0;
+    padding-bottom: 10mm;
   }
 
   body.print-sensory-results .profile-section--scores:not(.profile-section--scores-adult) .sense-interpret:nth-child(2n):not(:last-child) {
     break-after: page;
     page-break-after: always;
+  }
+
+  body.print-sensory-results .sense-interpret__block,
+  body.print-sensory-results .sense-interpret__header,
+  body.print-sensory-results .sense-interpret__section {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   body.print-sensory-results .score-table__legend {
@@ -9000,7 +9108,7 @@ body.is-pain-screen .site-footer {
     font-size: 8.5pt;
   }
 
-  /* —— Sensory diet: own pages, sections stay intact —— */
+  /* —— Sensory diet: keep sections intact without blank pages —— */
   body.print-sensory-results .sensory-diet {
     break-before: page;
     page-break-before: always;
@@ -9026,27 +9134,29 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .sensory-diet__intro {
-    margin-bottom: 5mm;
+    margin-bottom: 4mm;
     font-size: 10pt;
+    break-after: avoid;
+    page-break-after: avoid;
   }
 
   body.print-sensory-results .sensory-diet__grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 5mm;
   }
 
   body.print-sensory-results .sensory-diet__section {
     break-inside: avoid;
     page-break-inside: avoid;
-    break-after: page;
-    page-break-after: always;
+    break-after: auto;
+    page-break-after: auto;
     box-sizing: border-box;
-    min-height: 230mm;
+    min-height: 0;
     margin: 0;
-    padding: 5mm 5mm 14mm;
-    border-radius: 0;
-    border: none;
+    padding: 5mm 5mm 8mm;
+    border-radius: 8px;
+    border: 1px solid rgba(54, 91, 70, 0.12);
     background:
       radial-gradient(ellipse 65% 30% at 100% 0%, color-mix(in srgb, var(--domain-color) 16%, transparent), transparent 65%),
       linear-gradient(180deg, #fafcf8, #f3f7f0);

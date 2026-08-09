@@ -5441,28 +5441,15 @@ function renderInterpretCover(copy, pageEntry) {
   const { firstName, surname } = splitPersonName(fullName);
   const parentName = (state.demographics.parentName || "").trim();
   const dateLabel = formatQuestionnaireDate(state.completedAt, state.language);
-  const nameLabel = copy.interpretCoverNameLabel || "Name";
-  const surnameLabel = copy.interpretCoverSurnameLabel || "Surname";
+  const displayName = [firstName, surname].filter(Boolean).join(" ") || fullName;
 
   const metaBlocks = [];
-  if (firstName || surname || fullName) {
-    if (firstName && surname) {
-      metaBlocks.push(`
-        <div class="interpret-cover__meta-block">
-          <p class="interpret-cover__meta-label">${escapeHtml(nameLabel)}</p>
-          <p class="interpret-cover__meta-name">${escapeHtml(firstName)}</p>
-        </div>
-        <div class="interpret-cover__meta-block">
-          <p class="interpret-cover__meta-label">${escapeHtml(surnameLabel)}</p>
-          <p class="interpret-cover__meta-name">${escapeHtml(surname)}</p>
-        </div>`);
-    } else {
-      metaBlocks.push(`
-        <div class="interpret-cover__meta-block interpret-cover__meta-block--wide">
-          <p class="interpret-cover__meta-label">${escapeHtml(copy.interpretCoverPreparedFor)}</p>
-          <p class="interpret-cover__meta-name">${escapeHtml(fullName || firstName)}</p>
-        </div>`);
-    }
+  if (displayName) {
+    metaBlocks.push(`
+      <div class="interpret-cover__meta-block interpret-cover__meta-block--wide">
+        <p class="interpret-cover__meta-label">${escapeHtml(copy.interpretCoverPreparedFor)}</p>
+        <p class="interpret-cover__meta-name">${escapeHtml(displayName)}</p>
+      </div>`);
     if (isParent && parentName) {
       metaBlocks.push(`
         <div class="interpret-cover__meta-block interpret-cover__meta-block--wide">
@@ -5508,6 +5495,8 @@ function renderInterpretCover(copy, pageEntry) {
         </div>
       </div>
       <div class="interpret-cover__content">
+        <p class="interpret-cover__studio">${escapeHtml(copy.interpretCoverStudioMark || "SoulfulSensoryOT")}</p>
+        <p class="interpret-cover__report-title">${escapeHtml(copy.interpretCoverReportTitle || "Sensory questionnaire results")}</p>
         <p class="interpret-cover__kicker">${escapeHtml(copy.scoreTableKicker)}</p>
         <h3 class="interpret-cover__title">${escapeHtml(title)}</h3>
         <blockquote class="interpret-cover__quote">
@@ -5528,9 +5517,51 @@ function renderInterpretCover(copy, pageEntry) {
 function renderInterpretGlossary(copy, pageEntry) {
   const terms = Array.isArray(copy.interpretGlossary) ? copy.interpretGlossary : [];
 
-  const arrowBullet = `<svg class="interpret-glossary__arrow" viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M2.2 7h8.2M7.4 3.6 11 7l-3.6 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const leafBullet = `<svg class="interpret-glossary__leaf-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M8.1 1.6c2.6 1.8 4.6 4.6 4.8 7.6.1 2.1-.7 3.9-2.3 4.7-1.1.55-2.3.45-3.2-.2C5.8 12.3 4.6 10 4.2 7.4 3.8 4.6 5.2 2.4 8.1 1.6z" fill="currentColor" opacity="0.92"/>
+      <path d="M8.05 3.1c.15 2.6.05 5.1-.55 7.55" fill="none" stroke="#f7faf6" stroke-width="0.85" stroke-linecap="round" opacity="0.55"/>
+    </svg>`;
 
   const scenery = {
+    leavesOval: `<svg viewBox="0 0 150 44" aria-hidden="true" focusable="false">
+      <g fill="currentColor">
+        <path d="M28 28c-4.2-7.5-.8-14.2 5.6-15.8 5.2-1.3 10.4 2.8 11.6 9.6 1 5.8-2.4 11.2-7.2 12.2-3.6.7-7.2-1.2-10-5.9z" opacity="0.55"/>
+        <path d="M52 18c-3.5-6.8.2-12.8 5.8-13.8 4.8-.9 9.4 2.6 10.4 8.6.9 5.2-2 10-6.4 11-3.4.7-6.8-1-9.8-5.8z" opacity="0.78"/>
+        <path d="M74 22c-3.8-7.2-.2-13.6 5.9-14.8 5-.9 9.8 2.8 11 9 .9 5.5-2.2 10.6-6.8 11.6-3.5.7-7-1.2-10.1-5.8z" opacity="0.62"/>
+        <path d="M96 17c-3.2-6.2.4-11.6 5.4-12.5 4.4-.8 8.6 2.4 9.5 7.8.8 4.8-1.8 9.2-5.8 10-3.2.7-6.4-1-9.1-5.3z" opacity="0.72"/>
+      </g>
+      <path d="M34 30c14-2 28-4.5 42-4.8 12-.2 24 1.2 36 4" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" opacity="0.4"/>
+      <path d="M52 18.5c.2 3.8-.2 7.2-1.4 10.2M74 22c.15 3.5-.3 6.8-1.5 9.6M96 17.5c.2 3.4-.15 6.5-1.2 9.2" fill="none" stroke="#f7faf6" stroke-width="0.7" stroke-linecap="round" opacity="0.35"/>
+    </svg>`,
+    leavesSprig: `<svg viewBox="0 0 150 48" aria-hidden="true" focusable="false">
+      <path d="M18 8c18 10 36 22 52 34" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+      <path d="M42 10c-1.2 4.8 1.8 9.6 6.8 11.2 4.2 1.4 8.6-.8 10.2-5.2 1.8-4.8-1-9.8-5.6-11.2C48.8 3.6 43.4 5.6 42 10z" fill="currentColor" opacity="0.7"/>
+      <path d="M62 20c-1 4.4 1.6 8.8 6.2 10.2 3.8 1.2 7.8-.8 9.2-4.8 1.6-4.4-.8-9-5.2-10.2-3.8-1.2-8.2.8-10.2 4.8z" fill="currentColor" opacity="0.82"/>
+      <path d="M84 30c-.9 4 1.5 8 5.8 9.2 3.5 1 7.2-.8 8.5-4.4 1.5-4-.7-8.2-4.8-9.3-3.5-1-7.6.8-9.5 4.5z" fill="currentColor" opacity="0.62"/>
+      <path d="M108 8c-16 11-30 24-42 36" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.32"/>
+      <path d="M118 14c1.1 4.2-1.4 8.6-5.8 10-3.8 1.2-7.8-.6-9.2-4.4-1.6-4.2.8-8.8 5-10.1 3.8-1.2 8 .7 10 4.5z" fill="currentColor" opacity="0.55"/>
+      <g fill="none" stroke="#f7faf6" stroke-width="0.65" stroke-linecap="round" opacity="0.4">
+        <path d="M48 8.5c1.2 3.2 1.4 6.4.4 9.2"/>
+        <path d="M68 19.5c1 2.8 1.1 5.6.2 8.2"/>
+        <path d="M89 30c.9 2.6 1 5.2.2 7.6"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-width="0.55" stroke-linecap="round" opacity="0.35">
+        <path d="M45.5 11.5l2.2-1.6M46.8 14.2l2.4-1M48 16.8l2.2-.6"/>
+        <path d="M65.5 22l2.2-1.4M66.8 24.5l2.3-.8M68 27l2.1-.5"/>
+      </g>
+    </svg>`,
+    leavesMaple: `<svg viewBox="0 0 120 48" aria-hidden="true" focusable="false">
+      <path d="M60 6.5c1.2 3.8 1.4 7.2.4 10.2 3.8-2.2 7.8-3 11.5-1.8 2.8.9 4.8 3 5.2 5.6.3 2.2-.6 4.2-2.4 5.4 3.6.4 6.8 2.2 8.8 5 1.6 2.2 1.8 4.8.4 6.8-1.2 1.8-3.4 2.6-5.6 2.2 2.2 2.8 2.8 6 1.4 8.6-1.4 2.6-4.4 3.8-7.2 3.2 1.6 3.2.8 6.6-1.6 8.4-2 1.5-4.6 1.4-6.4-.2.6 3.2-.8 6-3.4 7.2-2.2 1-4.8.4-6.2-1.6-.6 2.6-2.6 4.4-5.2 4.6-2.8.2-5.2-1.6-5.8-4.2-1.6 2-4.2 2.8-6.6 1.8-2.4-1-3.6-3.6-3-6.2-2.2 1.4-5 .8-6.6-1.4-1.6-2.2-1.2-5.2.8-7-2.4.2-4.6-.8-5.8-2.8-1.4-2.2-.8-5 1.2-6.8 1.8-1.6 4.4-2 6.6-1.2-2.2-2.6-2.4-6-.6-8.6 1.6-2.2 4.6-3 7-2 1.6-2.6 4.4-4 7.4-3.6 2.8.4 5 2.2 5.8 4.8.8-2.8 3-4.8 5.8-5.4 2.4-.5 4.8.4 6.2 2.4z" fill="currentColor" opacity="0.7"/>
+      <path d="M60 14.5c0 8.5-.2 16.5-1.2 24.5" fill="none" stroke="#f7faf6" stroke-width="0.85" stroke-linecap="round" opacity="0.4"/>
+      <path d="M58.8 22c-5.5-2.2-10.2-2.8-15.2-1.6M61.2 22c5.5-2.2 10.2-2.8 15.2-1.6M57.5 30c-4.8.6-9.2 2.4-12.8 5.2M62.5 30c4.8.6 9.2 2.4 12.8 5.2" fill="none" stroke="#f7faf6" stroke-width="0.65" stroke-linecap="round" opacity="0.28"/>
+      <path d="M60 40.5v5.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+    </svg>`,
+    leavesOak: `<svg viewBox="0 0 130 46" aria-hidden="true" focusable="false">
+      <path d="M22 24c2.2-6.5 6.8-10.5 12.2-10.8 3.2-.2 5.8 1 7.4 3.2 1.8-3.4 5.2-5.4 9-5.2 4 .2 7 2.8 8.2 6.4 2-2.8 5.4-4.2 9-3.8 4.2.4 7.2 3.4 8 7.2 2.2-2 5.4-2.8 8.6-2 3.8.9 6.4 4 6.8 7.6.2 2.4-.6 4.6-2.2 6.2 2.6 1.2 4.2 3.8 3.8 6.6-.4 3.2-3 5.4-6.2 5.6-1.8.1-3.4-.5-4.6-1.6-1.4 2.4-4 3.8-6.8 3.6-3.2-.2-5.8-2.4-6.4-5.2-1.8 2-4.6 3-7.4 2.6-3.2-.4-5.6-2.6-6.2-5.4-2 1.8-4.8 2.6-7.6 2-3.4-.6-5.8-3.2-6.2-6.4-2.2 1.2-4.8 1.4-7.2.4-3-.1-5-3.4-4.6-6.6.2-1.8 1.2-3.4 2.6-4.4z" fill="currentColor" opacity="0.58"/>
+      <path d="M78 20c1.8-5.2 5.6-8.4 10-8.6 2.6-.1 4.8.8 6.2 2.6 1.5-2.8 4.4-4.4 7.6-4.2 3.4.2 5.8 2.4 6.8 5.4 1.7-2.2 4.6-3.4 7.6-3 3.6.4 6.2 3 6.8 6.2.2 2-.4 3.8-1.8 5.2 2.2 1 3.6 3.2 3.2 5.6-.4 2.8-2.6 4.6-5.4 4.8-1.4.1-2.8-.4-3.8-1.2-1.2 2-3.4 3.2-5.8 3-2.8-.2-4.8-2-5.4-4.4-1.6 1.6-3.8 2.4-6.2 2.2-2.8-.3-4.8-2.2-5.2-4.6-1.7 1.4-4 2-6.2 1.6-2.8-.5-4.8-2.6-5.2-5.2-1.8 1-4 1.2-6 .2-2.6-1.2-4.2-3.8-3.8-6.6.2-1.4.9-2.6 2-3.4z" fill="currentColor" opacity="0.42"/>
+      <path d="M48 22c2 6.5 4.5 12.5 7.5 17.5" fill="none" stroke="#f7faf6" stroke-width="0.75" stroke-linecap="round" opacity="0.35"/>
+      <path d="M96 18c1.6 5.2 3.6 10 6 14.2" fill="none" stroke="#f7faf6" stroke-width="0.65" stroke-linecap="round" opacity="0.28"/>
+    </svg>`,
     sun: `<svg viewBox="0 0 120 40" aria-hidden="true" focusable="false">
       <defs>
         <radialGradient id="glossary-sun-glow" cx="50%" cy="55%" r="55%">
@@ -5555,19 +5586,9 @@ function renderInterpretGlossary(copy, pageEntry) {
       <path d="M48 12 C50.5 15.5 53 17.8 56.5 19.2M122 6 C119.5 9.5 117.8 12.2 114.5 14.5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
       <path d="M4 38h152" fill="none" stroke="currentColor" stroke-width="1" opacity="0.25" stroke-linecap="round"/>
     </svg>`,
-    birds: `<svg viewBox="0 0 130 36" aria-hidden="true" focusable="false">
-      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 20 C22 14.5 26.5 12.8 30 14.5 C33.2 12.2 37.5 13.5 41 19.5" stroke-width="1.35" opacity="0.7"/>
-        <path d="M48 14 C54 7.5 60.5 5.8 65.5 8.2 C70.2 5.2 76.5 6.8 82 15" stroke-width="1.55"/>
-        <path d="M86 22 C90.5 17.2 94.8 15.8 98.2 17.2 C101.4 15.2 105.2 16.4 108.5 21.8" stroke-width="1.25" opacity="0.65"/>
-        <path d="M64.8 8.4 C66.2 9.8 66.8 11.2 66.5 12.6" stroke-width="1.1" opacity="0.55"/>
-      </g>
-    </svg>`,
-    rabbit: `<svg viewBox="0 0 56 36" aria-hidden="true" focusable="false"><path d="M22 20c0-4.5 3.2-7.5 7.2-7.5S36.4 15.5 36.4 20c0 5.2-3.4 8.5-7.2 8.5S22 25.2 22 20z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M25.2 13.2c-1-5.5.2-9.2 2.2-9.5 1.4-.2 2.4 2.8 2.6 6.8M32.8 13.4c.4-5.2 1.8-8.8 3.5-8.7 1.6.1 1.8 4.2.6 8.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="32.2" cy="19.2" r="1.1" fill="currentColor"/><path d="M36.2 22.2c1.4.2 3 .8 3.8 1.8M20.5 28.5c2.2 1.4 5.2 2.2 8.7 2.2s6.2-.8 8.2-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-    deer: `<svg viewBox="0 0 64 36" aria-hidden="true" focusable="false"><path d="M18 24c2.5-5.5 8-8.5 14.5-8.5 5.2 0 9.5 2 12 5.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M42.5 21.5c2.2-.4 4.8.2 6.5 1.8M44 17.2c1.2-3.2 3.5-5 5.5-5.2M40.5 16c-.2-3.2 1.2-5.8 3.2-6.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M24 25.5v7M30.5 25.8v7.2M36 25.2v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="47.2" cy="22.2" r="1" fill="currentColor"/></svg>`,
   };
 
-  const sceneryOrder = ["sun", "mountains", "birds", "rabbit", "deer"];
+  const sceneryOrder = ["leavesOval", "leavesSprig", "leavesMaple", "leavesOak", "sun", "mountains"];
 
   const sceneryBreak = (kind) => `
     <li class="interpret-glossary__scenery interpret-glossary__scenery--${kind}" aria-hidden="true">
@@ -5579,22 +5600,62 @@ function renderInterpretGlossary(copy, pageEntry) {
     const id = entry.id || `term-${index}`;
     parts.push(`
       <li class="interpret-glossary__item interpret-glossary__item--${escapeHtml(id)}">
-        <span class="interpret-glossary__bullet" aria-hidden="true">${arrowBullet}</span>
+        <span class="interpret-glossary__bullet" aria-hidden="true">${leafBullet}</span>
         <div class="interpret-glossary__copy">
           <strong class="interpret-glossary__term">${escapeHtml(entry.term)}</strong>
           <span class="interpret-glossary__definition">${escapeHtml(entry.definition)}</span>
         </div>
       </li>`);
 
-    // Place a nature sketch between each pair of boxes (between rows on desktop)
     if (index % 2 === 1 && index < terms.length - 1) {
       const scene = sceneryOrder[Math.floor(index / 2) % sceneryOrder.length];
       parts.push(sceneryBreak(scene));
     }
   });
 
+  const cornerLeaves = `
+    <div class="interpret-glossary__foliage" aria-hidden="true">
+      <img
+        class="interpret-glossary__photo interpret-glossary__photo--sprig-top"
+        src="assets/glossary-leaves-sprig.png"
+        alt=""
+        width="800"
+        height="1000"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="interpret-glossary__photo interpret-glossary__photo--floor-tl"
+        src="assets/glossary-leaves-floor.png"
+        alt=""
+        width="1200"
+        height="1600"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="interpret-glossary__photo interpret-glossary__photo--floor-br"
+        src="assets/glossary-leaves-floor.png"
+        alt=""
+        width="1200"
+        height="1600"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="interpret-glossary__photo interpret-glossary__photo--sprig-side"
+        src="assets/glossary-leaves-sprig.png"
+        alt=""
+        width="800"
+        height="1000"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>`;
+
   return `
     <section class="interpret-glossary"${reportPageAttrs(pageEntry)} aria-labelledby="interpret-glossary-title">
+      ${cornerLeaves}
       <p class="profile-kicker">${escapeHtml(copy.interpretGlossaryKicker)}</p>
       <h3 id="interpret-glossary-title">${escapeHtml(copy.interpretGlossaryTitle)}</h3>
       ${printMountainRule("section")}
@@ -6309,13 +6370,6 @@ function syncQuestionnaireChrome() {
   const printTagline = document.getElementById("print-brand-tagline");
   if (printTagline) {
     printTagline.textContent = isAfrikaans ? "Arbeidsterapiedienste" : "Occupational Therapy Services";
-  }
-
-  const printFooterNote = document.querySelector(".print-brand__footer-note");
-  if (printFooterNote) {
-    printFooterNote.textContent = isAfrikaans
-      ? "Sensoriese siftingsresultate"
-      : "Sensory screening results";
   }
 
   const disclaimer = document.getElementById("footer-disclaimer");
