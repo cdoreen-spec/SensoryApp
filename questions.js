@@ -211,6 +211,10 @@ const QUESTIONNAIRE_UI = {
     interpretCoverParentLabel: "Parent / guardian",
     interpretCoverNameLabel: "Name",
     interpretCoverSurnameLabel: "Surname",
+    tocKicker: "This report",
+    tocTitle: "Contents",
+    tocIntro: "Each heading below matches a page in your sensory report.",
+    reportPageLabel: "Page",
     interpretGlossaryKicker: "Before you read on",
     interpretGlossaryTitle: "A short sensory glossary",
     interpretGlossaryIntro:
@@ -690,6 +694,10 @@ const QUESTIONNAIRE_UI = {
     interpretCoverParentLabel: "Ouer / voog",
     interpretCoverNameLabel: "Naam",
     interpretCoverSurnameLabel: "Van",
+    tocKicker: "Hierdie verslag",
+    tocTitle: "Inhoudsopgawe",
+    tocIntro: "Elke opskrif hieronder pas by ’n bladsy in jou sensoriese verslag.",
+    reportPageLabel: "Bladsy",
     interpretGlossaryKicker: "Voor jy verder lees",
     interpretGlossaryTitle: "’n Kort sensoriese verklarende woordeboek",
     interpretGlossaryIntro:

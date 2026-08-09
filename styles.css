@@ -4057,6 +4057,7 @@ body.is-pain-screen .site-footer {
 
 .card--results .results-intro,
 .card--results .interpret-cover,
+.card--results .interpret-toc,
 .card--results .interpret-glossary,
 .card--results .interpret-senses,
 .card--results .interpret-world,
@@ -4205,9 +4206,29 @@ body.is-pain-screen .site-footer {
 }
 
 .teen-crew__hero-art .teen-crew__art {
-  width: min(286px, 100%);
+  width: min(340px, 100%);
   height: auto;
-  filter: drop-shadow(0 16px 26px rgba(36, 75, 56, 0.24));
+  filter: drop-shadow(0 16px 26px rgba(36, 75, 56, 0.22));
+}
+
+.teen-crew__art--photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+  object-fit: cover;
+  object-position: center;
+  background: #e8efe6;
+}
+
+.teen-crew__hero-art .teen-crew__art--photo {
+  aspect-ratio: 4 / 3;
+  max-height: 280px;
+  object-fit: cover;
+}
+
+.teen-crew__art--explorer {
+  object-position: center 40%;
 }
 
 .teen-crew__hero-ridge {
@@ -4352,16 +4373,24 @@ body.is-pain-screen .site-footer {
 .teen-crew__member-art {
   display: grid;
   place-items: center;
-  min-height: 210px;
-  padding: 0.5rem;
+  min-height: 0;
+  padding: 0.35rem;
   border-radius: 16px;
+  overflow: hidden;
   background:
     radial-gradient(ellipse 70% 55% at 50% 30%, rgba(255, 255, 255, 0.65), transparent 70%);
 }
 
 .teen-crew__member-art .teen-crew__art {
-  width: min(200px, 100%);
+  width: 100%;
   height: auto;
+  filter: drop-shadow(0 8px 16px rgba(36, 75, 56, 0.14));
+}
+
+.teen-crew__member-art .teen-crew__art--photo {
+  aspect-ratio: 4 / 3;
+  max-height: 190px;
+  border-radius: 14px;
 }
 
 .teen-crew__you-pill {
@@ -4688,6 +4717,82 @@ body.is-pain-screen .site-footer {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(220, 232, 222, 0.72);
+}
+
+.interpret-toc {
+  position: relative;
+  margin: 0 0 1.75rem;
+  padding: 1.45rem 1.35rem 1.55rem;
+  background:
+    radial-gradient(ellipse 60% 40% at 0% 0%, rgba(154, 186, 158, 0.22), transparent 60%),
+    linear-gradient(168deg, #f7faf6 0%, #eef4ee 100%);
+  border: 1px solid rgba(54, 91, 70, 0.16);
+  border-radius: 18px;
+}
+
+.interpret-toc h3 {
+  margin: 0.15rem 0 0.55rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.55rem, 3.2vw, 1.95rem);
+  color: var(--forest);
+}
+
+.interpret-toc .profile-section__summary {
+  margin-bottom: 1.1rem;
+}
+
+.interpret-toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.interpret-toc__row {
+  margin: 0;
+}
+
+.interpret-toc__link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 0.45rem;
+  padding: 0.45rem 0.15rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(54, 91, 70, 0.1);
+}
+
+.interpret-toc__link:hover {
+  color: var(--forest);
+}
+
+.interpret-toc__title {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: inherit;
+}
+
+.interpret-toc__leader {
+  border-bottom: 1px dotted rgba(54, 91, 70, 0.35);
+  min-width: 1.5rem;
+  margin-bottom: 0.28rem;
+}
+
+.interpret-toc__page {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--forest);
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.report-page-number {
+  display: none;
 }
 
 .interpret-glossary {
@@ -7631,7 +7736,7 @@ body.is-pain-screen .site-footer {
 
   .print-brand--footer {
     bottom: 0;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 0.5rem;
     padding: 2mm 0 0;
     background: #fff;
@@ -7652,8 +7757,17 @@ body.is-pain-screen .site-footer {
   }
 
   .print-brand__footer-note {
-    margin-left: auto;
+    margin-left: 0;
     letter-spacing: 0.04em;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Reserve the bottom-right corner for per-page numbers */
+  .print-brand__footer-page-slot {
+    display: block;
+    width: 22mm;
+    flex-shrink: 0;
   }
 
   .app {
@@ -7771,8 +7885,9 @@ body.is-pain-screen .site-footer {
     box-shadow: none;
   }
 
-  /* Sensory results packet: cover → glossary → our senses → sensory world → scores */
+  /* Sensory results packet: cover → contents → glossary → our senses → sensory world → scores */
   body:not(.print-work-report) .interpret-cover,
+  body:not(.print-work-report) .interpret-toc,
   body:not(.print-work-report) .interpret-glossary,
   body:not(.print-work-report) .interpret-senses,
   body:not(.print-work-report) .interpret-world {
@@ -8009,6 +8124,139 @@ body.is-pain-screen .site-footer {
     color: rgba(36, 75, 56, 0.55);
     font-size: 8pt;
     letter-spacing: 0.08em;
+  }
+
+  /* —— Contents: after cover —— */
+  .interpret-toc {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-sizing: border-box;
+    min-height: 240mm;
+    margin: 0;
+    padding: 4mm 2mm 10mm;
+    border: none;
+    border-radius: 0;
+    background:
+      radial-gradient(ellipse 60% 35% at 0% 0%, rgba(154, 186, 158, 0.16), transparent 60%),
+      #fff;
+    position: relative;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .interpret-toc .profile-kicker {
+    font-size: 8.5pt;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    color: #3f6b4f;
+  }
+
+  .interpret-toc h3 {
+    font-family: var(--font-serif);
+    font-size: 22pt;
+    font-weight: 700;
+    color: #244b38;
+    margin: 1.5mm 0 2mm;
+  }
+
+  .interpret-toc .profile-section__summary {
+    font-size: 10.5pt;
+    line-height: 1.5;
+    margin-bottom: 6mm;
+  }
+
+  .interpret-toc__list {
+    gap: 1.2mm;
+  }
+
+  .interpret-toc__link {
+    padding: 1.8mm 0;
+    color: #1c2a22;
+    border-bottom-color: rgba(54, 91, 70, 0.16);
+  }
+
+  .interpret-toc__title {
+    font-size: 11pt;
+    line-height: 1.25;
+  }
+
+  .interpret-toc__leader {
+    margin-bottom: 1.2mm;
+  }
+
+  .interpret-toc__page {
+    font-size: 11pt;
+    min-width: 8mm;
+  }
+
+  .report-page-number {
+    display: flex !important;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0.35em;
+    position: absolute;
+    right: 0;
+    bottom: -12mm;
+    z-index: 10002;
+    margin: 0;
+    padding: 1mm 0 0;
+    min-width: 18mm;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: #244b38;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .report-page-number__label {
+    font-weight: 600;
+    color: #52775c;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 6.5pt;
+  }
+
+  .report-page-number__value {
+    font-family: var(--font-serif);
+    font-size: 10pt;
+    font-weight: 700;
+    color: #244b38;
+    min-width: 1.2em;
+    text-align: right;
+  }
+
+  /* Full-bleed pages clip overflow — keep the number inside the sheet */
+  .interpret-cover .report-page-number,
+  .interpret-senses .report-page-number,
+  .interpret-world .report-page-number {
+    right: 12mm;
+    bottom: 4mm;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 1mm 2mm;
+    border-radius: 3px;
+  }
+
+  .sense-interpret .report-page-number,
+  .sensory-diet__section .report-page-number {
+    right: 2mm;
+    bottom: 2mm;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 1mm 2mm;
+    border-radius: 3px;
+  }
+
+  .interpret-toc .report-page-number,
+  .interpret-glossary .report-page-number,
+  .profile-section .report-page-number,
+  .sense-interpret-intro .report-page-number,
+  .sense-glance .report-page-number {
+    right: 0;
+    bottom: -12mm;
   }
 
   /* —— Glossary: full A4 with nature accents —— */
@@ -8379,6 +8627,22 @@ body.is-pain-screen .site-footer {
     box-shadow: none;
   }
 
+  body.print-sensory-results .teen-crew__art--photo {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border-radius: 10px;
+  }
+
+  body.print-sensory-results .teen-crew__hero-art .teen-crew__art--photo {
+    max-height: 62mm;
+    width: auto;
+    max-width: 100%;
+  }
+
+  body.print-sensory-results .teen-crew__member-art .teen-crew__art--photo {
+    max-height: 42mm;
+  }
+
   body.print-sensory-results .teen-crew__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 3mm;
@@ -8438,6 +8702,7 @@ body.is-pain-screen .site-footer {
     padding: 3mm 2mm 8mm;
     display: flex;
     flex-direction: column;
+    position: relative;
     background:
       radial-gradient(ellipse 60% 35% at 0% 0%, rgba(154, 186, 158, 0.16), transparent 60%),
       #fff;
@@ -8483,6 +8748,7 @@ body.is-pain-screen .site-footer {
     min-height: 220mm;
     padding: 4mm 2mm;
     box-sizing: border-box;
+    position: relative;
   }
 
   body.print-sensory-results .sense-interpret-grid,
@@ -8838,6 +9104,7 @@ body.is-pain-screen .site-footer {
   body.print-work-report .results-atmosphere,
   body.print-work-report .results-intro,
   body.print-work-report .interpret-cover,
+  body.print-work-report .interpret-toc,
   body.print-work-report .interpret-glossary,
   body.print-work-report .interpret-senses,
   body.print-work-report .interpret-world,

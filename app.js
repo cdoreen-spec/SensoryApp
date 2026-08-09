@@ -4633,12 +4633,12 @@ function renderIdealSaturday() {
   );
 }
 
-function renderIdealSaturdayResults() {
+function renderIdealSaturdayResults(pageEntry) {
   const text = (state.idealSaturday || "").trim();
   if (!text) return "";
   const copy = currentUi();
   return `
-    <section class="profile-section ideal-saturday-results" aria-labelledby="ideal-saturday-results-title">
+    <section class="profile-section ideal-saturday-results"${reportPageAttrs(pageEntry)} aria-labelledby="ideal-saturday-results-title">
       <p class="profile-kicker">${escapeHtml(copy.idealSaturdayTag)}</p>
       <h3 id="ideal-saturday-results-title">${escapeHtml(copy.idealSaturdayResultsTitle)}</h3>
       ${printMountainRule("section")}
@@ -4646,6 +4646,7 @@ function renderIdealSaturdayResults() {
       <blockquote class="ideal-saturday-results__quote">
         <p>${escapeHtml(text)}</p>
       </blockquote>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
@@ -4778,7 +4779,7 @@ function renderBalanceBar(
     </div>`;
 }
 
-function renderAdultSenseGlance(rows, copy) {
+function renderAdultSenseGlance(rows, copy, pageEntry) {
   const cards = rows
     .map(
       (row, index) => `
@@ -4797,9 +4798,10 @@ function renderAdultSenseGlance(rows, copy) {
     .join("");
 
   return `
-    <div class="sense-glance">
+    <div class="sense-glance"${reportPageAttrs(pageEntry)}>
       <p class="sense-glance__label">${escapeHtml(copy.scoreGlanceTitle)}</p>
       <ul class="sense-glance__grid">${cards}</ul>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
     </div>`;
 }
 
@@ -4872,7 +4874,7 @@ function senseInterpretTrail() {
     </div>`;
 }
 
-function renderSenseInterpretCard(row, index, copy, { detailed = false } = {}) {
+function renderSenseInterpretCard(row, index, copy, { detailed = false, pageEntry = null } = {}) {
   const meansBlock = detailed
     ? `
         <div class="sense-interpret__block sense-interpret__block--means">
@@ -4888,7 +4890,7 @@ function renderSenseInterpretCard(row, index, copy, { detailed = false } = {}) {
         class="sense-interpret${detailed ? " sense-interpret--detailed" : ""}"
         data-profile="${row.profile}"
         data-domain="${escapeHtml(row.id)}"
-        style="--domain-color:${row.color}; --interpret-delay:${index * 55}ms"
+        style="--domain-color:${row.color}; --interpret-delay:${index * 55}ms"${reportPageAttrs(pageEntry)}
       >
         <div class="sense-interpret__print-band print-only" aria-hidden="true"></div>
         <header class="sense-interpret__header">
@@ -4929,6 +4931,7 @@ function renderSenseInterpretCard(row, index, copy, { detailed = false } = {}) {
           <span class="sense-interpret__print-footer-peak sense-interpret__print-footer-peak--mid"></span>
           <span class="sense-interpret__print-footer-peak sense-interpret__print-footer-peak--near"></span>
         </div>
+        ${reportPageNumberHtml(copy, pageEntry?.page)}
       </article>`;
 }
 
@@ -5015,12 +5018,12 @@ function renderOverallScoreCard(metrics, copy) {
   `;
 }
 
-function renderOverallSummary(metrics) {
+function renderOverallSummary(metrics, pageEntry) {
   const copy = currentUi();
   const contextOverview = getContextOverview(state.lifeContext, metrics.lean, state.language);
   const framing = getContextFraming(state.lifeContext, state.language);
   return `
-    <section class="profile-section profile-section--overall" aria-labelledby="overall-title">
+    <section class="profile-section profile-section--overall"${reportPageAttrs(pageEntry, { includeId: false })} aria-labelledby="overall-title">
       <p class="profile-kicker">${escapeHtml(copy.overallPattern)}</p>
       <h3 id="overall-title">${escapeHtml(metrics.leanHeadline)}</h3>
       ${printMountainRule("section")}
@@ -5036,6 +5039,7 @@ function renderOverallSummary(metrics) {
       </div>`
           : ""
       }
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
@@ -5077,309 +5081,34 @@ function getTeenCrewRoster(copy) {
 }
 
 function teenCrewCharacterArt(id, suffix = id) {
-  const skyId = `crewSky-${suffix}`;
-  const skinId = `crewSkin-${suffix}`;
-  const skinShadeId = `crewSkinShade-${suffix}`;
-  const clothId = `crewCloth-${suffix}`;
-  const clothDeepId = `crewClothDeep-${suffix}`;
-  const ropeId = `crewRope-${suffix}`;
-  const groundId = `crewGround-${suffix}`;
-
-  if (id === "explorer") {
-    return `
-      <svg class="teen-crew__art teen-crew__art--explorer" viewBox="0 0 280 300" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="${skyId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#f7edd0"/>
-            <stop offset="45%" stop-color="#e8efd8"/>
-            <stop offset="100%" stop-color="#d4e2c4" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="${skinId}" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#efc8a0"/>
-            <stop offset="100%" stop-color="#c89464"/>
-          </linearGradient>
-          <linearGradient id="${skinShadeId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#e0b488"/>
-            <stop offset="100%" stop-color="#b07850"/>
-          </linearGradient>
-          <linearGradient id="${clothId}" x1="0" y1="0" x2="0.3" y2="1">
-            <stop offset="0%" stop-color="#e8bd62"/>
-            <stop offset="100%" stop-color="#b07e2c"/>
-          </linearGradient>
-          <linearGradient id="${clothDeepId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3d4a38"/>
-            <stop offset="100%" stop-color="#243028"/>
-          </linearGradient>
-          <linearGradient id="${ropeId}" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#d4b070"/>
-            <stop offset="50%" stop-color="#e8c888"/>
-            <stop offset="100%" stop-color="#b88840"/>
-          </linearGradient>
-          <radialGradient id="${groundId}" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#244b38" stop-opacity="0.22"/>
-            <stop offset="100%" stop-color="#244b38" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <rect width="280" height="300" fill="url(#${skyId})"/>
-        <circle cx="214" cy="48" r="30" fill="#f0e2b8" opacity="0.85"/>
-        <circle cx="214" cy="48" r="16" fill="#faf6e0"/>
-        <path d="M6 248 L42 178 L72 210 L118 108 L168 188 L208 142 L274 248Z" fill="#8faf98" opacity="0.4"/>
-        <path d="M2 248 L58 194 L96 224 L138 142 L184 204 L274 248Z" fill="#3f5f4a" opacity="0.52"/>
-        <path d="M118 108 L130 136 L122 132 L116 146 L110 136 L98 154Z" fill="#f7f4ea"/>
-        <ellipse cx="148" cy="262" rx="64" ry="14" fill="url(#${groundId})"/>
-        <!-- motion dust -->
-        <ellipse cx="72" cy="248" rx="18" ry="5" fill="#8a9a78" opacity="0.25"/>
-        <ellipse cx="98" cy="252" rx="10" ry="3" fill="#8a9a78" opacity="0.2"/>
-        <!-- trailing ropes behind -->
-        <path d="M176 156 C204 146 228 168 252 152 C262 144 272 154 264 164 C248 182 216 170 196 180 C184 186 176 176 176 166Z" fill="none" stroke="url(#${ropeId})" stroke-width="4" stroke-linecap="round"/>
-        <path d="M182 166 C206 158 230 178 250 164" fill="none" stroke="#a88440" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
-        <path d="M236 156 C244 150 254 156 250 168 C242 164 238 162 234 164" fill="none" stroke="#c4a060" stroke-width="2.8" stroke-linecap="round"/>
-        <path d="M248 160 C256 156 262 164 258 172 C252 168 250 166 248 168" fill="none" stroke="#d4b070" stroke-width="2.4" stroke-linecap="round"/>
-        <!-- rear leg drive -->
-        <path d="M118 188 C102 206 82 226 68 242 L86 248 C96 230 116 210 128 196Z" fill="url(#${clothDeepId})"/>
-        <path d="M118 188 C110 200 104 208 100 214" fill="none" stroke="#1a2420" stroke-width="1.5" opacity="0.35"/>
-        <path d="M62 238 L92 246 L88 262 L52 254Z" fill="#6b4a1e"/>
-        <path d="M56 250 L86 256" fill="none" stroke="#4a3210" stroke-width="1.5" stroke-linecap="round"/>
-        <!-- front stride leg -->
-        <path d="M142 186 C162 198 186 210 208 218 L202 236 C176 226 154 212 136 198Z" fill="url(#${clothDeepId})"/>
-        <path d="M196 214 L224 222 L216 240 L186 230Z" fill="#7a5a1e"/>
-        <path d="M200 226 L216 230" fill="none" stroke="#4a3210" stroke-width="1.5" stroke-linecap="round"/>
-        <!-- torso lean -->
-        <path d="M108 122 C100 154 108 186 138 194 C170 186 178 150 170 118 C156 112 122 114 108 122Z" fill="url(#${clothId})"/>
-        <path d="M120 138 C136 130 156 134 164 148" fill="none" stroke="#8a6420" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
-        <path d="M124 158 C140 152 156 156 162 168" fill="none" stroke="#8a6420" stroke-width="1.6" stroke-linecap="round" opacity="0.3"/>
-        <!-- collar / zipper -->
-        <path d="M132 120 L140 120 L138 136 L134 136Z" fill="#c99440"/>
-        <path d="M136 122 L138 168" fill="none" stroke="#8a6420" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
-        <!-- backpack -->
-        <path d="M158 124 C180 130 190 158 180 188 C170 180 162 156 158 124Z" fill="#8a5824"/>
-        <path d="M162 136 C176 140 182 160 176 178" fill="none" stroke="#5e3a14" stroke-width="2.2" stroke-linecap="round"/>
-        <rect x="166" y="148" width="14" height="10" rx="2.5" fill="#d8c48a"/>
-        <path d="M168 152 L178 152" stroke="#8a6a30" stroke-width="1.2"/>
-        <path d="M148 128 C156 126 162 130 164 138" fill="none" stroke="#6b4518" stroke-width="2.4" stroke-linecap="round"/>
-        <path d="M140 148 C150 146 158 152 160 162" fill="none" stroke="#6b4518" stroke-width="2.2" stroke-linecap="round"/>
-        <!-- harness coil at hip -->
-        <ellipse cx="148" cy="178" rx="13" ry="9" fill="#c4a060" stroke="#8a6a30" stroke-width="1.8"/>
-        <path d="M138 178 C144 172 154 172 158 178 C154 184 144 184 138 178Z" fill="none" stroke="#8a6a30" stroke-width="1.4"/>
-        <path d="M140 178 C146 174 152 174 156 178" fill="none" stroke="#e8d4a0" stroke-width="1.2" opacity="0.7"/>
-        <path d="M132 172 C126 166 122 170 126 176" fill="none" stroke="#b88840" stroke-width="2.5" stroke-linecap="round"/>
-        <!-- back arm pumping -->
-        <path d="M112 136 C88 146 70 164 60 184 L78 190 C86 172 102 156 120 148Z" fill="url(#${skinId})"/>
-        <ellipse cx="58" cy="186" rx="8" ry="7.5" fill="url(#${skinShadeId})"/>
-        <path d="M54 184 C50 180 48 184 52 188" fill="none" stroke="#a07050" stroke-width="1.2" opacity="0.5"/>
-        <!-- front arm reaching + rope end -->
-        <path d="M164 132 C186 118 212 110 234 104 L238 120 C214 126 190 136 168 148Z" fill="url(#${skinId})"/>
-        <ellipse cx="236" cy="110" rx="8.5" ry="8" fill="url(#${skinShadeId})"/>
-        <path d="M234 110 C250 98 266 110 260 126 C248 118 240 114 234 118" fill="none" stroke="url(#${ropeId})" stroke-width="3.2" stroke-linecap="round"/>
-        <path d="M256 118 C262 122 260 130 254 128" fill="none" stroke="#a88440" stroke-width="2" stroke-linecap="round"/>
-        <!-- neck + head -->
-        <path d="M130 114 L146 112 L144 126 L132 126Z" fill="url(#${skinId})"/>
-        <ellipse cx="140" cy="92" rx="22" ry="24" fill="url(#${skinId})"/>
-        <ellipse cx="128" cy="96" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.55"/>
-        <ellipse cx="152" cy="94" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.35"/>
-        <!-- hair windblown -->
-        <path d="M120 86 C124 60 148 52 164 64 C170 78 164 96 154 102 C140 92 126 92 120 86Z" fill="#3a4f38"/>
-        <path d="M152 66 C166 58 182 70 184 88" fill="none" stroke="#3a4f38" stroke-width="6" stroke-linecap="round"/>
-        <path d="M158 72 C170 68 178 78 176 90" fill="none" stroke="#2a3a2c" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
-        <!-- face -->
-        <path d="M128 84 C132 82 138 82 142 84" fill="none" stroke="#2f4230" stroke-width="1.6" stroke-linecap="round" opacity="0.4"/>
-        <path d="M146 82 C150 80 156 80 160 83" fill="none" stroke="#2f4230" stroke-width="1.6" stroke-linecap="round" opacity="0.4"/>
-        <ellipse cx="134" cy="90" rx="2.6" ry="3" fill="#2a332c"/>
-        <ellipse cx="150" cy="88" rx="2.6" ry="3" fill="#2a332c"/>
-        <circle cx="133.2" cy="89" r="0.7" fill="#f5efe6"/>
-        <circle cx="149.2" cy="87" r="0.7" fill="#f5efe6"/>
-        <path d="M140 92 C142 96 144 96 146 93" fill="none" stroke="#a07050" stroke-width="1.3" stroke-linecap="round"/>
-        <path d="M136 104 C144 110 154 108 160 100" fill="none" stroke="#a06a55" stroke-width="2" stroke-linecap="round"/>
-      </svg>`;
-  }
-
-  if (id === "observer") {
-    return `
-      <svg class="teen-crew__art teen-crew__art--observer" viewBox="0 0 280 300" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="${skyId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#d4e4ee"/>
-            <stop offset="50%" stop-color="#e2edeb"/>
-            <stop offset="100%" stop-color="#eef2ea" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="${skinId}" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#efc8a0"/>
-            <stop offset="100%" stop-color="#c89464"/>
-          </linearGradient>
-          <linearGradient id="${skinShadeId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#e0b488"/>
-            <stop offset="100%" stop-color="#b07850"/>
-          </linearGradient>
-          <linearGradient id="${clothId}" x1="0" y1="0" x2="0.2" y2="1">
-            <stop offset="0%" stop-color="#92acc8"/>
-            <stop offset="100%" stop-color="#4e6788"/>
-          </linearGradient>
-          <linearGradient id="${clothDeepId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3a4c58"/>
-            <stop offset="100%" stop-color="#243038"/>
-          </linearGradient>
-          <radialGradient id="${groundId}" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#244b38" stop-opacity="0.18"/>
-            <stop offset="100%" stop-color="#244b38" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <rect width="280" height="300" fill="url(#${skyId})"/>
-        <path d="M178 36 C198 24 224 34 222 58 C242 52 254 74 234 88 C244 108 218 122 196 110 C174 128 146 106 160 84 C138 76 146 48 178 36Z" fill="#c5d4de" opacity="0.88"/>
-        <path d="M8 250 L52 182 L88 214 L132 124 L180 196 L222 156 L272 250Z" fill="#9bb8c4" opacity="0.35"/>
-        <path d="M4 250 L66 196 L106 228 L148 152 L198 210 L272 250Z" fill="#4a6b7a" opacity="0.45"/>
-        <ellipse cx="140" cy="264" rx="58" ry="13" fill="url(#${groundId})"/>
-        <!-- distant bird -->
-        <path d="M214 112 C224 102 238 104 242 118 C232 124 222 120 214 112Z" fill="#6b8f9c"/>
-        <path d="M242 118 C252 112 262 122 256 132" fill="none" stroke="#4a6b7a" stroke-width="1.8" stroke-linecap="round"/>
-        <!-- wildflower left -->
-        <g transform="translate(42 200)">
-          <path d="M0 28 C0 14 2 4 2 0" stroke="#52775c" stroke-width="2.2" fill="none"/>
-          <circle cx="2" cy="-2" r="5.5" fill="#e8c96a"/>
-          <circle cx="-6" cy="-4" r="4.5" fill="#88a487"/>
-          <circle cx="9" cy="-5" r="4.5" fill="#a8c4ae"/>
-          <circle cx="8" cy="4" r="4" fill="#7b9e87"/>
-          <circle cx="-4" cy="4" r="3.8" fill="#c5d4c0"/>
-        </g>
-        <!-- legs rooted -->
-        <path d="M118 198 L108 248 L128 252 L134 202Z" fill="url(#${clothDeepId})"/>
-        <path d="M150 198 L146 248 L168 252 L166 202Z" fill="#2a3844"/>
-        <path d="M102 248 L132 252 L134 266 L96 262Z" fill="#1a2c36"/>
-        <path d="M140 248 L172 252 L174 266 L136 262Z" fill="#1a2c36"/>
-        <!-- jacket torso -->
-        <path d="M112 132 C106 168 114 200 140 208 C168 200 178 166 172 132 C158 124 126 124 112 132Z" fill="url(#${clothId})"/>
-        <path d="M124 148 C140 138 160 142 168 158" fill="none" stroke="#3e5678" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
-        <path d="M128 170 C144 162 160 166 166 178" fill="none" stroke="#3e5678" stroke-width="1.6" stroke-linecap="round" opacity="0.3"/>
-        <!-- jacket lapels -->
-        <path d="M132 134 L142 134 L140 156 L134 156Z" fill="#6a86a8"/>
-        <path d="M142 134 L152 136 L148 156 L140 156Z" fill="#5a7698"/>
-        <!-- chest camera strap + camera -->
-        <path d="M124 130 C136 156 148 156 160 132" fill="none" stroke="#1e262c" stroke-width="2.6" stroke-linecap="round"/>
-        <path d="M126 132 C138 154 150 154 158 134" fill="none" stroke="#4a5560" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
-        <rect x="124" y="156" width="34" height="24" rx="5" fill="#1e262c"/>
-        <rect x="128" y="160" width="26" height="16" rx="3" fill="#3a4650"/>
-        <circle cx="141" cy="168" r="7.5" fill="#12181e" stroke="#7a8a98" stroke-width="1.8"/>
-        <circle cx="141" cy="168" r="4" fill="#8eb0c4"/>
-        <circle cx="141" cy="168" r="1.8" fill="#cfe0ea"/>
-        <rect x="150" y="158" width="5" height="6" rx="1.2" fill="#d4b070"/>
-        <rect x="128" y="158" width="8" height="3" rx="1" fill="#5a6874"/>
-        <!-- left arm bracing binoculars -->
-        <path d="M116 140 C92 148 74 160 64 178 L84 186 C92 170 106 158 122 152Z" fill="url(#${skinId})"/>
-        <ellipse cx="62" cy="180" rx="8" ry="7.5" fill="url(#${skinShadeId})"/>
-        <!-- right arm lifting binoculars -->
-        <path d="M164 138 C184 120 202 104 220 94 L228 110 C208 120 190 136 170 152Z" fill="url(#${skinId})"/>
-        <ellipse cx="224" cy="100" rx="8" ry="7.5" fill="url(#${skinShadeId})"/>
-        <!-- neck + head angled to horizon -->
-        <path d="M134 122 L152 118 L150 134 L136 134Z" fill="url(#${skinId})"/>
-        <ellipse cx="146" cy="98" rx="21" ry="23" fill="url(#${skinId})"/>
-        <ellipse cx="134" cy="102" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.5"/>
-        <!-- hair -->
-        <path d="M128 92 C132 68 152 60 168 70 C172 84 164 102 154 108 C140 98 130 98 128 92Z" fill="#2f4638"/>
-        <path d="M156 72 C168 66 180 78 178 94" fill="none" stroke="#243830" stroke-width="4.5" stroke-linecap="round" opacity="0.65"/>
-        <!-- face (partially behind binoculars) -->
-        <path d="M136 90 C140 88 146 88 150 90" fill="none" stroke="#2f4230" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/>
-        <path d="M138 110 C146 116 156 114 162 106" fill="none" stroke="#a06a55" stroke-width="1.9" stroke-linecap="round"/>
-        <!-- binoculars raised to eyes — clear twin barrels -->
-        <g transform="translate(176 86) rotate(-16)">
-          <rect x="-2" y="2" width="46" height="18" rx="5" fill="#152830"/>
-          <rect x="0" y="0" width="20" height="22" rx="6" fill="#1f3640"/>
-          <rect x="24" y="0" width="20" height="22" rx="6" fill="#1f3640"/>
-          <rect x="18" y="6" width="8" height="10" rx="2" fill="#2a4a55"/>
-          <circle cx="10" cy="11" r="6.5" fill="#b8d8e8"/>
-          <circle cx="34" cy="11" r="6.5" fill="#b8d8e8"/>
-          <circle cx="10" cy="11" r="3.2" fill="#4a7890"/>
-          <circle cx="34" cy="11" r="3.2" fill="#4a7890"/>
-          <circle cx="10" cy="11" r="1.2" fill="#e8f4fa"/>
-          <circle cx="34" cy="11" r="1.2" fill="#e8f4fa"/>
-          <path d="M4 -6 C12 -14 32 -14 40 -6" fill="none" stroke="#1f3640" stroke-width="3" stroke-linecap="round"/>
-          <path d="M6 22 C10 28 34 28 38 22" fill="none" stroke="#152830" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-        </g>
-      </svg>`;
-  }
-
+  const assets = {
+    explorer: {
+      src: "assets/sensory-character-explorer.png?v=20260809e",
+      alt: "Sensory Explorer — I explore the trail",
+    },
+    adaptor: {
+      src: "assets/sensory-character-adaptor.png?v=20260809e",
+      alt: "Sensory Adaptor — I find my way",
+    },
+    observer: {
+      src: "assets/sensory-character-observer.png?v=20260809e",
+      alt: "Sensory Observer — I notice the trail",
+    },
+  };
+  const asset = assets[id] || assets.adaptor;
   return `
-    <svg class="teen-crew__art teen-crew__art--adaptor" viewBox="0 0 280 300" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="${skyId}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#dcefdc"/>
-          <stop offset="50%" stop-color="#e8f2e8"/>
-          <stop offset="100%" stop-color="#eef2ea" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="${skinId}" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#efc8a0"/>
-          <stop offset="100%" stop-color="#c89464"/>
-        </linearGradient>
-        <linearGradient id="${skinShadeId}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#e0b488"/>
-          <stop offset="100%" stop-color="#b07850"/>
-        </linearGradient>
-        <linearGradient id="${clothId}" x1="0" y1="0" x2="0.2" y2="1">
-          <stop offset="0%" stop-color="#a4c4a2"/>
-          <stop offset="100%" stop-color="#568a5e"/>
-        </linearGradient>
-        <linearGradient id="${clothDeepId}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3d4a38"/>
-          <stop offset="100%" stop-color="#2a342c"/>
-        </linearGradient>
-        <linearGradient id="${ropeId}" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#d4a04a"/>
-          <stop offset="50%" stop-color="#ecc070"/>
-          <stop offset="100%" stop-color="#b88038"/>
-        </linearGradient>
-        <radialGradient id="${groundId}" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#244b38" stop-opacity="0.18"/>
-          <stop offset="100%" stop-color="#244b38" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-      <rect width="280" height="300" fill="url(#${skyId})"/>
-      <path d="M10 250 L54 178 L90 208 L138 116 L186 194 L228 154 L274 250Z" fill="#a8c4ae" opacity="0.4"/>
-      <path d="M6 250 L68 194 L108 226 L150 142 L200 208 L274 250Z" fill="#52775c" opacity="0.48"/>
-      <ellipse cx="142" cy="264" rx="58" ry="13" fill="url(#${groundId})"/>
-      <!-- long rope held across -->
-      <path d="M22 146 C72 122 116 136 142 150 C170 134 214 120 262 146" fill="none" stroke="url(#${ropeId})" stroke-width="4.2" stroke-linecap="round"/>
-      <path d="M22 150 C72 128 116 140 142 154 C170 140 214 126 262 150" fill="none" stroke="#a87830" stroke-width="1.8" stroke-linecap="round" opacity="0.55"/>
-      <path d="M22 146 C16 136 8 136 4 144" stroke="url(#${ropeId})" stroke-width="3" stroke-linecap="round"/>
-      <path d="M262 146 C270 138 278 140 276 152" stroke="url(#${ropeId})" stroke-width="3" stroke-linecap="round"/>
-      <!-- balanced stance legs -->
-      <path d="M120 200 L110 248 L132 252 L138 204Z" fill="url(#${clothDeepId})"/>
-      <path d="M152 200 L148 248 L172 252 L170 204Z" fill="#354232"/>
-      <path d="M104 248 L136 252 L138 266 L98 262Z" fill="#243028"/>
-      <path d="M142 248 L176 252 L178 266 L138 262Z" fill="#243028"/>
-      <!-- torso -->
-      <path d="M114 132 C108 168 116 200 142 208 C170 200 180 166 174 132 C160 124 128 124 114 132Z" fill="url(#${clothId})"/>
-      <path d="M126 148 C144 138 162 144 170 160" fill="none" stroke="#3f6a48" stroke-width="2.2" stroke-linecap="round" opacity="0.45"/>
-      <path d="M130 168 C146 160 162 166 168 178" fill="none" stroke="#3f6a48" stroke-width="1.6" stroke-linecap="round" opacity="0.3"/>
-      <!-- collar -->
-      <path d="M134 134 L144 134 L142 152 L136 152Z" fill="#7aa67c"/>
-      <!-- belt + badge -->
-      <rect x="128" y="178" width="28" height="10" rx="2.5" fill="#3d5a47"/>
-      <circle cx="142" cy="183" r="4.2" fill="#f0e2b8" stroke="#7a5a1e" stroke-width="1.4"/>
-      <circle cx="142" cy="183" r="1.6" fill="#c4a060"/>
-      <!-- arms open holding rope -->
-      <path d="M118 140 C84 134 54 128 36 134 L40 152 C60 146 90 152 120 156Z" fill="url(#${skinId})"/>
-      <path d="M164 140 C196 132 226 124 246 132 L242 150 C222 142 194 150 162 156Z" fill="url(#${skinId})"/>
-      <ellipse cx="34" cy="140" rx="9" ry="8.5" fill="url(#${skinShadeId})"/>
-      <ellipse cx="248" cy="136" rx="9" ry="8.5" fill="url(#${skinShadeId})"/>
-      <!-- neck + head -->
-      <path d="M132 122 L150 122 L148 136 L134 136Z" fill="url(#${skinId})"/>
-      <ellipse cx="142" cy="98" rx="21" ry="23" fill="url(#${skinId})"/>
-      <ellipse cx="130" cy="102" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.5"/>
-      <ellipse cx="154" cy="100" rx="5" ry="6.5" fill="url(#${skinShadeId})" opacity="0.35"/>
-      <!-- hair -->
-      <path d="M124 92 C128 68 148 60 164 70 C168 84 160 102 150 108 C136 98 126 98 124 92Z" fill="#243d2e"/>
-      <path d="M152 72 C164 66 176 78 174 94" fill="none" stroke="#1a2e22" stroke-width="4.5" stroke-linecap="round" opacity="0.65"/>
-      <!-- face -->
-      <path d="M130 88 C134 86 140 86 144 88" fill="none" stroke="#2f4230" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-      <path d="M148 86 C152 84 158 84 162 88" fill="none" stroke="#2f4230" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-      <ellipse cx="136" cy="96" rx="2.5" ry="2.9" fill="#2a332c"/>
-      <ellipse cx="152" cy="95" rx="2.5" ry="2.9" fill="#2a332c"/>
-      <circle cx="135.2" cy="95" r="0.65" fill="#f5efe6"/>
-      <circle cx="151.2" cy="94" r="0.65" fill="#f5efe6"/>
-      <path d="M142 98 C144 102 146 102 148 99" fill="none" stroke="#a07050" stroke-width="1.2" stroke-linecap="round"/>
-      <path d="M134 110 C142 116 152 116 158 108" fill="none" stroke="#a06a55" stroke-width="1.9" stroke-linecap="round"/>
-    </svg>`;
+    <img
+      class="teen-crew__art teen-crew__art--photo teen-crew__art--${escapeHtml(id)}"
+      src="${asset.src}"
+      alt="${escapeHtml(asset.alt)}"
+      width="1024"
+      height="768"
+      loading="lazy"
+      decoding="async"
+    />`;
 }
 
-function renderTeenCrewSummary(metrics) {
+function renderTeenCrewSummary(metrics, pageEntry) {
   if (state.respondent !== "teen") return "";
 
   const copy = currentUi();
@@ -5404,7 +5133,7 @@ function renderTeenCrewSummary(metrics) {
     .join("");
 
   return `
-    <section class="profile-section teen-crew" aria-labelledby="teen-crew-title" data-crew-you="${youId}">
+    <section class="profile-section teen-crew"${reportPageAttrs(pageEntry)} aria-labelledby="teen-crew-title" data-crew-you="${youId}">
       <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
       <h3 id="teen-crew-title">${escapeHtml(copy.teenCrewTitle)}</h3>
       ${printMountainRule("section")}
@@ -5441,12 +5170,13 @@ function renderTeenCrewSummary(metrics) {
           ${crewCards}
         </div>
       </div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
 }
 
-function renderAdultSettingGuide(scores, metrics) {
+function renderAdultSettingGuide(scores, metrics, pageEntry) {
   if (state.respondent !== "adult") return "";
   if (state.lifeContext !== "work" && state.lifeContext !== "home") return "";
 
@@ -5499,7 +5229,7 @@ function renderAdultSettingGuide(scores, metrics) {
       : "";
 
   return `
-    <section class="profile-section profile-section--setting-guide" aria-labelledby="setting-guide-title" data-setting-context="${escapeHtml(report.lifeContext)}" data-setting-profile="${escapeHtml(report.profile)}">
+    <section class="profile-section profile-section--setting-guide"${reportPageAttrs(pageEntry)} aria-labelledby="setting-guide-title" data-setting-context="${escapeHtml(report.lifeContext)}" data-setting-profile="${escapeHtml(report.profile)}">
       <p class="profile-kicker">${escapeHtml(report.kicker)}</p>
       <h3 id="setting-guide-title">${escapeHtml(report.title)}</h3>
       ${printMountainRule("section")}
@@ -5508,6 +5238,7 @@ function renderAdultSettingGuide(scores, metrics) {
         ${blocks}
         ${domainHints}
       </div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
@@ -5521,6 +5252,109 @@ function formatQuestionnaireDate(iso, language = "en") {
     month: "long",
     year: "numeric",
   }).format(date);
+}
+
+/** Ordered print pages for the sensory results packet (TOC + page numbers). */
+function buildReportPagePlan(copy, scores, metrics) {
+  const isParent = state.respondent === "parent";
+  const pages = [];
+  const add = (id, title, { listInToc = true } = {}) => {
+    const page = pages.length + 1;
+    const entry = { id, title: String(title || "").trim() || `Page ${page}`, page, listInToc };
+    pages.push(entry);
+    return entry;
+  };
+
+  add(
+    "report-cover",
+    isParent ? copy.interpretCoverTitleParent : copy.interpretCoverTitle
+  );
+  add("report-toc", copy.tocTitle, { listInToc: false });
+  add("report-glossary", copy.interpretGlossaryTitle);
+  add("report-senses", copy.interpretSensesTitle);
+  add("report-world", copy.interpretWorldTitle);
+  add("report-profile", isParent ? copy.profileTitleParent : copy.profileTitle);
+
+  if (state.respondent === "teen") {
+    add("report-teen-crew", copy.teenCrewTitle);
+  }
+  if ((state.idealSaturday || "").trim()) {
+    add("report-ideal-saturday", copy.idealSaturdayResultsTitle);
+  }
+
+  add("report-scores-intro", copy.scoreTableTitleAdult);
+  add("report-sense-glance", copy.scoreGlanceTitle);
+
+  getScoreRows(scores).forEach((row) => {
+    add(`report-sense-${row.id}`, row.shortTitle);
+  });
+
+  if (state.respondent === "adult" && (state.lifeContext === "work" || state.lifeContext === "home")) {
+    const settingReport = getAdultSettingReport(
+      state.lifeContext,
+      metrics.lean,
+      scores,
+      state.language
+    );
+    if (settingReport?.sections?.length) {
+      add("report-setting-guide", settingReport.title);
+    }
+  }
+
+  scores.forEach((score) => {
+    const plan = getSensoryDietPlan(score.id, score.profile, state.language, state.lifeContext);
+    if (plan.contextual.length || plan.general.length) {
+      add(`report-diet-${score.id}`, score.title);
+    }
+  });
+
+  return pages;
+}
+
+function reportPageById(plan, id) {
+  return plan.find((entry) => entry.id === id) || null;
+}
+
+function reportPageNumberHtml(copy, page) {
+  if (!page) return "";
+  const label = copy.reportPageLabel || "Page";
+  return `<p class="report-page-number print-only" aria-hidden="true"><span class="report-page-number__label">${escapeHtml(label)}</span> <span class="report-page-number__value">${page}</span></p>`;
+}
+
+function reportPageAttrs(entry, { includeId = true } = {}) {
+  if (!entry) return "";
+  const idAttr = includeId ? ` id="${escapeHtml(entry.id)}"` : "";
+  return `${idAttr} data-report-page="${entry.page}"`;
+}
+
+function renderInterpretToc(copy, plan, tocEntry) {
+  const rows = plan
+    .filter((entry) => entry.listInToc)
+    .map(
+      (entry) => `
+      <li class="interpret-toc__row">
+        <a class="interpret-toc__link" href="#${escapeHtml(entry.id)}">
+          <span class="interpret-toc__title">${escapeHtml(entry.title)}</span>
+          <span class="interpret-toc__leader" aria-hidden="true"></span>
+          <span class="interpret-toc__page">${entry.page}</span>
+        </a>
+      </li>`
+    )
+    .join("");
+
+  return `
+    <section class="interpret-toc"${reportPageAttrs(tocEntry)} aria-labelledby="interpret-toc-title">
+      <p class="profile-kicker">${escapeHtml(copy.tocKicker)}</p>
+      <h3 id="interpret-toc-title">${escapeHtml(copy.tocTitle)}</h3>
+      ${printMountainRule("section")}
+      <p class="profile-section__summary">${escapeHtml(copy.tocIntro)}</p>
+      <ol class="interpret-toc__list">
+        ${rows}
+      </ol>
+      ${reportPageNumberHtml(copy, tocEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
 }
 
 /** Print-only mountain rule used between report sections. */
@@ -5599,7 +5433,7 @@ function printSenseNatureArt(domainId) {
     </div>`;
 }
 
-function renderInterpretCover(copy) {
+function renderInterpretCover(copy, pageEntry) {
   const isParent = state.respondent === "parent";
   const title = isParent ? copy.interpretCoverTitleParent : copy.interpretCoverTitle;
   const quote = isParent ? copy.interpretCoverQuoteParent : copy.interpretCoverQuote;
@@ -5646,7 +5480,7 @@ function renderInterpretCover(copy) {
   }
 
   return `
-    <section class="interpret-cover" aria-label="${escapeHtml(title)}">
+    <section class="interpret-cover"${reportPageAttrs(pageEntry)} aria-label="${escapeHtml(title)}">
       <div class="interpret-cover__media" aria-hidden="true">
         <img src="assets/outeniqua-trail-hero.png" alt="" class="interpret-cover__image" width="1536" height="1024" />
       </div>
@@ -5686,11 +5520,12 @@ function renderInterpretCover(copy) {
         }
         <p class="interpret-cover__credit">${escapeHtml(copy.interpretCoverCredit)}</p>
       </div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
     </section>
   `;
 }
 
-function renderInterpretGlossary(copy) {
+function renderInterpretGlossary(copy, pageEntry) {
   const terms = Array.isArray(copy.interpretGlossary) ? copy.interpretGlossary : [];
 
   const arrowBullet = `<svg class="interpret-glossary__arrow" viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M2.2 7h8.2M7.4 3.6 11 7l-3.6 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -5759,7 +5594,7 @@ function renderInterpretGlossary(copy) {
   });
 
   return `
-    <section class="interpret-glossary" aria-labelledby="interpret-glossary-title">
+    <section class="interpret-glossary"${reportPageAttrs(pageEntry)} aria-labelledby="interpret-glossary-title">
       <p class="profile-kicker">${escapeHtml(copy.interpretGlossaryKicker)}</p>
       <h3 id="interpret-glossary-title">${escapeHtml(copy.interpretGlossaryTitle)}</h3>
       ${printMountainRule("section")}
@@ -5767,14 +5602,15 @@ function renderInterpretGlossary(copy) {
       <ul class="interpret-glossary__list">
         ${parts.join("")}
       </ul>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
 }
 
-function renderInterpretOurSenses(copy) {
+function renderInterpretOurSenses(copy, pageEntry) {
   return `
-    <section class="interpret-senses" aria-labelledby="interpret-senses-title">
+    <section class="interpret-senses"${reportPageAttrs(pageEntry)} aria-labelledby="interpret-senses-title">
       <header class="interpret-senses__header no-print">
         <p class="profile-kicker">${escapeHtml(copy.interpretSensesKicker)}</p>
         <h3 id="interpret-senses-title">${escapeHtml(copy.interpretSensesTitle)}</h3>
@@ -5792,13 +5628,14 @@ function renderInterpretOurSenses(copy) {
           decoding="async"
         />
       </figure>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
     </section>
   `;
 }
 
-function renderInterpretSensoryWorld(copy) {
+function renderInterpretSensoryWorld(copy, pageEntry) {
   return `
-    <section class="interpret-world" aria-labelledby="interpret-world-title">
+    <section class="interpret-world"${reportPageAttrs(pageEntry)} aria-labelledby="interpret-world-title">
       <header class="interpret-world__header no-print">
         <p class="profile-kicker">${escapeHtml(copy.interpretWorldKicker)}</p>
         <h3 id="interpret-world-title">${escapeHtml(copy.interpretWorldTitle)}</h3>
@@ -5807,7 +5644,7 @@ function renderInterpretSensoryWorld(copy) {
       <figure class="interpret-world__figure">
         <img
           class="interpret-world__image"
-          src="assets/sensory-infographic.png?v=20260809d"
+          src="assets/sensory-infographic.png?v=20260809e"
           alt="${escapeHtml(copy.interpretWorldAria)}"
           width="2131"
           height="3200"
@@ -5815,25 +5652,33 @@ function renderInterpretSensoryWorld(copy) {
           decoding="async"
         />
       </figure>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
     </section>
   `;
 }
 
-function renderScoreTable(scores) {
+function renderScoreTable(scores, plan) {
   const copy = currentUi();
   const rows = getScoreRows(scores);
   const isParent = state.respondent === "parent";
   const title = copy.scoreTableTitleAdult;
   const intro = isParent ? copy.scoreTableIntroParent : copy.scoreTableIntroAdult;
   const framing = getContextFraming(state.lifeContext, state.language);
+  const introEntry = reportPageById(plan, "report-scores-intro");
+  const glanceEntry = reportPageById(plan, "report-sense-glance");
 
   const cards = rows
-    .map((row, index) => renderSenseInterpretCard(row, index, copy, { detailed: true }))
+    .map((row, index) =>
+      renderSenseInterpretCard(row, index, copy, {
+        detailed: true,
+        pageEntry: reportPageById(plan, `report-sense-${row.id}`),
+      })
+    )
     .join("");
 
   return `
     <section class="profile-section profile-section--scores profile-section--scores-adult" aria-labelledby="scores-title">
-      <div class="sense-interpret-intro">
+      <div class="sense-interpret-intro"${reportPageAttrs(introEntry)}>
         <p class="profile-kicker">${escapeHtml(copy.scoreTableKicker)}</p>
         <h3 id="scores-title">${escapeHtml(title)}</h3>
         ${printMountainRule("section")}
@@ -5861,9 +5706,10 @@ function renderScoreTable(scores) {
             ${escapeHtml(copy.scoreLeanSeeking)}
           </li>
         </ul>
+        ${reportPageNumberHtml(copy, introEntry?.page)}
         <div class="print-page-motif print-only" aria-hidden="true"></div>
       </div>
-      ${renderAdultSenseGlance(rows, copy)}
+      ${renderAdultSenseGlance(rows, copy, glanceEntry)}
       <div class="sense-interpret-grid sense-interpret-grid--adult">
         ${cards}
       </div>
@@ -6135,7 +5981,7 @@ function renderWorkReport(scores) {
   `;
 }
 
-function renderSensoryDiet(scores) {
+function renderSensoryDiet(scores, plan) {
   const copy = currentUi();
   const isParent = state.respondent === "parent";
   const open = state.showSensoryDiet;
@@ -6143,25 +5989,26 @@ function renderSensoryDiet(scores) {
   const framing = getContextFraming(state.lifeContext, state.language);
   const sections = scores
     .map((score) => {
-      const plan = getSensoryDietPlan(score.id, score.profile, state.language, state.lifeContext);
+      const dietPlan = getSensoryDietPlan(score.id, score.profile, state.language, state.lifeContext);
       const groups = [];
-      if (plan.contextual.length) {
+      if (dietPlan.contextual.length) {
         groups.push({
           label: framing ? framing.inSetting : context,
-          items: plan.contextual,
+          items: dietPlan.contextual,
           contextual: true,
         });
       }
-      if (plan.general.length) {
+      if (dietPlan.general.length) {
         groups.push({
           label: groups.length ? copy.dietEverywhere : "",
-          items: plan.general,
+          items: dietPlan.general,
           contextual: false,
         });
       }
       if (!groups.length) return "";
+      const pageEntry = reportPageById(plan, `report-diet-${score.id}`);
       return `
-        <article class="sensory-diet__section" style="--domain-color:${DOMAIN_COLORS[score.id]}" data-domain="${escapeHtml(score.id)}">
+        <article class="sensory-diet__section"${reportPageAttrs(pageEntry)} style="--domain-color:${DOMAIN_COLORS[score.id]}" data-domain="${escapeHtml(score.id)}">
           <header class="sensory-diet__section-header">
             <span class="sensory-diet__icon" aria-hidden="true">${score.icon}</span>
             <div>
@@ -6181,6 +6028,7 @@ function renderSensoryDiet(scores) {
           `
             )
             .join("")}
+          ${reportPageNumberHtml(copy, pageEntry?.page)}
         </article>
       `;
     })
@@ -6332,6 +6180,8 @@ function renderResults() {
   const context = lifeContextLabel();
   const framing = getContextFraming(state.lifeContext, state.language);
   const fromDashboard = Boolean(state.archiveReadOnly) && canAccessTherapistDashboard();
+  const pagePlan = buildReportPagePlan(copy, scores, metrics);
+  const profilePage = reportPageById(pagePlan, "report-profile");
 
   if (shouldEmailResultsToClinician()) {
     queueMicrotask(() => ensureResultsSubmitted());
@@ -6369,12 +6219,13 @@ function renderResults() {
 
       ${renderSampleReportBanner()}
 
-      ${renderInterpretCover(copy)}
-      ${renderInterpretGlossary(copy)}
-      ${renderInterpretOurSenses(copy)}
-      ${renderInterpretSensoryWorld(copy)}
+      ${renderInterpretCover(copy, reportPageById(pagePlan, "report-cover"))}
+      ${renderInterpretToc(copy, pagePlan, reportPageById(pagePlan, "report-toc"))}
+      ${renderInterpretGlossary(copy, reportPageById(pagePlan, "report-glossary"))}
+      ${renderInterpretOurSenses(copy, reportPageById(pagePlan, "report-senses"))}
+      ${renderInterpretSensoryWorld(copy, reportPageById(pagePlan, "report-world"))}
 
-      <div class="results-intro">
+      <div class="results-intro"${reportPageAttrs(profilePage)}>
         <p class="profile-kicker">${escapeHtml(copy.viewpoint)}</p>
         <h2>${escapeHtml(state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle)}</h2>
         ${printMountainRule("section")}
@@ -6400,12 +6251,12 @@ function renderResults() {
       </div>
 
       ${renderSharingPermissionsSummary()}
-      ${renderOverallSummary(metrics)}
-      ${renderTeenCrewSummary(metrics)}
-      ${renderIdealSaturdayResults()}
-      ${renderScoreTable(scores)}
-      ${renderAdultSettingGuide(scores, metrics)}
-      ${renderSensoryDiet(scores)}
+      ${renderOverallSummary(metrics, profilePage)}
+      ${renderTeenCrewSummary(metrics, reportPageById(pagePlan, "report-teen-crew"))}
+      ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}
+      ${renderScoreTable(scores, pagePlan)}
+      ${renderAdultSettingGuide(scores, metrics, reportPageById(pagePlan, "report-setting-guide"))}
+      ${renderSensoryDiet(scores, pagePlan)}
 
       <div class="results-contact">
         <h3>${escapeHtml(copy.contactTitle)}</h3>
