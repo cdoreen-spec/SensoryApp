@@ -3817,41 +3817,40 @@ function getTeenCheatSheet(scores, language = "en") {
 }
 
 /**
- * Shared classification rule: a net imbalance of at least 20% of the scored
- * items is needed before the answers lean sensitive or seeking.
+ * Shared classification rule: tally answers into sensitive / avoiding,
+ * sensory neutral, and sensory seeking, then pick whichever count is highest.
  * Used for both a single sense and the overall (all senses combined) score.
+ *
+ * Ties: if sensitive and seeking tie for highest, treat as neutral (mixed).
+ * If a pole ties with neutral for highest, prefer neutral.
  */
-function classifyBalance(sensitive, seeking, scored) {
+function classifyBalance(sensitive, seeking, scored, neutral = 0) {
   if (!scored) return { profile: "neutral", threshold: 0, diff: 0 };
 
-  const diff = sensitive - seeking;
-  const threshold = Math.max(1, Math.ceil(scored * 0.2));
+  const counts = {
+    sensitive: sensitive || 0,
+    neutral: neutral || 0,
+    seeking: seeking || 0,
+  };
+  const diff = counts.sensitive - counts.seeking;
+  const max = Math.max(counts.sensitive, counts.neutral, counts.seeking);
+  const tied = ["sensitive", "neutral", "seeking"].filter((key) => counts[key] === max);
 
-  let profile = "neutral";
-  if (diff >= threshold) profile = "sensitive";
-  else if (diff <= -threshold) profile = "seeking";
+  // Unique highest wins; any tie falls back to neutral (mixed / unclear lean).
+  const profile = tied.length === 1 ? tied[0] : "neutral";
 
-  return { profile, threshold, diff };
+  return { profile, threshold: max, diff };
 }
 
 /**
- * Position for the sensitive–neutral–seeking bar, 0 = fully sensitive,
- * 50 = even, 100 = fully seeking. The neutral band is stretched to 30–70 so
- * the marker always sits in the same zone as the classification above.
+ * Position for the sensitive-neutral-seeking bar from the three tallies:
+ * sensitive at 0, neutral at 50, seeking at 100 (weighted average).
  */
-function balancePercent(sensitive, seeking, scored, threshold) {
-  if (!scored || !threshold) return 50;
+function balancePercent(sensitive, seeking, scored, threshold, neutral = 0) {
+  const total = (sensitive || 0) + (seeking || 0) + (neutral || 0);
+  if (!total) return 50;
 
-  const ratio = Math.max(-1, Math.min(1, (seeking - sensitive) / scored));
-  const band = Math.min(0.99, threshold / scored);
-
-  if (Math.abs(ratio) <= band) {
-    return Math.round(50 + (ratio / band) * 20);
-  }
-
-  const overflow = (Math.abs(ratio) - band) / (1 - band);
-  const percent = 70 + overflow * 30;
-  return Math.round(ratio > 0 ? percent : 100 - percent);
+  return Math.round(((neutral || 0) * 50 + (seeking || 0) * 100) / total);
 }
 
 function scoreDomain(questions, answers) {
@@ -3882,7 +3881,7 @@ function scoreDomain(questions, answers) {
     return { sensitive: 0, seeking: 0, neutral: 0, profile: "neutral", scored: 0 };
   }
 
-  const { profile } = classifyBalance(sensitive, seeking, scored);
+  const { profile } = classifyBalance(sensitive, seeking, scored, neutral);
 
   return { sensitive, seeking, neutral, profile, scored };
 }
@@ -3906,7 +3905,7 @@ function scoreAllDomains(domainAnswers, domains, language = "en", respondent = "
 
 /**
  * Adds every sensory system together into one overall score, then classifies
- * the person as a whole using the same rule applied to each single sense.
+ * the person as a whole using the same highest-of-three rule applied to each sense.
  */
 function scoreOverall(domainScores, language = "en", respondent = "adult") {
   const profileLabels = getProfileLabels(language, respondent);
@@ -3929,7 +3928,12 @@ function scoreOverall(domainScores, language = "en", respondent = "adult") {
     }
   );
 
-  const { profile, threshold, diff } = classifyBalance(totals.sensitive, totals.seeking, totals.scored);
+  const { profile, threshold, diff } = classifyBalance(
+    totals.sensitive,
+    totals.seeking,
+    totals.scored,
+    totals.neutral
+  );
   const signals = totals.sensitive + totals.seeking;
 
   return {
@@ -3938,7 +3942,13 @@ function scoreOverall(domainScores, language = "en", respondent = "adult") {
     profile,
     threshold,
     diff,
-    balance: balancePercent(totals.sensitive, totals.seeking, totals.scored, threshold),
+    balance: balancePercent(
+      totals.sensitive,
+      totals.seeking,
+      totals.scored,
+      threshold,
+      totals.neutral
+    ),
     // Share of answered items that flagged a sensory response either way.
     intensity: totals.scored ? Math.round((signals / totals.scored) * 100) : 0,
     meta: profileLabels[profile],
