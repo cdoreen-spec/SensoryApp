@@ -2969,7 +2969,11 @@ body.is-pain-screen .site-footer {
   padding: 0.95rem 1.15rem 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.85rem 0.75rem;
+  /* marker · mile · name · desc · detail — shared across all four stops */
+  grid-template-rows: auto auto auto auto auto;
+  column-gap: 0.75rem;
+  row-gap: 0.28rem;
+  align-items: start;
   max-width: none;
 }
 
@@ -2986,10 +2990,10 @@ body.is-pain-screen .site-footer {
 
 .sensory-flow__place {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.65rem;
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 5;
+  justify-items: center;
   min-width: 0;
   padding: 0;
   text-align: center;
@@ -3004,6 +3008,7 @@ body.is-pain-screen .site-footer {
   place-items: center;
   width: 1.55rem;
   height: 1.55rem;
+  margin-bottom: 0.37rem;
   flex-shrink: 0;
   border-radius: 50%;
   background:
@@ -3023,10 +3028,10 @@ body.is-pain-screen .site-footer {
 }
 
 .sensory-flow__stop {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.28rem;
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 4;
+  justify-items: center;
   width: 100%;
   max-width: none;
   padding: 0.15rem 0.2rem 0;
@@ -3069,9 +3074,12 @@ body.is-pain-screen .site-footer {
   line-height: 1.4;
   color: var(--ink-soft);
   text-wrap: pretty;
+  width: 100%;
 }
 
 .sensory-flow__place-detail {
+  align-self: stretch;
+  width: 100%;
   margin-top: 0.35rem;
   padding-top: 0.4rem;
   border-top: 1px solid rgba(61, 90, 71, 0.14);
@@ -3246,7 +3254,8 @@ body.is-pain-screen .site-footer {
 
   .sensory-flow__trail {
     min-width: 36rem;
-    gap: 0.65rem 0.55rem;
+    column-gap: 0.55rem;
+    row-gap: 0.28rem;
     padding: 0.75rem 0.7rem 0;
   }
 
