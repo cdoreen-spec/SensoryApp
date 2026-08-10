@@ -4361,7 +4361,7 @@ body.is-pain-screen .site-footer {
 .trail-profile__figure {
   margin: 1.1rem auto 1.6rem;
   padding: 0;
-  max-width: min(520px, 100%);
+  max-width: min(720px, 100%);
   border-radius: 18px;
   overflow: hidden;
   border: 1.5px solid rgba(61, 90, 71, 0.14);
@@ -5029,13 +5029,114 @@ body.is-pain-screen .site-footer {
 
 .interpret-toc {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   margin: 0 0 1.75rem;
   padding: 1.45rem 1.35rem 1.55rem;
   background:
-    radial-gradient(ellipse 60% 40% at 0% 0%, rgba(154, 186, 158, 0.22), transparent 60%),
-    linear-gradient(168deg, #f7faf6 0%, #eef4ee 100%);
+    radial-gradient(ellipse 70% 48% at 8% -6%, rgba(154, 186, 158, 0.28), transparent 58%),
+    radial-gradient(ellipse 48% 40% at 96% 6%, rgba(196, 210, 154, 0.2), transparent 55%),
+    radial-gradient(ellipse 55% 42% at 50% 110%, rgba(104, 142, 118, 0.14), transparent 62%),
+    linear-gradient(168deg, #f8fbf7 0%, #eef5ee 48%, #e6efe4 100%);
   border: 1px solid rgba(54, 91, 70, 0.16);
   border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 12px 32px rgba(61, 90, 71, 0.06);
+}
+
+.interpret-toc__foliage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.interpret-toc__photo {
+  position: absolute;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.interpret-toc__photo--canopy {
+  left: 50%;
+  top: 42%;
+  width: min(118%, 42rem);
+  height: auto;
+  max-height: 78%;
+  object-fit: contain;
+  object-position: center bottom;
+  opacity: 0.11;
+  filter: saturate(0.55) brightness(1.45) contrast(0.85);
+  transform: translateX(-50%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 72%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 72%, transparent 100%);
+}
+
+.interpret-toc__photo--sprig-tr {
+  top: -6%;
+  right: -4%;
+  width: min(36%, 14rem);
+  height: auto;
+  max-height: 48%;
+  object-position: center top;
+  opacity: 0.22;
+  filter: saturate(0.7) brightness(1.12) contrast(0.92);
+  mask-image: linear-gradient(210deg, #000 0%, #000 45%, transparent 90%);
+  -webkit-mask-image: linear-gradient(210deg, #000 0%, #000 45%, transparent 90%);
+  transform: rotate(6deg);
+}
+
+.interpret-toc__photo--floor-bl {
+  left: -10%;
+  bottom: -12%;
+  width: min(54%, 19rem);
+  height: min(40%, 14rem);
+  object-position: 40% 55%;
+  opacity: 0.2;
+  filter: saturate(0.68) brightness(1.14) hue-rotate(-3deg);
+  mask-image: radial-gradient(ellipse 70% 68% at 35% 70%, #000 0%, transparent 74%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 68% at 35% 70%, #000 0%, transparent 74%);
+  transform: rotate(-8deg);
+}
+
+.interpret-toc__photo--sprig-br {
+  right: -8%;
+  bottom: -4%;
+  width: min(30%, 12rem);
+  height: auto;
+  max-height: 40%;
+  object-position: right bottom;
+  opacity: 0.18;
+  filter: saturate(0.72) brightness(1.1);
+  mask-image: linear-gradient(320deg, #000 0%, #000 40%, transparent 88%);
+  -webkit-mask-image: linear-gradient(320deg, #000 0%, #000 40%, transparent 88%);
+  transform: scaleX(-1) rotate(10deg);
+}
+
+.interpret-toc__photo--vine {
+  left: 4%;
+  top: 18%;
+  width: min(7%, 2.4rem);
+  height: auto;
+  opacity: 0.16;
+  filter: saturate(0.65) brightness(1.2);
+  object-fit: contain;
+}
+
+.interpret-toc > .profile-kicker,
+.interpret-toc > h3,
+.interpret-toc > .print-nature-rule,
+.interpret-toc > .profile-section__summary,
+.interpret-toc > .interpret-toc__list,
+.interpret-toc > .report-page-number,
+.interpret-toc > .print-page-motif {
+  position: relative;
+  z-index: 1;
 }
 
 .interpret-toc h3 {
@@ -8474,12 +8575,37 @@ body.is-pain-screen .site-footer {
     padding: 2mm 2mm 10mm;
     border: none;
     border-radius: 0;
+    box-shadow: none;
     background:
-      radial-gradient(ellipse 60% 35% at 0% 0%, rgba(154, 186, 158, 0.16), transparent 60%),
+      radial-gradient(ellipse 60% 35% at 0% 0%, rgba(154, 186, 158, 0.14), transparent 60%),
+      radial-gradient(ellipse 45% 30% at 100% 100%, rgba(104, 142, 118, 0.08), transparent 62%),
       #fff;
     position: relative;
+    isolation: isolate;
+    overflow: hidden;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .interpret-toc__photo--canopy {
+    opacity: 0.08;
+    filter: saturate(0.45) brightness(1.55) contrast(0.8);
+  }
+
+  .interpret-toc__photo--sprig-tr {
+    opacity: 0.16;
+  }
+
+  .interpret-toc__photo--floor-bl {
+    opacity: 0.14;
+  }
+
+  .interpret-toc__photo--sprig-br {
+    opacity: 0.12;
+  }
+
+  .interpret-toc__photo--vine {
+    opacity: 0.12;
   }
 
   .interpret-toc .profile-kicker {
@@ -8783,9 +8909,116 @@ body.is-pain-screen .site-footer {
     display: none !important;
   }
 
-  body.print-sensory-results .trail-profile .teen-crew__detail,
+  /* —— Matched character (Observer / Adaptor / Explorer): enlarged A4 page —— */
+  body.print-sensory-results .trail-profile .teen-crew__detail {
+    margin-top: 0;
+    padding: 4mm 0 0;
+    box-sizing: border-box;
+    min-height: 250mm;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__detail-title {
+    font-family: var(--font-serif);
+    font-size: 16pt;
+    font-weight: 700;
+    color: #244b38;
+    margin: 0 0 5mm;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero {
+    flex: 1;
+    grid-template-columns: minmax(70mm, 0.42fr) minmax(0, 1fr);
+    gap: 7mm 8mm;
+    margin: 0;
+    padding: 8mm 8mm 9mm;
+    border-radius: 12px;
+    border-width: 1.25pt;
+    align-items: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero-art {
+    gap: 2mm;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__art-scape-svg {
+    width: min(100%, 55mm);
+    max-height: 14mm;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero-art .teen-crew__art--photo {
+    max-height: 95mm;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__you-label {
+    font-size: 9.5pt;
+    letter-spacing: 0.14em;
+    margin-bottom: 2mm;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero-name {
+    font-size: 26pt;
+    line-height: 1.12;
+    margin-bottom: 3mm;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero-tag {
+    font-size: 10.5pt;
+    padding: 1.8mm 4mm;
+    margin-bottom: 4.5mm;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero-summary {
+    font-size: 12.5pt;
+    line-height: 1.45;
+    max-width: none;
+    margin-bottom: 4mm;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero-body {
+    font-size: 11pt;
+    line-height: 1.55;
+    max-width: none;
+  }
+
+  body.print-sensory-results .trail-profile .trail-profile__traits {
+    margin-top: 5mm;
+    padding-top: 4.5mm;
+  }
+
+  body.print-sensory-results .trail-profile .trail-profile__traits-title {
+    font-size: 9.5pt;
+    letter-spacing: 0.12em;
+    margin-bottom: 3mm;
+  }
+
+  body.print-sensory-results .trail-profile .trail-profile__traits-list {
+    gap: 2.8mm;
+  }
+
+  body.print-sensory-results .trail-profile .trail-profile__traits-list li {
+    font-size: 10.5pt;
+    line-height: 1.45;
+    padding-left: 6mm;
+  }
+
+  body.print-sensory-results .trail-profile .trail-profile__traits-list li::before {
+    top: 1.5mm;
+    width: 3.2mm;
+    height: 3.2mm;
+  }
+
   body.print-sensory-results .trail-profile .trail-profile__footer {
-    padding: 2mm 0 0;
+    margin: 6mm 0 0;
+    max-width: none;
+    font-size: 12pt;
+    line-height: 1.45;
   }
 
   /* —— Our senses infographic: full A4 page —— */
@@ -9169,6 +9402,10 @@ body.is-pain-screen .site-footer {
     max-height: 62mm;
     width: auto;
     max-width: 100%;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__hero-art .teen-crew__art--photo {
+    max-height: 95mm;
   }
 
   body.print-sensory-results .teen-crew__member-art .teen-crew__art--photo {

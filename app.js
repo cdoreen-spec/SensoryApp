@@ -5440,8 +5440,58 @@ function renderInterpretToc(copy, plan, tocEntry) {
     )
     .join("");
 
+  const foliage = `
+    <div class="interpret-toc__foliage" aria-hidden="true">
+      <img
+        class="interpret-toc__photo interpret-toc__photo--canopy"
+        src="forest-canopy.svg"
+        alt=""
+        width="1000"
+        height="440"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="interpret-toc__photo interpret-toc__photo--sprig-tr"
+        src="assets/glossary-leaves-sprig.png"
+        alt=""
+        width="800"
+        height="1000"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="interpret-toc__photo interpret-toc__photo--floor-bl"
+        src="assets/glossary-leaves-floor.png"
+        alt=""
+        width="1200"
+        height="1600"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="interpret-toc__photo interpret-toc__photo--sprig-br"
+        src="assets/glossary-leaves-sprig.png"
+        alt=""
+        width="800"
+        height="1000"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="interpret-toc__photo interpret-toc__photo--vine"
+        src="vine-sprig.svg"
+        alt=""
+        width="48"
+        height="120"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>`;
+
   return `
     <section class="interpret-toc"${reportPageAttrs(tocEntry)} aria-labelledby="interpret-toc-title">
+      ${foliage}
       <p class="profile-kicker">${escapeHtml(copy.tocKicker)}</p>
       <h3 id="interpret-toc-title">${escapeHtml(copy.tocTitle)}</h3>
       ${printMountainRule("section")}
