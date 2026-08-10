@@ -2843,7 +2843,7 @@ body.is-pain-screen .site-footer {
   isolation: isolate;
   overflow: hidden;
   width: min(980px, calc(100% - 1.25rem));
-  margin: -1.25rem auto 0.5rem;
+  margin: 2rem auto 0.5rem;
   padding: 0 0 1.85rem;
   text-align: center;
   color: var(--ink);
@@ -3222,7 +3222,7 @@ body.is-pain-screen .site-footer {
 @media (max-width: 720px) {
   .sensory-flow__places {
     width: min(100%, calc(100% - 0.75rem));
-    margin-top: -0.75rem;
+    margin-top: 1.5rem;
     padding-bottom: 1.5rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
