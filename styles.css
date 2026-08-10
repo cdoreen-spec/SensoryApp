@@ -4286,81 +4286,142 @@ body.is-pain-screen .site-footer {
   overflow: hidden;
 }
 
-.teen-crew__hero {
-  display: grid;
-  grid-template-columns: minmax(210px, 300px) minmax(0, 1fr);
-  gap: 1.4rem 1.85rem;
-  align-items: stretch;
-  margin: 1.15rem 0 1.5rem;
-  padding: 1.4rem 1.45rem 1.5rem;
-  border-radius: 22px;
-  border: 1.5px solid rgba(82, 119, 92, 0.3);
-  background:
-    radial-gradient(ellipse 50% 60% at 10% 15%, rgba(168, 196, 174, 0.45), transparent 58%),
-    linear-gradient(145deg, #f4faf4 0%, #dce8dc 55%, #c8dcc8 100%);
-  box-shadow: 0 14px 36px rgba(36, 75, 56, 0.1);
-  --crew-scape: #3f6b4f;
-  --crew-scape-soft: #6f9478;
-  --crew-scape-gold: #b8c48a;
-}
-
-.teen-crew__hero-art {
-  position: relative;
+.teen-crew__match {
+  margin-top: 1.75rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: stretch;
-  align-self: stretch;
-  min-height: 100%;
-  gap: 0.35rem;
+  align-items: stretch;
 }
 
-.teen-crew__art-scape {
-  flex: 1 1 0;
+.teen-crew__match-banner {
+  position: relative;
   display: grid;
-  place-items: center;
+  place-items: end stretch;
+  min-height: min(38vh, 16.5rem);
+  overflow: hidden;
+  border-radius: 20px;
+  isolation: isolate;
+  box-shadow: 0 18px 40px rgba(36, 75, 56, 0.14);
+}
+
+.teen-crew__match-banner-media,
+.teen-crew__match-banner-veil {
+  position: absolute;
+  inset: 0;
+}
+
+.teen-crew__match-banner-image {
   width: 100%;
-  min-height: 3.25rem;
-  pointer-events: none;
-  opacity: 0.9;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+  transform: scale(1.04);
 }
 
-.teen-crew__art-scape-svg {
-  width: min(100%, 13.5rem);
-  height: auto;
-  max-height: 5.5rem;
-  overflow: visible;
+.teen-crew__match-banner-veil {
+  background:
+    linear-gradient(180deg, rgba(12, 28, 18, 0.18) 0%, rgba(16, 36, 24, 0.38) 40%, rgba(10, 24, 16, 0.88) 100%),
+    linear-gradient(105deg, rgba(14, 32, 20, 0.42) 0%, transparent 58%);
 }
 
-.teen-crew__art-scape-ridge {
-  fill: var(--crew-scape);
+.teen-crew__match-banner-content {
+  position: relative;
+  z-index: 1;
+  padding: clamp(1.25rem, 3.2vw, 2rem);
+  max-width: 36rem;
+  color: #f4f8f4;
 }
 
-.teen-crew__art-scape-ridge--near {
-  fill: var(--crew-scape-soft);
+.teen-crew__detail-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 240, 232, 0.82);
 }
 
-.teen-crew__art-scape-path {
-  stroke: var(--crew-scape);
+.teen-crew__you-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 210, 0.9);
 }
 
-.teen-crew__art-scape-dot {
-  fill: var(--crew-scape-gold);
+.teen-crew__hero-name {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fafcf8;
+  text-wrap: balance;
+  text-shadow: 0 2px 18px rgba(10, 24, 16, 0.35);
 }
 
-.teen-crew__hero-photo {
+.teen-crew__hero-tag {
+  margin: 0 0 0.35rem;
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1f3d2c;
+  background: rgba(244, 248, 242, 0.9);
+  border: 1px solid rgba(244, 248, 242, 0.35);
+}
+
+.teen-crew__match-portrait {
   position: relative;
   z-index: 2;
-  width: 100%;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
+  margin: 1.15rem auto 0;
+  padding: 0;
+  width: min(100%, 42rem);
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1.5px solid rgba(61, 90, 71, 0.16);
+  box-shadow: 0 16px 36px rgba(36, 75, 56, 0.16);
+  background: #e8efe6;
 }
 
-.teen-crew__hero-art .teen-crew__art {
-  width: min(340px, 100%);
+.teen-crew__match-portrait .teen-crew__art--photo {
+  display: block;
+  width: 100%;
   height: auto;
-  filter: drop-shadow(0 16px 26px rgba(36, 75, 56, 0.22));
+  object-fit: contain;
+  object-position: center center;
+  background: #e8efe6;
+}
+
+.teen-crew__match-portrait .teen-crew__art--explorer,
+.teen-crew__match-portrait .teen-crew__art--observer,
+.teen-crew__match-portrait .teen-crew__art--adaptor {
+  object-position: center center;
+}
+
+.teen-crew__match-copy {
+  margin: 1.35rem auto 0;
+  width: min(100%, 42rem);
+}
+
+.teen-crew__hero-summary {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.05rem, 2.2vw, 1.18rem);
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--forest);
+  text-wrap: pretty;
+}
+
+.teen-crew__hero-body {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink);
+  text-wrap: pretty;
 }
 
 .teen-crew__art--photo {
@@ -4371,84 +4432,6 @@ body.is-pain-screen .site-footer {
   object-fit: cover;
   object-position: center;
   background: #e8efe6;
-}
-
-.teen-crew__hero-art .teen-crew__art--photo {
-  aspect-ratio: 4 / 3;
-  max-height: 280px;
-  object-fit: cover;
-}
-
-.teen-crew__art--explorer {
-  object-position: center 40%;
-}
-
-.teen-crew__hero-ridge {
-  position: absolute;
-  inset: auto 8% -4% 8%;
-  height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(36, 75, 56, 0.16), transparent 70%);
-  pointer-events: none;
-}
-
-.teen-crew__you-label {
-  margin: 0 0 0.25rem;
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--sage-dark);
-}
-
-.teen-crew__hero-name {
-  margin: 0 0 0.3rem;
-  font-family: var(--font-serif);
-  font-size: clamp(1.35rem, 3vw, 1.75rem);
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--forest);
-}
-
-.teen-crew__hero-tag {
-  margin: 0 0 0.75rem;
-  display: inline-block;
-  padding: 0.28rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--forest);
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(61, 90, 71, 0.16);
-}
-
-.teen-crew__hero-summary {
-  margin: 0 0 0.75rem;
-  max-width: 40rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.45;
-  color: var(--forest);
-}
-
-.teen-crew__hero-body {
-  margin: 0;
-  max-width: 40rem;
-  font-size: 1rem;
-  line-height: 1.55;
-  color: var(--ink);
-}
-
-.teen-crew__detail {
-  margin-top: 1.75rem;
-}
-
-.teen-crew__detail-title {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-serif);
-  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
-  font-weight: 700;
-  color: var(--forest);
 }
 
 .trail-profile__figure {
@@ -4469,8 +4452,8 @@ body.is-pain-screen .site-footer {
 }
 
 .trail-profile__traits {
-  margin-top: 1.1rem;
-  padding-top: 0.95rem;
+  margin-top: 1.15rem;
+  padding-top: 1rem;
   border-top: 1px solid rgba(61, 90, 71, 0.14);
 }
 
@@ -4488,7 +4471,14 @@ body.is-pain-screen .site-footer {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 1.1rem;
+}
+
+@media (max-width: 640px) {
+  .trail-profile__traits-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .trail-profile__traits-list li {
@@ -4678,37 +4668,21 @@ body.is-pain-screen .site-footer {
     grid-template-columns: 1fr;
   }
 
-  .teen-crew__hero {
-    grid-template-columns: 1fr;
-    text-align: center;
+  .teen-crew__match-banner {
+    min-height: min(34vh, 14.5rem);
+    border-radius: 16px;
   }
 
-  .teen-crew__hero-art {
-    max-width: 18rem;
-    margin: 0 auto;
-    min-height: 0;
+  .teen-crew__match-portrait {
+    margin-top: 1rem;
+    width: min(100%, 34rem);
+    border-radius: 14px;
   }
 
-  .teen-crew__art-scape {
-    min-height: 2.4rem;
-    flex: 0 0 auto;
-  }
-
-  .teen-crew__hero-body,
-  .teen-crew__hero-summary,
+  .teen-crew__match-copy,
   .teen-crew__why-body,
   .teen-crew__roster-intro,
-  .trail-profile__traits,
   .trail-profile__footer {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .trail-profile__traits-list {
-    text-align: left;
-  }
-
-  .teen-crew__hero-tag {
     margin-left: auto;
     margin-right: auto;
   }
@@ -9162,116 +9136,134 @@ body.is-pain-screen .site-footer {
     display: none !important;
   }
 
-  /* —— Matched character (Observer / Adapter / Explorer): enlarged A4 page —— */
+  /* —— Matched character (Observer / Adapter / Explorer): full A4 page —— */
   body.print-sensory-results .trail-profile .teen-crew__detail {
     margin-top: 0;
-    padding: 4mm 0 0;
+    padding: 0;
     box-sizing: border-box;
     min-height: 250mm;
     display: flex;
     flex-direction: column;
   }
 
-  body.print-sensory-results .trail-profile .teen-crew__detail-title {
-    font-family: var(--font-serif);
-    font-size: 16pt;
-    font-weight: 700;
-    color: #244b38;
-    margin: 0 0 5mm;
-  }
-
-  body.print-sensory-results .trail-profile .teen-crew__hero {
-    flex: 1;
-    grid-template-columns: minmax(70mm, 0.42fr) minmax(0, 1fr);
-    gap: 7mm 8mm;
-    margin: 0;
-    padding: 8mm 8mm 9mm;
-    border-radius: 12px;
-    border-width: 1.25pt;
-    align-items: center;
+  body.print-sensory-results .trail-profile .teen-crew__match-banner {
+    min-height: 68mm;
+    max-height: 72mm;
+    border-radius: 10px;
+    box-shadow: none;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  body.print-sensory-results .trail-profile .teen-crew__hero-art {
-    gap: 2mm;
+  body.print-sensory-results .trail-profile .teen-crew__match-banner-image {
+    object-position: center 40%;
   }
 
-  body.print-sensory-results .trail-profile .teen-crew__art-scape-svg {
-    width: min(100%, 55mm);
-    max-height: 14mm;
+  body.print-sensory-results .trail-profile .teen-crew__match-banner-content {
+    padding: 6mm 7mm 7mm;
+    max-width: none;
   }
 
-  body.print-sensory-results .trail-profile .teen-crew__hero-art .teen-crew__art--photo {
-    max-height: 95mm;
-    width: 100%;
-    max-width: 100%;
-    border-radius: 12px;
+  body.print-sensory-results .trail-profile .teen-crew__detail-title {
+    font-size: 8pt;
+    letter-spacing: 0.14em;
+    margin: 0 0 2.2mm;
+    color: rgba(232, 240, 232, 0.88);
   }
 
   body.print-sensory-results .trail-profile .teen-crew__you-label {
-    font-size: 9.5pt;
-    letter-spacing: 0.14em;
-    margin-bottom: 2mm;
+    font-size: 8.5pt;
+    letter-spacing: 0.12em;
+    margin-bottom: 1.2mm;
+    color: rgba(214, 228, 210, 0.92);
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-name {
-    font-size: 26pt;
+    font-size: 22pt;
     line-height: 1.12;
-    margin-bottom: 3mm;
+    margin-bottom: 4mm;
+    color: #fafcf8;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-tag {
-    font-size: 10.5pt;
-    padding: 1.8mm 4mm;
-    margin-bottom: 4.5mm;
+    font-size: 9.5pt;
+    padding: 1.4mm 3.5mm;
+    margin-bottom: 1.5mm;
+    color: #1f3d2c;
+    background: rgba(244, 248, 242, 0.94);
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__match-portrait {
+    margin: 5mm auto 0;
+    width: 148mm;
+    max-width: none;
+    border-radius: 10px;
+    border-width: 1pt;
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__match-portrait .teen-crew__art--photo {
+    max-height: 72mm;
+    width: 100%;
+    object-fit: contain;
+    border-radius: 0;
+  }
+
+  body.print-sensory-results .trail-profile .teen-crew__match-copy {
+    margin: 5mm auto 0;
+    width: 100%;
+    max-width: none;
+    flex: 1;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-summary {
-    font-size: 12.5pt;
-    line-height: 1.45;
+    font-size: 12pt;
+    line-height: 1.4;
     max-width: none;
-    margin-bottom: 4mm;
+    margin-bottom: 3.5mm;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-body {
-    font-size: 11pt;
-    line-height: 1.55;
+    font-size: 10.5pt;
+    line-height: 1.5;
     max-width: none;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits {
-    margin-top: 5mm;
-    padding-top: 4.5mm;
+    margin-top: 4.5mm;
+    padding-top: 4mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-title {
-    font-size: 9.5pt;
+    font-size: 8.5pt;
     letter-spacing: 0.12em;
-    margin-bottom: 3mm;
+    margin-bottom: 2.5mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-list {
-    gap: 2.8mm;
+    gap: 2.2mm;
+    grid-template-columns: 1fr 1fr;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-list li {
-    font-size: 10.5pt;
-    line-height: 1.45;
-    padding-left: 6mm;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    padding-left: 5.5mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-list li::before {
-    top: 1.5mm;
-    width: 3.2mm;
-    height: 3.2mm;
+    top: 1.3mm;
+    width: 2.8mm;
+    height: 2.8mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__footer {
-    margin: 6mm 0 0;
+    margin: 5mm 0 0;
     max-width: none;
-    font-size: 12pt;
-    line-height: 1.45;
+    font-size: 11pt;
+    line-height: 1.4;
   }
 
   /* —— Our senses infographic: full A4 page —— */
@@ -9636,7 +9628,7 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .context-reading,
   body.print-sensory-results .setting-guide__block,
   body.print-sensory-results .setting-guide__hints,
-  body.print-sensory-results .teen-crew__hero,
+  body.print-sensory-results .teen-crew__match,
   body.print-sensory-results .teen-crew__member,
   body.print-sensory-results .teen-crew__why,
   body.print-sensory-results .trail-profile__figure,
@@ -9667,12 +9659,9 @@ body.is-pain-screen .site-footer {
     line-height: 1.5;
   }
 
-  body.print-sensory-results .teen-crew__hero {
+  body.print-sensory-results .teen-crew__match-banner,
+  body.print-sensory-results .teen-crew__match-portrait {
     box-shadow: none;
-  }
-
-  body.print-sensory-results .teen-crew__art-scape {
-    opacity: 0.75;
   }
 
   body.print-sensory-results .teen-crew__art--photo {
@@ -9681,14 +9670,10 @@ body.is-pain-screen .site-footer {
     border-radius: 10px;
   }
 
-  body.print-sensory-results .teen-crew__hero-art .teen-crew__art--photo {
-    max-height: 62mm;
-    width: auto;
+  body.print-sensory-results .teen-crew__match-portrait .teen-crew__art--photo {
+    max-height: 72mm;
+    width: 100%;
     max-width: 100%;
-  }
-
-  body.print-sensory-results .trail-profile .teen-crew__hero-art .teen-crew__art--photo {
-    max-height: 95mm;
   }
 
   body.print-sensory-results .teen-crew__member-art .teen-crew__art--photo {
