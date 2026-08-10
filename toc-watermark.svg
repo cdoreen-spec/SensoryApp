@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <symbol id="tocLeaf" viewBox="0 0 48 80">
+      <path d="M24 3
+        C10 18 4 38 10 58
+        C13 66 19 74 24 78
+        C29 74 35 66 38 58
+        C44 38 38 18 24 3Z" fill="currentColor"/>
+      <path d="M24 14 C24 32 24 52 24 70" fill="none" stroke="#a8c0ab" stroke-width="1" stroke-opacity="0.28"/>
+      <path d="M24 28 C16 32 13 38 12 44
+               M24 44 C32 48 35 54 36 60
+               M24 56 C17 59 14 64 13 68" fill="none" stroke="#a8c0ab" stroke-width="0.75" stroke-opacity="0.2"/>
+    </symbol>
+  </defs>
+
+  <!-- Very light sage leaves, spread across the page -->
+  <g opacity="0.34">
+    <use href="#tocLeaf" x="36" y="36" width="44" height="74" fill="#c5d7c7" transform="rotate(-26 58 73)"/>
+    <use href="#tocLeaf" x="170" y="110" width="40" height="68" fill="#cddccf" transform="rotate(20 190 144)"/>
+    <use href="#tocLeaf" x="300" y="48" width="42" height="70" fill="#bfd3c2" transform="rotate(-8 321 83)"/>
+    <use href="#tocLeaf" x="460" y="92" width="38" height="64" fill="#d0dfd2" transform="rotate(14 479 124)"/>
+    <use href="#tocLeaf" x="620" y="40" width="44" height="72" fill="#c2d5c5" transform="rotate(-18 642 76)"/>
+    <use href="#tocLeaf" x="780" y="88" width="40" height="68" fill="#cad9cc" transform="rotate(22 800 122)"/>
+    <use href="#tocLeaf" x="900" y="30" width="46" height="76" fill="#b9ceb9" transform="rotate(-12 923 68)"/>
+
+    <use href="#tocLeaf" x="70" y="210" width="42" height="70" fill="#c8dac9" transform="rotate(28 91 245)"/>
+    <use href="#tocLeaf" x="240" y="250" width="40" height="66" fill="#d2e0d3" transform="rotate(-22 260 283)"/>
+    <use href="#tocLeaf" x="400" y="200" width="44" height="72" fill="#c0d4c3" transform="rotate(10 422 236)"/>
+    <use href="#tocLeaf" x="560" y="240" width="38" height="64" fill="#ccdccd" transform="rotate(-30 579 272)"/>
+    <use href="#tocLeaf" x="720" y="210" width="42" height="70" fill="#c5d7c7" transform="rotate(16 741 245)"/>
+    <use href="#tocLeaf" x="870" y="250" width="40" height="68" fill="#c9dbc9" transform="rotate(-14 890 284)"/>
+
+    <use href="#tocLeaf" x="40" y="360" width="44" height="74" fill="#bfd3c2" transform="rotate(18 62 397)"/>
+    <use href="#tocLeaf" x="190" y="390" width="40" height="66" fill="#d0dfd2" transform="rotate(-26 210 423)"/>
+    <use href="#tocLeaf" x="350" y="350" width="42" height="70" fill="#c8dac9" transform="rotate(32 371 385)"/>
+    <use href="#tocLeaf" x="520" y="380" width="38" height="64" fill="#c2d5c5" transform="rotate(-10 539 412)"/>
+    <use href="#tocLeaf" x="680" y="360" width="44" height="72" fill="#cddccf" transform="rotate(24 702 396)"/>
+    <use href="#tocLeaf" x="840" y="390" width="40" height="68" fill="#b9ceb9" transform="rotate(-20 860 424)"/>
+
+    <use href="#tocLeaf" x="100" y="500" width="42" height="70" fill="#cad9cc" transform="rotate(-16 121 535)"/>
+    <use href="#tocLeaf" x="280" y="520" width="40" height="66" fill="#c0d4c3" transform="rotate(26 300 553)"/>
+    <use href="#tocLeaf" x="460" y="490" width="44" height="72" fill="#d2e0d3" transform="rotate(-28 482 526)"/>
+    <use href="#tocLeaf" x="640" y="510" width="38" height="64" fill="#c5d7c7" transform="rotate(12 659 542)"/>
+    <use href="#tocLeaf" x="800" y="500" width="42" height="70" fill="#ccdccd" transform="rotate(-22 821 535)"/>
+  </g>
+
+  <!-- Soft, very gradual rolling hills -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Far gentle rise -->
+    <path
+      d="M-40 655
+         C90 630, 180 618, 290 635
+         C400 652, 500 610, 610 625
+         C720 640, 820 612, 1040 630
+         L1040 740 L-40 740 Z"
+      fill="#c8dac9"
+      fill-opacity="0.08"
+      stroke="#b0c7b3"
+      stroke-opacity="0.28"
+      stroke-width="2"
+    />
+    <!-- Near gentle hills -->
+    <path
+      d="M-40 690
+         C70 665, 160 655, 270 672
+         C380 690, 470 648, 580 662
+         C690 676, 790 650, 1040 668
+         L1040 760 L-40 760 Z"
+      fill="#bfd3c2"
+      fill-opacity="0.07"
+      stroke="#9eb6a1"
+      stroke-opacity="0.32"
+      stroke-width="2.3"
+    />
+    <!-- Soft inner contour -->
+    <path
+      d="M20 710
+         C130 685, 220 675, 330 690
+         C440 705, 540 668, 650 682
+         C760 696, 860 670, 1000 688"
+      stroke="#b0c7b3"
+      stroke-opacity="0.22"
+      stroke-width="1.6"
+    />
+  </g>
+</svg>
