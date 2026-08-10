@@ -5174,51 +5174,46 @@ function renderTeenCrewSummary(metrics, pageEntry) {
         />
       </figure>
 
-      <div class="teen-crew__detail">
-        <h4 class="teen-crew__detail-title">${escapeHtml(detailTitle)}</h4>
-        <div class="teen-crew__hero teen-crew__hero--${youId}">
-          <div class="teen-crew__hero-art" aria-hidden="true">
-            <div class="teen-crew__art-scape teen-crew__art-scape--top">
-              <svg class="teen-crew__art-scape-svg" viewBox="0 0 220 72" fill="none" focusable="false">
-                <path class="teen-crew__art-scape-ridge" d="M0 58 L28 34 L52 48 L78 18 L108 42 L138 22 L168 46 L196 28 L220 54 V72 H0Z" opacity="0.22"/>
-                <path class="teen-crew__art-scape-ridge teen-crew__art-scape-ridge--near" d="M0 64 L36 46 L62 56 L94 36 L128 54 L162 40 L198 58 L220 50 V72 H0Z" opacity="0.28"/>
-                <path class="teen-crew__art-scape-path" d="M12 50 Q48 28 86 44 T156 34 T208 48" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55"/>
-                <circle class="teen-crew__art-scape-dot" cx="86" cy="44" r="2.2" opacity="0.55"/>
-                <circle class="teen-crew__art-scape-dot" cx="156" cy="34" r="2.2" opacity="0.45"/>
-              </svg>
-            </div>
-            <div class="teen-crew__hero-photo">
-              ${teenCrewCharacterArt(youId, `hero-${youId}`)}
-              <div class="teen-crew__hero-ridge"></div>
-            </div>
-            <div class="teen-crew__art-scape teen-crew__art-scape--bottom">
-              <svg class="teen-crew__art-scape-svg" viewBox="0 0 220 72" fill="none" focusable="false">
-                <path class="teen-crew__art-scape-ridge" d="M0 14 L24 36 L48 22 L76 48 L110 24 L140 44 L170 20 L198 38 L220 18 V0 H0Z" opacity="0.22"/>
-                <path class="teen-crew__art-scape-ridge teen-crew__art-scape-ridge--near" d="M0 8 L34 28 L60 16 L92 38 L126 18 L160 34 L196 14 L220 24 V0 H0Z" opacity="0.28"/>
-                <path class="teen-crew__art-scape-path" d="M14 24 Q52 44 90 28 T158 40 T206 26" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55"/>
-                <circle class="teen-crew__art-scape-dot" cx="90" cy="28" r="2.2" opacity="0.55"/>
-                <circle class="teen-crew__art-scape-dot" cx="158" cy="40" r="2.2" opacity="0.45"/>
-              </svg>
-            </div>
+      <article class="teen-crew__detail teen-crew__match teen-crew__match--${youId}">
+        <header class="teen-crew__match-banner">
+          <div class="teen-crew__match-banner-media" aria-hidden="true">
+            <img
+              class="teen-crew__match-banner-image"
+              src="assets/matched-character-forest.png?v=20260810a"
+              alt=""
+              width="682"
+              height="1024"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
-          <div class="teen-crew__hero-copy">
+          <div class="teen-crew__match-banner-veil" aria-hidden="true"></div>
+          <div class="teen-crew__match-banner-content">
+            <p class="teen-crew__detail-title">${escapeHtml(detailTitle)}</p>
             <p class="teen-crew__you-label">${escapeHtml(youAre)}</p>
             <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
             <p class="teen-crew__hero-tag">${escapeHtml(you.tag)}</p>
-            <p class="teen-crew__hero-summary">${escapeHtml(you.summary)}</p>
-            <p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>
-            ${
-              traitItems
-                ? `
-            <div class="trail-profile__traits">
-              <p class="trail-profile__traits-title">${escapeHtml(copy.teenCrewTraitsTitle)}</p>
-              <ul class="trail-profile__traits-list">${traitItems}</ul>
-            </div>`
-                : ""
-            }
           </div>
+        </header>
+
+        <figure class="teen-crew__match-portrait">
+          ${teenCrewCharacterArt(youId, `hero-${youId}`)}
+        </figure>
+
+        <div class="teen-crew__match-copy">
+          <p class="teen-crew__hero-summary">${escapeHtml(you.summary)}</p>
+          <p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>
+          ${
+            traitItems
+              ? `
+          <div class="trail-profile__traits">
+            <p class="trail-profile__traits-title">${escapeHtml(copy.teenCrewTraitsTitle)}</p>
+            <ul class="trail-profile__traits-list">${traitItems}</ul>
+          </div>`
+              : ""
+          }
         </div>
-      </div>
+      </article>
 
       <p class="trail-profile__footer">${escapeHtml(footer)}</p>
       ${reportPageNumberHtml(copy, pageEntry?.page)}
