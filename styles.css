@@ -4167,7 +4167,7 @@ body.is-pain-screen .site-footer {
   display: grid;
   grid-template-columns: minmax(210px, 300px) minmax(0, 1fr);
   gap: 1.4rem 1.85rem;
-  align-items: center;
+  align-items: stretch;
   margin: 1.15rem 0 1.5rem;
   padding: 1.4rem 1.45rem 1.5rem;
   border-radius: 22px;
@@ -4176,6 +4176,9 @@ body.is-pain-screen .site-footer {
     radial-gradient(ellipse 55% 70% at 12% 20%, rgba(240, 226, 184, 0.35), transparent 60%),
     linear-gradient(145deg, rgba(250, 252, 248, 0.98) 0%, rgba(220, 232, 224, 0.75) 100%);
   box-shadow: 0 14px 36px rgba(36, 75, 56, 0.1);
+  --crew-scape: #3d5a47;
+  --crew-scape-soft: #789783;
+  --crew-scape-gold: #c4a86a;
 }
 
 .teen-crew__hero--explorer {
@@ -4183,6 +4186,9 @@ body.is-pain-screen .site-footer {
     radial-gradient(ellipse 50% 60% at 10% 15%, rgba(240, 226, 184, 0.55), transparent 58%),
     linear-gradient(145deg, #fff8e8 0%, #e7efd8 55%, #d5e3c8 100%);
   border-color: rgba(184, 140, 70, 0.35);
+  --crew-scape: #7a6434;
+  --crew-scape-soft: #a89058;
+  --crew-scape-gold: #d0b46a;
 }
 
 .teen-crew__hero--adaptor {
@@ -4190,6 +4196,9 @@ body.is-pain-screen .site-footer {
     radial-gradient(ellipse 50% 60% at 10% 15%, rgba(168, 196, 174, 0.45), transparent 58%),
     linear-gradient(145deg, #f4faf4 0%, #dce8dc 55%, #c8dcc8 100%);
   border-color: rgba(82, 119, 92, 0.3);
+  --crew-scape: #3f6b4f;
+  --crew-scape-soft: #6f9478;
+  --crew-scape-gold: #b8c48a;
 }
 
 .teen-crew__hero--observer {
@@ -4197,12 +4206,62 @@ body.is-pain-screen .site-footer {
     radial-gradient(ellipse 50% 60% at 10% 15%, rgba(180, 210, 220, 0.5), transparent 58%),
     linear-gradient(145deg, #f2f7fa 0%, #d7e4ea 55%, #c2d4de 100%);
   border-color: rgba(74, 107, 122, 0.32);
+  --crew-scape: #4a6b7a;
+  --crew-scape-soft: #7a96a4;
+  --crew-scape-gold: #9bb4c0;
 }
 
 .teen-crew__hero-art {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: stretch;
+  align-self: stretch;
+  min-height: 100%;
+  gap: 0.35rem;
+}
+
+.teen-crew__art-scape {
+  flex: 1 1 0;
   display: grid;
   place-items: center;
+  width: 100%;
+  min-height: 3.25rem;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.teen-crew__art-scape-svg {
+  width: min(100%, 13.5rem);
+  height: auto;
+  max-height: 5.5rem;
+  overflow: visible;
+}
+
+.teen-crew__art-scape-ridge {
+  fill: var(--crew-scape);
+}
+
+.teen-crew__art-scape-ridge--near {
+  fill: var(--crew-scape-soft);
+}
+
+.teen-crew__art-scape-path {
+  stroke: var(--crew-scape);
+}
+
+.teen-crew__art-scape-dot {
+  fill: var(--crew-scape-gold);
+}
+
+.teen-crew__hero-photo {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
 }
 
 .teen-crew__hero-art .teen-crew__art {
@@ -4270,12 +4329,104 @@ body.is-pain-screen .site-footer {
   border: 1px solid rgba(61, 90, 71, 0.16);
 }
 
+.teen-crew__hero-summary {
+  margin: 0 0 0.75rem;
+  max-width: 40rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--forest);
+}
+
 .teen-crew__hero-body {
   margin: 0;
   max-width: 40rem;
   font-size: 1rem;
   line-height: 1.55;
   color: var(--ink);
+}
+
+.teen-crew__detail {
+  margin-top: 1.75rem;
+}
+
+.teen-crew__detail-title {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+  font-weight: 700;
+  color: var(--forest);
+}
+
+.trail-profile__figure {
+  margin: 1.1rem auto 1.6rem;
+  padding: 0;
+  max-width: min(520px, 100%);
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1.5px solid rgba(61, 90, 71, 0.14);
+  box-shadow: 0 12px 32px rgba(36, 75, 56, 0.1);
+  background: #f3f1ea;
+}
+
+.trail-profile__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.trail-profile__traits {
+  margin-top: 1.1rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid rgba(61, 90, 71, 0.14);
+}
+
+.trail-profile__traits-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+}
+
+.trail-profile__traits-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.trail-profile__traits-list li {
+  position: relative;
+  padding-left: 1.35rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.trail-profile__traits-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #c8d9b8 0%, #6f8f6a 55%, #3d5a47 100%);
+  box-shadow: 0 0 0 2px rgba(61, 90, 71, 0.12);
+}
+
+.trail-profile__footer {
+  margin: 1.5rem 0 0;
+  max-width: 42rem;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--forest);
 }
 
 .teen-crew__why {
@@ -4439,11 +4590,29 @@ body.is-pain-screen .site-footer {
     text-align: center;
   }
 
+  .teen-crew__hero-art {
+    max-width: 18rem;
+    margin: 0 auto;
+    min-height: 0;
+  }
+
+  .teen-crew__art-scape {
+    min-height: 2.4rem;
+    flex: 0 0 auto;
+  }
+
   .teen-crew__hero-body,
+  .teen-crew__hero-summary,
   .teen-crew__why-body,
-  .teen-crew__roster-intro {
+  .teen-crew__roster-intro,
+  .trail-profile__traits,
+  .trail-profile__footer {
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .trail-profile__traits-list {
+    text-align: left;
   }
 
   .teen-crew__hero-tag {
@@ -4456,6 +4625,158 @@ body.is-pain-screen .site-footer {
   .teen-crew__member {
     transition: none;
   }
+}
+
+.results-section-bridge {
+  margin: 2.75rem 0 2.35rem;
+  padding: 2.1rem 1.35rem 2rem;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 0%, rgba(154, 186, 158, 0.14), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(236, 244, 238, 0.55) 100%);
+  border-top: 1px solid rgba(104, 139, 120, 0.22);
+  border-bottom: 1px solid rgba(104, 139, 120, 0.22);
+  border-radius: 0;
+}
+
+.results-section-bridge--home {
+  padding: 0 0 2rem;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(236, 244, 238, 0.4) 0%, rgba(255, 255, 255, 0.55) 42%, rgba(236, 244, 238, 0.6) 100%);
+}
+
+.results-section-bridge__visuals {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 0.55rem;
+  margin: 0 0 1.55rem;
+  padding: 0.55rem;
+  background:
+    linear-gradient(135deg, rgba(36, 75, 56, 0.08), rgba(120, 146, 123, 0.12)),
+    rgba(237, 242, 235, 0.9);
+}
+
+.results-section-bridge__shot {
+  position: relative;
+  margin: 0;
+  min-height: 11.5rem;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(61, 90, 71, 0.16);
+  box-shadow: 0 10px 28px rgba(36, 75, 56, 0.1);
+}
+
+.results-section-bridge__shot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 42%, rgba(36, 75, 56, 0.72) 100%),
+    linear-gradient(135deg, rgba(54, 91, 70, 0.12), transparent 55%);
+  pointer-events: none;
+}
+
+.results-section-bridge__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 11.5rem;
+  max-height: 15.5rem;
+  object-fit: cover;
+  object-position: center 40%;
+  filter: saturate(0.92) contrast(1.03);
+}
+
+.results-section-bridge__shot--adult .results-section-bridge__image {
+  object-position: center 55%;
+}
+
+.results-section-bridge__caption {
+  position: absolute;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: 0.75rem;
+  z-index: 1;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(250, 252, 248, 0.96);
+  text-shadow: 0 1px 8px rgba(20, 40, 28, 0.45);
+  text-align: left;
+}
+
+.results-section-bridge__rule {
+  display: block;
+  width: min(100%, 280px);
+  height: auto;
+  margin: 0 auto 1.15rem;
+  opacity: 0.72;
+}
+
+.results-section-bridge__kicker {
+  margin: 0 0 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+}
+
+.results-section-bridge__heading {
+  margin: 0 auto 1rem;
+  max-width: 22rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 3vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--forest);
+  text-wrap: balance;
+}
+
+.results-section-bridge__quote {
+  margin: 0 auto;
+  max-width: 36rem;
+  padding: 0 1.1rem;
+  border: none;
+}
+
+.results-section-bridge__quote p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.02rem, 2.2vw, 1.18rem);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--forest) 78%, var(--ink-soft));
+  text-wrap: pretty;
+}
+
+.results-section-bridge__credit {
+  margin: 0.95rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+  opacity: 0.85;
+}
+
+@media (max-width: 720px) {
+  .results-section-bridge__visuals {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .results-section-bridge__image {
+    max-height: 12.5rem;
+  }
+}
+
+.profile-section--setting-guide {
+  margin-top: 0.35rem;
 }
 
 .setting-guide {
@@ -5834,6 +6155,15 @@ body.is-pain-screen .site-footer {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid rgba(104, 139, 120, 0.22);
+}
+
+/* Give the glance strip room before the detailed sense cards */
+.profile-section--scores-adult .sense-glance {
+  margin-bottom: 2.85rem;
+}
+
+.profile-section--scores-adult .sense-interpret-grid--adult {
+  margin-top: 0.35rem;
 }
 
 .sense-glance__label {
@@ -8664,9 +8994,70 @@ body.is-pain-screen .site-footer {
   }
 
   /* Avoid a blank sheet between the setting guide and the sensory diet */
-  body.print-sensory-results .profile-section--setting-guide {
+  body.print-sensory-results .results-section-bridge {
     break-before: page;
     page-break-before: always;
+    break-after: avoid;
+    page-break-after: avoid;
+    margin: 0 0 8mm;
+    padding: 6mm 4mm 5mm;
+    background: transparent;
+    border-top: none;
+    border-bottom: 1px solid rgba(104, 139, 120, 0.28);
+  }
+
+  body.print-sensory-results .results-section-bridge--home {
+    padding: 0 0 5mm;
+  }
+
+  body.print-sensory-results .results-section-bridge__visuals {
+    gap: 2mm;
+    margin-bottom: 4mm;
+    padding: 1.5mm;
+    background: transparent;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .results-section-bridge__shot {
+    min-height: 0;
+    border-radius: 4px;
+    box-shadow: none;
+  }
+
+  body.print-sensory-results .results-section-bridge__image {
+    min-height: 28mm;
+    max-height: 36mm;
+  }
+
+  body.print-sensory-results .results-section-bridge__caption {
+    font-size: 7pt;
+    bottom: 2mm;
+    left: 2.5mm;
+  }
+
+  body.print-sensory-results .results-section-bridge__rule {
+    width: 180px;
+    margin-bottom: 3mm;
+  }
+
+  body.print-sensory-results .results-section-bridge__heading {
+    font-size: 16pt;
+    margin-bottom: 3mm;
+  }
+
+  body.print-sensory-results .results-section-bridge__quote p {
+    font-size: 11pt;
+  }
+
+  body.print-sensory-results .results-section-bridge__credit {
+    font-size: 8pt;
+    margin-top: 2.5mm;
+  }
+
+  body.print-sensory-results .profile-section--setting-guide {
+    break-before: auto;
+    page-break-before: auto;
     break-after: auto;
     page-break-after: auto;
   }
@@ -8700,6 +9091,8 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .teen-crew__hero,
   body.print-sensory-results .teen-crew__member,
   body.print-sensory-results .teen-crew__why,
+  body.print-sensory-results .trail-profile__figure,
+  body.print-sensory-results .trail-profile__traits,
   body.print-sensory-results .interpret-glossary__item {
     break-inside: avoid;
     page-break-inside: avoid;
@@ -8728,6 +9121,10 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .teen-crew__hero {
     box-shadow: none;
+  }
+
+  body.print-sensory-results .teen-crew__art-scape {
+    opacity: 0.75;
   }
 
   body.print-sensory-results .teen-crew__art--photo {

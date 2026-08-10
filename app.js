@@ -1121,18 +1121,22 @@ function buildResultsReport() {
     "— Overall pattern —",
     `Profile: ${profileLabelPlain(metrics.meta)}`,
     metrics.leanHeadline,
-    ...(state.respondent === "teen"
+    ...(shouldShowTrailProfile()
       ? (() => {
           const copy = currentUi();
+          const isParent = state.respondent === "parent";
           const roster = getTeenCrewRoster(copy);
           const you = roster.find((m) => m.id === getTeenCrewId(metrics.lean));
+          const youAre = isParent ? copy.teenCrewYouAreParent : copy.teenCrewYouAre;
           return you
             ? [
                 "",
-                "— Your trail role —",
-                `${copy.teenCrewYouAre}: ${you.name}`,
+                "— Sensory Trail Profile —",
+                `${youAre}: ${you.name}`,
                 you.tag,
+                you.summary,
                 you.body,
+                ...(you.traits || []).map((trait) => `• ${trait}`),
                 "",
                 copy.teenCrewWhyTitle,
                 copy.teenCrewWhyBody,
@@ -5051,31 +5055,43 @@ function getTeenCrewId(lean) {
   return "adaptor";
 }
 
+function shouldShowTrailProfile() {
+  if (state.respondent === "adult" && state.lifeContext === "work") return false;
+  return state.respondent === "adult" || state.respondent === "teen" || state.respondent === "parent";
+}
+
 function getTeenCrewRoster(copy) {
+  const isParent = state.respondent === "parent";
   return [
     {
-      id: "explorer",
-      lean: "seeking",
-      name: copy.teenCrewExplorerName,
-      tag: copy.teenCrewExplorerTag,
-      body: copy.teenCrewExplorerBody,
-      role: copy.teenCrewExplorerRole,
+      id: "observer",
+      lean: "sensitive",
+      name: copy.teenCrewObserverName,
+      tag: copy.teenCrewObserverTag,
+      summary: isParent ? copy.teenCrewObserverSummaryParent : copy.teenCrewObserverSummary,
+      body: isParent ? copy.teenCrewObserverBodyParent : copy.teenCrewObserverBody,
+      role: copy.teenCrewObserverRole,
+      traits: copy.teenCrewObserverTraits || [],
     },
     {
       id: "adaptor",
       lean: "neutral",
       name: copy.teenCrewAdaptorName,
       tag: copy.teenCrewAdaptorTag,
-      body: copy.teenCrewAdaptorBody,
+      summary: isParent ? copy.teenCrewAdaptorSummaryParent : copy.teenCrewAdaptorSummary,
+      body: isParent ? copy.teenCrewAdaptorBodyParent : copy.teenCrewAdaptorBody,
       role: copy.teenCrewAdaptorRole,
+      traits: copy.teenCrewAdaptorTraits || [],
     },
     {
-      id: "observer",
-      lean: "sensitive",
-      name: copy.teenCrewObserverName,
-      tag: copy.teenCrewObserverTag,
-      body: copy.teenCrewObserverBody,
-      role: copy.teenCrewObserverRole,
+      id: "explorer",
+      lean: "seeking",
+      name: copy.teenCrewExplorerName,
+      tag: copy.teenCrewExplorerTag,
+      summary: isParent ? copy.teenCrewExplorerSummaryParent : copy.teenCrewExplorerSummary,
+      body: isParent ? copy.teenCrewExplorerBodyParent : copy.teenCrewExplorerBody,
+      role: copy.teenCrewExplorerRole,
+      traits: copy.teenCrewExplorerTraits || [],
     },
   ];
 }
@@ -5109,70 +5125,144 @@ function teenCrewCharacterArt(id, suffix = id) {
 }
 
 function renderTeenCrewSummary(metrics, pageEntry) {
-  if (state.respondent !== "teen") return "";
+  if (!shouldShowTrailProfile()) return "";
 
   const copy = currentUi();
+  const isParent = state.respondent === "parent";
   const youId = getTeenCrewId(metrics.lean);
   const roster = getTeenCrewRoster(copy);
   const you = roster.find((member) => member.id === youId) || roster[1];
+  const title = isParent ? copy.teenCrewTitleParent : copy.teenCrewTitle;
+  const intro = isParent ? copy.teenCrewIntroParent : copy.teenCrewIntro;
+  const youAre = isParent ? copy.teenCrewYouAreParent : copy.teenCrewYouAre;
+  const detailTitle = isParent ? copy.teenCrewDetailTitleParent : copy.teenCrewDetailTitle;
+  const footer = isParent ? copy.teenCrewFooterParent : copy.teenCrewFooter;
 
-  const crewCards = roster
-    .map((member) => {
-      const isYou = member.id === youId;
-      return `
-        <article class="teen-crew__member teen-crew__member--${member.id}${isYou ? " is-you" : ""}" data-crew="${member.id}">
-          <div class="teen-crew__member-art">${teenCrewCharacterArt(member.id, `card-${member.id}`)}</div>
-          <div class="teen-crew__member-copy">
-            ${isYou ? `<span class="teen-crew__you-pill">${escapeHtml(copy.teenCrewBadge)}</span>` : ""}
-            <h4 class="teen-crew__member-name">${escapeHtml(member.name)}</h4>
-            <p class="teen-crew__member-tag">${escapeHtml(member.tag)}</p>
-            <p class="teen-crew__member-role">${escapeHtml(member.role)}</p>
-          </div>
-        </article>`;
-    })
+  const traitItems = (you.traits || [])
+    .map((trait) => `<li>${escapeHtml(trait)}</li>`)
     .join("");
 
   return `
-    <section class="profile-section teen-crew"${reportPageAttrs(pageEntry)} aria-labelledby="teen-crew-title" data-crew-you="${youId}">
+    <section class="profile-section teen-crew trail-profile"${reportPageAttrs(pageEntry)} aria-labelledby="teen-crew-title" data-crew-you="${youId}">
       <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
-      <h3 id="teen-crew-title">${escapeHtml(copy.teenCrewTitle)}</h3>
+      <h3 id="teen-crew-title">${escapeHtml(title)}</h3>
       ${printMountainRule("section")}
-      <p class="profile-section__summary">${escapeHtml(copy.teenCrewIntro)}</p>
+      <p class="profile-section__summary">${escapeHtml(intro)}</p>
 
-      <div class="teen-crew__hero teen-crew__hero--${youId}">
-        <div class="teen-crew__hero-art" aria-hidden="true">
-          ${teenCrewCharacterArt(youId, `hero-${youId}`)}
-          <div class="teen-crew__hero-ridge"></div>
-        </div>
-        <div class="teen-crew__hero-copy">
-          <p class="teen-crew__you-label">${escapeHtml(copy.teenCrewYouAre)}</p>
-          <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
-          <p class="teen-crew__hero-tag">${escapeHtml(you.tag)}</p>
-          <p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>
+      <figure class="trail-profile__figure">
+        <img
+          class="trail-profile__image"
+          src="assets/sensory-trail-profile.png?v=20260810a"
+          alt="${escapeHtml(copy.teenCrewSummaryAria)}"
+          width="1080"
+          height="1920"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+
+      <div class="teen-crew__detail">
+        <h4 class="teen-crew__detail-title">${escapeHtml(detailTitle)}</h4>
+        <div class="teen-crew__hero teen-crew__hero--${youId}">
+          <div class="teen-crew__hero-art" aria-hidden="true">
+            <div class="teen-crew__art-scape teen-crew__art-scape--top">
+              <svg class="teen-crew__art-scape-svg" viewBox="0 0 220 72" fill="none" focusable="false">
+                <path class="teen-crew__art-scape-ridge" d="M0 58 L28 34 L52 48 L78 18 L108 42 L138 22 L168 46 L196 28 L220 54 V72 H0Z" opacity="0.22"/>
+                <path class="teen-crew__art-scape-ridge teen-crew__art-scape-ridge--near" d="M0 64 L36 46 L62 56 L94 36 L128 54 L162 40 L198 58 L220 50 V72 H0Z" opacity="0.28"/>
+                <path class="teen-crew__art-scape-path" d="M12 50 Q48 28 86 44 T156 34 T208 48" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55"/>
+                <circle class="teen-crew__art-scape-dot" cx="86" cy="44" r="2.2" opacity="0.55"/>
+                <circle class="teen-crew__art-scape-dot" cx="156" cy="34" r="2.2" opacity="0.45"/>
+              </svg>
+            </div>
+            <div class="teen-crew__hero-photo">
+              ${teenCrewCharacterArt(youId, `hero-${youId}`)}
+              <div class="teen-crew__hero-ridge"></div>
+            </div>
+            <div class="teen-crew__art-scape teen-crew__art-scape--bottom">
+              <svg class="teen-crew__art-scape-svg" viewBox="0 0 220 72" fill="none" focusable="false">
+                <path class="teen-crew__art-scape-ridge" d="M0 14 L24 36 L48 22 L76 48 L110 24 L140 44 L170 20 L198 38 L220 18 V0 H0Z" opacity="0.22"/>
+                <path class="teen-crew__art-scape-ridge teen-crew__art-scape-ridge--near" d="M0 8 L34 28 L60 16 L92 38 L126 18 L160 34 L196 14 L220 24 V0 H0Z" opacity="0.28"/>
+                <path class="teen-crew__art-scape-path" d="M14 24 Q52 44 90 28 T158 40 T206 26" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55"/>
+                <circle class="teen-crew__art-scape-dot" cx="90" cy="28" r="2.2" opacity="0.55"/>
+                <circle class="teen-crew__art-scape-dot" cx="158" cy="40" r="2.2" opacity="0.45"/>
+              </svg>
+            </div>
+          </div>
+          <div class="teen-crew__hero-copy">
+            <p class="teen-crew__you-label">${escapeHtml(youAre)}</p>
+            <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
+            <p class="teen-crew__hero-tag">${escapeHtml(you.tag)}</p>
+            <p class="teen-crew__hero-summary">${escapeHtml(you.summary)}</p>
+            <p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>
+            ${
+              traitItems
+                ? `
+            <div class="trail-profile__traits">
+              <p class="trail-profile__traits-title">${escapeHtml(copy.teenCrewTraitsTitle)}</p>
+              <ul class="trail-profile__traits-list">${traitItems}</ul>
+            </div>`
+                : ""
+            }
+          </div>
         </div>
       </div>
 
-      <div class="teen-crew__why">
-        <div class="teen-crew__why-ornament" aria-hidden="true">
-          <svg viewBox="0 0 220 36" fill="none" focusable="false">
-            <path d="M4 28 L28 12 L44 22 L64 8 L88 20 L110 10 L132 22 L156 10 L180 20 L204 8 L216 28" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
-            <circle cx="110" cy="14" r="3" fill="#d8c48a"/>
-          </svg>
-        </div>
-        <h4 class="teen-crew__why-title">${escapeHtml(copy.teenCrewWhyTitle)}</h4>
-        <p class="teen-crew__why-body">${escapeHtml(copy.teenCrewWhyBody)}</p>
-      </div>
-
-      <div class="teen-crew__roster">
-        <h4 class="teen-crew__roster-title">${escapeHtml(copy.teenCrewCrewTitle)}</h4>
-        <p class="teen-crew__roster-intro">${escapeHtml(copy.teenCrewCrewIntro)}</p>
-        <div class="teen-crew__grid">
-          ${crewCards}
-        </div>
-      </div>
+      <p class="trail-profile__footer">${escapeHtml(footer)}</p>
       ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
+  `;
+}
+
+function renderSettingSectionBridge() {
+  if (state.respondent !== "adult") return "";
+  if (state.lifeContext !== "work" && state.lifeContext !== "home") return "";
+
+  const copy = currentUi();
+  const quote =
+    state.lifeContext === "work" ? copy.settingBridgeQuoteWork : copy.settingBridgeQuoteHome;
+  const isHome = state.lifeContext === "home";
+
+  const visuals = isHome
+    ? `
+      <div class="results-section-bridge__visuals" aria-hidden="true">
+        <figure class="results-section-bridge__shot results-section-bridge__shot--family">
+          <img
+            src="assets/home-life-family.png"
+            alt=""
+            class="results-section-bridge__image"
+            width="1024"
+            height="788"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption class="results-section-bridge__caption">${escapeHtml(copy.settingBridgeFamilyLabel)}</figcaption>
+        </figure>
+        <figure class="results-section-bridge__shot results-section-bridge__shot--adult">
+          <img
+            src="assets/home-life-adult.png"
+            alt=""
+            class="results-section-bridge__image"
+            width="1024"
+            height="682"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption class="results-section-bridge__caption">${escapeHtml(copy.settingBridgeAdultHomeLabel)}</figcaption>
+        </figure>
+      </div>`
+    : `<img src="mountain-divider.svg" alt="" class="results-section-bridge__rule" width="600" height="44" />`;
+
+  return `
+    <aside class="results-section-bridge${isHome ? " results-section-bridge--home" : ""}" aria-label="${escapeHtml(copy.settingBridgeHeading)}">
+      ${visuals}
+      <p class="results-section-bridge__kicker">${escapeHtml(copy.settingBridgeKicker)}</p>
+      <h3 class="results-section-bridge__heading">${escapeHtml(copy.settingBridgeHeading)}</h3>
+      <blockquote class="results-section-bridge__quote">
+        <p>${escapeHtml(quote)}</p>
+      </blockquote>
+      <p class="results-section-bridge__credit">${escapeHtml(copy.settingBridgeCredit)}</p>
+    </aside>
   `;
 }
 
@@ -5229,6 +5319,7 @@ function renderAdultSettingGuide(scores, metrics, pageEntry) {
       : "";
 
   return `
+    ${renderSettingSectionBridge()}
     <section class="profile-section profile-section--setting-guide"${reportPageAttrs(pageEntry)} aria-labelledby="setting-guide-title" data-setting-context="${escapeHtml(report.lifeContext)}" data-setting-profile="${escapeHtml(report.profile)}">
       <p class="profile-kicker">${escapeHtml(report.kicker)}</p>
       <h3 id="setting-guide-title">${escapeHtml(report.title)}</h3>
@@ -5275,8 +5366,10 @@ function buildReportPagePlan(copy, scores, metrics) {
   add("report-world", copy.interpretWorldTitle);
   add("report-profile", isParent ? copy.profileTitleParent : copy.profileTitle);
 
-  if (state.respondent === "teen") {
-    add("report-teen-crew", copy.teenCrewTitle);
+  if (shouldShowTrailProfile()) {
+    const trailTitle =
+      state.respondent === "parent" ? copy.teenCrewTitleParent : copy.teenCrewTitle;
+    add("report-teen-crew", trailTitle);
   }
   if ((state.idealSaturday || "").trim()) {
     add("report-ideal-saturday", copy.idealSaturdayResultsTitle);

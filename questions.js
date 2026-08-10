@@ -302,6 +302,15 @@ const QUESTIONNAIRE_UI = {
     scoreLeanSeeking: "Looks for more sensory input",
     thresholdLegend:
       "Low threshold = notices input quickly (sensitive). Medium = more typical / mixed. High threshold = needs more input (seeking).",
+    settingBridgeKicker: "Next",
+    settingBridgeHeading: "Where your senses meet everyday life",
+    settingBridgeQuoteHome:
+      "Understanding your sensory needs is not about changing who you are — it’s about creating an environment where you can thrive.",
+    settingBridgeQuoteWork:
+      "Understanding your sensory needs is not about changing who you are — it’s about creating an environment where you can thrive.",
+    settingBridgeCredit: "Soulful Sensory OT",
+    settingBridgeFamilyLabel: "Teenagers & family",
+    settingBridgeAdultHomeLabel: "Adults at home",
     teenMapKicker: "Sensory road map",
     teenMapTitle: "Your sensory road map",
     teenMapIntro:
@@ -316,36 +325,92 @@ const QUESTIONNAIRE_UI = {
     teenCheatFrustratedHint: "Ground yourself first, then go back to the task.",
     teenCheatOverload: "Too much / overloaded",
     teenCheatOverloadHint: "Turn the volume of the world down before anything else.",
-    teenCrewKicker: "Your trail role",
-    teenCrewTitle: "Meet your sensory character",
+    teenCrewKicker: "Your Sensory Trail Profile",
+    teenCrewTitle: "Your Sensory Trail Profile",
+    teenCrewTitleParent: "Your child’s Sensory Trail Profile",
     teenCrewIntro:
-      "Your overall sensory threshold matches one of three trail characters. None is better than the others — on a real adventure, you need the whole crew.",
+      "We all experience the world differently. Your results show which trail style most reflects you.",
+    teenCrewIntroParent:
+      "We all experience the world differently. These results show which trail style most reflects your child.",
+    teenCrewSummaryAria:
+      "Infographic of the three sensory trail profiles: Sensory Observer, Sensory Adaptor, and Sensory Explorer",
     teenCrewYouAre: "You are",
+    teenCrewYouAreParent: "Your child is",
     teenCrewBadge: "That’s you",
-    teenCrewCrewTitle: "The full adventure crew",
+    teenCrewBadgeParent: "That’s them",
+    teenCrewDetailTitle: "Your matched character",
+    teenCrewDetailTitleParent: "Your child’s matched character",
+    teenCrewTraitsTitle: "What this often looks like",
+    teenCrewCrewTitle: "The three trail styles",
     teenCrewCrewIntro:
       "On a high trail you need one of each. High-threshold courage up front, low-threshold awareness on the path, and a medium-threshold adaptor holding the middle.",
     teenCrewWhyTitle: "Why every summit needs all three",
     teenCrewWhyBody:
       "The Sensory Explorer (higher sensory threshold) has the courage and energy to go first — checking the route ahead and seeing if it’s safe to climb. The Sensory Observer (lower sensory threshold) picks up the animals, the weather shift, new smells, how the trail snacks taste, and any holes or loose stones before the crew steps into them — and may need steadier breaks along the way. The Sensory Adaptor (medium / mixed threshold) reads the group and fits where they are needed — surging forward, slowing down, or holding the middle of the rope so the whole crew stays together.",
-    teenCrewExplorerName: "The Sensory Explorer",
-    teenCrewExplorerTag: "Higher threshold · first on the path",
+    teenCrewFooter:
+      "There is no right or wrong profile. Your trail is unique, and understanding it is the first step to thriving on your journey.",
+    teenCrewFooterParent:
+      "There is no right or wrong profile. Your child’s trail is unique, and understanding it is the first step to helping them thrive on their journey.",
+    teenCrewExplorerName: "Sensory Explorer",
+    teenCrewExplorerTag: "High threshold – Sensory seeker",
+    teenCrewExplorerSummary:
+      "You seek out experiences, movement, and stimulation to feel energised and engaged.",
+    teenCrewExplorerSummaryParent:
+      "They seek out experiences, movement, and stimulation to feel energised and engaged.",
     teenCrewExplorerBody:
       "Your sensory threshold sits higher — you often like more sensory input, not less. Busy days, new places, movement, sound and fresh sights tend to wake you up. Stillness can feel flat, so you go looking for the next thing to do and see. On the mountain you are the one who hikes ahead with plenty of energy, can keep going for a good stretch, tests the route, and comes back with the report: it’s wild up there — and worth it.",
+    teenCrewExplorerBodyParent:
+      "Your child’s sensory threshold sits higher — they often like more sensory input, not less. Busy days, new places, movement, sound and fresh sights tend to wake them up. Stillness can feel flat, so they go looking for the next thing to do and see. On the mountain they are the one who hikes ahead with plenty of energy, can keep going for a good stretch, tests the route, and comes back with the report: it’s wild up there — and worth it.",
     teenCrewExplorerRole:
       "Higher-threshold scout — loves input, busyness and new terrain; has the energy to keep going and check if the path ahead is safe.",
-    teenCrewAdaptorName: "The Sensory Adaptor",
-    teenCrewAdaptorTag: "Medium threshold · holds the middle of the rope",
+    teenCrewExplorerTraits: [
+      "Naturally drawn to movement, excitement, and novelty.",
+      "Needs more stimulation to feel satisfied.",
+      "Enjoys challenges, variety, and fast-paced environments.",
+      "May get restless or bored in calm, quiet settings.",
+      "Thrives with exploration, risk-taking, and adventure.",
+      "Brings energy, enthusiasm, and spontaneity.",
+    ],
+    teenCrewAdaptorName: "Sensory Adaptor",
+    teenCrewAdaptorTag: "Medium threshold – Balanced",
+    teenCrewAdaptorSummary:
+      "You can adapt to different situations and find your balance between stimulation and rest.",
+    teenCrewAdaptorSummaryParent:
+      "They can adapt to different situations and find their balance between stimulation and rest.",
     teenCrewAdaptorBody:
-      "Your sensory threshold sits in the flexible middle — sometimes you want more input, sometimes you need less. You shift with the classroom, the house, the weather on the trail and the people around you. On the mountain you can climb with the explorers when the day asks for energy, or slow down with the observers when it asks for care — you fit where the crew needs you, and that keeps everyone moving.",
+      "Your sensory threshold sits in the flexible middle — sometimes you want more input, sometimes you need less. You shift with home life, school or work, the weather on the trail and the people around you. On the mountain you can climb with the explorers when the day asks for energy, or slow down with the observers when it asks for care — you fit where the crew needs you, and that keeps everyone moving.",
+    teenCrewAdaptorBodyParent:
+      "Your child’s sensory threshold sits in the flexible middle — sometimes they want more input, sometimes they need less. They shift with home life, school, the weather on the trail and the people around them. On the mountain they can climb with the explorers when the day asks for energy, or slow down with the observers when it asks for care — they fit where the crew needs them, and that keeps everyone moving.",
     teenCrewAdaptorRole:
       "Medium-threshold middle — reads the group, matches the pace, and keeps high- and low-threshold hikers walking as one crew.",
-    teenCrewObserverName: "The Sensory Observer",
-    teenCrewObserverTag: "Lower threshold · sees what others walk past",
+    teenCrewAdaptorTraits: [
+      "Flexible and able to adjust to different environments.",
+      "Manageable awareness of sensory input.",
+      "Can enjoy both busy and quiet settings.",
+      "Uses strategies to stay regulated and focused.",
+      "Seeks balance, routine, and choices that support them.",
+      "Often acts as a bridge between different needs.",
+    ],
+    teenCrewObserverName: "Sensory Observer",
+    teenCrewObserverTag: "Low threshold – Sensitive",
+    teenCrewObserverSummary:
+      "You notice the details others might miss and can be deeply aware of your environment.",
+    teenCrewObserverSummaryParent:
+      "They notice the details others might miss and can be deeply aware of their environment.",
     teenCrewObserverBody:
       "Your sensory threshold sits lower — you are very aware and pick things up quickly. A change in the weather, a new smell on the breeze, how the trail snacks taste, a bird call, a loose stone underfoot: it all registers. That awareness is a real strength on the mountain. You may also need more regular breaks during the hike so your system can settle before the next stretch — and when you do, the whole crew notices what they would have missed.",
+    teenCrewObserverBodyParent:
+      "Your child’s sensory threshold sits lower — they are very aware and pick things up quickly. A change in the weather, a new smell on the breeze, how the trail snacks taste, a bird call, a loose stone underfoot: it all registers. That awareness is a real strength on the mountain. They may also need more regular breaks during the hike so their system can settle before the next stretch — and when they do, the whole crew notices what they would have missed.",
     teenCrewObserverRole:
       "Lower-threshold lookout — spots detail fast (weather, smells, tastes, hazards) and benefits from steadier breaks along the trail.",
+    teenCrewObserverTraits: [
+      "Keenly aware of sights, sounds, textures, smells, and subtle changes around them.",
+      "Easily affected by busy, noisy, or chaotic environments.",
+      "Needs time to recharge and process.",
+      "Thoughtful, reflective, and observant.",
+      "Often picks up on others’ emotions and needs.",
+      "Thrives in calm, predictable routines and peaceful spaces.",
+    ],
     pathwaysTitle: "Sensory pathways",
     pathwaysHelp: "Follow each sense down the trail. Leaves show highlighted answers; the dial shows whether that sense leans sensitive or seeking.",
     responseMosaic: "Response mosaic",
@@ -787,6 +852,15 @@ const QUESTIONNAIRE_UI = {
     scoreLeanSeeking: "Soek meer",
     thresholdLegend:
       "Lae drempel = merk insette vinnig op (sensitief). Medium = meer tipies / gemeng. Hoë drempel = het meer insette nodig (soekend).",
+    settingBridgeKicker: "Volgende",
+    settingBridgeHeading: "Waar jou sintuie die alledaagse lewe ontmoet",
+    settingBridgeQuoteHome:
+      "Om jou sensoriese behoeftes te verstaan gaan nie daaroor om te verander wie jy is nie — dit gaan daaroor om ’n omgewing te skep waarin jy kan floreer.",
+    settingBridgeQuoteWork:
+      "Om jou sensoriese behoeftes te verstaan gaan nie daaroor om te verander wie jy is nie — dit gaan daaroor om ’n omgewing te skep waarin jy kan floreer.",
+    settingBridgeCredit: "Soulful Sensory OT",
+    settingBridgeFamilyLabel: "Tieners & familie",
+    settingBridgeAdultHomeLabel: "Volwassenes by die huis",
     teenMapKicker: "Sensoriese roetekaart",
     teenMapTitle: "Jou sensoriese roetekaart",
     teenMapIntro:
@@ -801,36 +875,92 @@ const QUESTIONNAIRE_UI = {
     teenCheatFrustratedHint: "Anker jouself eers, gaan dan terug na die taak.",
     teenCheatOverload: "Te veel / oorstimuleer",
     teenCheatOverloadHint: "Draai eers die wêreld se volume af voor enigiets anders.",
-    teenCrewKicker: "Jou roeterol",
-    teenCrewTitle: "Ontmoet jou sensoriese karakter",
+    teenCrewKicker: "Jou Sensoriese Roeteprofiel",
+    teenCrewTitle: "Jou Sensoriese Roeteprofiel",
+    teenCrewTitleParent: "Jou kind se Sensoriese Roeteprofiel",
     teenCrewIntro:
-      "Jou algehele sensoriese drempel pas by een van drie roetekarakters. Geeneen is beter as die ander nie — op ’n regte avontuur het jy die hele span nodig.",
+      "Ons ervaar almal die wêreld verskillend. Jou resultate wys watter roetestyl die meeste by jou pas.",
+    teenCrewIntroParent:
+      "Ons ervaar almal die wêreld verskillend. Hierdie resultate wys watter roetestyl die meeste by jou kind pas.",
+    teenCrewSummaryAria:
+      "Infografika van die drie sensoriese roeteprofiele: Sensoriese Waarnemer, Sensoriese Aanpasser, en Sensoriese Verkenner",
     teenCrewYouAre: "Jy is",
+    teenCrewYouAreParent: "Jou kind is",
     teenCrewBadge: "Dis jy",
-    teenCrewCrewTitle: "Die volle avontuurspan",
+    teenCrewBadgeParent: "Dis hulle",
+    teenCrewDetailTitle: "Jou ooreenstemmende karakter",
+    teenCrewDetailTitleParent: "Jou kind se ooreenstemmende karakter",
+    teenCrewTraitsTitle: "Hoe dit dikwels lyk",
+    teenCrewCrewTitle: "Die drie roetestyle",
     teenCrewCrewIntro:
       "Op ’n hoë roete het jy een van elkeen nodig. Hoë-drempel moed voor, lae-drempel bewustheid op die pad, en ’n medium-drempel aanpasser wat die middel hou.",
     teenCrewWhyTitle: "Hoekom elke piek al drie nodig het",
     teenCrewWhyBody:
       "Die Sensoriese Verkenner (hoër sensoriese drempel) het die moed en energie om eerste te gaan — om die roete vooruit te toets en te sien of dit veilig is om te klim. Die Sensoriese Waarnemer (laer sensoriese drempel) merk die diere, die weerverskuiwing, nuwe reuke, hoe die roetesnacks smaak, en enige gate of los klippe op voordat die span daarin stap — en mag meer gereelde pouses langs die pad nodig hê. Die Sensoriese Aanpasser (medium / gemengde drempel) lees die groep en pas in waar hulle nodig is — vorentoe, stadiger, of in die middel van die tou sodat die hele span saam bly.",
-    teenCrewExplorerName: "Die Sensoriese Verkenner",
-    teenCrewExplorerTag: "Hoër drempel · eerste op die pad",
+    teenCrewFooter:
+      "Daar is geen regte of verkeerde profiel nie. Jou roete is uniek, en om dit te verstaan is die eerste stap om op jou reis te floreer.",
+    teenCrewFooterParent:
+      "Daar is geen regte of verkeerde profiel nie. Jou kind se roete is uniek, en om dit te verstaan is die eerste stap om hulle op hul reis te help floreer.",
+    teenCrewExplorerName: "Sensoriese Verkenner",
+    teenCrewExplorerTag: "Hoë drempel – Sensoriese soeker",
+    teenCrewExplorerSummary:
+      "Jy soek ervarings, beweging en stimulasie om energiek en betrokke te voel.",
+    teenCrewExplorerSummaryParent:
+      "Hulle soek ervarings, beweging en stimulasie om energiek en betrokke te voel.",
     teenCrewExplorerBody:
       "Jou sensoriese drempel sit hoër — jy hou dikwels van meer sensoriese insette, nie minder nie. Besige dae, nuwe plekke, beweging, klank en vars uitsigte wek jou gewoonlik op. Stilte kan flou voel, so jy soek die volgende ding om te doen en te sien. Op die berg is jy die een wat met baie energie vooruit stap, ’n goeie ruk kan aanhou, die roete toets, en terugkom met die berig: dit is wild daar bo — en die moeite werd.",
+    teenCrewExplorerBodyParent:
+      "Jou kind se sensoriese drempel sit hoër — hulle hou dikwels van meer sensoriese insette, nie minder nie. Besige dae, nuwe plekke, beweging, klank en vars uitsigte wek hulle gewoonlik op. Stilte kan flou voel, so hulle soek die volgende ding om te doen en te sien. Op die berg is hulle die een wat met baie energie vooruit stap, ’n goeie ruk kan aanhou, die roete toets, en terugkom met die berig: dit is wild daar bo — en die moeite werd.",
     teenCrewExplorerRole:
       "Hoër-drempel verkenner — hou van insette, besigheid en nuwe terrein; het die energie om aan te hou en te kyk of die pad vooruit veilig is.",
-    teenCrewAdaptorName: "Die Sensoriese Aanpasser",
-    teenCrewAdaptorTag: "Medium drempel · hou die middel van die tou",
+    teenCrewExplorerTraits: [
+      "Natuurlik aangetrokke tot beweging, opwinding en nuutheid.",
+      "Het meer stimulasie nodig om tevrede te voel.",
+      "Geniet uitdagings, afwisseling en vinnige omgewings.",
+      "Kan rusteloos of verveeld raak in stil, kalm omgewings.",
+      "Floreer met verkenning, risiko en avontuur.",
+      "Bring energie, entoesiasme en spontaniteit.",
+    ],
+    teenCrewAdaptorName: "Sensoriese Aanpasser",
+    teenCrewAdaptorTag: "Medium drempel – Gebalanseerd",
+    teenCrewAdaptorSummary:
+      "Jy kan by verskillende situasies aanpas en jou balans tussen stimulasie en rus vind.",
+    teenCrewAdaptorSummaryParent:
+      "Hulle kan by verskillende situasies aanpas en hul balans tussen stimulasie en rus vind.",
     teenCrewAdaptorBody:
-      "Jou sensoriese drempel sit in die buigsame middel — partykeer wil jy meer insette hê, partykeer minder. Jy verskuif saam met die klas, die huis, die weer op die roete en die mense om jou. Op die berg kan jy saam met die verkenners klim wanneer die dag energie vra, of saam met die waarnemers stadiger word wanneer dit omsigtigheid vra — jy pas in waar die span jou nodig het, en dit hou almal aan die gang.",
+      "Jou sensoriese drempel sit in die buigsame middel — partykeer wil jy meer insette hê, partykeer minder. Jy verskuif saam met die huis, skool of werk, die weer op die roete en die mense om jou. Op die berg kan jy saam met die verkenners klim wanneer die dag energie vra, of saam met die waarnemers stadiger word wanneer dit omsigtigheid vra — jy pas in waar die span jou nodig het, en dit hou almal aan die gang.",
+    teenCrewAdaptorBodyParent:
+      "Jou kind se sensoriese drempel sit in die buigsame middel — partykeer wil hulle meer insette hê, partykeer minder. Hulle verskuif saam met die huis, skool, die weer op die roete en die mense om hulle. Op die berg kan hulle saam met die verkenners klim wanneer die dag energie vra, of saam met die waarnemers stadiger word wanneer dit omsigtigheid vra — hulle pas in waar die span hulle nodig het, en dit hou almal aan die gang.",
     teenCrewAdaptorRole:
       "Medium-drempel middel — lees die groep, pas die tempo, en hou hoë- en lae-drempel stappers as een span.",
-    teenCrewObserverName: "Die Sensoriese Waarnemer",
-    teenCrewObserverTag: "Laer drempel · sien wat ander verbyloop",
+    teenCrewAdaptorTraits: [
+      "Buigsaam en in staat om by verskillende omgewings aan te pas.",
+      "Hanteerbare bewustheid van sensoriese insette.",
+      "Kan beide besige en stil omgewings geniet.",
+      "Gebruik strategieë om gereguleerd en gefokus te bly.",
+      "Soek balans, roetine en keuses wat hulle ondersteun.",
+      "Tree dikwels as ’n brug tussen verskillende behoeftes op.",
+    ],
+    teenCrewObserverName: "Sensoriese Waarnemer",
+    teenCrewObserverTag: "Lae drempel – Sensitief",
+    teenCrewObserverSummary:
+      "Jy merk die besonderhede op wat ander dalk mis en kan diep bewus wees van jou omgewing.",
+    teenCrewObserverSummaryParent:
+      "Hulle merk die besonderhede op wat ander dalk mis en kan diep bewus wees van hul omgewing.",
     teenCrewObserverBody:
       "Jou sensoriese drempel sit laer — jy is baie bewus en merk dinge vinnig op. ’n Verandering in die weer, ’n nuwe reuk op die wind, hoe die roetesnacks smaak, ’n voëlroep, ’n los klip onder jou voet: dit alles registreer. Daardie bewustheid is ’n regte krag op die berg. Jy mag ook meer gereelde pouses tydens die stap nodig hê sodat jou stelsel kan sak voor die volgende stuk — en wanneer jy dit doen, merk die hele span wat hulle sou misgeloop het.",
+    teenCrewObserverBodyParent:
+      "Jou kind se sensoriese drempel sit laer — hulle is baie bewus en merk dinge vinnig op. ’n Verandering in die weer, ’n nuwe reuk op die wind, hoe die roetesnacks smaak, ’n voëlroep, ’n los klip onder hul voet: dit alles registreer. Daardie bewustheid is ’n regte krag op die berg. Hulle mag ook meer gereelde pouses tydens die stap nodig hê sodat hul stelsel kan sak voor die volgende stuk — en wanneer hulle dit doen, merk die hele span wat hulle sou misgeloop het.",
     teenCrewObserverRole:
       "Laer-drempel uitkyk — merk detail vinnig (weer, reuke, smake, gevare) en baat by meer gereelde pouses op die roete.",
+    teenCrewObserverTraits: [
+      "Skerp bewus van sig, klank, teksture, reuke en subtiele veranderinge om hulle.",
+      "Maklik beïnvloed deur besige, lawaaierige of chaotiese omgewings.",
+      "Het tyd nodig om te herlaai en te verwerk.",
+      "Denkende, reflektief en waarnemend.",
+      "Merk dikwels ander se emosies en behoeftes op.",
+      "Floreer in kalm, voorspelbare roetines en vreedsame ruimtes.",
+    ],
     pathwaysTitle: "Sensoriese paaie",
     pathwaysHelp: "Volg elke sintuig langs die roete. Blare wys uitgeligte antwoorde; die wyser wys of die sintuig sensitief of soekend neig.",
     responseMosaic: "Reaksiemosaïek",
