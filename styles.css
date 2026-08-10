@@ -5029,7 +5029,8 @@ body.is-pain-screen .site-footer {
 .interpret-cover__content {
   position: relative;
   z-index: 1;
-  padding: clamp(1.6rem, 4vw, 2.75rem);
+  /* Extra top padding keeps the title clear of the brand pill above */
+  padding: clamp(5.25rem, 12vw, 7rem) clamp(1.6rem, 4vw, 2.75rem) clamp(1.6rem, 4vw, 2.75rem);
   max-width: 36rem;
   color: #f4f8f4;
 }
