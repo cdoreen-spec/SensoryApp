@@ -5144,18 +5144,20 @@ function renderTeenCrewSummary(metrics, pageEntry) {
 
   return `
     <section class="profile-section teen-crew trail-profile"${reportPageAttrs(pageEntry)} aria-labelledby="teen-crew-title" data-crew-you="${youId}">
-      <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
-      <h3 id="teen-crew-title">${escapeHtml(title)}</h3>
-      ${printMountainRule("section")}
-      <p class="profile-section__summary">${escapeHtml(intro)}</p>
+      <header class="trail-profile__header no-print">
+        <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
+        <h3 id="teen-crew-title">${escapeHtml(title)}</h3>
+        ${printMountainRule("section")}
+        <p class="profile-section__summary">${escapeHtml(intro)}</p>
+      </header>
 
       <figure class="trail-profile__figure">
         <img
           class="trail-profile__image"
           src="assets/sensory-trail-profile.png?v=20260810a"
           alt="${escapeHtml(copy.teenCrewSummaryAria)}"
-          width="1080"
-          height="1920"
+          width="682"
+          height="1024"
           loading="lazy"
           decoding="async"
         />
@@ -5236,7 +5238,6 @@ function renderSettingSectionBridge() {
             loading="lazy"
             decoding="async"
           />
-          <figcaption class="results-section-bridge__caption">${escapeHtml(copy.settingBridgeFamilyLabel)}</figcaption>
         </figure>
         <figure class="results-section-bridge__shot results-section-bridge__shot--adult">
           <img
@@ -5248,20 +5249,24 @@ function renderSettingSectionBridge() {
             loading="lazy"
             decoding="async"
           />
-          <figcaption class="results-section-bridge__caption">${escapeHtml(copy.settingBridgeAdultHomeLabel)}</figcaption>
         </figure>
       </div>`
+    : "";
+
+  const rule = isHome
+    ? ""
     : `<img src="mountain-divider.svg" alt="" class="results-section-bridge__rule" width="600" height="44" />`;
 
   return `
     <aside class="results-section-bridge${isHome ? " results-section-bridge--home" : ""}" aria-label="${escapeHtml(copy.settingBridgeHeading)}">
-      ${visuals}
+      ${rule}
       <p class="results-section-bridge__kicker">${escapeHtml(copy.settingBridgeKicker)}</p>
       <h3 class="results-section-bridge__heading">${escapeHtml(copy.settingBridgeHeading)}</h3>
       <blockquote class="results-section-bridge__quote">
         <p>${escapeHtml(quote)}</p>
       </blockquote>
       <p class="results-section-bridge__credit">${escapeHtml(copy.settingBridgeCredit)}</p>
+      ${visuals}
     </aside>
   `;
 }

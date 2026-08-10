@@ -309,8 +309,6 @@ const QUESTIONNAIRE_UI = {
     settingBridgeQuoteWork:
       "Understanding your sensory needs is not about changing who you are — it’s about creating an environment where you can thrive.",
     settingBridgeCredit: "Soulful Sensory OT",
-    settingBridgeFamilyLabel: "Teenagers & family",
-    settingBridgeAdultHomeLabel: "Adults at home",
     teenMapKicker: "Sensory road map",
     teenMapTitle: "Your sensory road map",
     teenMapIntro:
@@ -859,8 +857,6 @@ const QUESTIONNAIRE_UI = {
     settingBridgeQuoteWork:
       "Om jou sensoriese behoeftes te verstaan gaan nie daaroor om te verander wie jy is nie — dit gaan daaroor om ’n omgewing te skep waarin jy kan floreer.",
     settingBridgeCredit: "Soulful Sensory OT",
-    settingBridgeFamilyLabel: "Tieners & familie",
-    settingBridgeAdultHomeLabel: "Volwassenes by die huis",
     teenMapKicker: "Sensoriese roetekaart",
     teenMapTitle: "Jou sensoriese roetekaart",
     teenMapIntro:
