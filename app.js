@@ -42,6 +42,8 @@ const state = {
   /** Therapist dashboard: viewing a saved assessment report (skip re-email). */
   viewingArchivedId: null,
   archiveReadOnly: false,
+  /** When reopening from the dashboard: "full" | "basic" (short patient report). */
+  reportViewMode: null,
   /** Dev/admin: viewing generated sample answers (not a real patient). */
   sampleReportPreview: false,
   dashboardSearch: "",
@@ -146,6 +148,13 @@ function isPainPathwayEnabled() {
 
 const CLINICIAN_SESSION_KEY = "ssot-clinician-unlocked";
 const CLINICIAN_PREF_KEY = "ssot-invite-show-results";
+const SHORT_REPORT_PREF_KEY = "ssot-short-report-sections";
+/** Optional extras on the patient short report. Core copy always asks them to book a follow-up. */
+const DEFAULT_SHORT_REPORT_SECTIONS = {
+  overallPattern: false,
+  domainGlance: false,
+  trailCharacter: false,
+};
 const SENSORY_DRAFT_KEY = "ssot-sensory-draft";
 const SENSORY_DRAFT_VERSION = 1;
 const ASSESSMENTS_KEY = "ssot-assessments-v1";
@@ -357,10 +366,13 @@ function deleteAssessmentById(id) {
   return true;
 }
 
-function applyAssessmentRecord(record) {
+function applyAssessmentRecord(record, options = {}) {
   if (!record) return false;
+  const viewMode =
+    options.viewMode === RESULTS_ACCESS.basic ? RESULTS_ACCESS.basic : RESULTS_ACCESS.full;
   state.viewingArchivedId = record.id;
   state.archiveReadOnly = true;
+  state.reportViewMode = viewMode;
   state.sampleReportPreview = Boolean(record.isSample);
   state.completedAt = record.completedAt || null;
   state.language = LANGUAGES.includes(record.language) ? record.language : "en";
@@ -379,7 +391,7 @@ function applyAssessmentRecord(record) {
   state.sharingConsent = { ...(record.sharingConsent || {}) };
   state.contactPreference = record.contactPreference || null;
   state.inviteMode = false;
-  state.patientResultsAccess = RESULTS_ACCESS.full;
+  state.patientResultsAccess = viewMode;
   state.submissionStatus = null;
   state.submissionError = null;
   state.submissionAttempted = true;
@@ -401,6 +413,7 @@ function applyAssessmentRecord(record) {
 function exitArchivedReport() {
   state.viewingArchivedId = null;
   state.archiveReadOnly = false;
+  state.reportViewMode = null;
   state.sampleReportPreview = false;
   state.view = "dashboard";
   state.step = 0;
@@ -678,8 +691,11 @@ function normalizeResultsAccess(value) {
 }
 
 function getPatientResultsAccess() {
-  // Re-opening a saved report from the therapist dashboard always shows the full packet.
+  // Dashboard reopen: therapist chooses full packet or patient short-report preview.
   if (state.archiveReadOnly) {
+    if (state.reportViewMode === RESULTS_ACCESS.basic) {
+      return RESULTS_ACCESS.basic;
+    }
     return RESULTS_ACCESS.full;
   }
   // Invite links carry the clinician-chosen access level in ?results=
@@ -695,6 +711,43 @@ function getPatientResultsAccess() {
     return RESULTS_ACCESS.full;
   }
   return RESULTS_ACCESS.none;
+}
+
+function readShortReportSections() {
+  try {
+    const raw = localStorage.getItem(SHORT_REPORT_PREF_KEY);
+    if (!raw) return { ...DEFAULT_SHORT_REPORT_SECTIONS };
+    const parsed = JSON.parse(raw);
+    return {
+      overallPattern: Boolean(parsed?.overallPattern),
+      domainGlance: Boolean(parsed?.domainGlance),
+      trailCharacter: Boolean(parsed?.trailCharacter),
+    };
+  } catch {
+    return { ...DEFAULT_SHORT_REPORT_SECTIONS };
+  }
+}
+
+function writeShortReportSections(sections) {
+  const next = {
+    overallPattern: Boolean(sections?.overallPattern),
+    domainGlance: Boolean(sections?.domainGlance),
+    trailCharacter: Boolean(sections?.trailCharacter),
+  };
+  try {
+    localStorage.setItem(SHORT_REPORT_PREF_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore quota / private mode */
+  }
+  return next;
+}
+
+function isShortReportDashboardPreview() {
+  return (
+    Boolean(state.archiveReadOnly) &&
+    state.reportViewMode === RESULTS_ACCESS.basic &&
+    canAccessTherapistDashboard()
+  );
 }
 
 function shouldShowResultsToPatient() {
@@ -1335,8 +1388,8 @@ function renderClinicianShare() {
           <label class="clinician__choice">
             <input type="radio" name="invite-results" data-invite-results value="basic"${access === RESULTS_ACCESS.basic ? " checked" : ""} />
             <span>
-              <strong>Basic summary only</strong>
-              <em>High-level overall pattern. Detailed sense-by-sense report stays for your feedback session.</em>
+              <strong>Brief report only</strong>
+              <em>A short completion note that asks them to book a follow-up. You keep the full detailed report.</em>
             </span>
           </label>
           <label class="clinician__choice">
@@ -1496,7 +1549,8 @@ function renderDashboardAssessmentRow(item) {
         ${domainLine ? `<p class="dash-row__domains">${domainLine}</p>` : ""}
       </div>
       <div class="dash-row__actions">
-        <button type="button" class="btn btn-primary btn--compact" data-action="open-assessment" data-assessment-id="${escapeHtml(item.id)}">View</button>
+        <button type="button" class="btn btn-primary btn--compact" data-action="open-assessment" data-assessment-id="${escapeHtml(item.id)}">View full</button>
+        <button type="button" class="btn btn-secondary btn--compact" data-action="open-assessment-summary" data-assessment-id="${escapeHtml(item.id)}">View short</button>
         <button type="button" class="btn btn-secondary btn--compact" data-action="download-assessment" data-assessment-id="${escapeHtml(item.id)}">Download</button>
         <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${escapeHtml(item.id)}" title="Remove from this device">Remove</button>
       </div>
@@ -6358,6 +6412,110 @@ function renderSensoryDiet(scores, plan) {
   `;
 }
 
+function renderShortReportSectionExtras(metrics, sections) {
+  const copy = currentUi();
+  const parts = [];
+
+  if (sections.overallPattern) {
+    const label = profileLabelPlain(metrics.meta) || metrics.leanHeadline;
+    if (label) {
+      parts.push(`
+        <section class="results-summary__snippet" aria-labelledby="short-overall-title">
+          <p class="profile-kicker">${escapeHtml(copy.summaryOverallKicker)}</p>
+          <h3 id="short-overall-title">${escapeHtml(label)}</h3>
+          <p class="results-summary__snippet-note">${escapeHtml(copy.summaryOverallNote)}</p>
+        </section>
+      `);
+    }
+  }
+
+  if (sections.domainGlance) {
+    const scores = scoreAllDomains(
+      state.answers,
+      currentDomains(),
+      state.language,
+      state.respondent || "adult"
+    );
+    const rows = getScoreRows(scores);
+    if (rows.length) {
+      const list = rows
+        .map(
+          (row) => `
+          <li class="results-summary__domain">
+            <span class="results-summary__domain-name">${escapeHtml(row.shortTitle || row.title)}</span>
+            <span class="results-summary__domain-lean">${escapeHtml(row.profileShort || row.thresholdLabel || "—")}</span>
+          </li>`
+        )
+        .join("");
+      parts.push(`
+        <section class="results-summary__snippet" aria-labelledby="short-domains-title">
+          <p class="profile-kicker">${escapeHtml(copy.summaryDomainsKicker)}</p>
+          <h3 id="short-domains-title">${escapeHtml(copy.summaryDomainsTitle)}</h3>
+          <ul class="results-summary__domains">${list}</ul>
+          <p class="results-summary__snippet-note">${escapeHtml(copy.summaryDomainsNote)}</p>
+        </section>
+      `);
+    }
+  }
+
+  if (sections.trailCharacter && shouldShowTrailProfile()) {
+    const roster = getTeenCrewRoster(copy);
+    const youId = getTeenCrewId(metrics.lean);
+    const you = roster.find((member) => member.id === youId) || roster[1];
+    if (you) {
+      parts.push(`
+        <section class="results-summary__snippet" aria-labelledby="short-trail-title">
+          <p class="profile-kicker">${escapeHtml(copy.summaryTrailKicker)}</p>
+          <h3 id="short-trail-title">${escapeHtml(you.name)}</h3>
+          <p class="results-summary__snippet-tag">${escapeHtml(you.tag || "")}</p>
+          <p class="results-summary__snippet-note">${escapeHtml(copy.summaryTrailNote)}</p>
+        </section>
+      `);
+    }
+  }
+
+  return parts.join("");
+}
+
+function renderShortReportEditor(sections) {
+  if (!isShortReportDashboardPreview()) return "";
+  const copy = currentUi();
+  return `
+    <aside class="short-report-editor no-print" aria-labelledby="short-report-editor-title">
+      <div class="short-report-editor__head">
+        <p class="short-report-editor__eyebrow">Therapist tools</p>
+        <h3 id="short-report-editor-title">${escapeHtml(copy.summaryEditorTitle)}</h3>
+        <p>${escapeHtml(copy.summaryEditorLead)}</p>
+      </div>
+      <fieldset class="short-report-editor__fields">
+        <legend class="visually-hidden">${escapeHtml(copy.summaryEditorLegend)}</legend>
+        <label class="short-report-editor__choice">
+          <input type="checkbox" data-short-section="overallPattern"${sections.overallPattern ? " checked" : ""} />
+          <span>
+            <strong>${escapeHtml(copy.summaryEditorOverall)}</strong>
+            <em>${escapeHtml(copy.summaryEditorOverallHint)}</em>
+          </span>
+        </label>
+        <label class="short-report-editor__choice">
+          <input type="checkbox" data-short-section="domainGlance"${sections.domainGlance ? " checked" : ""} />
+          <span>
+            <strong>${escapeHtml(copy.summaryEditorDomains)}</strong>
+            <em>${escapeHtml(copy.summaryEditorDomainsHint)}</em>
+          </span>
+        </label>
+        <label class="short-report-editor__choice">
+          <input type="checkbox" data-short-section="trailCharacter"${sections.trailCharacter ? " checked" : ""} />
+          <span>
+            <strong>${escapeHtml(copy.summaryEditorTrail)}</strong>
+            <em>${escapeHtml(copy.summaryEditorTrailHint)}</em>
+          </span>
+        </label>
+      </fieldset>
+      <p class="short-report-editor__note">${escapeHtml(copy.summaryEditorNote)}</p>
+    </aside>
+  `;
+}
+
 function renderResultsSummary() {
   clearSensoryDraft();
   if (!state.completedAt) {
@@ -6372,6 +6530,8 @@ function renderResultsSummary() {
     state.respondent || "adult"
   );
   const metrics = getProfileMetrics(scores);
+  const sections = readShortReportSections();
+  const fromDashboard = isShortReportDashboardPreview();
 
   if (shouldEmailResultsToClinician()) {
     queueMicrotask(() => ensureResultsSubmitted());
@@ -6392,9 +6552,20 @@ function renderResultsSummary() {
 
   return renderShell(
     `
-      <div class="results-summary">
+      ${
+        fromDashboard
+          ? `<div class="results-dashboard-bar no-print">
+              <button type="button" class="btn btn-secondary" data-action="back-dashboard">← Back to dashboard</button>
+              <button type="button" class="btn btn-secondary" data-action="switch-report-full">View full report</button>
+            </div>`
+          : ""
+      }
+
+      ${renderShortReportEditor(sections)}
+
+      <div class="results-summary results-summary--brief">
         <div class="results-intro">
-          <p class="profile-kicker">${escapeHtml(copy.viewpoint)}</p>
+          <p class="profile-kicker">${escapeHtml(copy.summaryKicker)}</p>
           <h2>${escapeHtml(copy.summaryTitle)}</h2>
           ${
             state.demographics.name
@@ -6405,17 +6576,20 @@ function renderResultsSummary() {
           ${submissionNote}
         </div>
 
-        ${renderSharingPermissionsSummary()}
-        ${renderOverallSummary(metrics)}
-        ${renderTeenCrewSummary(metrics)}
-        ${renderIdealSaturdayResults()}
+        ${renderShortReportSectionExtras(metrics, sections)}
 
         <section class="results-summary__next" aria-labelledby="summary-next-title">
           <h3 id="summary-next-title">${escapeHtml(copy.summaryNextTitle)}</h3>
           <p>${escapeHtml(copy.summaryNextBody)}</p>
           <div class="actions">
-            <a class="btn btn-primary" href="${WHATSAPP_FEEDBACK_URL}" target="_blank" rel="noopener noreferrer">${escapeHtml(copy.summaryBookCta)}</a>
-            <button type="button" class="btn btn-secondary" data-action="back-home">${escapeHtml(copy.thankYouHome)}</button>
+            ${
+              fromDashboard
+                ? ""
+                : `<a class="btn btn-primary" href="${WHATSAPP_FEEDBACK_URL}" target="_blank" rel="noopener noreferrer">${escapeHtml(copy.summaryBookCta)}</a>`
+            }
+            <button type="button" class="btn ${fromDashboard ? "btn-primary" : "btn-secondary"}" data-action="${fromDashboard ? "back-dashboard" : "back-home"}">${escapeHtml(
+              fromDashboard ? copy.summaryEditorBack : copy.thankYouHome
+            )}</button>
             ${
               shouldEmailResultsToClinician() && state.submissionStatus === "error"
                 ? `<button type="button" class="btn btn-secondary" data-action="retry-submit">${escapeHtml(copy.thankYouRetry)}</button>`
@@ -6423,20 +6597,6 @@ function renderResultsSummary() {
             }
           </div>
         </section>
-
-        <div class="results-contact">
-          <h3>${escapeHtml(copy.contactTitle)}</h3>
-          <div class="contact-choice">
-            <label>
-              <input type="radio" name="contact" value="yes" ${state.contactPreference === "yes" ? "checked" : ""} />
-              ${escapeHtml(copy.contactYes)}
-            </label>
-            <label>
-              <input type="radio" name="contact" value="no" ${state.contactPreference === "no" ? "checked" : ""} />
-              ${escapeHtml(copy.contactNo)}
-            </label>
-          </div>
-        </div>
       </div>
     `,
     renderProgress(),
@@ -6493,6 +6653,7 @@ function renderResults() {
         fromDashboard
           ? `<div class="results-dashboard-bar no-print">
               <button type="button" class="btn btn-secondary" data-action="back-dashboard">← Back to dashboard</button>
+              <button type="button" class="btn btn-secondary" data-action="switch-report-basic">Preview short report</button>
               <button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
             </div>`
           : ""
