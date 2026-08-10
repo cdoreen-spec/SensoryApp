@@ -3117,14 +3117,10 @@ function renderSensoryLanding() {
   const places = SENSORY_AREAS.map(
     (area, i) => `
       <li class="sensory-flow__place sensory-flow__place--${escapeHtml(area.id)}" style="--i:${i}">
-        <span class="sensory-flow__marker" aria-hidden="true"></span>
+        <span class="sensory-flow__marker" aria-hidden="true">
+          <span class="sensory-flow__marker-dot"></span>
+        </span>
         <div class="sensory-flow__stop">
-          <span class="sensory-flow__peaks" aria-hidden="true">
-            <svg viewBox="0 0 52 22" width="40" height="16" fill="none">
-              <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.35"/>
-              <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.7"/>
-            </svg>
-          </span>
           <span class="sensory-flow__mile">Stop ${i + 1}</span>
           <span class="sensory-flow__place-name">${escapeHtml(area.name)}</span>
           <span class="sensory-flow__place-desc">${escapeHtml(area.desc)}</span>
@@ -3170,12 +3166,27 @@ function renderSensoryLanding() {
 
         <div class="sensory-flow__places" aria-labelledby="places-heading">
           <div class="sensory-flow__places-scene" aria-hidden="true">
-            <svg class="sensory-flow__places-backdrop" viewBox="0 0 960 160" preserveAspectRatio="xMidYMax meet">
-              <path class="sensory-flow__places-line" d="M0 130 L120 95 L200 118 L320 55 L420 105 L520 70 L640 115 L760 80 L880 110 L960 95" />
+            <img
+              src="assets/heading-forest-trail.png"
+              alt=""
+              class="sensory-flow__places-photo"
+              width="682"
+              height="1024"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="sensory-flow__places-veil"></div>
+            <div class="sensory-flow__places-mist sensory-flow__places-mist--1"></div>
+            <div class="sensory-flow__places-mist sensory-flow__places-mist--2"></div>
+            <svg class="sensory-flow__places-path" viewBox="0 0 960 120" preserveAspectRatio="none">
+              <path d="M40 88 C160 40 260 108 380 62 C500 16 580 98 700 54 C800 20 880 78 920 48" />
             </svg>
           </div>
-          <p class="sensory-flow__label">Along the trail</p>
-          <h2 id="places-heading" class="sensory-flow__title">Places your senses shape</h2>
+          <div class="sensory-flow__places-heading">
+            <p class="sensory-flow__label">Along the trail</p>
+            <h2 id="places-heading" class="sensory-flow__title">Places your senses shape</h2>
+            <img src="hero-vine-rule.svg" alt="" class="sensory-flow__places-rule" width="180" height="12" />
+          </div>
           <ol class="sensory-flow__trail" aria-label="Places and spaces">
             ${places}
           </ol>
@@ -5104,7 +5115,7 @@ function teenCrewCharacterArt(id, suffix = id) {
     },
     adaptor: {
       src: "assets/sensory-character-adaptor.png?v=20260809e",
-      alt: "Sensory Adaptor — I find my way",
+      alt: "Sensory Adapter — I find my way",
     },
     observer: {
       src: "assets/sensory-character-observer.png?v=20260809e",
@@ -5581,6 +5592,48 @@ function printSenseNatureArt(domainId) {
     </div>`;
 }
 
+/** Photo masthead for major interpret sections — same pattern as the report cover. */
+function renderInterpretSectionBanner({
+  image,
+  objectPosition = "center 40%",
+  kicker,
+  titleId,
+  title,
+  lead = "",
+  variant = "",
+  titleTag = "h3",
+  width = 682,
+  height = 1024,
+}) {
+  const variantClass = variant ? ` interpret-section-banner--${variant}` : "";
+  const headingTag = titleTag === "h2" ? "h2" : "h3";
+  return `
+    <header class="interpret-section-banner${variantClass}">
+      <div class="interpret-section-banner__media" aria-hidden="true">
+        <img
+          src="${escapeHtml(image)}"
+          alt=""
+          class="interpret-section-banner__image"
+          style="object-position: ${escapeHtml(objectPosition)}"
+          width="${Number(width) || 682}"
+          height="${Number(height) || 1024}"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div class="interpret-section-banner__veil" aria-hidden="true"></div>
+      <div class="interpret-section-banner__content">
+        <p class="interpret-section-banner__kicker">${escapeHtml(kicker)}</p>
+        <${headingTag} id="${escapeHtml(titleId)}" class="interpret-section-banner__title">${escapeHtml(title)}</${headingTag}>
+        ${
+          lead
+            ? `<p class="interpret-section-banner__lead">${escapeHtml(lead)}</p>`
+            : ""
+        }
+      </div>
+    </header>`;
+}
+
 function renderInterpretCover(copy, pageEntry) {
   const isParent = state.respondent === "parent";
   const title = isParent ? copy.interpretCoverTitleParent : copy.interpretCoverTitle;
@@ -5803,11 +5856,16 @@ function renderInterpretGlossary(copy, pageEntry) {
 
   return `
     <section class="interpret-glossary"${reportPageAttrs(pageEntry)} aria-labelledby="interpret-glossary-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-forest-trail.png",
+        objectPosition: "center 38%",
+        kicker: copy.interpretGlossaryKicker,
+        titleId: "interpret-glossary-title",
+        title: copy.interpretGlossaryTitle,
+        lead: copy.interpretGlossaryIntro,
+        variant: "forest",
+      })}
       ${cornerLeaves}
-      <p class="profile-kicker">${escapeHtml(copy.interpretGlossaryKicker)}</p>
-      <h3 id="interpret-glossary-title">${escapeHtml(copy.interpretGlossaryTitle)}</h3>
-      ${printMountainRule("section")}
-      <p class="profile-section__summary">${escapeHtml(copy.interpretGlossaryIntro)}</p>
       <ul class="interpret-glossary__list">
         ${parts.join("")}
       </ul>
@@ -5845,11 +5903,14 @@ function renderInterpretOurSenses(copy, pageEntry) {
 function renderInterpretSensoryWorld(copy, pageEntry) {
   return `
     <section class="interpret-world"${reportPageAttrs(pageEntry)} aria-labelledby="interpret-world-title">
-      <header class="interpret-world__header no-print">
-        <p class="profile-kicker">${escapeHtml(copy.interpretWorldKicker)}</p>
-        <h3 id="interpret-world-title">${escapeHtml(copy.interpretWorldTitle)}</h3>
-        ${printMountainRule("section")}
-      </header>
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-sunlight-trail.png",
+        objectPosition: "center 45%",
+        kicker: copy.interpretWorldKicker,
+        titleId: "interpret-world-title",
+        title: copy.interpretWorldTitle,
+        variant: "sunlight",
+      })}
       <figure class="interpret-world__figure">
         <img
           class="interpret-world__image"
@@ -6434,16 +6495,24 @@ function renderResults() {
       ${renderInterpretOurSenses(copy, reportPageById(pagePlan, "report-senses"))}
       ${renderInterpretSensoryWorld(copy, reportPageById(pagePlan, "report-world"))}
 
-      <div class="results-intro"${reportPageAttrs(profilePage)}>
-        <p class="profile-kicker">${escapeHtml(copy.viewpoint)}</p>
-        <h2>${escapeHtml(state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle)}</h2>
-        ${printMountainRule("section")}
+      <div class="results-intro"${reportPageAttrs(profilePage)} aria-labelledby="profile-title">
+        ${renderInterpretSectionBanner({
+          image: "assets/heading-viewpoint-forest.png",
+          objectPosition: "center 48%",
+          kicker: copy.viewpoint,
+          titleId: "profile-title",
+          title: state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle,
+          lead: copy.profileIntro,
+          variant: "viewpoint",
+          titleTag: "h2",
+          width: 1024,
+          height: 682,
+        })}
         ${
           state.demographics.name
             ? `<p class="results-intro__name">${escapeHtml(state.demographics.name)}</p>`
             : ""
         }
-        <p class="step-desc">${escapeHtml(copy.profileIntro)}</p>
         ${
           context
             ? `<p class="results-intro__context">
