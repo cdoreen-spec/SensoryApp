@@ -4285,44 +4285,14 @@ body.is-pain-screen .site-footer {
   margin: 1.15rem 0 1.5rem;
   padding: 1.4rem 1.45rem 1.5rem;
   border-radius: 22px;
-  border: 1.5px solid rgba(61, 90, 71, 0.16);
-  background:
-    radial-gradient(ellipse 55% 70% at 12% 20%, rgba(240, 226, 184, 0.35), transparent 60%),
-    linear-gradient(145deg, rgba(250, 252, 248, 0.98) 0%, rgba(220, 232, 224, 0.75) 100%);
-  box-shadow: 0 14px 36px rgba(36, 75, 56, 0.1);
-  --crew-scape: #3d5a47;
-  --crew-scape-soft: #789783;
-  --crew-scape-gold: #c4a86a;
-}
-
-.teen-crew__hero--explorer {
-  background:
-    radial-gradient(ellipse 50% 60% at 10% 15%, rgba(240, 226, 184, 0.55), transparent 58%),
-    linear-gradient(145deg, #fff8e8 0%, #e7efd8 55%, #d5e3c8 100%);
-  border-color: rgba(184, 140, 70, 0.35);
-  --crew-scape: #7a6434;
-  --crew-scape-soft: #a89058;
-  --crew-scape-gold: #d0b46a;
-}
-
-.teen-crew__hero--adaptor {
+  border: 1.5px solid rgba(82, 119, 92, 0.3);
   background:
     radial-gradient(ellipse 50% 60% at 10% 15%, rgba(168, 196, 174, 0.45), transparent 58%),
     linear-gradient(145deg, #f4faf4 0%, #dce8dc 55%, #c8dcc8 100%);
-  border-color: rgba(82, 119, 92, 0.3);
+  box-shadow: 0 14px 36px rgba(36, 75, 56, 0.1);
   --crew-scape: #3f6b4f;
   --crew-scape-soft: #6f9478;
   --crew-scape-gold: #b8c48a;
-}
-
-.teen-crew__hero--observer {
-  background:
-    radial-gradient(ellipse 50% 60% at 10% 15%, rgba(180, 210, 220, 0.5), transparent 58%),
-    linear-gradient(145deg, #f2f7fa 0%, #d7e4ea 55%, #c2d4de 100%);
-  border-color: rgba(74, 107, 122, 0.32);
-  --crew-scape: #4a6b7a;
-  --crew-scape-soft: #7a96a4;
-  --crew-scape-gold: #9bb4c0;
 }
 
 .teen-crew__hero-art {
