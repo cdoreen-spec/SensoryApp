@@ -1010,7 +1010,7 @@ const QUESTIONNAIRE_UI = {
     summaryTrailNote: "Jou gekoppelde karakter word hier kort gedeel. Die volle roete-profiel vorm deel van jou terugvoersessie.",
     summaryEditorTitle: "Wat in die kort verslag ingesluit is",
     summaryEditorLead:
-      "Pasiënte op ’n kort-verslag-uitnodiging sien altyd die voltooiingsnota en opvolgversoek. Skakel extras net aan as jy wil hê dit moet ingesluit word.",
+      "Pasiënte op ’n kort-verslag-uitnodiging sien altyd die voltooiingsnota en opvolgversoek. Skakel ekstra afdelings net aan as jy wil hê dit moet ingesluit word.",
     summaryEditorLegend: "Opsionele kort-verslag-afdelings",
     summaryEditorOverall: "Algehele patroon-etiket",
     summaryEditorOverallHint: "Wys net die hoëvlak-patroonnaam.",
