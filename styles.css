@@ -4195,6 +4195,7 @@ body.is-pain-screen .site-footer {
 .card--results .profile-section--scores,
 .card--results .sense-detail-list,
 .card--results .sensory-diet,
+.card--results .report-conclusion,
 .card--results .work-report,
 .card--results .results-contact,
 .card--results .actions {
@@ -5843,6 +5844,111 @@ body.is-pain-screen .site-footer {
   .interpret-glossary__list {
     margin-left: 0.85rem;
     margin-right: 0.85rem;
+  }
+}
+
+.report-conclusion {
+  position: relative;
+  margin: 2.5rem 0 1.75rem;
+  padding: 0 0 2.25rem;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(154, 186, 158, 0.16), transparent 60%),
+    linear-gradient(168deg, rgba(250, 252, 248, 0.98) 0%, rgba(236, 244, 238, 0.94) 52%, rgba(228, 238, 230, 0.96) 100%);
+  border: 1px solid rgba(54, 91, 70, 0.16);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.report-conclusion > .interpret-section-banner {
+  margin: 0;
+  border-radius: 17px 17px 0 0;
+  box-shadow: none;
+  min-height: min(44vh, 19rem);
+  place-items: center;
+}
+
+.report-conclusion > .interpret-section-banner .interpret-section-banner__veil {
+  background:
+    linear-gradient(180deg, rgba(12, 28, 18, 0.35) 0%, rgba(14, 30, 22, 0.48) 45%, rgba(10, 24, 16, 0.72) 100%),
+    linear-gradient(90deg, rgba(12, 28, 18, 0.25) 0%, transparent 50%, rgba(12, 28, 18, 0.25) 100%);
+}
+
+.report-conclusion > .interpret-section-banner .interpret-section-banner__content {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.25rem) clamp(1.35rem, 4vw, 2.5rem);
+  text-align: center;
+}
+
+.report-conclusion > .interpret-section-banner .interpret-section-banner__kicker {
+  margin-bottom: 0.75rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+}
+
+.report-conclusion > .interpret-section-banner .interpret-section-banner__title {
+  font-size: clamp(2rem, 5.5vw, 2.85rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+
+.report-conclusion__body {
+  padding: clamp(2.5rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 2.5rem) 0.5rem;
+  max-width: 36rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.report-conclusion__description {
+  margin: 0 0 2.5rem;
+  font-size: clamp(1.05rem, 2.2vw, 1.18rem);
+  line-height: 1.75;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.report-conclusion__quote {
+  margin: 0 auto 2rem;
+  max-width: 32rem;
+  padding: 1.65rem 1.5rem;
+  border: none;
+  border-top: 1px solid rgba(104, 139, 120, 0.3);
+  border-bottom: 1px solid rgba(104, 139, 120, 0.3);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.report-conclusion__quote p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 2.6vw, 1.38rem);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--forest) 82%, var(--ink-soft));
+  text-wrap: pretty;
+}
+
+.report-conclusion__credit {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+  opacity: 0.8;
+}
+
+@media (max-width: 520px) {
+  .report-conclusion__body {
+    padding: 2rem 1.1rem 0.25rem;
+  }
+
+  .report-conclusion__description {
+    margin-bottom: 2rem;
+  }
+
+  .report-conclusion__quote {
+    padding: 1.35rem 1rem;
   }
 }
 
@@ -8583,6 +8689,43 @@ body.is-pain-screen .site-footer {
     color: #1c2a22;
     orphans: 3;
     widows: 3;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Keep report photos / infographics visible when saving as PDF */
+  body.print-sensory-results img,
+  body:not(.print-work-report) .interpret-cover img,
+  body:not(.print-work-report) .interpret-toc img,
+  body:not(.print-work-report) .interpret-glossary img,
+  body:not(.print-work-report) .interpret-senses img,
+  body:not(.print-work-report) .interpret-world img,
+  body:not(.print-work-report) .interpret-section-banner img,
+  body.print-sensory-results .trail-profile img,
+  body.print-sensory-results .teen-crew img,
+  body.print-sensory-results .results-section-bridge img,
+  body.print-sensory-results .report-conclusion img,
+  .print-brand img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  body.print-sensory-results .interpret-section-banner__media,
+  body.print-sensory-results .interpret-section-banner__image,
+  body.print-sensory-results .interpret-cover__media,
+  body.print-sensory-results .interpret-cover__image,
+  body.print-sensory-results .interpret-senses__figure,
+  body.print-sensory-results .interpret-senses__image,
+  body.print-sensory-results .interpret-world__figure,
+  body.print-sensory-results .interpret-world__image,
+  body.print-sensory-results .trail-profile__figure,
+  body.print-sensory-results .trail-profile__image {
+    display: block !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Centered brand mark on every printed page */
@@ -9110,7 +9253,8 @@ body.is-pain-screen .site-footer {
   .interpret-glossary .report-page-number,
   .profile-section .report-page-number,
   .sense-interpret-intro .report-page-number,
-  .sense-glance .report-page-number {
+  .sense-glance .report-page-number,
+  .report-conclusion .report-page-number {
     right: 0;
     bottom: 1.5mm;
   }
@@ -9635,21 +9779,28 @@ body.is-pain-screen .site-footer {
     print-color-adjust: exact;
   }
 
-  /* —— Profile intro + overall: keep related content together —— */
+  /* —— Profile intro + overall: keep related content together on one page —— */
   body.print-sensory-results .results-intro {
     break-after: avoid;
     page-break-after: avoid;
-    margin: 0 0 4mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0 0 2mm;
     padding: 0;
   }
 
   body.print-sensory-results .results-intro > .interpret-section-banner {
-    margin: 0 0 4mm;
-    min-height: 48mm;
+    margin: 0 0 2mm;
+    min-height: 26mm;
+    max-height: 30mm;
     border-radius: 0;
     box-shadow: none;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .results-intro > .interpret-section-banner .interpret-section-banner__content {
+    padding: 3.5mm 5mm;
   }
 
   body.print-sensory-results .results-intro .profile-kicker,
@@ -9670,7 +9821,7 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .results-intro .profile-kicker,
   body.print-sensory-results .results-intro .interpret-section-banner__kicker {
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     letter-spacing: 0.16em;
     font-weight: 700;
     color: #3f6b4f;
@@ -9683,11 +9834,11 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .results-intro h2,
   body.print-sensory-results .results-intro .interpret-section-banner__title {
     font-family: var(--font-serif);
-    font-size: 22pt;
+    font-size: 16pt;
     font-weight: 700;
     color: #244b38;
-    line-height: 1.15;
-    margin: 1.5mm 0 3mm;
+    line-height: 1.12;
+    margin: 1mm 0 1.5mm;
   }
 
   body.print-sensory-results .results-intro .interpret-section-banner__title {
@@ -9697,53 +9848,63 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .results-intro .interpret-section-banner__lead {
-    margin: 2.5mm 0 0;
-    font-size: 10pt;
-    line-height: 1.5;
+    margin: 1.2mm 0 0;
+    font-size: 8pt;
+    line-height: 1.3;
     color: rgba(244, 248, 244, 0.94);
   }
 
   body.print-sensory-results .results-intro__name {
     font-family: var(--font-serif);
-    font-size: 13pt;
+    font-size: 11pt;
     font-weight: 700;
     color: #365b46;
+    margin: 0 0 1.5mm;
   }
 
   body.print-sensory-results .results-intro .step-desc,
   body.print-sensory-results .results-intro__context-text {
-    font-size: 10pt;
-    line-height: 1.5;
+    font-size: 8.5pt;
+    line-height: 1.35;
+  }
+
+  body.print-sensory-results .results-intro__context {
+    margin: 0 0 1.5mm;
   }
 
   body.print-sensory-results .sharing-summary {
+    /* Compact permissions note — avoid pushing the overall pattern onto a second sheet */
     break-inside: avoid;
     page-break-inside: avoid;
     break-after: avoid;
     page-break-after: avoid;
-    margin: 0 0 5mm;
-    padding: 4mm 4.5mm;
+    margin: 0 0 2mm;
+    padding: 2mm 2.5mm;
     background: linear-gradient(160deg, #f7faf6, #eef4ee);
     border: 1px solid rgba(54, 91, 70, 0.18);
-    border-radius: 8px;
+    border-radius: 6px;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   body.print-sensory-results .sharing-summary h3 {
     font-family: var(--font-serif);
-    font-size: 13pt;
+    font-size: 10pt;
     font-weight: 700;
     color: #244b38;
+    margin: 0 0 1mm;
   }
 
   body.print-sensory-results .sharing-summary__intro,
   body.print-sensory-results .sharing-summary__note {
-    font-size: 9pt;
+    font-size: 7.5pt;
+    line-height: 1.3;
+    margin: 0 0 1mm;
   }
 
   body.print-sensory-results .sharing-summary__row {
-    padding: 2.5mm 3mm;
+    padding: 1.4mm 2mm;
+    font-size: 8pt;
   }
 
   body.print-sensory-results .profile-section:not(.profile-section--scores) {
@@ -9761,6 +9922,92 @@ body.is-pain-screen .site-footer {
       radial-gradient(ellipse 55% 28% at 100% 0%, rgba(154, 186, 158, 0.12), transparent 65%),
       transparent;
     display: block;
+  }
+
+  /* Overall pattern: stay on one page with the profile intro above */
+  body.print-sensory-results .profile-section--overall {
+    break-before: avoid;
+    page-break-before: avoid;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+    padding: 0 0 3mm;
+  }
+
+  body.print-sensory-results .profile-section--overall > .print-page-motif {
+    display: none !important;
+  }
+
+  body.print-sensory-results .profile-section--overall .print-nature-rule {
+    margin: 1.2mm auto;
+    max-height: 4.5mm;
+  }
+
+  body.print-sensory-results .profile-section--overall .profile-kicker {
+    font-size: 7.5pt;
+    margin: 0 0 0.8mm;
+  }
+
+  body.print-sensory-results .profile-section--overall h3 {
+    font-size: 15pt;
+    margin: 0 0 1.5mm;
+    line-height: 1.15;
+  }
+
+  body.print-sensory-results .profile-section--overall .profile-section__summary {
+    font-size: 8.5pt;
+    line-height: 1.35;
+    margin: 0 0 2mm;
+  }
+
+  body.print-sensory-results .profile-section--overall .overall-score {
+    padding: 3mm 3.5mm;
+    margin: 0 0 2mm;
+  }
+
+  body.print-sensory-results .profile-section--overall .overall-score__note,
+  body.print-sensory-results .profile-section--overall .overall-score__label,
+  body.print-sensory-results .profile-section--overall .overall-score__bar-label,
+  body.print-sensory-results .profile-section--overall .overall-score__split-label-head,
+  body.print-sensory-results .profile-section--overall .overall-score__stat-label,
+  body.print-sensory-results .profile-section--overall .overall-score__total-label {
+    font-size: 7.5pt;
+  }
+
+  body.print-sensory-results .profile-section--overall .overall-score__profile {
+    font-size: 14pt;
+    line-height: 1.15;
+  }
+
+  body.print-sensory-results .profile-section--overall .overall-score__stat-value,
+  body.print-sensory-results .profile-section--overall .overall-score__total-value {
+    font-size: 12pt;
+  }
+
+  body.print-sensory-results .profile-section--overall .overall-score__stats,
+  body.print-sensory-results .profile-section--overall .overall-score__split-list {
+    gap: 1.5mm;
+  }
+
+  body.print-sensory-results .profile-section--overall .overall-score__stat,
+  body.print-sensory-results .profile-section--overall .overall-score__split-item {
+    padding: 1.5mm 2mm;
+  }
+
+  body.print-sensory-results .profile-section--overall .context-reading {
+    padding: 2.5mm 3mm;
+    margin: 0;
+  }
+
+  body.print-sensory-results .profile-section--overall .context-reading__label {
+    font-size: 7.5pt;
+    margin-bottom: 1mm;
+  }
+
+  body.print-sensory-results .profile-section--overall .context-reading__text {
+    font-size: 8.5pt;
+    line-height: 1.35;
   }
 
   /* Avoid a blank sheet between the setting guide and the sensory diet */
@@ -9868,9 +10115,9 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .overall-score {
-    margin: 0 0 5mm;
-    padding: 5mm 5mm;
-    border-radius: 10px;
+    margin: 0 0 2.5mm;
+    padding: 3mm 3.5mm;
+    border-radius: 8px;
     border: 1px solid rgba(54, 91, 70, 0.18);
     background: linear-gradient(165deg, #fafcf8, #eef4ee);
   }
@@ -9957,14 +10204,14 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .sense-interpret-intro {
-    break-after: page;
-    page-break-after: always;
+    break-after: avoid;
+    page-break-after: avoid;
     break-inside: avoid;
     page-break-inside: avoid;
     box-sizing: border-box;
     min-height: 0;
     margin: 0;
-    padding: 2mm 2mm 10mm;
+    padding: 1mm 2mm 2mm;
     display: block;
     position: relative;
     background:
@@ -9973,48 +10220,85 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .sense-interpret-intro .profile-kicker {
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     letter-spacing: 0.16em;
     font-weight: 700;
   }
 
   body.print-sensory-results .sense-interpret-intro h3 {
     font-family: var(--font-serif);
-    font-size: 22pt;
+    font-size: 15pt;
     font-weight: 700;
     color: #244b38;
-    margin: 1.5mm 0 2mm;
+    margin: 1mm 0 1.5mm;
   }
 
   body.print-sensory-results .sense-interpret-intro .profile-section__summary {
-    font-size: 10.5pt;
-    line-height: 1.5;
-    margin-bottom: 5mm;
+    font-size: 8.5pt;
+    line-height: 1.35;
+    margin-bottom: 2.5mm;
+  }
+
+  body.print-sensory-results .sense-interpret-intro .print-nature-rule {
+    margin: 1mm auto 1.5mm;
+    max-height: 4.5mm;
   }
 
   body.print-sensory-results .sense-interpret-key {
-    gap: 3mm;
-    margin-top: 4mm;
+    gap: 1.5mm;
+    margin-top: 2mm;
   }
 
   body.print-sensory-results .sense-interpret-key__item {
-    padding: 3.5mm 4mm;
-    font-size: 10pt;
-    border-radius: 8px;
+    padding: 2mm 2.5mm;
+    font-size: 8pt;
+    line-height: 1.3;
+    border-radius: 6px;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
+  /* Keep glance on the same sheet as the scores intro above */
   body.print-sensory-results .sense-glance,
   body.print-sensory-results .teen-cheat {
+    break-before: avoid;
+    page-break-before: avoid;
     break-after: page;
     page-break-after: always;
     break-inside: avoid;
     page-break-inside: avoid;
     min-height: 0;
-    padding: 3mm 2mm 10mm;
+    padding: 1mm 1.5mm 5mm;
     box-sizing: border-box;
     position: relative;
+  }
+
+  body.print-sensory-results .sense-glance__label {
+    font-size: 8pt;
+    margin: 0 0 2mm;
+  }
+
+  body.print-sensory-results .sense-glance__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.6mm;
+  }
+
+  body.print-sensory-results .sense-glance__card {
+    padding: 1.6mm 2mm;
+  }
+
+  body.print-sensory-results .sense-glance__title {
+    font-size: 8.5pt;
+  }
+
+  body.print-sensory-results .sense-glance__blurb {
+    font-size: 7pt;
+    line-height: 1.2;
+  }
+
+  body.print-sensory-results .sense-glance__icon {
+    font-size: 11pt;
   }
 
   body.print-sensory-results .sense-interpret-grid,
@@ -10055,7 +10339,7 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .sense-interpret__print-band {
     display: block !important;
     height: 2.5mm;
-    margin: 0 0 3mm;
+    margin: 0 0 2.5mm;
     background: linear-gradient(
       90deg,
       color-mix(in srgb, var(--domain-color) 88%, #244b38),
@@ -10068,32 +10352,32 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .sense-interpret__header {
     align-items: center;
-    gap: 3mm;
-    padding: 0 2.5mm 1.5mm;
-    margin-bottom: 1mm;
+    gap: 2.5mm;
+    padding: 0 2.5mm 1mm;
+    margin-bottom: 0.5mm;
   }
 
   body.print-sensory-results .sense-interpret__print-kicker {
     display: block !important;
-    margin: 0 0 1mm;
+    margin: 0 0 0.8mm;
     font-size: 7pt;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: color-mix(in srgb, var(--domain-color) 55%, #365b46);
   }
 
   body.print-sensory-results .sense-interpret__icon {
-    width: 12mm;
-    height: 12mm;
-    font-size: 14pt;
+    width: 11mm;
+    height: 11mm;
+    font-size: 13pt;
     border-radius: 3mm;
     box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--domain-color) 40%, transparent);
   }
 
   body.print-sensory-results .sense-interpret__title {
     font-family: var(--font-serif);
-    font-size: 17pt;
+    font-size: 15pt;
     font-weight: 700;
     line-height: 1.1;
     color: #244b38;
@@ -10103,45 +10387,54 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .sense-interpret__text,
   body.print-sensory-results .sense-interpret__blurb,
   body.print-sensory-results .sense-interpret__subtitle {
-    font-size: 9pt;
-    line-height: 1.4;
+    font-size: 8.5pt;
+    line-height: 1.3;
   }
 
   body.print-sensory-results .sense-interpret__blurb,
   body.print-sensory-results .sense-interpret__subtitle {
-    margin-top: 1mm;
+    margin-top: 0.8mm;
     color: #4a554c;
   }
 
   body.print-sensory-results .sense-interpret__badges .threshold-pill {
-    font-size: 8pt;
-    padding: 1.4mm 2.8mm;
+    font-size: 7.5pt;
+    padding: 1.2mm 2.4mm;
   }
 
   body.print-sensory-results .sense-interpret .print-sense-art {
-    margin: 1.5mm auto 0.5mm;
+    margin: 1mm auto 0.5mm;
   }
 
   body.print-sensory-results .sense-interpret .print-sense-art svg {
-    width: min(100%, 52mm);
-    max-height: 26mm;
+    width: min(100%, 48mm);
+    max-height: 22mm;
   }
 
   body.print-sensory-results .sense-interpret .balance-bar {
-    margin: 1.5mm 2.5mm 2.5mm;
-    padding: 2.5mm 3mm;
+    margin: 1mm 2.5mm 2mm;
+    padding: 2mm 2.5mm;
+  }
+
+  body.print-sensory-results .sense-interpret .balance-bar__track {
+    height: 4mm;
+  }
+
+  body.print-sensory-results .sense-interpret .balance-bar__axis,
+  body.print-sensory-results .sense-interpret .balance-bar__status {
+    font-size: 7pt;
   }
 
   body.print-sensory-results .sense-interpret__body {
     display: grid;
-    gap: 2mm;
+    gap: 1.5mm;
     padding: 0 2.5mm;
     align-content: start;
     flex: 1;
   }
 
   body.print-sensory-results .sense-interpret__block {
-    padding: 3mm 3.5mm;
+    padding: 2.5mm 3mm;
     border-radius: 6px;
     border: 1px solid rgba(54, 91, 70, 0.14);
     background: rgba(255, 255, 255, 0.72);
@@ -10158,50 +10451,50 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .sense-interpret__label {
     font-family: var(--font-serif);
-    font-size: 10pt;
+    font-size: 9pt;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-transform: none;
     color: #244b38;
-    margin-bottom: 1.5mm;
-    padding-bottom: 1mm;
+    margin-bottom: 1.2mm;
+    padding-bottom: 0.8mm;
     border-bottom: 1px solid rgba(54, 91, 70, 0.16);
   }
 
   body.print-sensory-results .sense-interpret__text,
   body.print-sensory-results .sense-interpret__points li {
-    font-size: 9.5pt;
-    line-height: 1.4;
+    font-size: 8.5pt;
+    line-height: 1.3;
     color: #2a332c;
   }
 
   body.print-sensory-results .sense-interpret__content {
-    gap: 2.5mm;
+    gap: 1.8mm;
   }
 
   body.print-sensory-results .sense-interpret__section-title {
-    font-size: 8pt;
+    font-size: 7.5pt;
     color: #365b46;
   }
 
   body.print-sensory-results .sense-interpret__points {
-    gap: 1.6mm;
+    gap: 1.2mm;
   }
 
   body.print-sensory-results .sense-interpret__points li {
-    padding-left: 4mm;
+    padding-left: 3.5mm;
   }
 
   body.print-sensory-results .sense-interpret__trail {
-    margin: 1mm 0 1.5mm;
+    margin: 0.8mm 0 1mm;
   }
 
   body.print-sensory-results .sense-interpret__trail svg {
-    width: 45mm;
+    width: 40mm;
   }
 
   body.print-sensory-results .sense-interpret__dial {
-    width: min(100%, 7.5rem);
+    width: min(100%, 6.5rem);
   }
 
   body.print-sensory-results .sense-interpret__print-footer {
@@ -10210,7 +10503,7 @@ body.is-pain-screen .site-footer {
     left: -2%;
     right: -2%;
     bottom: 0;
-    height: 10mm;
+    height: 9mm;
     overflow: hidden;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -10239,7 +10532,7 @@ body.is-pain-screen .site-footer {
     clip-path: polygon(0 100%, 0 68%, 18% 50%, 36% 72%, 54% 48%, 72% 70%, 88% 54%, 100% 66%, 100% 100%);
   }
 
-  /* One detailed adult card per page; no trailing blank page after the last */
+  /* One sensory system per page; keep each card from spilling onto a second sheet */
   body.print-sensory-results .profile-section--scores-adult .sense-interpret:not(:last-child) {
     break-after: page;
     page-break-after: always;
@@ -10253,7 +10546,8 @@ body.is-pain-screen .site-footer {
   /* Two shorter cards per page for teen / parent */
   body.print-sensory-results .profile-section--scores:not(.profile-section--scores-adult) .sense-interpret {
     min-height: 0;
-    padding-bottom: 10mm;
+    max-height: 130mm;
+    padding-bottom: 8mm;
   }
 
   body.print-sensory-results .profile-section--scores:not(.profile-section--scores-adult) .sense-interpret:nth-child(2n):not(:last-child) {
@@ -10360,6 +10654,91 @@ body.is-pain-screen .site-footer {
     font-size: 9pt;
     line-height: 1.35;
     margin-bottom: 2mm;
+  }
+
+  /* —— Report conclusion —— */
+  body.print-sensory-results .report-conclusion {
+    break-before: page;
+    page-break-before: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 0 12mm;
+    border: none;
+    border-radius: 0;
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 0%, rgba(154, 186, 158, 0.16), transparent 58%),
+      #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .report-conclusion > .interpret-section-banner {
+    margin: 0 0 8mm;
+    min-height: 52mm;
+    max-height: 58mm;
+    border-radius: 0;
+    box-shadow: none;
+    place-items: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .report-conclusion > .interpret-section-banner .interpret-section-banner__content {
+    padding: 6mm 8mm;
+    max-width: none;
+    text-align: center;
+  }
+
+  body.print-sensory-results .report-conclusion .interpret-section-banner__kicker {
+    margin-bottom: 2mm;
+    font-size: 8pt;
+    letter-spacing: 0.2em;
+    color: rgba(232, 240, 232, 0.9);
+  }
+
+  body.print-sensory-results .report-conclusion .interpret-section-banner__title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 22pt;
+    font-weight: 700;
+    line-height: 1.12;
+    color: #fafcf8;
+    text-shadow: 0 1px 8px rgba(8, 22, 16, 0.45);
+  }
+
+  body.print-sensory-results .report-conclusion__body {
+    padding: 2mm 8mm 0;
+    max-width: 150mm;
+  }
+
+  body.print-sensory-results .report-conclusion__description {
+    margin: 0 0 8mm;
+    font-size: 11.5pt;
+    line-height: 1.65;
+    color: #1c2a22;
+  }
+
+  body.print-sensory-results .report-conclusion__quote {
+    margin: 0 auto 6mm;
+    max-width: 135mm;
+    padding: 5mm 6mm;
+    background: rgba(244, 248, 244, 0.75);
+    border-color: rgba(104, 139, 120, 0.32);
+  }
+
+  body.print-sensory-results .report-conclusion__quote p {
+    font-size: 13pt;
+    line-height: 1.45;
+    color: #2f5340;
+  }
+
+  body.print-sensory-results .report-conclusion__credit {
+    margin: 0;
+    font-size: 8pt;
+    letter-spacing: 0.12em;
+    color: #3f6b4f;
   }
 
   .sensory-diet__trigger,
@@ -10637,22 +11016,70 @@ body.is-pain-screen .site-footer {
 }
 
 .results-summary {
-  max-width: 40rem;
+  max-width: 44rem;
   margin: 0 auto;
-  padding-bottom: 1rem;
+  padding-bottom: 1.5rem;
 }
 
-.results-summary--brief .results-intro h2 {
-  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
-  line-height: 1.25;
+.results-summary--brief {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.results-summary__hero {
+  margin-bottom: 0.35rem;
+}
+
+.results-summary--brief > .interpret-section-banner,
+.results-summary__hero > .interpret-section-banner,
+.results-summary__next > .interpret-section-banner {
+  margin-bottom: 1rem;
+  min-height: min(38vh, 16.5rem);
+}
+
+.results-summary__name {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 2.2vw, 1.35rem);
+  font-weight: 600;
+  color: var(--forest);
+  letter-spacing: 0.01em;
+}
+
+.results-summary__intro {
+  margin: 0 0 0.85rem;
+  color: var(--ink-muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  max-width: 38rem;
+}
+
+.results-summary__extras {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0.85rem 0 0.35rem;
 }
 
 .results-summary__snippet {
-  margin: 1.25rem 0;
-  padding: 1rem 1.05rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  padding: 1.05rem 1.1rem;
+  border-radius: 16px;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.82) 0%, rgba(245, 249, 245, 0.9) 100%);
   border: 1px solid rgba(54, 91, 70, 0.12);
+  box-shadow: 0 10px 28px rgba(36, 75, 56, 0.06);
+}
+
+.results-summary__snippet--pattern {
+  background:
+    linear-gradient(155deg, rgba(143, 175, 152, 0.14) 0%, rgba(255, 255, 255, 0.88) 48%),
+    rgba(255, 255, 255, 0.7);
+}
+
+.results-summary__snippet--trail {
+  background:
+    linear-gradient(155deg, rgba(196, 154, 88, 0.12) 0%, rgba(255, 255, 255, 0.9) 50%),
+    rgba(255, 255, 255, 0.7);
 }
 
 .results-summary__snippet .profile-kicker {
@@ -10662,7 +11089,7 @@ body.is-pain-screen .site-footer {
 .results-summary__snippet h3 {
   margin: 0 0 0.45rem;
   font-family: var(--font-serif);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   color: var(--forest);
   line-height: 1.3;
 }
@@ -10693,7 +11120,7 @@ body.is-pain-screen .site-footer {
   justify-content: space-between;
   gap: 0.75rem;
   align-items: baseline;
-  padding: 0.35rem 0;
+  padding: 0.4rem 0;
   border-bottom: 1px solid rgba(54, 91, 70, 0.1);
   font-size: 0.95rem;
 }
@@ -10713,30 +11140,39 @@ body.is-pain-screen .site-footer {
 }
 
 .results-summary__next {
-  margin: 1.75rem 0 1.25rem;
-  padding: 1.25rem 1.15rem;
-  border-radius: 16px;
-  background: rgba(54, 91, 70, 0.06);
-  border: 1px solid rgba(54, 91, 70, 0.12);
+  margin: 1.35rem 0 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
   text-align: left;
 }
 
-.results-summary__next h3 {
-  margin: 0 0 0.5rem;
-  font-family: var(--font-serif);
-  font-size: 1.2rem;
-  color: var(--forest);
+.results-summary__next-body {
+  margin-top: 0.15rem;
+  padding: 1.15rem 1.15rem 1.2rem;
+  border-radius: 16px;
+  background: rgba(54, 91, 70, 0.06);
+  border: 1px solid rgba(54, 91, 70, 0.12);
 }
 
-.results-summary__next p {
+.results-summary__next-body p {
   margin: 0 0 1rem;
   color: var(--ink-muted);
   line-height: 1.55;
 }
 
-.results-summary__next .actions {
+.results-summary__next-body .actions {
   margin: 0;
   flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .results-summary--brief > .interpret-section-banner,
+  .results-summary__hero > .interpret-section-banner,
+  .results-summary__next > .interpret-section-banner {
+    min-height: 13.5rem;
+    border-radius: 16px;
+  }
 }
 
 .short-report-editor {

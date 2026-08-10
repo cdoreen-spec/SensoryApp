@@ -427,9 +427,12 @@ const QUESTIONNAIRE_UI = {
     thankYouHome: "Back to home",
     summaryKicker: "Screening complete",
     summaryTitle: "Thank you — your answers were received",
+    summaryBannerLead: "A brief confirmation while your detailed sensory report stays with your therapist.",
     summaryIntro:
       "This is only a brief confirmation. A follow-up session with your therapist is needed to understand what your results mean and how they show up in everyday life.",
+    summaryNextKicker: "Next step",
     summaryNextTitle: "Book a follow-up session",
+    summaryNextBannerLead: "Walk through your full profile together on the trail ahead.",
     summaryNextBody:
       "Your therapist has the full sensory report. Book an online or in-person session with Soulful Sensory OT to walk through the detailed findings together.",
     summaryBookCta: "Book a follow-up session",
@@ -597,6 +600,17 @@ const QUESTIONNAIRE_UI = {
     dietOpen: "Browse more ideas by sense",
     dietClose: "Hide idea bank",
     dietEmpty: "Complete the screening to see tailored ideas for each sense.",
+    reportConclusionKicker: "Conclusion",
+    reportConclusionTitle: "The trail ahead",
+    reportConclusionBody:
+      "You’ve found your sensory trail profile — a map, not a label. It offers clues about what helps you feel regulated, focused and supported, and what your nervous system might need from you. The next step isn’t to fit yourself into the world; it’s to learn how to support yourself within it.",
+    reportConclusionBodyParent:
+      "You’ve found your child’s sensory trail profile — a map, not a label. It offers clues about what helps them feel regulated, focused and supported, and what their nervous system might need from you. The next step isn’t to fit them into the world; it’s to learn how to support them within it.",
+    reportConclusionQuote:
+      "When you understand your sensory needs, you understand yourself a little better.",
+    reportConclusionQuoteParent:
+      "When you understand your child’s sensory needs, you understand them a little better.",
+    reportConclusionCredit: "Soulful Sensory OT",
   },
   af: {
     shellTitle: "Sensoriese Siftingsvraelys",
@@ -1023,9 +1037,12 @@ const QUESTIONNAIRE_UI = {
     thankYouHome: "Terug na tuis",
     summaryKicker: "Sifting voltooi",
     summaryTitle: "Dankie — jou antwoorde is ontvang",
+    summaryBannerLead: "’n Kort bevestiging terwyl jou gedetailleerde sensoriese verslag by jou terapeut bly.",
     summaryIntro:
       "Dit is net ’n kort bevestiging. ’n Opvolgsessie met jou terapeut is nodig om te verstaan wat jou resultate beteken en hoe dit in die alledaagse lewe wys.",
+    summaryNextKicker: "Volgende stap",
     summaryNextTitle: "Bespreek ’n opvolgsessie",
+    summaryNextBannerLead: "Loop saam deur jou volle profiel op die pad vorentoe.",
     summaryNextBody:
       "Jou terapeut het die volle sensoriese verslag. Bespreek ’n aanlyn- of persoonlike sessie met Soulful Sensory OT om die gedetailleerde bevindinge saam deur te werk.",
     summaryBookCta: "Bespreek ’n opvolgsessie",
@@ -1193,6 +1210,17 @@ const QUESTIONNAIRE_UI = {
     dietOpen: "Blaai deur meer idees per sintuig",
     dietClose: "Versteek ideebank",
     dietEmpty: "Voltooi die sifting om pasgemaakte idees vir elke sintuig te sien.",
+    reportConclusionKicker: "Gevolgtrekking",
+    reportConclusionTitle: "Die pad vorentoe",
+    reportConclusionBody:
+      "Jy het jou sensoriese roete-profiel gevind — ’n kaart, nie ’n etiket nie. Dit bied leidrade oor wat jou help om gereguleerd, gefokus en ondersteun te voel, en wat jou senuweestelsel dalk van jou nodig het. Die volgende tree is nie om jouself in die wêreld te forseer nie; dit is om te leer hoe om jouself daarin te ondersteun.",
+    reportConclusionBodyParent:
+      "Jy het jou kind se sensoriese roete-profiel gevind — ’n kaart, nie ’n etiket nie. Dit bied leidrade oor wat hulle help om gereguleerd, gefokus en ondersteun te voel, en wat hulle senuweestelsel dalk van jou nodig het. Die volgende tree is nie om hulle in die wêreld te forseer nie; dit is om te leer hoe om hulle daarin te ondersteun.",
+    reportConclusionQuote:
+      "Wanneer jy jou sensoriese behoeftes verstaan, verstaan jy jouself ’n bietjie beter.",
+    reportConclusionQuoteParent:
+      "Wanneer jy jou kind se sensoriese behoeftes verstaan, verstaan jy hulle ’n bietjie beter.",
+    reportConclusionCredit: "Soulful Sensory OT",
   },
 };
 

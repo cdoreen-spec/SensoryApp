@@ -5680,6 +5680,8 @@ function buildReportPagePlan(copy, scores, metrics) {
     }
   });
 
+  add("report-conclusion", copy.reportConclusionTitle);
+
   return pages;
 }
 
@@ -5712,6 +5714,7 @@ function waitForReportPrintImages(root = document) {
         ".teen-crew img",
         ".results-section-bridge img",
         ".profile-section img",
+        ".report-conclusion img",
         ".print-brand img",
       ].join(", ")
     )
@@ -6271,6 +6274,38 @@ function renderInterpretSensoryWorld(copy, pageEntry) {
   `;
 }
 
+function renderReportConclusion(pageEntry) {
+  const copy = currentUi();
+  const isParent = state.respondent === "parent";
+  const body = isParent ? copy.reportConclusionBodyParent : copy.reportConclusionBody;
+  const quote = isParent ? copy.reportConclusionQuoteParent : copy.reportConclusionQuote;
+
+  return `
+    <section class="report-conclusion"${reportPageAttrs(pageEntry)} aria-labelledby="report-conclusion-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-conclusion-trail.png",
+        objectPosition: "center 48%",
+        kicker: copy.reportConclusionKicker,
+        titleId: "report-conclusion-title",
+        title: copy.reportConclusionTitle,
+        variant: "forest",
+        titleTag: "h2",
+        width: 1024,
+        height: 682,
+      })}
+      <div class="report-conclusion__body">
+        <p class="report-conclusion__description">${escapeHtml(body)}</p>
+        <blockquote class="report-conclusion__quote">
+          <p>${escapeHtml(quote)}</p>
+        </blockquote>
+        <p class="report-conclusion__credit">${escapeHtml(copy.reportConclusionCredit)}</p>
+      </div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
+}
+
 function renderScoreTable(scores, plan) {
   const copy = currentUi();
   const rows = getScoreRows(scores);
@@ -6739,7 +6774,7 @@ function renderShortReportSectionExtras(metrics, sections) {
     const label = profileLabelPlain(metrics.meta) || metrics.leanHeadline;
     if (label) {
       parts.push(`
-        <section class="results-summary__snippet" aria-labelledby="short-overall-title">
+        <section class="results-summary__snippet results-summary__snippet--pattern" aria-labelledby="short-overall-title">
           <p class="profile-kicker">${escapeHtml(copy.summaryOverallKicker)}</p>
           <h3 id="short-overall-title">${escapeHtml(label)}</h3>
           <p class="results-summary__snippet-note">${escapeHtml(copy.summaryOverallNote)}</p>
@@ -6767,7 +6802,7 @@ function renderShortReportSectionExtras(metrics, sections) {
         )
         .join("");
       parts.push(`
-        <section class="results-summary__snippet" aria-labelledby="short-domains-title">
+        <section class="results-summary__snippet results-summary__snippet--domains" aria-labelledby="short-domains-title">
           <p class="profile-kicker">${escapeHtml(copy.summaryDomainsKicker)}</p>
           <h3 id="short-domains-title">${escapeHtml(copy.summaryDomainsTitle)}</h3>
           <ul class="results-summary__domains">${list}</ul>
@@ -6783,7 +6818,7 @@ function renderShortReportSectionExtras(metrics, sections) {
     const you = roster.find((member) => member.id === youId) || roster[1];
     if (you) {
       parts.push(`
-        <section class="results-summary__snippet" aria-labelledby="short-trail-title">
+        <section class="results-summary__snippet results-summary__snippet--trail" aria-labelledby="short-trail-title">
           <p class="profile-kicker">${escapeHtml(copy.summaryTrailKicker)}</p>
           <h3 id="short-trail-title">${escapeHtml(you.name)}</h3>
           <p class="results-summary__snippet-tag">${escapeHtml(you.tag || "")}</p>
@@ -6793,7 +6828,9 @@ function renderShortReportSectionExtras(metrics, sections) {
     }
   }
 
-  return parts.join("");
+  return parts.length
+    ? `<div class="results-summary__extras">${parts.join("")}</div>`
+    : "";
 }
 
 function renderShortReportEditor(sections) {
@@ -6883,37 +6920,60 @@ function renderResultsSummary() {
       ${renderShortReportEditor(sections)}
 
       <div class="results-summary results-summary--brief">
-        <div class="results-intro">
-          <p class="profile-kicker">${escapeHtml(copy.summaryKicker)}</p>
-          <h2>${escapeHtml(copy.summaryTitle)}</h2>
+        <div class="results-summary__hero">
+          ${renderInterpretSectionBanner({
+            image: "assets/short-report-misty-trail.png",
+            objectPosition: "center 42%",
+            kicker: copy.summaryKicker,
+            titleId: "summary-title",
+            title: copy.summaryTitle,
+            lead: copy.summaryBannerLead || "",
+            variant: "forest",
+            titleTag: "h2",
+            width: 768,
+            height: 1024,
+          })}
           ${
             state.demographics.name
-              ? `<p class="results-intro__name">${escapeHtml(state.demographics.name)}</p>`
+              ? `<p class="results-summary__name">${escapeHtml(state.demographics.name)}</p>`
               : ""
           }
-          <p class="step-desc">${escapeHtml(copy.summaryIntro)}</p>
+          <p class="results-summary__intro">${escapeHtml(copy.summaryIntro)}</p>
           ${submissionNote}
         </div>
 
         ${renderShortReportSectionExtras(metrics, sections)}
 
         <section class="results-summary__next" aria-labelledby="summary-next-title">
-          <h3 id="summary-next-title">${escapeHtml(copy.summaryNextTitle)}</h3>
-          <p>${escapeHtml(copy.summaryNextBody)}</p>
-          <div class="actions">
-            ${
-              fromDashboard
-                ? ""
-                : `<a class="btn btn-primary" href="${WHATSAPP_FEEDBACK_URL}" target="_blank" rel="noopener noreferrer">${escapeHtml(copy.summaryBookCta)}</a>`
-            }
-            <button type="button" class="btn ${fromDashboard ? "btn-primary" : "btn-secondary"}" data-action="${fromDashboard ? "back-dashboard" : "back-home"}">${escapeHtml(
-              fromDashboard ? copy.summaryEditorBack : copy.thankYouHome
-            )}</button>
-            ${
-              shouldEmailResultsToClinician() && state.submissionStatus === "error"
-                ? `<button type="button" class="btn btn-secondary" data-action="retry-submit">${escapeHtml(copy.thankYouRetry)}</button>`
-                : ""
-            }
+          ${renderInterpretSectionBanner({
+            image: "assets/short-report-sunlight-trail.png",
+            objectPosition: "center 48%",
+            kicker: copy.summaryNextKicker || copy.summaryNextTitle,
+            titleId: "summary-next-title",
+            title: copy.summaryNextTitle,
+            lead: copy.summaryNextBannerLead || "",
+            variant: "sunlight",
+            titleTag: "h3",
+            width: 682,
+            height: 1024,
+          })}
+          <div class="results-summary__next-body">
+            <p>${escapeHtml(copy.summaryNextBody)}</p>
+            <div class="actions">
+              ${
+                fromDashboard
+                  ? ""
+                  : `<a class="btn btn-primary" href="${WHATSAPP_FEEDBACK_URL}" target="_blank" rel="noopener noreferrer">${escapeHtml(copy.summaryBookCta)}</a>`
+              }
+              <button type="button" class="btn ${fromDashboard ? "btn-primary" : "btn-secondary"}" data-action="${fromDashboard ? "back-dashboard" : "back-home"}">${escapeHtml(
+                fromDashboard ? copy.summaryEditorBack : copy.thankYouHome
+              )}</button>
+              ${
+                shouldEmailResultsToClinician() && state.submissionStatus === "error"
+                  ? `<button type="button" class="btn btn-secondary" data-action="retry-submit">${escapeHtml(copy.thankYouRetry)}</button>`
+                  : ""
+              }
+            </div>
           </div>
         </section>
       </div>
@@ -7026,6 +7086,7 @@ function renderResults() {
       ${renderScoreTable(scores, pagePlan)}
       ${renderAdultSettingGuide(scores, metrics, reportPageById(pagePlan, "report-setting-guide"))}
       ${renderSensoryDiet(scores, pagePlan)}
+      ${renderReportConclusion(reportPageById(pagePlan, "report-conclusion"))}
 
       <div class="results-contact">
         <h3>${escapeHtml(copy.contactTitle)}</h3>
