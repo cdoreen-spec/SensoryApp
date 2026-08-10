@@ -2899,9 +2899,25 @@ function renderHome() {
           <div class="home-helps__ridge home-helps__ridge--near"></div>
           <div class="home-helps__contours"></div>
         </div>
+        <header class="home-helps__banner">
+          <div class="home-helps__banner-media" aria-hidden="true">
+            <img
+              src="assets/home-helps-banner.png"
+              alt=""
+              class="home-helps__banner-image"
+              width="1024"
+              height="639"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="home-helps__banner-veil" aria-hidden="true"></div>
+          <div class="home-helps__banner-content">
+            <p class="home-section__eyebrow home-helps__banner-eyebrow">The sensory questionnaire</p>
+            <h2 id="helps-heading" class="home-section__title home-helps__banner-title">How this can help you:</h2>
+          </div>
+        </header>
         <div class="home-helps__inner">
-          <p class="home-section__eyebrow">The sensory questionnaire</p>
-          <h2 id="helps-heading" class="home-section__title">What this can help with</h2>
           <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
           <p class="home-section__lead home-helps__lead">
             One main path — seven side trails into the places sensory understanding can take you.
