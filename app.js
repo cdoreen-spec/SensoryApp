@@ -5115,7 +5115,7 @@ function teenCrewCharacterArt(id, suffix = id) {
     },
     adaptor: {
       src: "assets/sensory-character-adaptor.png?v=20260809e",
-      alt: "Sensory Adapter — I find my way",
+      alt: "Sensory Adaptor — I find my way",
     },
     observer: {
       src: "assets/sensory-character-observer.png?v=20260809e",
