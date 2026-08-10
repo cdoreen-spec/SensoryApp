@@ -5444,10 +5444,10 @@ function renderInterpretToc(copy, plan, tocEntry) {
     <div class="interpret-toc__foliage" aria-hidden="true">
       <img
         class="interpret-toc__photo interpret-toc__photo--canopy"
-        src="forest-canopy.svg"
+        src="toc-watermark.svg"
         alt=""
         width="1000"
-        height="440"
+        height="700"
         loading="lazy"
         decoding="async"
       />

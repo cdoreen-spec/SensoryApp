@@ -5063,18 +5063,15 @@ body.is-pain-screen .site-footer {
 }
 
 .interpret-toc__photo--canopy {
-  left: 50%;
-  top: 42%;
-  width: min(118%, 42rem);
-  height: auto;
-  max-height: 78%;
-  object-fit: contain;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   object-position: center bottom;
-  opacity: 0.11;
-  filter: saturate(0.55) brightness(1.45) contrast(0.85);
-  transform: translateX(-50%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 72%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 72%, transparent 100%);
+  opacity: 0.26;
+  filter: saturate(0.45) brightness(1.2) contrast(0.86);
+  mask-image: linear-gradient(180deg, #000 0%, #000 58%, rgba(0, 0, 0, 0.85) 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 58%, rgba(0, 0, 0, 0.85) 78%, transparent 100%);
 }
 
 .interpret-toc__photo--sprig-tr {
@@ -5084,8 +5081,8 @@ body.is-pain-screen .site-footer {
   height: auto;
   max-height: 48%;
   object-position: center top;
-  opacity: 0.22;
-  filter: saturate(0.7) brightness(1.12) contrast(0.92);
+  opacity: 0.14;
+  filter: saturate(0.55) brightness(1.2) contrast(0.9);
   mask-image: linear-gradient(210deg, #000 0%, #000 45%, transparent 90%);
   -webkit-mask-image: linear-gradient(210deg, #000 0%, #000 45%, transparent 90%);
   transform: rotate(6deg);
@@ -5097,8 +5094,8 @@ body.is-pain-screen .site-footer {
   width: min(54%, 19rem);
   height: min(40%, 14rem);
   object-position: 40% 55%;
-  opacity: 0.2;
-  filter: saturate(0.68) brightness(1.14) hue-rotate(-3deg);
+  opacity: 0.12;
+  filter: saturate(0.5) brightness(1.22) hue-rotate(-3deg);
   mask-image: radial-gradient(ellipse 70% 68% at 35% 70%, #000 0%, transparent 74%);
   -webkit-mask-image: radial-gradient(ellipse 70% 68% at 35% 70%, #000 0%, transparent 74%);
   transform: rotate(-8deg);
@@ -5111,8 +5108,8 @@ body.is-pain-screen .site-footer {
   height: auto;
   max-height: 40%;
   object-position: right bottom;
-  opacity: 0.18;
-  filter: saturate(0.72) brightness(1.1);
+  opacity: 0.11;
+  filter: saturate(0.55) brightness(1.18);
   mask-image: linear-gradient(320deg, #000 0%, #000 40%, transparent 88%);
   -webkit-mask-image: linear-gradient(320deg, #000 0%, #000 40%, transparent 88%);
   transform: scaleX(-1) rotate(10deg);
@@ -5123,8 +5120,8 @@ body.is-pain-screen .site-footer {
   top: 18%;
   width: min(7%, 2.4rem);
   height: auto;
-  opacity: 0.16;
-  filter: saturate(0.65) brightness(1.2);
+  opacity: 0.1;
+  filter: saturate(0.5) brightness(1.28);
   object-fit: contain;
 }
 
@@ -8593,24 +8590,24 @@ body.is-pain-screen .site-footer {
   }
 
   .interpret-toc__photo--canopy {
-    opacity: 0.08;
-    filter: saturate(0.45) brightness(1.55) contrast(0.8);
+    opacity: 0.22;
+    filter: saturate(0.5) brightness(1.16) contrast(0.88);
   }
 
   .interpret-toc__photo--sprig-tr {
-    opacity: 0.16;
+    opacity: 0.1;
   }
 
   .interpret-toc__photo--floor-bl {
-    opacity: 0.14;
+    opacity: 0.09;
   }
 
   .interpret-toc__photo--sprig-br {
-    opacity: 0.12;
+    opacity: 0.08;
   }
 
   .interpret-toc__photo--vine {
-    opacity: 0.12;
+    opacity: 0.08;
   }
 
   .interpret-toc .profile-kicker {
