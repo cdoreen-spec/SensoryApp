@@ -7352,6 +7352,148 @@ body.is-pain-screen .site-footer {
   font-style: italic;
 }
 
+.work-report-doc__custom p {
+  white-space: pre-wrap;
+}
+
+.work-report-doc__custom p.is-empty {
+  min-height: 0;
+  margin: 0;
+}
+
+.setting-report-editor {
+  margin-top: 0.35rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(104, 139, 151, 0.1);
+  border: 1px solid rgba(104, 139, 151, 0.28);
+}
+
+.setting-report-editor__eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  font-weight: 700;
+}
+
+.setting-report-editor__head h4 {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--forest);
+}
+
+.setting-report-editor__head p {
+  margin: 0 0 0.85rem;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.setting-report-editor__fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.setting-report-editor__choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(54, 91, 70, 0.1);
+  cursor: pointer;
+}
+
+.setting-report-editor__choice input {
+  margin-top: 0.2rem;
+}
+
+.setting-report-editor__choice strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.setting-report-editor__choice em {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.setting-report-custom-list {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(104, 139, 151, 0.28);
+}
+
+.setting-report-custom-list__head h4 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--forest);
+}
+
+.setting-report-custom-list__head p,
+.setting-report-custom-list__empty {
+  margin: 0 0 0.75rem;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.setting-report-custom {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(54, 91, 70, 0.12);
+}
+
+.setting-report-custom__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.setting-report-custom__label {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.setting-report-custom__remove {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.2rem 0.35rem;
+  color: var(--ink-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.setting-report-custom__remove:hover {
+  color: var(--terracotta);
+}
+
 .work-report-doc__visual {
   margin: 0 0 1.1rem;
   padding: 0.9rem 1rem 1rem;
@@ -8549,8 +8691,8 @@ body.is-pain-screen .site-footer {
   .print-page-motif {
     display: block !important;
     position: relative;
-    height: 18mm;
-    margin: 8mm -2mm 0;
+    height: 10mm;
+    margin: 3mm -2mm 0;
     overflow: hidden;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -8576,6 +8718,18 @@ body.is-pain-screen .site-footer {
     height: 68%;
     background: rgba(54, 91, 70, 0.16);
     clip-path: polygon(0 100%, 0 70%, 12% 52%, 24% 68%, 36% 42%, 50% 66%, 62% 48%, 74% 70%, 86% 54%, 100% 68%, 100% 100%);
+  }
+
+  /* Keep printed report photos/infographics visible in PDF output */
+  body.print-sensory-results img,
+  body:not(.print-work-report) .interpret-cover img,
+  body:not(.print-work-report) .interpret-senses img,
+  body:not(.print-work-report) .interpret-world img,
+  body:not(.print-work-report) .interpret-toc img,
+  body:not(.print-work-report) .interpret-glossary img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    visibility: visible !important;
   }
 
   .profile-section,
@@ -8642,9 +8796,10 @@ body.is-pain-screen .site-footer {
     box-sizing: border-box;
     width: calc(100% + 14mm);
     max-width: none;
-    height: 281mm;
-    min-height: 281mm;
-    max-height: 281mm;
+    /* Slightly under printable height to avoid a trailing blank sheet from rounding */
+    height: 273mm;
+    min-height: 273mm;
+    max-height: 273mm;
     margin: -7mm -7mm 0;
     padding: 0;
     border-radius: 0;
@@ -8797,10 +8952,12 @@ body.is-pain-screen .site-footer {
   .interpret-toc {
     break-after: page;
     page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
     box-sizing: border-box;
     min-height: 0;
     margin: 0;
-    padding: 2mm 2mm 10mm;
+    padding: 1mm 2mm 5mm;
     border: none;
     border-radius: 0;
     box-shadow: none;
@@ -8813,6 +8970,16 @@ body.is-pain-screen .site-footer {
     overflow: hidden;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  /* Motif + absolute page number below the box were spilling onto a blank sheet */
+  .interpret-toc > .print-page-motif {
+    display: none !important;
+  }
+
+  .interpret-toc .print-nature-rule {
+    margin: 1.5mm auto 2mm;
+    max-height: 5mm;
   }
 
   .interpret-toc__photo--canopy {
@@ -8837,7 +9004,7 @@ body.is-pain-screen .site-footer {
   }
 
   .interpret-toc .profile-kicker {
-    font-size: 8.5pt;
+    font-size: 8pt;
     letter-spacing: 0.16em;
     font-weight: 700;
     color: #3f6b4f;
@@ -8845,39 +9012,39 @@ body.is-pain-screen .site-footer {
 
   .interpret-toc h3 {
     font-family: var(--font-serif);
-    font-size: 22pt;
+    font-size: 18pt;
     font-weight: 700;
     color: #244b38;
-    margin: 1.5mm 0 2mm;
+    margin: 1mm 0 1.5mm;
   }
 
   .interpret-toc .profile-section__summary {
-    font-size: 10.5pt;
-    line-height: 1.5;
-    margin-bottom: 6mm;
+    font-size: 9pt;
+    line-height: 1.35;
+    margin-bottom: 3mm;
   }
 
   .interpret-toc__list {
-    gap: 1.2mm;
+    gap: 0.4mm;
   }
 
   .interpret-toc__link {
-    padding: 1.8mm 0;
+    padding: 1.1mm 0;
     color: #1c2a22;
     border-bottom-color: rgba(54, 91, 70, 0.16);
   }
 
   .interpret-toc__title {
-    font-size: 11pt;
-    line-height: 1.25;
+    font-size: 9.5pt;
+    line-height: 1.2;
   }
 
   .interpret-toc__leader {
-    margin-bottom: 1.2mm;
+    margin-bottom: 0.8mm;
   }
 
   .interpret-toc__page {
-    font-size: 11pt;
+    font-size: 9.5pt;
     min-width: 8mm;
   }
 
@@ -8945,17 +9112,19 @@ body.is-pain-screen .site-footer {
   .sense-interpret-intro .report-page-number,
   .sense-glance .report-page-number {
     right: 0;
-    bottom: -4mm;
+    bottom: 1.5mm;
   }
 
-  /* —— Glossary —— */
+  /* —— Glossary: keep on a single page —— */
   .interpret-glossary {
     break-after: page;
     page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
     box-sizing: border-box;
     min-height: 0;
     margin: 0;
-    padding: 0 0 10mm;
+    padding: 0 0 4mm;
     border: none;
     border-radius: 0;
     box-shadow: none;
@@ -8967,9 +9136,15 @@ body.is-pain-screen .site-footer {
     print-color-adjust: exact;
   }
 
+  .interpret-glossary > .print-page-motif,
+  .interpret-glossary__scenery {
+    display: none !important;
+  }
+
   .interpret-glossary > .interpret-section-banner {
-    margin: 0 0 5mm;
-    min-height: 52mm;
+    margin: 0 0 2mm;
+    min-height: 26mm;
+    max-height: 30mm;
     border-radius: 0;
     box-shadow: none;
     -webkit-print-color-adjust: exact;
@@ -8983,9 +9158,13 @@ body.is-pain-screen .site-footer {
   }
 
   .interpret-section-banner__kicker {
-    font-size: 8pt;
+    font-size: 7pt;
     letter-spacing: 0.14em;
     color: rgba(232, 240, 232, 0.88);
+  }
+
+  .interpret-glossary > .interpret-section-banner .interpret-section-banner__content {
+    padding: 3.5mm 5mm 3.5mm;
   }
 
   .interpret-section-banner__content {
@@ -8994,11 +9173,11 @@ body.is-pain-screen .site-footer {
 
   .interpret-glossary::before,
   .interpret-glossary::after {
-    opacity: 0.32;
+    opacity: 0.22;
   }
 
   .interpret-glossary .profile-kicker {
-    font-size: 8.5pt;
+    font-size: 8pt;
     letter-spacing: 0.16em;
     font-weight: 700;
     color: #3f6b4f;
@@ -9007,10 +9186,10 @@ body.is-pain-screen .site-footer {
   .interpret-glossary h3,
   .interpret-glossary .interpret-section-banner__title {
     font-family: var(--font-serif);
-    font-size: 22pt;
+    font-size: 16pt;
     font-weight: 700;
-    line-height: 1.15;
-    margin: 1.5mm 0 2mm;
+    line-height: 1.12;
+    margin: 1mm 0 1.5mm;
     color: #244b38;
   }
 
@@ -9022,52 +9201,52 @@ body.is-pain-screen .site-footer {
 
   .interpret-glossary .profile-section__summary,
   .interpret-glossary .interpret-section-banner__lead {
-    margin-bottom: 5mm;
-    font-size: 10pt;
-    line-height: 1.5;
+    margin-bottom: 2mm;
+    font-size: 8pt;
+    line-height: 1.3;
     color: #425348;
   }
 
   .interpret-glossary .interpret-section-banner__lead {
-    margin: 2.5mm 0 0;
+    margin: 1.2mm 0 0;
     color: rgba(244, 248, 244, 0.94);
   }
 
   .interpret-glossary__list {
-    gap: 3.5mm;
-    margin: 4mm 2mm 0;
+    gap: 1.2mm;
+    margin: 1.5mm 1mm 0;
   }
 
   .interpret-glossary__item {
-    padding: 4mm 4.5mm;
-    border-radius: 8px;
+    padding: 1.6mm 2.8mm;
+    border-radius: 5px;
     background: linear-gradient(148deg, rgba(255, 255, 250, 0.98), rgba(232, 242, 228, 0.78));
-    box-shadow: inset 3.5px 0 0 rgba(54, 91, 70, 0.45);
+    box-shadow: inset 2.5px 0 0 rgba(54, 91, 70, 0.45);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .interpret-glossary__term {
     font-family: var(--font-serif);
-    font-size: 12pt;
+    font-size: 9.5pt;
     font-weight: 700;
     color: #244b38;
   }
 
   .interpret-glossary__definition {
-    font-size: 9.5pt;
-    line-height: 1.45;
+    font-size: 7.8pt;
+    line-height: 1.28;
   }
 
   .interpret-glossary__bullet {
-    margin-top: 0.5mm;
+    margin-top: 0.3mm;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .interpret-glossary__leaf-icon {
-    width: 3.2mm;
-    height: 3.2mm;
+    width: 2.6mm;
+    height: 2.6mm;
   }
 
   .interpret-glossary__arrow {
@@ -9078,51 +9257,51 @@ body.is-pain-screen .site-footer {
   .interpret-glossary__photo--sprig-top {
     top: -2mm;
     right: -2mm;
-    width: 48mm;
-    opacity: 0.38;
+    width: 32mm;
+    opacity: 0.22;
   }
 
   .interpret-glossary__photo--floor-tl {
     top: -3mm;
     left: -4mm;
-    width: 55mm;
-    height: 38mm;
-    opacity: 0.3;
+    width: 36mm;
+    height: 24mm;
+    opacity: 0.18;
   }
 
   .interpret-glossary__photo--floor-br {
     right: -5mm;
-    bottom: 4mm;
-    width: 58mm;
-    height: 40mm;
-    opacity: 0.28;
+    bottom: 2mm;
+    width: 36mm;
+    height: 24mm;
+    opacity: 0.16;
   }
 
   .interpret-glossary__photo--sprig-side {
     left: -3mm;
-    bottom: 10mm;
-    width: 36mm;
-    opacity: 0.26;
+    bottom: 6mm;
+    width: 24mm;
+    opacity: 0.16;
   }
 
   .interpret-glossary__scenery {
-    padding: 2.5mm 0 2mm;
+    padding: 1mm 0;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .interpret-glossary__scenery-art svg {
-    height: 9mm;
+    height: 6mm;
   }
 
   .interpret-glossary__scenery--leavesOval .interpret-glossary__scenery-art svg,
   .interpret-glossary__scenery--leavesSprig .interpret-glossary__scenery-art svg {
-    height: 9.5mm;
+    height: 6.5mm;
   }
 
   .interpret-glossary__scenery--leavesMaple .interpret-glossary__scenery-art svg,
   .interpret-glossary__scenery--leavesOak .interpret-glossary__scenery-art svg {
-    height: 10.5mm;
+    height: 7mm;
   }
 
   /* —— Sensory Trail Profile infographic: full A4 page —— */
@@ -9139,9 +9318,9 @@ body.is-pain-screen .site-footer {
     box-sizing: border-box;
     width: calc(100% + 14mm);
     max-width: none;
-    height: 281mm;
-    min-height: 281mm;
-    max-height: 281mm;
+    height: 273mm;
+    min-height: 273mm;
+    max-height: 273mm;
     margin: -7mm -7mm 0;
     padding: 0;
     border: none;
@@ -9180,14 +9359,17 @@ body.is-pain-screen .site-footer {
     margin-top: 0;
     padding: 0;
     box-sizing: border-box;
-    min-height: 250mm;
+    min-height: 0;
+    max-height: 265mm;
     display: flex;
     flex-direction: column;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__match-banner {
-    min-height: 68mm;
-    max-height: 72mm;
+    min-height: 52mm;
+    max-height: 56mm;
     border-radius: 10px;
     box-shadow: none;
     -webkit-print-color-adjust: exact;
@@ -9199,42 +9381,42 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .trail-profile .teen-crew__match-banner-content {
-    padding: 6mm 7mm 7mm;
+    padding: 4.5mm 6mm 5mm;
     max-width: none;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__detail-title {
-    font-size: 8pt;
+    font-size: 7.5pt;
     letter-spacing: 0.14em;
-    margin: 0 0 2.2mm;
+    margin: 0 0 1.5mm;
     color: rgba(232, 240, 232, 0.88);
   }
 
   body.print-sensory-results .trail-profile .teen-crew__you-label {
-    font-size: 8.5pt;
+    font-size: 8pt;
     letter-spacing: 0.12em;
-    margin-bottom: 1.2mm;
+    margin-bottom: 1mm;
     color: rgba(214, 228, 210, 0.92);
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-name {
-    font-size: 22pt;
+    font-size: 18pt;
     line-height: 1.12;
-    margin-bottom: 4mm;
+    margin-bottom: 2.5mm;
     color: #fafcf8;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-tag {
-    font-size: 9.5pt;
-    padding: 1.4mm 3.5mm;
-    margin-bottom: 1.5mm;
+    font-size: 8.5pt;
+    padding: 1.1mm 3mm;
+    margin-bottom: 1mm;
     color: #1f3d2c;
     background: rgba(244, 248, 242, 0.94);
   }
 
   body.print-sensory-results .trail-profile .teen-crew__match-portrait {
-    margin: 5mm auto 0;
-    width: 148mm;
+    margin: 3.5mm auto 0;
+    width: 128mm;
     max-width: none;
     border-radius: 10px;
     border-width: 1pt;
@@ -9244,65 +9426,69 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .trail-profile .teen-crew__match-portrait .teen-crew__art--photo {
-    max-height: 72mm;
+    max-height: 58mm;
     width: 100%;
     object-fit: contain;
     border-radius: 0;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__match-copy {
-    margin: 5mm auto 0;
+    margin: 3.5mm auto 0;
     width: 100%;
     max-width: none;
     flex: 1;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-summary {
-    font-size: 12pt;
-    line-height: 1.4;
+    font-size: 10.5pt;
+    line-height: 1.35;
     max-width: none;
-    margin-bottom: 3.5mm;
+    margin-bottom: 2.5mm;
   }
 
   body.print-sensory-results .trail-profile .teen-crew__hero-body {
-    font-size: 10.5pt;
-    line-height: 1.5;
+    font-size: 9.5pt;
+    line-height: 1.4;
     max-width: none;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits {
-    margin-top: 4.5mm;
-    padding-top: 4mm;
+    margin-top: 3mm;
+    padding-top: 3mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-title {
-    font-size: 8.5pt;
+    font-size: 8pt;
     letter-spacing: 0.12em;
-    margin-bottom: 2.5mm;
+    margin-bottom: 2mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-list {
-    gap: 2.2mm;
+    gap: 1.6mm;
     grid-template-columns: 1fr 1fr;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-list li {
-    font-size: 9.5pt;
-    line-height: 1.4;
-    padding-left: 5.5mm;
+    font-size: 8.5pt;
+    line-height: 1.35;
+    padding-left: 5mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__traits-list li::before {
-    top: 1.3mm;
-    width: 2.8mm;
-    height: 2.8mm;
+    top: 1.1mm;
+    width: 2.4mm;
+    height: 2.4mm;
   }
 
   body.print-sensory-results .trail-profile .trail-profile__footer {
-    margin: 5mm 0 0;
+    margin: 3.5mm 0 0;
     max-width: none;
-    font-size: 11pt;
-    line-height: 1.4;
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+
+  body.print-sensory-results .trail-profile > .print-page-motif {
+    display: none !important;
   }
 
   /* —— Our senses infographic: full A4 page —— */
@@ -9312,9 +9498,9 @@ body.is-pain-screen .site-footer {
     box-sizing: border-box;
     width: calc(100% + 14mm);
     max-width: none;
-    height: 281mm;
-    min-height: 281mm;
-    max-height: 281mm;
+    height: 273mm;
+    min-height: 273mm;
+    max-height: 273mm;
     margin: -7mm -7mm 0;
     padding: 0;
     border: none;
@@ -9365,9 +9551,9 @@ body.is-pain-screen .site-footer {
     box-sizing: border-box;
     width: calc(100% + 14mm);
     max-width: none;
-    height: 281mm;
-    min-height: 281mm;
-    max-height: 281mm;
+    height: 273mm;
+    min-height: 273mm;
+    max-height: 273mm;
     margin: -7mm -7mm 0;
     padding: 0;
     border: none;
@@ -9611,8 +9797,12 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .results-section-bridge__image {
-    min-height: 28mm;
-    max-height: 36mm;
+    min-height: 42mm;
+    max-height: 58mm;
+    width: 100%;
+    object-fit: cover;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   body.print-sensory-results .results-section-bridge__rule {
@@ -9734,15 +9924,17 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .setting-guide__block {
-    padding: 4mm 4.5mm;
+    padding: 3mm 3.5mm;
     background: linear-gradient(160deg, rgba(250, 252, 248, 0.9), rgba(236, 244, 234, 0.65));
     border: 1px solid rgba(54, 91, 70, 0.14);
     border-radius: 8px;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   body.print-sensory-results .setting-guide__heading {
     font-family: var(--font-serif);
-    font-size: 12pt;
+    font-size: 11pt;
     font-weight: 700;
     color: #244b38;
   }
@@ -9750,8 +9942,8 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .setting-guide__body,
   body.print-sensory-results .setting-guide__list li,
   body.print-sensory-results .setting-guide__hints-list li {
-    font-size: 9.5pt;
-    line-height: 1.45;
+    font-size: 9pt;
+    line-height: 1.4;
   }
 
   /* —— Sense-by-sense: keep each category intact —— */
@@ -9838,13 +10030,14 @@ body.is-pain-screen .site-footer {
     break-inside: avoid;
     page-break-inside: avoid;
     min-height: 0;
+    max-height: 265mm;
     margin: 0;
-    padding: 0 0 12mm;
+    padding: 0 0 8mm;
     border-radius: 0;
     border: none;
     animation: none !important;
     box-shadow: none;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -9861,8 +10054,8 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .sense-interpret__print-band {
     display: block !important;
-    height: 3.5mm;
-    margin: 0 0 5mm;
+    height: 2.5mm;
+    margin: 0 0 3mm;
     background: linear-gradient(
       90deg,
       color-mix(in srgb, var(--domain-color) 88%, #244b38),
@@ -9875,15 +10068,15 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .sense-interpret__header {
     align-items: center;
-    gap: 4mm;
-    padding: 0 3mm 2mm;
-    margin-bottom: 2mm;
+    gap: 3mm;
+    padding: 0 2.5mm 1.5mm;
+    margin-bottom: 1mm;
   }
 
   body.print-sensory-results .sense-interpret__print-kicker {
     display: block !important;
-    margin: 0 0 1.5mm;
-    font-size: 7.5pt;
+    margin: 0 0 1mm;
+    font-size: 7pt;
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -9891,18 +10084,18 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .sense-interpret__icon {
-    width: 16mm;
-    height: 16mm;
-    font-size: 18pt;
-    border-radius: 4mm;
+    width: 12mm;
+    height: 12mm;
+    font-size: 14pt;
+    border-radius: 3mm;
     box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--domain-color) 40%, transparent);
   }
 
   body.print-sensory-results .sense-interpret__title {
     font-family: var(--font-serif);
-    font-size: 22pt;
+    font-size: 17pt;
     font-weight: 700;
-    line-height: 1.12;
+    line-height: 1.1;
     color: #244b38;
     margin: 0;
   }
@@ -9910,46 +10103,46 @@ body.is-pain-screen .site-footer {
   body.print-sensory-results .sense-interpret__text,
   body.print-sensory-results .sense-interpret__blurb,
   body.print-sensory-results .sense-interpret__subtitle {
-    font-size: 10pt;
-    line-height: 1.5;
+    font-size: 9pt;
+    line-height: 1.4;
   }
 
   body.print-sensory-results .sense-interpret__blurb,
   body.print-sensory-results .sense-interpret__subtitle {
-    margin-top: 1.5mm;
+    margin-top: 1mm;
     color: #4a554c;
   }
 
   body.print-sensory-results .sense-interpret__badges .threshold-pill {
-    font-size: 9pt;
-    padding: 2mm 3.5mm;
+    font-size: 8pt;
+    padding: 1.4mm 2.8mm;
   }
 
   body.print-sensory-results .sense-interpret .print-sense-art {
-    margin: 3mm auto 1mm;
+    margin: 1.5mm auto 0.5mm;
   }
 
   body.print-sensory-results .sense-interpret .print-sense-art svg {
-    width: min(100%, 72mm);
-    max-height: 38mm;
+    width: min(100%, 52mm);
+    max-height: 26mm;
   }
 
   body.print-sensory-results .sense-interpret .balance-bar {
-    margin: 2mm 3mm 4mm;
-    padding: 3.5mm 4mm;
+    margin: 1.5mm 2.5mm 2.5mm;
+    padding: 2.5mm 3mm;
   }
 
   body.print-sensory-results .sense-interpret__body {
     display: grid;
-    gap: 0;
-    padding: 0 3mm;
+    gap: 2mm;
+    padding: 0 2.5mm;
     align-content: start;
     flex: 1;
   }
 
   body.print-sensory-results .sense-interpret__block {
-    padding: 4.5mm 5mm;
-    border-radius: 8px;
+    padding: 3mm 3.5mm;
+    border-radius: 6px;
     border: 1px solid rgba(54, 91, 70, 0.14);
     background: rgba(255, 255, 255, 0.72);
   }
@@ -9965,50 +10158,50 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .sense-interpret__label {
     font-family: var(--font-serif);
-    font-size: 11pt;
+    font-size: 10pt;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: none;
     color: #244b38;
-    margin-bottom: 2.5mm;
-    padding-bottom: 1.5mm;
+    margin-bottom: 1.5mm;
+    padding-bottom: 1mm;
     border-bottom: 1px solid rgba(54, 91, 70, 0.16);
   }
 
   body.print-sensory-results .sense-interpret__text,
   body.print-sensory-results .sense-interpret__points li {
-    font-size: 10.5pt;
-    line-height: 1.55;
+    font-size: 9.5pt;
+    line-height: 1.4;
     color: #2a332c;
   }
 
   body.print-sensory-results .sense-interpret__content {
-    gap: 3.5mm;
+    gap: 2.5mm;
   }
 
   body.print-sensory-results .sense-interpret__section-title {
-    font-size: 8.5pt;
+    font-size: 8pt;
     color: #365b46;
   }
 
   body.print-sensory-results .sense-interpret__points {
-    gap: 2.2mm;
+    gap: 1.6mm;
   }
 
   body.print-sensory-results .sense-interpret__points li {
-    padding-left: 4.5mm;
+    padding-left: 4mm;
   }
 
   body.print-sensory-results .sense-interpret__trail {
-    margin: 1.5mm 0 2.5mm;
+    margin: 1mm 0 1.5mm;
   }
 
   body.print-sensory-results .sense-interpret__trail svg {
-    width: 55mm;
+    width: 45mm;
   }
 
   body.print-sensory-results .sense-interpret__dial {
-    width: min(100%, 9rem);
+    width: min(100%, 7.5rem);
   }
 
   body.print-sensory-results .sense-interpret__print-footer {
@@ -10017,7 +10210,7 @@ body.is-pain-screen .site-footer {
     left: -2%;
     right: -2%;
     bottom: 0;
-    height: 16mm;
+    height: 10mm;
     overflow: hidden;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -10126,15 +10319,16 @@ body.is-pain-screen .site-footer {
     page-break-after: auto;
     box-sizing: border-box;
     min-height: 0;
+    max-height: 265mm;
     margin: 0;
-    padding: 5mm 5mm 8mm;
+    padding: 3.5mm 4mm 6mm;
     border-radius: 8px;
     border: 1px solid rgba(54, 91, 70, 0.12);
     background:
       radial-gradient(ellipse 65% 30% at 100% 0%, color-mix(in srgb, var(--domain-color) 16%, transparent), transparent 65%),
       linear-gradient(180deg, #fafcf8, #f3f7f0);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -10146,25 +10340,25 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .sensory-diet__section-header h4 {
     font-family: var(--font-serif);
-    font-size: 16pt;
+    font-size: 13pt;
     font-weight: 700;
     color: #244b38;
   }
 
   body.print-sensory-results .sensory-diet__icon {
-    width: 14mm;
-    height: 14mm;
-    font-size: 16pt;
+    width: 11mm;
+    height: 11mm;
+    font-size: 13pt;
   }
 
   body.print-sensory-results .sensory-diet__section .print-sense-art svg {
-    width: min(100%, 58mm);
-    max-height: 28mm;
+    width: min(100%, 46mm);
+    max-height: 22mm;
   }
 
   body.print-sensory-results .sensory-diet__ideas li {
-    font-size: 10pt;
-    line-height: 1.45;
+    font-size: 9pt;
+    line-height: 1.35;
     margin-bottom: 2mm;
   }
 

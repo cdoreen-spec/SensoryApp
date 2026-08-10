@@ -25,6 +25,10 @@ const state = {
   workReport: { name: "", jobTitle: "", reasonForReferral: "", additionalNotes: "" },
   schoolReportVisual: "balance", // balance | dials | cards
   schoolReportNotesEnabled: false,
+  /** Which built-in sections appear in the work/school letter (per session). */
+  settingReportSections: null,
+  /** Extra therapist-authored heading blocks for the work/school letter. */
+  settingReportCustomSections: [],
   error: null,
   /** Patient invite session: results emailed to clinician; on-screen report only if therapist granted it. */
   inviteMode: false,
@@ -154,6 +158,29 @@ const DEFAULT_SHORT_REPORT_SECTIONS = {
   overallPattern: false,
   domainGlance: false,
   trailCharacter: false,
+};
+/** Built-in sections for the adult workplace letter (all on by default). */
+const DEFAULT_WORK_REPORT_SECTIONS = {
+  details: true,
+  about: true,
+  referral: true,
+  scores: true,
+  challenges: true,
+  recommendations: true,
+  generalRecs: true,
+  closing: true,
+};
+/** Built-in sections for the teen school letter (all on by default). */
+const DEFAULT_SCHOOL_REPORT_SECTIONS = {
+  details: true,
+  about: true,
+  overload: true,
+  referral: true,
+  scores: true,
+  visual: true,
+  recommendations: true,
+  notes: true,
+  closing: true,
 };
 const SENSORY_DRAFT_KEY = "ssot-sensory-draft";
 const SENSORY_DRAFT_VERSION = 1;
@@ -400,6 +427,7 @@ function applyAssessmentRecord(record, options = {}) {
   state.workReportDeclined = false;
   state.schoolReportVisual = "balance";
   state.schoolReportNotesEnabled = false;
+  resetSettingReportComposer();
   if (record.isSample && record.workReport) {
     state.workReport = { ...state.workReport, ...record.workReport };
   }
@@ -433,6 +461,7 @@ function exitArchivedReport() {
   state.submissionStatus = null;
   state.submissionError = null;
   state.submissionAttempted = false;
+  resetSettingReportComposer();
   state.error = null;
 }
 
@@ -1041,6 +1070,7 @@ function applySensoryDraft(draft) {
   state.workReport = { name: "", jobTitle: "", reasonForReferral: "", additionalNotes: "" };
   state.schoolReportVisual = "balance";
   state.schoolReportNotesEnabled = false;
+  resetSettingReportComposer();
   state.submissionStatus = null;
   state.submissionError = null;
   state.submissionAttempted = false;
@@ -1066,6 +1096,7 @@ function resetSensoryQuestionnaireProgress() {
   state.workReport = { name: "", jobTitle: "", reasonForReferral: "", additionalNotes: "" };
   state.schoolReportVisual = "balance";
   state.schoolReportNotesEnabled = false;
+  resetSettingReportComposer();
   state.submissionStatus = null;
   state.submissionError = null;
   state.submissionAttempted = false;
@@ -2561,6 +2592,169 @@ function getSettingReportCopy() {
 
 function fillReportTemplate(template, name) {
   return String(template || "").split("{name}").join(name);
+}
+
+function defaultSettingReportSections() {
+  return isSchoolReport()
+    ? { ...DEFAULT_SCHOOL_REPORT_SECTIONS }
+    : { ...DEFAULT_WORK_REPORT_SECTIONS };
+}
+
+function normalizeSettingReportSections(raw) {
+  const defaults = defaultSettingReportSections();
+  const next = { ...defaults };
+  if (!raw || typeof raw !== "object") return next;
+  Object.keys(defaults).forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(raw, key)) {
+      next[key] = Boolean(raw[key]);
+    }
+  });
+  return next;
+}
+
+function getSettingReportSections() {
+  return normalizeSettingReportSections(state.settingReportSections);
+}
+
+function createSettingReportCustomId() {
+  return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function normalizeSettingReportCustomSections(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => ({
+      id: String(item?.id || createSettingReportCustomId()),
+      heading: String(item?.heading || ""),
+      body: String(item?.body || ""),
+    }))
+    .slice(0, 12);
+}
+
+function ensureSettingReportComposerDefaults() {
+  if (!state.settingReportSections) {
+    state.settingReportSections = defaultSettingReportSections();
+  } else {
+    state.settingReportSections = normalizeSettingReportSections(state.settingReportSections);
+  }
+  state.settingReportCustomSections = normalizeSettingReportCustomSections(
+    state.settingReportCustomSections
+  );
+  if (isSchoolReport() && state.settingReportSections.notes === false) {
+    state.schoolReportNotesEnabled = false;
+  }
+}
+
+function resetSettingReportComposer() {
+  state.settingReportSections = null;
+  state.settingReportCustomSections = [];
+}
+
+function settingReportSectionEnabled(key) {
+  return Boolean(getSettingReportSections()[key]);
+}
+
+function renderSettingReportSectionEditor(reportCopy) {
+  const copy = currentUi();
+  const sections = getSettingReportSections();
+  const forSchool = isSchoolReport();
+  const choices = forSchool
+    ? [
+        ["details", reportCopy.sectionDetails, copy.settingReportEditorDetailsHint],
+        ["about", reportCopy.sectionAbout, copy.settingReportEditorAboutHint],
+        ["overload", reportCopy.sectionOverload, copy.settingReportEditorOverloadHint],
+        ["referral", reportCopy.sectionReferral, copy.settingReportEditorReferralHint],
+        ["scores", reportCopy.sectionScores, copy.settingReportEditorScoresHint],
+        ["visual", reportCopy.sectionVisual, copy.settingReportEditorVisualHint],
+        ["recommendations", reportCopy.sectionRecs, copy.settingReportEditorRecsHint],
+        ["notes", reportCopy.sectionNotes, copy.settingReportEditorNotesHint],
+        ["closing", copy.settingReportEditorClosingLabel, copy.settingReportEditorClosingHint],
+      ]
+    : [
+        ["details", reportCopy.sectionDetails, copy.settingReportEditorDetailsHint],
+        ["about", reportCopy.sectionAbout, copy.settingReportEditorAboutHint],
+        ["referral", reportCopy.sectionReferral, copy.settingReportEditorReferralHint],
+        ["scores", reportCopy.sectionScores, copy.settingReportEditorScoresHint],
+        ["challenges", reportCopy.sectionChallenges, copy.settingReportEditorChallengesHint],
+        ["recommendations", reportCopy.sectionRecs, copy.settingReportEditorRecsHint],
+        ["generalRecs", reportCopy.sectionGeneralRecs, copy.settingReportEditorGeneralRecsHint],
+        ["closing", copy.settingReportEditorClosingLabel, copy.settingReportEditorClosingHint],
+      ];
+
+  const choiceHtml = choices
+    .filter(([, label]) => Boolean(label))
+    .map(
+      ([key, label, hint]) => `
+      <label class="setting-report-editor__choice">
+        <input type="checkbox" data-setting-section="${escapeHtml(key)}"${sections[key] ? " checked" : ""} />
+        <span>
+          <strong>${escapeHtml(label)}</strong>
+          <em>${escapeHtml(hint)}</em>
+        </span>
+      </label>`
+    )
+    .join("");
+
+  const customBlocks = (state.settingReportCustomSections || [])
+    .map(
+      (item, index) => `
+      <div class="setting-report-custom" data-custom-section-id="${escapeHtml(item.id)}">
+        <div class="setting-report-custom__head">
+          <p class="setting-report-custom__label">${escapeHtml(copy.settingReportCustomHeadingLabel)} ${index + 1}</p>
+          <button type="button" class="setting-report-custom__remove" data-action="remove-setting-heading" data-custom-section-id="${escapeHtml(item.id)}">${escapeHtml(copy.settingReportCustomRemove)}</button>
+        </div>
+        <label class="work-report__field work-report__field--full">
+          <span>${escapeHtml(copy.settingReportCustomHeading)}</span>
+          <input type="text" data-setting-custom="heading" data-custom-section-id="${escapeHtml(item.id)}" value="${escapeHtml(item.heading)}" placeholder="${escapeHtml(copy.settingReportCustomHeadingPlaceholder)}" />
+        </label>
+        <label class="work-report__field work-report__field--full">
+          <span>${escapeHtml(copy.settingReportCustomBody)}</span>
+          <textarea data-setting-custom="body" data-custom-section-id="${escapeHtml(item.id)}" rows="4" placeholder="${escapeHtml(copy.settingReportCustomBodyPlaceholder)}">${escapeHtml(item.body)}</textarea>
+        </label>
+      </div>`
+    )
+    .join("");
+
+  return `
+    <aside class="setting-report-editor work-report__field--full no-print" aria-labelledby="setting-report-editor-title">
+      <div class="setting-report-editor__head">
+        <p class="setting-report-editor__eyebrow">${escapeHtml(copy.settingReportEditorEyebrow)}</p>
+        <h4 id="setting-report-editor-title">${escapeHtml(copy.settingReportEditorTitle)}</h4>
+        <p>${escapeHtml(copy.settingReportEditorLead)}</p>
+      </div>
+      <fieldset class="setting-report-editor__fields">
+        <legend class="visually-hidden">${escapeHtml(copy.settingReportEditorLegend)}</legend>
+        ${choiceHtml}
+      </fieldset>
+
+      <div class="setting-report-custom-list">
+        <div class="setting-report-custom-list__head">
+          <h4>${escapeHtml(copy.settingReportCustomTitle)}</h4>
+          <p>${escapeHtml(copy.settingReportCustomLead)}</p>
+        </div>
+        ${customBlocks || `<p class="setting-report-custom-list__empty">${escapeHtml(copy.settingReportCustomEmpty)}</p>`}
+        <button type="button" class="btn btn-secondary btn--compact" data-action="add-setting-heading">${escapeHtml(copy.settingReportCustomAdd)}</button>
+      </div>
+    </aside>
+  `;
+}
+
+function renderSettingReportCustomSectionsHtml() {
+  const items = normalizeSettingReportCustomSections(state.settingReportCustomSections).filter(
+    (item) => item.heading.trim() || item.body.trim()
+  );
+  if (!items.length) return "";
+  return items
+    .map(
+      (item) => `
+            <section class="work-report-doc__custom" data-custom-section-id="${escapeHtml(item.id)}">
+              <h5 data-setting-custom-text="heading">${escapeHtml(item.heading.trim() || "—")}</h5>
+              <p data-setting-custom-text="body"${item.body.trim() ? "" : ' class="is-empty"'}>${
+                item.body.trim() ? escapeHtml(item.body.trim()) : ""
+              }</p>
+            </section>`
+    )
+    .join("");
 }
 
 function getSchoolVisualStyle() {
@@ -4787,6 +4981,7 @@ function ensureWorkReportDefaults() {
   if (!state.workReport.jobTitle && state.demographics.occupation) {
     state.workReport.jobTitle = state.demographics.occupation;
   }
+  ensureSettingReportComposerDefaults();
 }
 
 function getScoreRows(scores) {
@@ -5202,7 +5397,7 @@ function teenCrewCharacterArt(id, suffix = id) {
       alt="${escapeHtml(asset.alt)}"
       width="1024"
       height="768"
-      loading="lazy"
+      loading="eager"
       decoding="async"
     />`;
 }
@@ -5241,8 +5436,9 @@ function renderTeenCrewSummary(metrics, pageEntry) {
           alt="${escapeHtml(copy.teenCrewSummaryAria)}"
           width="682"
           height="1024"
-          loading="lazy"
+          loading="eager"
           decoding="async"
+          fetchpriority="high"
         />
       </figure>
 
@@ -5255,7 +5451,7 @@ function renderTeenCrewSummary(metrics, pageEntry) {
               alt=""
               width="682"
               height="1024"
-              loading="lazy"
+              loading="eager"
               decoding="async"
             />
           </div>
@@ -5313,7 +5509,7 @@ function renderSettingSectionBridge() {
             class="results-section-bridge__image"
             width="1024"
             height="788"
-            loading="lazy"
+            loading="eager"
             decoding="async"
           />
         </figure>
@@ -5324,7 +5520,7 @@ function renderSettingSectionBridge() {
             class="results-section-bridge__image"
             width="1024"
             height="682"
-            loading="lazy"
+            loading="eager"
             decoding="async"
           />
         </figure>
@@ -5497,6 +5693,85 @@ function reportPageNumberHtml(copy, page) {
   return `<p class="report-page-number print-only" aria-hidden="true"><span class="report-page-number__label">${escapeHtml(label)}</span> <span class="report-page-number__value">${page}</span></p>`;
 }
 
+/** Ensure report images are decoded before print/PDF so full-page visuals are not blank. */
+function waitForReportPrintImages(root = document) {
+  const scope =
+    root.querySelector?.(".card--results") ||
+    root.querySelector?.("#app") ||
+    root;
+  const imgs = Array.from(
+    scope.querySelectorAll(
+      [
+        ".interpret-cover img",
+        ".interpret-toc img",
+        ".interpret-glossary img",
+        ".interpret-senses img",
+        ".interpret-world img",
+        ".interpret-section-banner img",
+        ".trail-profile img",
+        ".teen-crew img",
+        ".results-section-bridge img",
+        ".profile-section img",
+        ".print-brand img",
+      ].join(", ")
+    )
+  );
+
+  return Promise.all(
+    imgs.map((img) => {
+      if (img.loading === "lazy") img.loading = "eager";
+
+      const settle = () => {
+        if (typeof img.decode === "function") {
+          return img.decode().catch(() => undefined);
+        }
+        return Promise.resolve();
+      };
+
+      if (img.complete && img.naturalWidth > 0) {
+        return settle();
+      }
+
+      return new Promise((resolve) => {
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          settle().finally(resolve);
+        };
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+        // Safety net if load never fires (broken URL / stalled network).
+        window.setTimeout(done, 6000);
+      });
+    })
+  );
+}
+
+function printSensoryResultsPacket() {
+  document.body.classList.add("print-sensory-results");
+  const cleanup = () => {
+    document.body.classList.remove("print-sensory-results");
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+
+  const runPrint = () => {
+    window.print();
+    window.setTimeout(cleanup, 2000);
+  };
+
+  waitForReportPrintImages(document)
+    .catch(() => undefined)
+    .then(
+      () =>
+        new Promise((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(resolve));
+        })
+    )
+    .then(runPrint);
+}
+
 function reportPageAttrs(entry, { includeId = true } = {}) {
   if (!entry) return "";
   const idAttr = includeId ? ` id="${escapeHtml(entry.id)}"` : "";
@@ -5526,7 +5801,7 @@ function renderInterpretToc(copy, plan, tocEntry) {
         alt=""
         width="1000"
         height="700"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       <img
@@ -5535,7 +5810,7 @@ function renderInterpretToc(copy, plan, tocEntry) {
         alt=""
         width="800"
         height="1000"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       <img
@@ -5544,7 +5819,7 @@ function renderInterpretToc(copy, plan, tocEntry) {
         alt=""
         width="1200"
         height="1600"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       <img
@@ -5553,7 +5828,7 @@ function renderInterpretToc(copy, plan, tocEntry) {
         alt=""
         width="800"
         height="1000"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       <img
@@ -5562,7 +5837,7 @@ function renderInterpretToc(copy, plan, tocEntry) {
         alt=""
         width="48"
         height="120"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
     </div>`;
@@ -5684,7 +5959,7 @@ function renderInterpretSectionBanner({
           style="object-position: ${escapeHtml(objectPosition)}"
           width="${Number(width) || 682}"
           height="${Number(height) || 1024}"
-          loading="lazy"
+          loading="eager"
           decoding="async"
         />
       </div>
@@ -5889,7 +6164,7 @@ function renderInterpretGlossary(copy, pageEntry) {
         alt=""
         width="800"
         height="1000"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       <img
@@ -5898,7 +6173,7 @@ function renderInterpretGlossary(copy, pageEntry) {
         alt=""
         width="1200"
         height="1600"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       <img
@@ -5907,7 +6182,7 @@ function renderInterpretGlossary(copy, pageEntry) {
         alt=""
         width="1200"
         height="1600"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
       <img
@@ -5916,7 +6191,7 @@ function renderInterpretGlossary(copy, pageEntry) {
         alt=""
         width="800"
         height="1000"
-        loading="lazy"
+        loading="eager"
         decoding="async"
       />
     </div>`;
@@ -5958,8 +6233,9 @@ function renderInterpretOurSenses(copy, pageEntry) {
           alt="${escapeHtml(copy.interpretSensesAria)}"
           width="2339"
           height="3508"
-          loading="lazy"
+          loading="eager"
           decoding="async"
+          fetchpriority="high"
         />
       </figure>
       ${reportPageNumberHtml(copy, pageEntry?.page)}
@@ -5985,8 +6261,9 @@ function renderInterpretSensoryWorld(copy, pageEntry) {
           alt="${escapeHtml(copy.interpretWorldAria)}"
           width="2131"
           height="3200"
-          loading="lazy"
+          loading="eager"
           decoding="async"
+          fetchpriority="high"
         />
       </figure>
       ${reportPageNumberHtml(copy, pageEntry?.page)}
@@ -6067,10 +6344,13 @@ function renderWorkReport(scores) {
   if (open) {
     ensureWorkReportDefaults();
     const report = state.workReport;
+    const sections = getSettingReportSections();
     const displayName = report.name.trim() || reportCopy.notProvided;
     const jobTitle = report.jobTitle.trim() || reportCopy.notProvided;
     const reason = report.reasonForReferral.trim() || reportCopy.notProvided;
     const rows = getScoreRows(scores);
+    const showNotesControls = isSchoolReport() && sections.notes;
+    const showVisualControls = isSchoolReport() && sections.visual;
 
     const overall = scoreOverall(scores, state.language, state.respondent || "adult");
     const overallThreshold = getThresholdMeta(overall.profile, state.language);
@@ -6128,25 +6408,34 @@ function renderWorkReport(scores) {
         .map((item) => `<li>${escapeHtml(item)}</li>`)
         .join("");
 
-      challengesSection = `
+      if (sections.challenges) {
+        challengesSection = `
             <section>
               <h5>${escapeHtml(reportCopy.sectionChallenges)}</h5>
               <ul class="work-report-doc__challenges">${challengeItems}</ul>
             </section>`;
+      }
 
-      recsSection = `
+      if (sections.recommendations || (sections.generalRecs && generalItems)) {
+        recsSection = `
             <section>
-              <h5>${escapeHtml(reportCopy.sectionRecs)}</h5>
-              <ul class="work-report-doc__recs work-report-doc__recs--grouped">${recGroups}</ul>
               ${
-                generalItems
+                sections.recommendations
+                  ? `
+              <h5>${escapeHtml(reportCopy.sectionRecs)}</h5>
+              <ul class="work-report-doc__recs work-report-doc__recs--grouped">${recGroups}</ul>`
+                  : ""
+              }
+              ${
+                sections.generalRecs && generalItems
                   ? `
               <p class="work-report-doc__subhead">${escapeHtml(reportCopy.sectionGeneralRecs)}</p>
               <ul class="work-report-doc__recs">${generalItems}</ul>`
                   : ""
               }
             </section>`;
-    } else {
+      }
+    } else if (sections.recommendations) {
       const recItems = rows
         .map(
           (row) => `
@@ -6181,8 +6470,9 @@ function renderWorkReport(scores) {
             <span>${escapeHtml(reportCopy.reason)}</span>
             <textarea data-work-report="reasonForReferral" rows="3" placeholder="${escapeHtml(reportCopy.reasonPlaceholder)}">${escapeHtml(report.reasonForReferral)}</textarea>
           </label>
+          ${renderSettingReportSectionEditor(reportCopy)}
           ${
-            isSchoolReport()
+            showNotesControls
               ? `
           <div class="school-report-notes-ask work-report__field--full">
             <p class="school-report-notes-ask__label">${escapeHtml(reportCopy.notesAsk)}</p>
@@ -6205,10 +6495,10 @@ function renderWorkReport(scores) {
             </label>`
                 : ""
             }
-          </div>
-          ${renderSchoolVisualPicker(reportCopy)}`
+          </div>`
               : ""
           }
+          ${showVisualControls ? renderSchoolVisualPicker(reportCopy) : ""}
         </div>
 
         <div class="work-report__preview" id="work-report-document">
@@ -6220,6 +6510,9 @@ function renderWorkReport(scores) {
               <p class="work-report-doc__prepared">${escapeHtml(reportCopy.preparedBy)}</p>
             </header>
 
+            ${
+              sections.details
+                ? `
             <section>
               <h5>${escapeHtml(reportCopy.sectionDetails)}</h5>
               <dl class="work-report-doc__details">
@@ -6227,15 +6520,22 @@ function renderWorkReport(scores) {
                 <div><dt>${escapeHtml(reportCopy.labelRole)}</dt><dd>${escapeHtml(jobTitle)}</dd></div>
                 <div><dt>${escapeHtml(reportCopy.labelReason)}</dt><dd>${escapeHtml(reason)}</dd></div>
               </dl>
-            </section>
+            </section>`
+                : ""
+            }
 
+            ${
+              sections.about
+                ? `
             <section>
               <h5>${escapeHtml(reportCopy.sectionAbout)}</h5>
               <p data-work-report-text="about">${escapeHtml(fillReportTemplate(reportCopy.aboutBody, displayName))}</p>
-            </section>
+            </section>`
+                : ""
+            }
 
             ${
-              reportCopy.sectionOverload
+              reportCopy.sectionOverload && sections.overload
                 ? `
             <section>
               <h5>${escapeHtml(reportCopy.sectionOverload)}</h5>
@@ -6244,15 +6544,23 @@ function renderWorkReport(scores) {
                 : ""
             }
 
+            ${
+              sections.referral
+                ? `
             <section>
               <h5>${escapeHtml(reportCopy.sectionReferral)}</h5>
               <p data-work-report-text="referral">${escapeHtml(fillReportTemplate(reportCopy.referralBody, displayName))}</p>
-            </section>
+            </section>`
+                : ""
+            }
 
+            ${
+              sections.scores || (isSchoolReport() && sections.visual)
+                ? `
             <section>
-              <h5>${escapeHtml(reportCopy.sectionScores)}</h5>
+              ${sections.scores ? `<h5>${escapeHtml(reportCopy.sectionScores)}</h5>` : ""}
               ${
-                isSchoolReport()
+                isSchoolReport() && sections.visual
                   ? `
               <div class="work-report-doc__visual">
                 <p class="work-report-doc__visual-label">${escapeHtml(reportCopy.sectionVisual)}</p>
@@ -6260,6 +6568,9 @@ function renderWorkReport(scores) {
               </div>`
                   : ""
               }
+              ${
+                sections.scores
+                  ? `
               <table class="work-report-doc__table">
                 <thead>
                   <tr>
@@ -6268,14 +6579,18 @@ function renderWorkReport(scores) {
                   </tr>
                 </thead>
                 <tbody>${scoreRows}</tbody>
-              </table>
-            </section>
+              </table>`
+                  : ""
+              }
+            </section>`
+                : ""
+            }
 
             ${challengesSection}
             ${recsSection}
 
             ${
-              isSchoolReport() && state.schoolReportNotesEnabled
+              showNotesControls && state.schoolReportNotesEnabled
                 ? `
             <section class="work-report-doc__notes">
               <h5>${escapeHtml(reportCopy.sectionNotes)}</h5>
@@ -6288,7 +6603,9 @@ function renderWorkReport(scores) {
                 : ""
             }
 
-            <p class="work-report-doc__closing">${escapeHtml(reportCopy.closing)}</p>
+            ${renderSettingReportCustomSectionsHtml()}
+
+            ${sections.closing ? `<p class="work-report-doc__closing">${escapeHtml(reportCopy.closing)}</p>` : ""}
           </article>
         </div>
 
@@ -7130,6 +7447,7 @@ function bindEvents() {
         state.workReport = { name: "", jobTitle: "", reasonForReferral: "", additionalNotes: "" };
         state.schoolReportVisual = "balance";
         state.schoolReportNotesEnabled = false;
+        resetSettingReportComposer();
       }
       state.error = null;
       moveStep(1);
@@ -7157,6 +7475,7 @@ function bindEvents() {
       state.workReportDeclined = false;
       state.schoolReportVisual = "balance";
       state.schoolReportNotesEnabled = false;
+      resetSettingReportComposer();
       state.error = null;
       updateChoiceSelection(lifeContextBtn, "data-life-context");
       saveSensoryDraft();
@@ -7351,6 +7670,35 @@ function bindEvents() {
       return;
     }
 
+    if (action === "add-setting-heading") {
+      if (!canOfferSettingReport() || !state.showWorkReport) return;
+      ensureSettingReportComposerDefaults();
+      state.settingReportCustomSections = [
+        ...normalizeSettingReportCustomSections(state.settingReportCustomSections),
+        { id: createSettingReportCustomId(), heading: "", body: "" },
+      ];
+      render();
+      queueMicrotask(() => {
+        const fields = app.querySelectorAll("[data-setting-custom='heading']");
+        const last = fields[fields.length - 1];
+        if (last) {
+          last.focus();
+          last.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+      return;
+    }
+
+    if (action === "remove-setting-heading") {
+      if (!canOfferSettingReport() || !state.showWorkReport) return;
+      const customId = btn.dataset.customSectionId;
+      state.settingReportCustomSections = normalizeSettingReportCustomSections(
+        state.settingReportCustomSections
+      ).filter((item) => item.id !== customId);
+      render();
+      return;
+    }
+
     if (action === "back-home") {
       clearInviteSession();
       state.viewingArchivedId = null;
@@ -7499,15 +7847,7 @@ function bindEvents() {
       applyAssessmentRecord(record, { viewMode });
       render({ scrollToTop: true });
       if (action === "download-assessment") {
-        queueMicrotask(() => {
-          document.body.classList.add("print-sensory-results");
-          const cleanup = () => {
-            document.body.classList.remove("print-sensory-results");
-            window.removeEventListener("afterprint", cleanup);
-          };
-          window.addEventListener("afterprint", cleanup);
-          window.setTimeout(() => window.print(), 80);
-        });
+        queueMicrotask(() => printSensoryResultsPacket());
       }
       return;
     }
@@ -7713,15 +8053,7 @@ function bindEvents() {
     }
 
     if (action === "print") {
-      document.body.classList.add("print-sensory-results");
-      const cleanup = () => {
-        document.body.classList.remove("print-sensory-results");
-        window.removeEventListener("afterprint", cleanup);
-      };
-      window.addEventListener("afterprint", cleanup);
-      window.setTimeout(() => {
-        window.print();
-      }, 50);
+      printSensoryResultsPacket();
     }
   });
 
@@ -7832,6 +8164,23 @@ function bindEvents() {
       return;
     }
 
+    if (e.target.matches("[data-setting-section]")) {
+      if (!canOfferSettingReport() || !state.showWorkReport) return;
+      ensureSettingReportComposerDefaults();
+      const key = e.target.getAttribute("data-setting-section");
+      const defaults = defaultSettingReportSections();
+      if (!Object.prototype.hasOwnProperty.call(defaults, key)) return;
+      state.settingReportSections = {
+        ...getSettingReportSections(),
+        [key]: Boolean(e.target.checked),
+      };
+      if (key === "notes" && !e.target.checked) {
+        state.schoolReportNotesEnabled = false;
+      }
+      render();
+      return;
+    }
+
     if (e.target.name === "contact") {
       state.contactPreference = e.target.value;
       saveSensoryDraft();
@@ -7933,6 +8282,20 @@ function bindEvents() {
       state.idealSaturday = e.target.value;
       state.error = null;
       saveSensoryDraft();
+      return;
+    }
+
+    if (e.target.matches("[data-setting-custom]")) {
+      const customId = e.target.getAttribute("data-custom-section-id");
+      const fieldKey = e.target.getAttribute("data-setting-custom");
+      if (!customId || (fieldKey !== "heading" && fieldKey !== "body")) return;
+      ensureSettingReportComposerDefaults();
+      state.settingReportCustomSections = normalizeSettingReportCustomSections(
+        state.settingReportCustomSections
+      ).map((item) =>
+        item.id === customId ? { ...item, [fieldKey]: e.target.value } : item
+      );
+      refreshSettingReportCustomPreview(customId);
       return;
     }
 
@@ -8085,6 +8448,39 @@ function refreshWorkReportPreview() {
     const notesText = state.workReport.additionalNotes.trim();
     notes.textContent = notesText || reportCopy.notesEmpty;
     notes.classList.toggle("is-empty", !notesText);
+  }
+}
+
+function refreshSettingReportCustomPreview(customId) {
+  const doc = app.querySelector(".work-report-doc");
+  if (!doc) return;
+  const item = normalizeSettingReportCustomSections(state.settingReportCustomSections).find(
+    (entry) => entry.id === customId
+  );
+  const safeId =
+    typeof CSS !== "undefined" && typeof CSS.escape === "function"
+      ? CSS.escape(customId)
+      : String(customId).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  let section = doc.querySelector(`[data-custom-section-id="${safeId}"]`);
+  if (!item || !(item.heading.trim() || item.body.trim())) {
+    if (section) section.remove();
+    return;
+  }
+  if (!section) {
+    section = document.createElement("section");
+    section.className = "work-report-doc__custom";
+    section.setAttribute("data-custom-section-id", customId);
+    section.innerHTML = `<h5 data-setting-custom-text="heading"></h5><p data-setting-custom-text="body"></p>`;
+    const closing = doc.querySelector(".work-report-doc__closing");
+    if (closing) doc.insertBefore(section, closing);
+    else doc.appendChild(section);
+  }
+  const heading = section.querySelector('[data-setting-custom-text="heading"]');
+  const body = section.querySelector('[data-setting-custom-text="body"]');
+  if (heading) heading.textContent = item.heading.trim() || "—";
+  if (body) {
+    body.textContent = item.body.trim();
+    body.classList.toggle("is-empty", !item.body.trim());
   }
 }
 
