@@ -652,6 +652,7 @@ function handleLogout() {
   state.clinicianUnlocked = false;
   state.viewingArchivedId = null;
   state.archiveReadOnly = false;
+  state.reportViewMode = null;
   state.sampleReportPreview = false;
   sessionStorage.removeItem(CLINICIAN_SESSION_KEY);
   state.step = 0;
@@ -760,7 +761,7 @@ function canViewFullResults() {
 
 function resultsAccessLabel(access = getPatientResultsAccess()) {
   if (access === RESULTS_ACCESS.full) return "full report";
-  if (access === RESULTS_ACCESS.basic) return "basic summary only";
+  if (access === RESULTS_ACCESS.basic) return "brief report only";
   return "none (thank-you only)";
 }
 
@@ -1070,6 +1071,7 @@ function resetSensoryQuestionnaireProgress() {
   state.submissionAttempted = false;
   state.viewingArchivedId = null;
   state.archiveReadOnly = false;
+  state.reportViewMode = null;
   state.error = null;
 }
 
@@ -7057,6 +7059,7 @@ function bindEvents() {
         clearInviteSession();
         state.viewingArchivedId = null;
         state.archiveReadOnly = false;
+        state.reportViewMode = null;
         state.sampleReportPreview = false;
         state.view = "home";
         state.step = 0;
@@ -7352,6 +7355,7 @@ function bindEvents() {
       clearInviteSession();
       state.viewingArchivedId = null;
       state.archiveReadOnly = false;
+      state.reportViewMode = null;
       state.sampleReportPreview = false;
       state.view = "home";
       state.step = 0;
