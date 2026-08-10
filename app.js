@@ -7476,7 +7476,7 @@ function bindEvents() {
       return;
     }
 
-    if (action === "open-assessment" || action === "download-assessment") {
+    if (action === "open-assessment" || action === "open-assessment-summary" || action === "download-assessment") {
       if (!canAccessTherapistDashboard()) {
         state.view = "dashboard";
         render({ scrollToTop: true });
@@ -7490,7 +7490,9 @@ function bindEvents() {
         render({ scrollToTop: true });
         return;
       }
-      applyAssessmentRecord(record);
+      const viewMode =
+        action === "open-assessment-summary" ? RESULTS_ACCESS.basic : RESULTS_ACCESS.full;
+      applyAssessmentRecord(record, { viewMode });
       render({ scrollToTop: true });
       if (action === "download-assessment") {
         queueMicrotask(() => {
@@ -7503,6 +7505,15 @@ function bindEvents() {
           window.setTimeout(() => window.print(), 80);
         });
       }
+      return;
+    }
+
+    if (action === "switch-report-basic" || action === "switch-report-full") {
+      if (!state.archiveReadOnly || !canAccessTherapistDashboard()) return;
+      state.reportViewMode =
+        action === "switch-report-basic" ? RESULTS_ACCESS.basic : RESULTS_ACCESS.full;
+      state.patientResultsAccess = state.reportViewMode;
+      render({ scrollToTop: true });
       return;
     }
 
@@ -7802,6 +7813,17 @@ function bindEvents() {
       state.clinicianDraftResultsAccess = normalizeResultsAccess(e.target.value);
       sessionStorage.setItem(CLINICIAN_PREF_KEY, state.clinicianDraftResultsAccess);
       state.clinicianCopyStatus = null;
+      render();
+      return;
+    }
+
+    if (e.target.matches("[data-short-section]")) {
+      if (!isShortReportDashboardPreview()) return;
+      const key = e.target.getAttribute("data-short-section");
+      if (!Object.prototype.hasOwnProperty.call(DEFAULT_SHORT_REPORT_SECTIONS, key)) return;
+      const sections = readShortReportSections();
+      sections[key] = Boolean(e.target.checked);
+      writeShortReportSections(sections);
       render();
       return;
     }
