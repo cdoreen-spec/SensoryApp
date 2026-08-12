@@ -323,44 +323,67 @@ const QUESTIONNAIRE_UI = {
     teenCheatFrustratedHint: "Ground yourself first, then go back to the task.",
     teenCheatOverload: "Too much / overloaded",
     teenCheatOverloadHint: "Turn the volume of the world down before anything else.",
-    teenCrewKicker: "Your Sensory Trail Profile",
-    teenCrewTitle: "Your Sensory Trail Profile",
-    teenCrewTitleParent: "Your child’s Sensory Trail Profile",
+    teenCrewKicker: "Your Sensory Trail Character",
+    teenCrewTitle: "Your Sensory Trail Character",
+    teenCrewTitleParent: "Your child’s Sensory Trail Character",
     teenCrewIntro:
-      "We all experience the world differently. Your results show which trail style most reflects you.",
+      "We all experience the world differently. Here are the three trail styles — then which one your answers matched most closely.",
     teenCrewIntroParent:
-      "We all experience the world differently. These results show which trail style most reflects your child.",
+      "We all experience the world differently. Here are the three trail styles — then which one your child’s answers matched most closely.",
     teenCrewSummaryAria:
       "Infographic of the three sensory trail profiles: Sensory Observer, Sensory Adaptor, and Sensory Explorer",
     teenCrewYouAre: "You are",
     teenCrewYouAreParent: "Your child is",
     teenCrewBadge: "That’s you",
     teenCrewBadgeParent: "That’s them",
-    teenCrewDetailTitle: "Your matched character",
-    teenCrewDetailTitleParent: "Your child’s matched character",
+    teenCrewDetailTitle: "Your matched trail",
+    teenCrewDetailTitleParent: "Your child’s matched trail",
     teenCrewTraitsTitle: "What this often looks like",
     teenCrewCrewTitle: "The three trail styles",
     teenCrewCrewIntro:
-      "On a high trail you need one of each. High-threshold courage up front, low-threshold awareness on the path, and a medium-threshold adaptor holding the middle.",
+      "Every crew needs all three: the Explorer who seeks more input, the Observer who notices detail quickly, and the Adaptor who flexes in the middle.",
     teenCrewWhyTitle: "Why every summit needs all three",
     teenCrewWhyBody:
       "The Sensory Explorer (higher sensory threshold) has the courage and energy to go first — checking the route ahead and seeing if it’s safe to climb. The Sensory Observer (lower sensory threshold) picks up the animals, the weather shift, new smells, how the trail snacks taste, and any holes or loose stones before the crew steps into them — and may need steadier breaks along the way. The Sensory Adaptor (medium / mixed threshold) reads the group and fits where they are needed — surging forward, slowing down, or holding the middle of the rope so the whole crew stays together.",
     teenCrewFooter:
-      "There is no right or wrong profile. Your trail is unique, and understanding it is the first step to thriving on your journey.",
+      "There is no right or wrong profile. Your trail is unique — this is a descriptive map, not a diagnosis.",
     teenCrewFooterParent:
-      "There is no right or wrong profile. Your child’s trail is unique, and understanding it is the first step to helping them thrive on their journey.",
+      "There is no right or wrong profile. Your child’s trail is unique — this is a descriptive map, not a diagnosis.",
+    briefScoresKicker: "Your sensory scores",
+    briefScoresKickerParent: "Your child’s sensory scores",
+    briefScoresTitle: "Results at a glance",
+    briefScoresIntro:
+      "A quick view of the overall pattern and how each sense leaned. This is descriptive, not a diagnosis.",
+    briefScoresIntroParent:
+      "A quick view of the overall pattern and how each sense leaned. This is descriptive, not a diagnosis.",
+    trailInterpretSectionLabel: "Interpretation",
+    senseSupportKicker: "Support by sense",
+    senseSupportTitle: "How to support each sensory system",
+    senseSupportTitleParent: "How to support each of your child’s sensory systems",
+    senseSupportIntro:
+      "Practical supports matched to how each sense scored — short, specific, and ready to use.",
+    senseSupportIntroParent:
+      "Practical supports matched to how each of your child’s senses scored — short, specific, and ready to use.",
+    senseSupportHowLabel: "Try this",
+    senseSupportLeanLabel: "Scored",
     teenCrewExplorerName: "Sensory Explorer",
     teenCrewExplorerTag: "High threshold – Sensory seeker",
     teenCrewExplorerSummary:
       "You seek out experiences, movement, and stimulation to feel energised and engaged.",
     teenCrewExplorerSummaryParent:
       "They seek out experiences, movement, and stimulation to feel energised and engaged.",
+    teenCrewExplorerSummaryTeen:
+      "In learning and free time — at a campus, online at home, or mixed — you often feel best with movement, variety, and something interesting to do.",
     teenCrewExplorerBody:
       "Your sensory threshold sits higher — you often like more sensory input, not less. Busy days, new places, movement, sound and fresh sights tend to wake you up. Stillness can feel flat, so you go looking for the next thing to do and see. On the mountain you are the one who hikes ahead with plenty of energy, can keep going for a good stretch, tests the route, and comes back with the report: it’s wild up there — and worth it.",
     teenCrewExplorerBodyParent:
       "Your child’s sensory threshold sits higher — they often like more sensory input, not less. Busy days, new places, movement, sound and fresh sights tend to wake them up. Stillness can feel flat, so they go looking for the next thing to do and see. On the mountain they are the one who hikes ahead with plenty of energy, can keep going for a good stretch, tests the route, and comes back with the report: it’s wild up there — and worth it.",
+    teenCrewExplorerBodyTeen:
+      "Your sensory threshold sits higher — you usually need more input to feel switched on. Long still lessons or quiet study blocks (on campus or online at home) and slow hobbies can feel flat, while sport, music, gaming with friends, drama, art that keeps your hands busy, or trying new places tends to wake you up. You may learn better after movement, a break, PE, a walk around the house, or a quick stretch than after sitting for a long stretch. Hobbies with movement, sound, challenge or social energy often fit you well — and restlessness is often your body asking for more input, not “not trying.”",
     teenCrewExplorerRole:
       "Higher-threshold scout — loves input, busyness and new terrain; has the energy to keep going and check if the path ahead is safe.",
+    teenCrewExplorerRoleTeen:
+      "Seeks movement, variety and stimulation — in learning, hobbies and with friends — to stay focused and energised.",
     teenCrewExplorerTraits: [
       "Naturally drawn to movement, excitement, and novelty.",
       "Needs more stimulation to feel satisfied.",
@@ -369,18 +392,32 @@ const QUESTIONNAIRE_UI = {
       "Thrives with exploration, risk-taking, and adventure.",
       "Brings energy, enthusiasm, and spontaneity.",
     ],
+    teenCrewExplorerTraitsTeen: [
+      "Often prefers active or hands-on hobbies: sport, dance, music, gaming, making things, outdoor time.",
+      "Long still lessons or quiet homework (campus or online) can feel harder than practical or social tasks.",
+      "Learns and settles better after movement — a break, walk, stretch, fidget tools, or PE.",
+      "May get restless, chatty or bored when the day is too quiet or repetitive.",
+      "Enjoys trying new clubs, challenges, music and busy hangouts with friends.",
+      "Brings energy and ideas — and needs enough “input” to keep that energy useful.",
+    ],
     teenCrewAdaptorName: "Sensory Adaptor",
     teenCrewAdaptorTag: "Medium threshold – Balanced",
     teenCrewAdaptorSummary:
       "You can adapt to different situations and find your balance between stimulation and rest.",
     teenCrewAdaptorSummaryParent:
       "They can adapt to different situations and find their balance between stimulation and rest.",
+    teenCrewAdaptorSummaryTeen:
+      "Your needs shift across the learning day and your hobbies — sometimes you want more buzz, sometimes you need things quieter.",
     teenCrewAdaptorBody:
       "Your sensory threshold sits in the flexible middle — sometimes you want more input, sometimes you need less. You shift with home life, school or work, the weather on the trail and the people around you. On the mountain you can climb with the explorers when the day asks for energy, or slow down with the observers when it asks for care — you fit where the crew needs you, and that keeps everyone moving.",
     teenCrewAdaptorBodyParent:
       "Your child’s sensory threshold sits in the flexible middle — sometimes they want more input, sometimes they need less. They shift with home life, school, the weather on the trail and the people around them. On the mountain they can climb with the explorers when the day asks for energy, or slow down with the observers when it asks for care — they fit where the crew needs them, and that keeps everyone moving.",
+    teenCrewAdaptorBodyTeen:
+      "Your sensory threshold sits in the flexible middle — some lessons, friends and hobbies feel easy; others ask you to turn the volume up or down. That can be a busy campus day, a quiet online morning at home, or a study night after sport. You often do well when you can choose: headphones for focus, a walk before homework, a lively interest one day and a quieter one the next. Noticing which subjects, sports and hangouts leave you settled — and which leave you flat or overloaded — is more useful than one fixed label.",
     teenCrewAdaptorRole:
       "Medium-threshold middle — reads the group, matches the pace, and keeps high- and low-threshold hikers walking as one crew.",
+    teenCrewAdaptorRoleTeen:
+      "Flexes between busy and calm — in learning, hobbies and with friends — and does best with choices that match the day.",
     teenCrewAdaptorTraits: [
       "Flexible and able to adjust to different environments.",
       "Manageable awareness of sensory input.",
@@ -389,18 +426,32 @@ const QUESTIONNAIRE_UI = {
       "Seeks balance, routine, and choices that support them.",
       "Often acts as a bridge between different needs.",
     ],
+    teenCrewAdaptorTraitsTeen: [
+      "Can enjoy both lively hobbies and quieter interests, depending on the day.",
+      "Some subjects or lessons feel fine; others need extra tools (movement, quiet, breaks) — on campus or online.",
+      "Often switches between wanting friends/noise and needing alone time to reset.",
+      "Does well with a mix: sport or music plus calmer downtime.",
+      "Uses simple strategies — headphones, stretch breaks, a calmer study spot — to stay regulated.",
+      "Often helps friends bridge different paces and preferences.",
+    ],
     teenCrewObserverName: "Sensory Observer",
     teenCrewObserverTag: "Low threshold – Sensitive",
     teenCrewObserverSummary:
       "You notice the details others might miss and can be deeply aware of your environment.",
     teenCrewObserverSummaryParent:
       "They notice the details others might miss and can be deeply aware of their environment.",
+    teenCrewObserverSummaryTeen:
+      "You notice a lot in learning and hobbies — detail, mood and atmosphere — and quieter settings often help you do your best.",
     teenCrewObserverBody:
       "Your sensory threshold sits lower — you are very aware and pick things up quickly. A change in the weather, a new smell on the breeze, how the trail snacks taste, a bird call, a loose stone underfoot: it all registers. That awareness is a real strength on the mountain. You may also need more regular breaks during the hike so your system can settle before the next stretch — and when you do, the whole crew notices what they would have missed.",
     teenCrewObserverBodyParent:
       "Your child’s sensory threshold sits lower — they are very aware and pick things up quickly. A change in the weather, a new smell on the breeze, how the trail snacks taste, a bird call, a loose stone underfoot: it all registers. That awareness is a real strength on the mountain. They may also need more regular breaks during the hike so their system can settle before the next stretch — and when they do, the whole crew notices what they would have missed.",
+    teenCrewObserverBodyTeen:
+      "Your sensory threshold sits lower — you pick up noise, screens, bright light, textures, smells and people’s moods quickly, whether you learn on a busy campus or online at home. That awareness can be a real strength in subjects and hobbies that need careful noticing — art, music, reading, design, caring for others, detail work. Busy group calls, shared spaces or stacked demands can take more energy than they look like from the outside. After a full learning day you may need a quieter reset before homework, sport or social plans. Calmer clubs, softer study spaces and hobbies you enjoy without overload help you stay sharp rather than drained.",
     teenCrewObserverRole:
       "Lower-threshold lookout — spots detail fast (weather, smells, tastes, hazards) and benefits from steadier breaks along the trail.",
+    teenCrewObserverRoleTeen:
+      "Notices detail and atmosphere quickly — in learning and hobbies — and thrives with calmer spaces and steadier resets.",
     teenCrewObserverTraits: [
       "Keenly aware of sights, sounds, textures, smells, and subtle changes around them.",
       "Easily affected by busy, noisy, or chaotic environments.",
@@ -409,6 +460,18 @@ const QUESTIONNAIRE_UI = {
       "Often picks up on others’ emotions and needs.",
       "Thrives in calm, predictable routines and peaceful spaces.",
     ],
+    teenCrewObserverTraitsTeen: [
+      "Notices detail others miss — useful in creative subjects, music, reading, craft or caring roles.",
+      "Noisy shared spaces, busy screens or stacked demands can drain focus faster — on campus or at home.",
+      "Often prefers quieter hobbies or smaller friend groups after a full learning day.",
+      "Needs recovery time before homework, practices or plans after studying.",
+      "Thoughtful and observant with friends’ feelings and the mood of a space or call.",
+      "Does best with predictable routines and permission to take sensory breaks.",
+    ],
+    teenCrewCrewIntroTeen:
+      "Every crew needs all three styles. Here’s how they often show up in learning (campus, online or mixed), hobbies and everyday teenage life — then which one your answers matched most closely.",
+    teenCrewTraitsTitleTeen: "How this often shows up for you",
+    teenCrewDetailTitleTeen: "Your matched trail",
     pathwaysTitle: "Sensory pathways",
     pathwaysHelp: "Follow each sense down the trail. Leaves show highlighted answers; the dial shows whether that sense leans sensitive or seeking.",
     responseMosaic: "Response mosaic",
@@ -933,44 +996,67 @@ const QUESTIONNAIRE_UI = {
     teenCheatFrustratedHint: "Anker jouself eers, gaan dan terug na die taak.",
     teenCheatOverload: "Te veel / oorstimuleer",
     teenCheatOverloadHint: "Draai eers die wêreld se volume af voor enigiets anders.",
-    teenCrewKicker: "Jou Sensoriese Roeteprofiel",
-    teenCrewTitle: "Jou Sensoriese Roeteprofiel",
-    teenCrewTitleParent: "Jou kind se Sensoriese Roeteprofiel",
+    teenCrewKicker: "Jou Sensoriese Roetekarakter",
+    teenCrewTitle: "Jou Sensoriese Roetekarakter",
+    teenCrewTitleParent: "Jou kind se Sensoriese Roetekarakter",
     teenCrewIntro:
-      "Ons ervaar almal die wêreld verskillend. Jou resultate wys watter roetestyl die meeste by jou pas.",
+      "Ons ervaar almal die wêreld verskillend. Hier is die drie roetestyle — en dan watter een jou antwoorde die naaste gepas het.",
     teenCrewIntroParent:
-      "Ons ervaar almal die wêreld verskillend. Hierdie resultate wys watter roetestyl die meeste by jou kind pas.",
+      "Ons ervaar almal die wêreld verskillend. Hier is die drie roetestyle — en dan watter een jou kind se antwoorde die naaste gepas het.",
     teenCrewSummaryAria:
       "Infografika van die drie sensoriese roeteprofiele: Sensoriese Waarnemer, Sensoriese Aanpasser, en Sensoriese Verkenner",
     teenCrewYouAre: "Jy is",
     teenCrewYouAreParent: "Jou kind is",
     teenCrewBadge: "Dis jy",
     teenCrewBadgeParent: "Dis hulle",
-    teenCrewDetailTitle: "Jou ooreenstemmende karakter",
-    teenCrewDetailTitleParent: "Jou kind se ooreenstemmende karakter",
+    teenCrewDetailTitle: "Jou ooreenstemmende roete",
+    teenCrewDetailTitleParent: "Jou kind se ooreenstemmende roete",
     teenCrewTraitsTitle: "Hoe dit dikwels lyk",
     teenCrewCrewTitle: "Die drie roetestyle",
     teenCrewCrewIntro:
-      "Op ’n hoë roete het jy een van elkeen nodig. Hoë-drempel moed voor, lae-drempel bewustheid op die pad, en ’n medium-drempel aanpasser wat die middel hou.",
+      "Elke span het al drie nodig: die Verkenner wat meer insette soek, die Waarnemer wat detail vinnig merk, en die Aanpasser wat in die middel buig.",
     teenCrewWhyTitle: "Hoekom elke piek al drie nodig het",
     teenCrewWhyBody:
       "Die Sensoriese Verkenner (hoër sensoriese drempel) het die moed en energie om eerste te gaan — om die roete vooruit te toets en te sien of dit veilig is om te klim. Die Sensoriese Waarnemer (laer sensoriese drempel) merk die diere, die weerverskuiwing, nuwe reuke, hoe die roetesnacks smaak, en enige gate of los klippe op voordat die span daarin stap — en mag meer gereelde pouses langs die pad nodig hê. Die Sensoriese Aanpasser (medium / gemengde drempel) lees die groep en pas in waar hulle nodig is — vorentoe, stadiger, of in die middel van die tou sodat die hele span saam bly.",
     teenCrewFooter:
-      "Daar is geen regte of verkeerde profiel nie. Jou roete is uniek, en om dit te verstaan is die eerste stap om op jou reis te floreer.",
+      "Daar is geen regte of verkeerde profiel nie. Jou roete is uniek — dit is ’n beskrywende kaart, nie ’n diagnose nie.",
     teenCrewFooterParent:
-      "Daar is geen regte of verkeerde profiel nie. Jou kind se roete is uniek, en om dit te verstaan is die eerste stap om hulle op hul reis te help floreer.",
+      "Daar is geen regte of verkeerde profiel nie. Jou kind se roete is uniek — dit is ’n beskrywende kaart, nie ’n diagnose nie.",
+    briefScoresKicker: "Jou sensoriese tellings",
+    briefScoresKickerParent: "Jou kind se sensoriese tellings",
+    briefScoresTitle: "Resultate in ’n oogopslag",
+    briefScoresIntro:
+      "’n Vinnige blik op die algehele patroon en hoe elke sintuig geneig het. Dit is beskrywend, nie ’n diagnose nie.",
+    briefScoresIntroParent:
+      "’n Vinnige blik op die algehele patroon en hoe elke sintuig geneig het. Dit is beskrywend, nie ’n diagnose nie.",
+    trailInterpretSectionLabel: "Interpretasie",
+    senseSupportKicker: "Ondersteuning per sintuig",
+    senseSupportTitle: "Hoe om elke sensoriese stelsel te ondersteun",
+    senseSupportTitleParent: "Hoe om elk van jou kind se sensoriese stelsels te ondersteun",
+    senseSupportIntro:
+      "Praktiese steun wat by elke sintuig se telling pas — kort, spesifiek, en gereed om te gebruik.",
+    senseSupportIntroParent:
+      "Praktiese steun wat by elke sintuig se telling van jou kind pas — kort, spesifiek, en gereed om te gebruik.",
+    senseSupportHowLabel: "Probeer dit",
+    senseSupportLeanLabel: "Telling",
     teenCrewExplorerName: "Sensoriese Verkenner",
     teenCrewExplorerTag: "Hoë drempel – Sensoriese soeker",
     teenCrewExplorerSummary:
       "Jy soek ervarings, beweging en stimulasie om energiek en betrokke te voel.",
     teenCrewExplorerSummaryParent:
       "Hulle soek ervarings, beweging en stimulasie om energiek en betrokke te voel.",
+    teenCrewExplorerSummaryTeen:
+      "In leer- en vrye tyd — op ’n kampus, aanlyn by die huis, of gemeng — voel jy dikwels die beste met beweging, afwisseling en iets interessants om te doen.",
     teenCrewExplorerBody:
       "Jou sensoriese drempel sit hoër — jy hou dikwels van meer sensoriese insette, nie minder nie. Besige dae, nuwe plekke, beweging, klank en vars uitsigte wek jou gewoonlik op. Stilte kan flou voel, so jy soek die volgende ding om te doen en te sien. Op die berg is jy die een wat met baie energie vooruit stap, ’n goeie ruk kan aanhou, die roete toets, en terugkom met die berig: dit is wild daar bo — en die moeite werd.",
     teenCrewExplorerBodyParent:
       "Jou kind se sensoriese drempel sit hoër — hulle hou dikwels van meer sensoriese insette, nie minder nie. Besige dae, nuwe plekke, beweging, klank en vars uitsigte wek hulle gewoonlik op. Stilte kan flou voel, so hulle soek die volgende ding om te doen en te sien. Op die berg is hulle die een wat met baie energie vooruit stap, ’n goeie ruk kan aanhou, die roete toets, en terugkom met die berig: dit is wild daar bo — en die moeite werd.",
+    teenCrewExplorerBodyTeen:
+      "Jou sensoriese drempel sit hoër — jy het gewoonlik meer insette nodig om wakker en betrokke te voel. Lang stil lesse of stil studieblokke (op ’n kampus of aanlyn by die huis) en stadige stokperdjies kan flou voel, terwyl sport, musiek, speletjies met vriende, drama, kuns wat jou hande besig hou, of nuwe plekke jou opwek. Jy leer dalk beter ná beweging, ’n pouse, LO, ’n stap in die huis, of ’n vinnige strek as ná lank sit. Stokperdjies met beweging, klank, uitdaging of sosiale energie pas dikwels by jou — en rusteloosheid is dikwels jou liggaam wat meer insette vra, nie “nie probeer nie.”",
     teenCrewExplorerRole:
       "Hoër-drempel verkenner — hou van insette, besigheid en nuwe terrein; het die energie om aan te hou en te kyk of die pad vooruit veilig is.",
+    teenCrewExplorerRoleTeen:
+      "Soek beweging, afwisseling en stimulasie — in leer, stokperdjies en by vriende — om gefokus en energiek te bly.",
     teenCrewExplorerTraits: [
       "Natuurlik aangetrokke tot beweging, opwinding en nuutheid.",
       "Het meer stimulasie nodig om tevrede te voel.",
@@ -979,18 +1065,32 @@ const QUESTIONNAIRE_UI = {
       "Floreer met verkenning, risiko en avontuur.",
       "Bring energie, entoesiasme en spontaniteit.",
     ],
+    teenCrewExplorerTraitsTeen: [
+      "Verkies dikwels aktiewe of hands-on stokperdjies: sport, dans, musiek, speletjies, maak-dinge, buitelewe.",
+      "Lang stil lesse of stil huiswerk (kampus of aanlyn) kan swaarder voel as praktiese of sosiale take.",
+      "Leer en sak beter ná beweging — ’n pouse, stap, strek, fidget-gereedskap of LO.",
+      "Kan rusteloos, praatsiek of verveeld raak wanneer die dag te stil of herhalend is.",
+      "Geniet nuwe klubs, uitdagings, musiek en besige tyd saam met vriende.",
+      "Bring energie en idees — en het genoeg “insette” nodig sodat daardie energie nuttig bly.",
+    ],
     teenCrewAdaptorName: "Sensoriese Aanpasser",
     teenCrewAdaptorTag: "Medium drempel – Gebalanseerd",
     teenCrewAdaptorSummary:
       "Jy kan by verskillende situasies aanpas en jou balans tussen stimulasie en rus vind.",
     teenCrewAdaptorSummaryParent:
       "Hulle kan by verskillende situasies aanpas en hul balans tussen stimulasie en rus vind.",
+    teenCrewAdaptorSummaryTeen:
+      "Jou behoeftes verskuif deur die leerdag en jou stokperdjies — partykeer wil jy meer gons, partykeer moet dinge stiller wees.",
     teenCrewAdaptorBody:
       "Jou sensoriese drempel sit in die buigsame middel — partykeer wil jy meer insette hê, partykeer minder. Jy verskuif saam met die huis, skool of werk, die weer op die roete en die mense om jou. Op die berg kan jy saam met die verkenners klim wanneer die dag energie vra, of saam met die waarnemers stadiger word wanneer dit omsigtigheid vra — jy pas in waar die span jou nodig het, en dit hou almal aan die gang.",
     teenCrewAdaptorBodyParent:
       "Jou kind se sensoriese drempel sit in die buigsame middel — partykeer wil hulle meer insette hê, partykeer minder. Hulle verskuif saam met die huis, skool, die weer op die roete en die mense om hulle. Op die berg kan hulle saam met die verkenners klim wanneer die dag energie vra, of saam met die waarnemers stadiger word wanneer dit omsigtigheid vra — hulle pas in waar die span hulle nodig het, en dit hou almal aan die gang.",
+    teenCrewAdaptorBodyTeen:
+      "Jou sensoriese drempel sit in die buigsame middel — party lesse, vriende en stokperdjies voel maklik; ander vra dat jy die volume op- of afdraai. Dit kan ’n besige kampusdag wees, ’n stil aanlyn oggend by die huis, of studietyd ná sport. Jy vaar dikwels goed wanneer jy kan kies: oorfone vir fokus, ’n stap voor huiswerk, ’n lewendige belangstelling een dag en ’n stiller een die volgende. Om te merk watter vakke, sport en hangouts jou geset laat — en watter jou plat of oorlaai laat — is nuttiger as een vaste etiket.",
     teenCrewAdaptorRole:
       "Medium-drempel middel — lees die groep, pas die tempo, en hou hoë- en lae-drempel stappers as een span.",
+    teenCrewAdaptorRoleTeen:
+      "Buig tussen besig en kalm — in leer, stokperdjies en by vriende — en vaar die beste met keuses wat by die dag pas.",
     teenCrewAdaptorTraits: [
       "Buigsaam en in staat om by verskillende omgewings aan te pas.",
       "Hanteerbare bewustheid van sensoriese insette.",
@@ -999,18 +1099,32 @@ const QUESTIONNAIRE_UI = {
       "Soek balans, roetine en keuses wat hulle ondersteun.",
       "Tree dikwels as ’n brug tussen verskillende behoeftes op.",
     ],
+    teenCrewAdaptorTraitsTeen: [
+      "Kan beide lewendige stokperdjies en stiller belangstellings geniet, afhangend van die dag.",
+      "Party vakke of lesse voel reg; ander het ekstra gereedskap nodig (beweging, stilte, pouses) — op ’n kampus of aanlyn.",
+      "Wissel dikwels tussen vriende/geraas wil hê en alleen tyd nodig om te herstel.",
+      "Vaar goed met ’n mengsel: sport of musiek plus kalmer afskakeltyd.",
+      "Gebruik eenvoudige strategieë — oorfone, strekpouses, ’n kalmer studieplek — om gereguleerd te bly.",
+      "Help dikwels vriende om verskillende tempos en voorkeure te oorbrug.",
+    ],
     teenCrewObserverName: "Sensoriese Waarnemer",
     teenCrewObserverTag: "Lae drempel – Sensitief",
     teenCrewObserverSummary:
       "Jy merk die besonderhede op wat ander dalk mis en kan diep bewus wees van jou omgewing.",
     teenCrewObserverSummaryParent:
       "Hulle merk die besonderhede op wat ander dalk mis en kan diep bewus wees van hul omgewing.",
+    teenCrewObserverSummaryTeen:
+      "Jy merk baie in leer en stokperdjies — detail, stemming en atmosfeer — en stiller omgewings help jou dikwels om jou beste te doen.",
     teenCrewObserverBody:
       "Jou sensoriese drempel sit laer — jy is baie bewus en merk dinge vinnig op. ’n Verandering in die weer, ’n nuwe reuk op die wind, hoe die roetesnacks smaak, ’n voëlroep, ’n los klip onder jou voet: dit alles registreer. Daardie bewustheid is ’n regte krag op die berg. Jy mag ook meer gereelde pouses tydens die stap nodig hê sodat jou stelsel kan sak voor die volgende stuk — en wanneer jy dit doen, merk die hele span wat hulle sou misgeloop het.",
     teenCrewObserverBodyParent:
       "Jou kind se sensoriese drempel sit laer — hulle is baie bewus en merk dinge vinnig op. ’n Verandering in die weer, ’n nuwe reuk op die wind, hoe die roetesnacks smaak, ’n voëlroep, ’n los klip onder hul voet: dit alles registreer. Daardie bewustheid is ’n regte krag op die berg. Hulle mag ook meer gereelde pouses tydens die stap nodig hê sodat hul stelsel kan sak voor die volgende stuk — en wanneer hulle dit doen, merk die hele span wat hulle sou misgeloop het.",
+    teenCrewObserverBodyTeen:
+      "Jou sensoriese drempel sit laer — jy merk geraas, skerms, helder lig, teksture, reuke en mense se stemmings vinnig op, of jy nou op ’n besige kampus of aanlyn by die huis leer. Daardie bewustheid kan ’n regte krag wees in vakke en stokperdjies wat noukeurige waarneming vra — kuns, musiek, lees, ontwerp, omgee vir ander, detailwerk. Besige groepoproepe, gedeelde ruimtes of gestapelde eise kan meer energie vat as wat dit van buite lyk. Ná ’n vol leerdag het jy dalk ’n stiller herstel nodig voor huiswerk, sport of planne. Kalmer klubs, sagter studieruimtes en stokperdjies wat jy geniet sonder oorlading help jou skerp bly eerder as uitgeput.",
     teenCrewObserverRole:
       "Laer-drempel uitkyk — merk detail vinnig (weer, reuke, smake, gevare) en baat by meer gereelde pouses op die roete.",
+    teenCrewObserverRoleTeen:
+      "Merk detail en atmosfeer vinnig — in leer en stokperdjies — en floreer met kalmer ruimtes en meer gereelde herstel.",
     teenCrewObserverTraits: [
       "Skerp bewus van sig, klank, teksture, reuke en subtiele veranderinge om hulle.",
       "Maklik beïnvloed deur besige, lawaaierige of chaotiese omgewings.",
@@ -1019,6 +1133,18 @@ const QUESTIONNAIRE_UI = {
       "Merk dikwels ander se emosies en behoeftes op.",
       "Floreer in kalm, voorspelbare roetines en vreedsame ruimtes.",
     ],
+    teenCrewObserverTraitsTeen: [
+      "Merk detail wat ander mis — nuttig in kreatiewe vakke, musiek, lees, handwerk of omgee-rolle.",
+      "Lawaaiige gedeelde ruimtes, besige skerms of gestapelde eise kan fokus vinniger uitput — op ’n kampus of by die huis.",
+      "Verkies dikwels stiller stokperdjies of kleiner vriendekringe ná ’n vol leerdag.",
+      "Het hersteltyd nodig voor huiswerk, oefeninge of planne ná studeer.",
+      "Denkende en waarnemend met vriende se gevoelens en die stemming van ’n ruimte of oproep.",
+      "Vaar die beste met voorspelbare roetines en toestemming om sensoriese pouses te neem.",
+    ],
+    teenCrewCrewIntroTeen:
+      "Elke span het al drie style nodig. Hier is hoe hulle dikwels in leer (kampus, aanlyn of gemeng), stokperdjies en tienerlewe lyk — en dan watter een jou antwoorde die naaste gepas het.",
+    teenCrewTraitsTitleTeen: "Hoe dit dikwels vir jou lyk",
+    teenCrewDetailTitleTeen: "Jou gepaste roete",
     pathwaysTitle: "Sensoriese paaie",
     pathwaysHelp: "Volg elke sintuig langs die roete. Blare wys uitgeligte antwoorde; die wyser wys of die sintuig sensitief of soekend neig.",
     responseMosaic: "Reaksiemosaïek",

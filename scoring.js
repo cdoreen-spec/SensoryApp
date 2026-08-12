@@ -3554,6 +3554,355 @@ const ADULT_SETTING_REPORT = {
   },
 };
 
+/**
+ * Concise trail-setting interpretation: what this profile needs in a setting,
+ * and a short support list. Used for the streamlined results packet.
+ */
+const TRAIL_SETTING_GUIDE = {
+  en: {
+    work: {
+      kicker: "Your sensory trail at work",
+      title: "What work needs from this trail",
+      needsLabel: "What you need",
+      supportLabel: "How to support this",
+      byProfile: {
+        seeking: {
+          needs:
+            "At work you usually need movement, variety and some background energy so focus stays available. Long, quiet, seated stretches tend to flatten you.",
+          support: [
+            "Build short movement breaks into the day (stairs, standing stretch, walking call).",
+            "Use helpful background sound for routine or hard-to-start tasks.",
+            "Prefer lively, hybrid or on-site setups over all-day isolation.",
+            "Allow standing desks and walking meetings where the work allows.",
+          ],
+        },
+        neutral: {
+          needs:
+            "At work you do best when you can dial stimulation up or down — quieter for hard thinking, a bit more energy when the day goes flat.",
+          support: [
+            "Keep access to both a quiet focus space and shared areas.",
+            "Treat headphones and brief movement as normal tools, not special favours.",
+            "Match the setup to the task and to how the morning has gone.",
+            "Protect a real lunch reset away from the desk.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "At work you usually need quieter, more predictable conditions so energy goes into the task — not into coping with noise, light and interruption.",
+          support: [
+            "Prioritise remote, hybrid or a quieter workspace for deep work.",
+            "Reduce competing input: headphones, clearer desk, softer light.",
+            "Leave short buffers between meetings.",
+            "Treat environmental setup as part of doing the job well.",
+          ],
+        },
+      },
+    },
+    home: {
+      kicker: "Your sensory trail at home",
+      title: "What home needs from this trail",
+      needsLabel: "What you need",
+      supportLabel: "How to support this",
+      byProfile: {
+        seeking: {
+          needs:
+            "At home you usually settle better after movement, music, touch or time outside. Quiet evenings with little to do can leave you restless or stuck on screens.",
+          support: [
+            "Plan active recharge: a walk, outdoor time, music while doing chores, or hands-on projects.",
+            "Use shared playlists or movement before deep conversation if you arrive home flat.",
+            "Keep a way to add helpful input in the evening — not only rest on the sofa.",
+            "Name the need kindly: “I need ten minutes to move, then I’m with you.”",
+          ],
+        },
+        neutral: {
+          needs:
+            "At home your needs shift with the day behind you — some evenings call for quiet, others for movement and stimulation. The first half hour after you walk in the door is the useful check-in.",
+          support: [
+            "Keep both options ready: a calm corner and a quick way to move or add sound.",
+            "Match the first home block to the day — settle first, or activate first.",
+            "Protect one lower-demand recovery stretch and one helpful sensory activity across the week.",
+            "Notice whether you arrive at the next day rested or restless, and adjust the mix.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "At home you usually need recovery from the day’s sensory load — quieter space, softer light, fewer simultaneous demands — before you have much left for people or tasks.",
+          support: [
+            "Protect a short quiet buffer on arrival before big conversations or demands.",
+            "Reduce stacked input at peak times: one sound source, softer light, clearer surfaces.",
+            "Ask for space or consent around touch when already overloaded.",
+            "Treat quiet and downtime as how connection becomes possible again — not as withdrawal.",
+          ],
+        },
+      },
+    },
+    homeParent: {
+      kicker: "Your child’s sensory trail at home",
+      title: "What home needs from this trail",
+      needsLabel: "What they need",
+      supportLabel: "How to support them",
+      byProfile: {
+        seeking: {
+          needs:
+            "At home your child usually settles better after movement, music, touch or outdoor time. Quiet, low-input evenings can leave them restless, snacky or stuck on screens.",
+          support: [
+            "Offer active recharge before homework or calm family time when they arrive home wired or flat.",
+            "Build movement and hands-on jobs into the evening routine.",
+            "Use music or outdoor time on purpose, not only as a last resort.",
+            "Agree a simple phrase for “I need to move first, then I can join you.”",
+          ],
+        },
+        neutral: {
+          needs:
+            "At home your child’s needs shift with the school or outing day behind them — some evenings need quiet, others need more input. Watching the first half hour at home helps you choose.",
+          support: [
+            "Keep both a calm reset option and an active reset option ready.",
+            "Ask a simple check-in: settle first, or move first?",
+            "Protect recovery after busy days without removing all helpful stimulation.",
+            "Adjust the evening mix when the next morning looks restless or depleted.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "At home your child usually needs recovery from the day’s sensory load — quieter space, softer light, fewer demands at once — before they have much left for homework, talk or family bustle.",
+          support: [
+            "Protect a short quiet buffer after school or outings before stacking demands.",
+            "Lower competing input at peak times: one sound source, softer light, clearer space.",
+            "Warn before touch or noisy surprises when they are already overloaded.",
+            "Treat the need for space as regulation — not as attitude or rejection.",
+          ],
+        },
+      },
+    },
+    school: {
+      kicker: "Your sensory trail in learning",
+      title: "What learning needs from this trail",
+      needsLabel: "What you need",
+      supportLabel: "How to support this",
+      byProfile: {
+        seeking: {
+          needs:
+            "In learning — on campus, online at home, or mixed — you usually concentrate better after movement than before it. Long still lessons or study blocks are often the hardest stretch — restlessness often means your body needed more input than it got. After studying, sport, music, gaming with friends, or hands-on hobbies usually settle you better than sitting still straight into more work.",
+          support: [
+            "Use movement or fidget supports in long seated lessons or online study blocks.",
+            "Take a short movement break between lessons/modules and before homework.",
+            "Ask for standing options, active roles, or a walk-and-talk reset when the setup allows.",
+            "Lean into active hobbies (sport, dance, drama, makerspace, outdoor time) as part of your week — not only as a reward.",
+            "Teachers/family: treat “restless” as a cue for helpful input, not only a behaviour problem.",
+          ],
+        },
+        neutral: {
+          needs:
+            "In learning, different lessons and setups ask different things of you — a busy campus day and a quiet online morning at home can feel nothing alike. Some need quieter focus tools; others feel fine as they are. Your hobbies can follow the same pattern. Noticing which subjects, sports and hangouts drain or lift you is more useful than one fixed plan.",
+          support: [
+            "Keep a simple toolkit for noisy days and flat days (quiet supports and movement options).",
+            "Match break-time movement to how you feel — calmer walking or more active play.",
+            "Adjust homework and hobby time after studying: settle first, or get moving first.",
+            "Build a mix of interests — one more active, one calmer — so you can choose by how the day felt.",
+            "Teachers/family: allow flexible supports without assuming one profile every day.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "In learning, noise, screens, shared spaces, bright light and long sitting can take real effort — whether that is a busy campus or online school at home. Feeling tired or short-tempered after a full learning day is often recovery, not attitude. Studying and hobbies get easier when sensory load comes down — quieter clubs, softer study corners, or creative interests that don’t add more noise can help.",
+          support: [
+            "Choose the calmest available spot for lessons or online study when possible.",
+            "Use quiet supports that are allowed (headphones/earplugs, softer light, brief reset).",
+            "Plan a short quiet reset after studying before homework, practice or social plans.",
+            "Choose hobbies that use your noticing strength (art, music, reading, craft, caring roles) without stacking overload.",
+            "Teachers/family: reduce stacked demands after a heavy sensory day.",
+          ],
+        },
+      },
+    },
+  },
+  af: {
+    work: {
+      kicker: "Jou sensoriese roete by die werk",
+      title: "Wat werk van hierdie roete nodig het",
+      needsLabel: "Wat jy nodig het",
+      supportLabel: "Hoe om dit te ondersteun",
+      byProfile: {
+        seeking: {
+          needs:
+            "By die werk het jy gewoonlik beweging, afwisseling en ’n bietjie agtergrondenergie nodig sodat fokus beskikbaar bly. Lang, stil, sittende stukkies laat jou plat voel.",
+          support: [
+            "Bou kort bewegingspouses in die dag in (trappe, strek terwyl jy staan, stap-oproep).",
+            "Gebruik nuttige agtergrondklank vir roetine- of moeilik-om-te-begin take.",
+            "Verkies lewendige, hibriede of ter-plese opstellings bo heeldag-isolasie.",
+            "Laat staande lessenaars en stapvergaderings toe waar die werk dit toelaat.",
+          ],
+        },
+        neutral: {
+          needs:
+            "By die werk vaar jy die beste wanneer jy stimulasie kan op- of afdraai — stiller vir moeilike denkwerk, ’n bietjie meer energie wanneer die dag plat raak.",
+          support: [
+            "Hou toegang tot beide ’n stil fokusplek en gedeelde areas.",
+            "Behandel oorfone en kort beweging as normale gereedskap, nie spesiale guns nie.",
+            "Pas die opstelling by die taak en by hoe die oggend gegaan het.",
+            "Beskerm ’n regte middagete-herstel weg van die lessenaar.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "By die werk het jy gewoonlik stiller, meer voorspelbare toestande nodig sodat energie na die taak gaan — nie na geraas, lig en onderbrekings nie.",
+          support: [
+            "Prioritiseer afgeleë, hibriede of ’n stiller werkplek vir diep werk.",
+            "Verminder mededingende insette: oorfone, skoner lessenaar, sagter lig.",
+            "Los kort buffers tussen vergaderings.",
+            "Behandel omgewingsopstelling as deel van die werk goed doen.",
+          ],
+        },
+      },
+    },
+    home: {
+      kicker: "Jou sensoriese roete by die huis",
+      title: "Wat die huis van hierdie roete nodig het",
+      needsLabel: "Wat jy nodig het",
+      supportLabel: "Hoe om dit te ondersteun",
+      byProfile: {
+        seeking: {
+          needs:
+            "By die huis bedaar jy gewoonlik beter ná beweging, musiek, aanraking of tyd buite. Stil aande met min om te doen kan jou rusteloos of op skerms laat voel.",
+          support: [
+            "Beplan aktiewe herlaai: ’n stap, buite tyd, musiek tydens take, of hands-on projekte.",
+            "Gebruik gedeelde speellyste of beweging voor diep gesprek as jy plat by die huis aankom.",
+            "Hou ’n manier om nuttige insette in die aand by te voeg — nie net rus op die bank nie.",
+            "Noem die behoefte vriendelik: “Ek het tien minute nodig om te beweeg, dan is ek by jou.”",
+          ],
+        },
+        neutral: {
+          needs:
+            "By die huis verskuif jou behoeftes met die dag agter jou — party aande vra stilte, ander vra beweging en stimulasie. Die eerste halfuur by die deur is die nuttige kontrole.",
+          support: [
+            "Hou albei opsies gereed: ’n kalm hoekie en ’n vinnige manier om te beweeg of klank by te voeg.",
+            "Pas die eerste huisblok by die dag — eers bedaar, of eers aktiveer.",
+            "Beskerm een laer-vraag herstelstuk en een nuttige sensoriese aktiwiteit oor die week.",
+            "Let of jy die volgende dag uitgerus of rusteloos aankom, en pas die mengsel aan.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "By die huis het jy gewoonlik herstel nodig van die dag se sensoriese lading — stiller ruimte, sagter lig, minder gelyktydige eise — voordat jy veel oor het vir mense of take.",
+          support: [
+            "Beskerm ’n kort stil buffer by aankoms voor groot gesprekke of eise.",
+            "Verminder gestapelde insette op piektye: een klankbron, sagter lig, skoner oppervlaktes.",
+            "Vra ruimte of toestemming rondom aanraking wanneer jy al oorlaai is.",
+            "Behandel stilte en afskakeltyd as hoe verbinding weer moontlik word — nie as onttrekking nie.",
+          ],
+        },
+      },
+    },
+    homeParent: {
+      kicker: "Jou kind se sensoriese roete by die huis",
+      title: "Wat die huis van hierdie roete nodig het",
+      needsLabel: "Wat hulle nodig het",
+      supportLabel: "Hoe om hulle te ondersteun",
+      byProfile: {
+        seeking: {
+          needs:
+            "By die huis bedaar jou kind gewoonlik beter ná beweging, musiek, aanraking of buite tyd. Stil aande met min insette kan hulle rusteloos, snacky of op skerms laat voel.",
+          support: [
+            "Bied aktiewe herlaai voor huiswerk of kalm gesinstyd wanneer hulle tuiskom.",
+            "Bou beweging en hands-on take in die aandroetine in.",
+            "Gebruik musiek of buite tyd doelbewus, nie net as laaste uitweg nie.",
+            "Stem ’n eenvoudige frase af vir “Ek moet eers beweeg, dan kan ek aansluit.”",
+          ],
+        },
+        neutral: {
+          needs:
+            "By die huis verskuif jou kind se behoeftes met die skool- of uitstappie-dag agter hulle — party aande vra stilte, ander vra meer insette. Die eerste halfuur tuis help jou kies.",
+          support: [
+            "Hou beide ’n kalm herstelopsie en ’n aktiewe herstelopsie gereed.",
+            "Vra ’n eenvoudige kontrole: eers bedaar, of eers beweeg?",
+            "Beskerm herstel ná besige dae sonder om alle nuttige stimulasie weg te neem.",
+            "Pas die aandmengsel aan wanneer die volgende oggend rusteloos of uitgeput lyk.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "By die huis het jou kind gewoonlik herstel nodig van die dag se sensoriese lading — stiller ruimte, sagter lig, minder eise gelyktydig — voordat hulle veel oor het vir huiswerk, praat of gesinsdrukte.",
+          support: [
+            "Beskerm ’n kort stil buffer ná skool of uitstappies voor eise gestapel word.",
+            "Verlaag mededingende insette op piektye: een klankbron, sagter lig, skoner ruimte.",
+            "Waarsku voor aanraking of lawaaierige verrassings wanneer hulle al oorlaai is.",
+            "Behandel die behoefte aan ruimte as regulering — nie as houding of verwerping nie.",
+          ],
+        },
+      },
+    },
+    school: {
+      kicker: "Jou sensoriese roete in leer",
+      title: "Wat leer van hierdie roete nodig het",
+      needsLabel: "Wat jy nodig het",
+      supportLabel: "Hoe om dit te ondersteun",
+      byProfile: {
+        seeking: {
+          needs:
+            "In leer — op ’n kampus, aanlyn by die huis, of gemeng — konsentreer jy gewoonlik beter ná beweging as daarvoor. Lang stil lesse of studieblokke is dikwels die swaarste stuk — rusteloosheid beteken dikwels dat jou lyf meer insette nodig gehad het. Ná studeer sit sport, musiek, speletjies met vriende of hands-on stokperdjies jou dikwels beter as om dadelik stil verder te werk.",
+          support: [
+            "Gebruik bewegings- of fidget-steun in lang sittende lesse of aanlyn studieblokke.",
+            "Neem ’n kort bewegingspouse tussen lesse/modules en voor huiswerk.",
+            "Vra staande opsies, aktiewe rolle, of ’n stap-en-praat herstel wanneer die opstelling dit toelaat.",
+            "Leun op aktiewe stokperdjies (sport, dans, drama, maak-dinge, buitelewe) as deel van jou week — nie net as beloning nie.",
+            "Onderwysers/familie: behandel “rusteloos” as ’n teken vir nuttige insette, nie net gedrag nie.",
+          ],
+        },
+        neutral: {
+          needs:
+            "In leer vra verskillende lesse en opstellings verskillende dinge van jou — ’n besige kampusdag en ’n stil aanlyn oggend by die huis kan niks dieselfde voel nie. Party het stiller fokusgereedskap nodig; ander voel reg soos hulle is. Jou stokperdjies kan dieselfde patroon volg. Om te merk watter vakke, sport en hangouts jou dreineer of oplig, is nuttiger as een vaste plan.",
+          support: [
+            "Hou ’n eenvoudige gereedskapstel vir lawaaierige dae en plat dae.",
+            "Pas pouse-beweging by hoe jy voel — kalmer stap of meer aktiewe spel.",
+            "Pas huiswerk- en stokperdjietyd ná studeer aan: eers bedaar, of eers beweeg.",
+            "Bou ’n mengsel van belangstellings — een meer aktief, een kalmer — sodat jy volgens die dag kan kies.",
+            "Onderwysers/familie: laat buigsame steun toe sonder om elke dag dieselfde profiel aan te neem.",
+          ],
+        },
+        sensitive: {
+          needs:
+            "In leer kan geraas, skerms, gedeelde ruimtes, helder lig en lang sit regtig moeite kos — of dit nou ’n besige kampus of aanlyn skool by die huis is. Moeg of kortaf ná ’n vol leerdag is dikwels herstel, nie houding nie. Studeer en stokperdjies word makliker wanneer sensoriese lading daal — stiller klubs, sagter studiehoeke of kreatiewe belangstellings sonder ekstra geraas help.",
+          support: [
+            "Kies die kalmste beskikbare plek vir lesse of aanlyn studie wanneer moontlik.",
+            "Gebruik stilsteun wat toelaatbaar is (oorfone/oordoppies, sagter lig, kort herstel).",
+            "Beplan ’n kort stil herstel ná studeer voor huiswerk, oefening of sosiale planne.",
+            "Kies stokperdjies wat jou waarnemingskrag gebruik (kuns, musiek, lees, handwerk, omgee-rolle) sonder om oorlading te stapel.",
+            "Onderwysers/familie: verminder gestapelde eise ná ’n swaar sensoriese dag.",
+          ],
+        },
+      },
+    },
+  },
+};
+
+function getTrailSettingGuide(settingKey, lean, language = "en") {
+  const pack = TRAIL_SETTING_GUIDE[language] || TRAIL_SETTING_GUIDE.en;
+  const setting = pack[settingKey] || TRAIL_SETTING_GUIDE.en[settingKey];
+  if (!setting) return null;
+  const profile = lean === "sensitive" || lean === "seeking" ? lean : "neutral";
+  const content = setting.byProfile?.[profile] || setting.byProfile?.neutral;
+  if (!content) return null;
+  return {
+    settingKey,
+    profile,
+    kicker: setting.kicker,
+    title: setting.title,
+    needsLabel: setting.needsLabel,
+    supportLabel: setting.supportLabel,
+    needs: content.needs || "",
+    support: Array.isArray(content.support) ? content.support : [],
+  };
+}
+
+/** Which concise trail-setting pages to show for the current pathway. */
+function getTrailSettingKeys(respondent, lifeContext) {
+  if (respondent === "parent") return ["homeParent"];
+  if (respondent === "adult" && lifeContext === "work") return ["work"];
+  if (respondent === "adult" && lifeContext === "home") return ["home"];
+  if (respondent === "teen") return ["school", "home"];
+  return [];
+}
+
 function getAdultSettingReport(lifeContext, lean, domainScores = [], language = "en") {
   if (lifeContext !== "work" && lifeContext !== "home") return null;
   const pack = ADULT_SETTING_REPORT[language] || ADULT_SETTING_REPORT.en;
@@ -3653,6 +4002,362 @@ function getWorkReportGuidance(scores, language = "en") {
   const general = pack.general?.[generalKey] || pack.general?.neutral || [];
 
   return { challenges, recommendations, general };
+}
+
+/**
+ * Ultra-short support tips per sensory system × profile for the results packet.
+ */
+const SENSE_SUPPORT_TIPS = {
+  en: {
+    self: {
+      auditory: {
+        sensitive: [
+          "Use a quieter spot or noise-reducing headphones for hard work.",
+          "Ask for one conversation or instruction at a time in busy rooms.",
+          "Take a short quiet break after noisy stretches.",
+        ],
+        neutral: [
+          "Keep headphones nearby for tougher or tired days.",
+          "Turn sound down for hard thinking; add helpful audio for routine tasks.",
+        ],
+        seeking: [
+          "Use a playlist or ambient sound when quiet feels flat.",
+          "Pair routine work with background audio so starting is easier.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Choose clothes and seating you can stay comfortable in.",
+          "Keep a soft layer nearby; give yourself a little space in crowds.",
+        ],
+        neutral: [
+          "Change position or take a short break as soon as clothes or seating bother you.",
+        ],
+        seeking: [
+          "Keep a small fidget for long sits or meetings.",
+          "Use short push, carry, or warm-mug breaks between tasks.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Arrive a few minutes early so you can settle before hard tasks.",
+          "Prefer steady movement over sudden rushing; plant your feet to focus.",
+        ],
+        neutral: [
+          "Keep two or three under-three-minute movement options ready.",
+          "Treat fidgeting as a cue to move, not to push through stillness.",
+        ],
+        seeking: [
+          "Take a short movement break before focus work.",
+          "Stand for some calls, or use walking meetings when possible.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Soften light and clear your desk before hard work.",
+          "Face away from busy walkways when you need to concentrate.",
+        ],
+        neutral: [
+          "Simplify screen and desk for your hardest block of the day.",
+          "Allow a bit more visual interest for routine or creative tasks.",
+        ],
+        seeking: [
+          "Use colour coding, visual timers, or a view nearby.",
+          "Look far into the distance after heavy screen work.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Choose milder products and fresher-air spots when you can.",
+          "Keep a familiar, milder food option for demanding days.",
+        ],
+        neutral: [
+          "Notice early cues (distraction, wanting to leave) and reduce scent or flavour intensity.",
+        ],
+        seeking: [
+          "Use pleasant scents on purpose (herbs, citrus, tea).",
+          "Add flavour interest at meals when the day feels flat.",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Leave short gaps between demanding blocks.",
+          "Group noisy or busy tasks, then follow with quieter recovery.",
+        ],
+        neutral: [
+          "At mid-day, check in: quieter recovery next, or more energy to get going?",
+        ],
+        seeking: [
+          "Change posture, place, or task type so the day does not stay flat.",
+          "Use a lively task or movement break in the afternoon dip.",
+        ],
+      },
+    },
+    parent: {
+      auditory: {
+        sensitive: [
+          "Offer a quieter spot or headphones for homework and busy rooms.",
+          "Give one instruction at a time when the environment is noisy.",
+          "Protect a short quiet reset after noisy outings or school.",
+        ],
+        neutral: [
+          "Keep both quiet tools and helpful sound available.",
+          "Match sound to the task and to how tired they are.",
+        ],
+        seeking: [
+          "Allow background music or sound for homework when quiet feels flat.",
+          "Use headphones when others need silence.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Prioritise comfortable clothes, socks, and bedding.",
+          "Ask before hugs or unexpected touch on overloaded days.",
+        ],
+        neutral: [
+          "Watch for early irritation with clothes or seating and adjust quickly.",
+        ],
+        seeking: [
+          "Offer fidgets, firm hugs (if welcome), or hands-on jobs.",
+          "Build grounding touch into routines — warm shower, baking, outdoor play.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Slow transitions between places; warn before rushed changes.",
+          "Use calm movement (slow walk, stretch) before settle-down times.",
+        ],
+        neutral: [
+          "Keep both calm and active reset options ready after school or outings.",
+        ],
+        seeking: [
+          "Build movement before homework or long sits.",
+          "Treat restlessness as a need for input, not only a behaviour issue.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Soften evening light and keep one clearer, calmer homework spot.",
+          "Reduce visual clutter on overloaded days.",
+        ],
+        neutral: [
+          "Simplify the workspace for hard tasks; allow more interest for creative ones.",
+        ],
+        seeking: [
+          "Use colour, checklists, and outdoor light to support attention.",
+          "Allow a view or short outdoor break between screen-heavy blocks.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Ventilate while cooking; keep a milder familiar meal option.",
+          "Avoid strong fragrances on already overloaded days.",
+        ],
+        neutral: [
+          "Notice when scent or flavour starts to tip them, and adjust early.",
+        ],
+        seeking: [
+          "Offer flavourful snacks or aromatic cooking as a helpful lift.",
+          "Use pleasant scents on purpose when the day feels flat.",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Protect a short buffer after school before stacking demands.",
+          "Do one thing at a time on high-load days.",
+        ],
+        neutral: [
+          "Ask after school: settle first, or move first?",
+        ],
+        seeking: [
+          "Add helpful input on quiet evenings — movement, music, outdoor time.",
+          "Avoid long inactive sits as the only after-school plan.",
+        ],
+      },
+    },
+  },
+  af: {
+    self: {
+      auditory: {
+        sensitive: [
+          "Gebruik ’n stiller plek of geraasverminderende oorfone vir moeilike werk.",
+          "Vra een gesprek of opdrag op ’n slag in besige vertrekke.",
+          "Neem ’n kort stil pouse ná lawaaierige stukkies.",
+        ],
+        neutral: [
+          "Hou oorfone naby vir moeiliker of moeg dae.",
+          "Draai klank af vir moeilike denkwerk; voeg nuttige oudio by vir roetinetake.",
+        ],
+        seeking: [
+          "Gebruik ’n speellys of agtergrondklank wanneer stilte plat voel.",
+          "Koppel roetinewerk aan oudio sodat begin makliker is.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Kies klere en sitplek waarin jy gemaklik kan bly.",
+          "Hou ’n sagte laag naby; gee jouself ’n bietjie ruimte in skares.",
+        ],
+        neutral: [
+          "Verander houding of neem ’n kort pouse sodra klere of sitplek pla.",
+        ],
+        seeking: [
+          "Hou ’n klein fidget vir lang sits of vergaderings.",
+          "Gebruik kort druk-, dra- of warm-beker-pouses tussen take.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Kom ’n paar minute vroeg sodat jy kan bedaar voor moeilike take.",
+          "Verkies bestendige beweging bo skielike gejaag; plant jou voete om te fokus.",
+        ],
+        neutral: [
+          "Hou twee of drie bewegingsopsies gereed wat onder drie minute neem.",
+          "Behandel fidget as ’n teken om te beweeg, nie om stil te sit nie.",
+        ],
+        seeking: [
+          "Neem ’n kort bewegingspouse voor fokuswerk.",
+          "Staan vir sommige oproepe, of gebruik stapvergaderings wanneer moontlik.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Versag lig en maak jou lessenaar skoon voor moeilike werk.",
+          "Sit weg van besige gange wanneer jy moet konsentreer.",
+        ],
+        neutral: [
+          "Vereenvoudig skerm en lessenaar vir jou moeilikste blok.",
+          "Laat ’n bietjie meer visuele belangstelling toe vir roetine- of kreatiewe take.",
+        ],
+        seeking: [
+          "Gebruik kleurkodering, visuele tydhouers, of ’n uitsig naby.",
+          "Kyk vêr in die verte ná swaar skermwerk.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Kies sagter produkte en vars-lug-plekke wanneer jy kan.",
+          "Hou ’n bekende, sagter kosopsie vir veeleisende dae.",
+        ],
+        neutral: [
+          "Merk vroeë tekens (afleiding, wil weggaan) en verlaag reuk- of smaakintensiteit.",
+        ],
+        seeking: [
+          "Gebruik aangename reuke doelbewus (kruie, sitrus, tee).",
+          "Voeg smaakbelangstelling by maaltye wanneer die dag plat voel.",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Los kort gapings tussen veeleisende blokke.",
+          "Groepeer lawaaierige of besige take, volg dan met stiller herstel.",
+        ],
+        neutral: [
+          "Teen middaguur, kontroleer: stiller herstel volgende, of meer energie om aan die gang te kom?",
+        ],
+        seeking: [
+          "Verander houding, plek of taaktipe sodat die dag nie plat bly nie.",
+          "Gebruik ’n lewendige taak of bewegingspouse in die middag-dip.",
+        ],
+      },
+    },
+    parent: {
+      auditory: {
+        sensitive: [
+          "Bied ’n stiller plek of oorfone vir huiswerk en besige vertrekke.",
+          "Gee een opdrag op ’n slag wanneer die omgewing lawaaierig is.",
+          "Beskerm ’n kort stil herstel ná lawaaierige uitstappies of skool.",
+        ],
+        neutral: [
+          "Hou beide stilgereedskap en nuttige klank beskikbaar.",
+          "Pas klank by die taak en by hoe moeg hulle is.",
+        ],
+        seeking: [
+          "Laat agtergrondmusiek of klank toe vir huiswerk wanneer stilte plat voel.",
+          "Gebruik oorfone wanneer ander stilte nodig het.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Prioritiseer gemaklike klere, sokkies en beddegoed.",
+          "Vra voor omhelsings of onverwagte aanraking op oorlaaide dae.",
+        ],
+        neutral: [
+          "Let op vroeë irritasie met klere of sitplek en pas vinnig aan.",
+        ],
+        seeking: [
+          "Bied fidgets, ferm omhelsings (as welkom), of hands-on take.",
+          "Bou grondende aanraking in roetines in — warm stort, bak, buite speel.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Maak oorgange stadiger; waarsku voor gehaaste veranderinge.",
+          "Gebruik kalm beweging (stadige stap, strek) voor afwindtye.",
+        ],
+        neutral: [
+          "Hou beide kalm en aktiewe herstelopsies gereed ná skool of uitstappies.",
+        ],
+        seeking: [
+          "Bou beweging in voor huiswerk of lang sits.",
+          "Behandel rusteloosheid as ’n behoefte aan insette, nie net gedrag nie.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Versag aandlig en hou een skoner, kalmer huiswerkplek.",
+          "Verminder visuele rommel op oorlaaide dae.",
+        ],
+        neutral: [
+          "Vereenvoudig die werkspasie vir moeilike take; laat meer belangstelling toe vir kreatiewe take.",
+        ],
+        seeking: [
+          "Gebruik kleur, kontrolelyste en buite lig om aandag te ondersteun.",
+          "Laat ’n uitsig of kort buite pouse tussen skerm-swaar blokke toe.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Ventileer terwyl jy kook; hou ’n sagter bekende maaltydopsie.",
+          "Vermy sterk geure op dae wat al oorlaai is.",
+        ],
+        neutral: [
+          "Merk wanneer reuk of smaak hulle begin kantel, en pas vroeg aan.",
+        ],
+        seeking: [
+          "Bied geurige happies of aromatiese kos as ’n nuttige opligting.",
+          "Gebruik aangename reuke doelbewus wanneer die dag plat voel.",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Beskerm ’n kort buffer ná skool voordat eise gestapel word.",
+          "Doen een ding op ’n slag op hoë-lading dae.",
+        ],
+        neutral: [
+          "Vra ná skool: eers bedaar, of eers beweeg?",
+        ],
+        seeking: [
+          "Voeg nuttige insette by stil aande — beweging, musiek, buite tyd.",
+          "Vermy lang onaktiewe sits as die enigste ná-skool plan.",
+        ],
+      },
+    },
+  },
+};
+
+function getSenseSupportTips(domainId, profile, { language = "en", respondent = "adult" } = {}) {
+  const pack = SENSE_SUPPORT_TIPS[language] || SENSE_SUPPORT_TIPS.en;
+  const perspective = respondent === "parent" ? pack.parent : pack.self;
+  const fallbackPerspective =
+    respondent === "parent"
+      ? SENSE_SUPPORT_TIPS.en.parent
+      : SENSE_SUPPORT_TIPS.en.self;
+  const domain = perspective?.[domainId] || fallbackPerspective?.[domainId];
+  if (!domain) return [];
+  const key = profile === "sensitive" || profile === "seeking" ? profile : "neutral";
+  const tips = domain[key] || domain.neutral || [];
+  return Array.isArray(tips) ? tips.filter(Boolean) : [];
 }
 
 /**
@@ -3817,40 +4522,45 @@ function getTeenCheatSheet(scores, language = "en") {
 }
 
 /**
- * Shared classification rule: tally answers into sensitive / avoiding,
- * sensory neutral, and sensory seeking, then pick whichever count is highest.
+ * Shared classification rule: compare sensitive vs seeking endorsements.
+ * A clear lean (at least ~20% of answered items) is required before the
+ * profile tips sensitive or seeking; otherwise it stays sensory neutral.
  * Used for both a single sense and the overall (all senses combined) score.
  *
- * Ties: if sensitive and seeking tie for highest, treat as neutral (mixed).
- * If a pole ties with neutral for highest, prefer neutral.
+ * `neutral` is accepted for call-site compatibility but does not decide the
+ * profile — "no" answers are not votes for neutral (see scoreDomain).
  */
 function classifyBalance(sensitive, seeking, scored, neutral = 0) {
   if (!scored) return { profile: "neutral", threshold: 0, diff: 0 };
 
-  const counts = {
-    sensitive: sensitive || 0,
-    neutral: neutral || 0,
-    seeking: seeking || 0,
-  };
-  const diff = counts.sensitive - counts.seeking;
-  const max = Math.max(counts.sensitive, counts.neutral, counts.seeking);
-  const tied = ["sensitive", "neutral", "seeking"].filter((key) => counts[key] === max);
+  const diff = (sensitive || 0) - (seeking || 0);
+  const threshold = Math.max(1, Math.ceil(scored * 0.2));
 
-  // Unique highest wins; any tie falls back to neutral (mixed / unclear lean).
-  const profile = tied.length === 1 ? tied[0] : "neutral";
+  let profile = "neutral";
+  if (diff >= threshold) profile = "sensitive";
+  else if (diff <= -threshold) profile = "seeking";
 
-  return { profile, threshold: max, diff };
+  return { profile, threshold, diff };
 }
 
 /**
- * Position for the sensitive-neutral-seeking bar from the three tallies:
- * sensitive at 0, neutral at 50, seeking at 100 (weighted average).
+ * Position for the sensitive–neutral–seeking bar, 0 = fully sensitive,
+ * 50 = even, 100 = fully seeking. The neutral band is stretched to 30–70 so
+ * the marker sits in the same zone as the classification above.
  */
 function balancePercent(sensitive, seeking, scored, threshold, neutral = 0) {
-  const total = (sensitive || 0) + (seeking || 0) + (neutral || 0);
-  if (!total) return 50;
+  if (!scored || !threshold) return 50;
 
-  return Math.round(((neutral || 0) * 50 + (seeking || 0) * 100) / total);
+  const ratio = Math.max(-1, Math.min(1, ((seeking || 0) - (sensitive || 0)) / scored));
+  const band = Math.min(0.99, threshold / scored);
+
+  if (Math.abs(ratio) <= band) {
+    return Math.round(50 + (ratio / band) * 20);
+  }
+
+  const overflow = (Math.abs(ratio) - band) / (1 - band);
+  const percent = 70 + overflow * 30;
+  return Math.round(ratio > 0 ? percent : 100 - percent);
 }
 
 function scoreDomain(questions, answers) {
@@ -3863,8 +4573,9 @@ function scoreDomain(questions, answers) {
     const answer = answers[i];
     if (answer === undefined || answer === null) return;
 
-    // Every answered item counts toward the total — including neutral-type
-    // questions and "no" answers, which sit in the middle ground.
+    // Every answered item counts toward scored (for intensity / lean threshold).
+    // Only a Yes endorses a profile bucket — a No means that pattern is absent,
+    // not that the person is "sensory neutral".
     scored += 1;
     const yes = answer === true;
 
@@ -3872,7 +4583,8 @@ function scoreDomain(questions, answers) {
       sensitive += 1;
     } else if (q.type === "seeking" && yes) {
       seeking += 1;
-    } else {
+    } else if (q.type === "neutral" && yes) {
+      // Preference / middle-ground items only; unused for lean classification.
       neutral += 1;
     }
   });
@@ -3905,7 +4617,7 @@ function scoreAllDomains(domainAnswers, domains, language = "en", respondent = "
 
 /**
  * Adds every sensory system together into one overall score, then classifies
- * the person as a whole using the same highest-of-three rule applied to each sense.
+ * the person as a whole using the same sensitive-vs-seeking lean rule.
  */
 function scoreOverall(domainScores, language = "en", respondent = "adult") {
   const profileLabels = getProfileLabels(language, respondent);

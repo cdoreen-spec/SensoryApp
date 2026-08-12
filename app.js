@@ -1217,19 +1217,31 @@ function buildResultsReport() {
           return you
             ? [
                 "",
-                "— Sensory Trail Profile —",
+                "— Sensory Trail Character —",
                 `${youAre}: ${you.name}`,
                 you.tag,
                 you.summary,
-                you.body,
-                ...(you.traits || []).map((trait) => `• ${trait}`),
                 "",
-                copy.teenCrewWhyTitle,
-                copy.teenCrewWhyBody,
+                copy.teenCrewCrewTitle,
+                ...roster.map((m) => `• ${m.name} (${m.tag}): ${m.summary}`),
               ]
             : [];
         })()
       : []),
+    ...(getTrailSettingKeys(state.respondent, state.lifeContext)
+      .map((settingKey) => {
+        const guide = getTrailSettingGuide(settingKey, metrics.lean, state.language);
+        if (!guide) return [];
+        return [
+          "",
+          `— ${guide.kicker} —`,
+          guide.needsLabel + ":",
+          guide.needs,
+          guide.supportLabel + ":",
+          ...(guide.support || []).map((item) => `• ${item}`),
+        ];
+      })
+      .flat()),
     ...(state.idealSaturday?.trim()
       ? ["", "— Best Saturday —", state.idealSaturday.trim()]
       : []),
@@ -5334,42 +5346,77 @@ function getTeenCrewId(lean) {
 }
 
 function shouldShowTrailProfile() {
-  if (state.respondent === "adult" && state.lifeContext === "work") return false;
   return state.respondent === "adult" || state.respondent === "teen" || state.respondent === "parent";
 }
 
 function getTeenCrewRoster(copy) {
   const isParent = state.respondent === "parent";
+  const isTeen = state.respondent === "teen";
+  const pick = (baseKey, parentKey, teenKey) => {
+    if (isParent) return copy[parentKey];
+    if (isTeen && copy[teenKey] != null) return copy[teenKey];
+    return copy[baseKey];
+  };
+
   return [
     {
       id: "observer",
       lean: "sensitive",
       name: copy.teenCrewObserverName,
       tag: copy.teenCrewObserverTag,
-      summary: isParent ? copy.teenCrewObserverSummaryParent : copy.teenCrewObserverSummary,
-      body: isParent ? copy.teenCrewObserverBodyParent : copy.teenCrewObserverBody,
-      role: copy.teenCrewObserverRole,
-      traits: copy.teenCrewObserverTraits || [],
+      summary: pick(
+        "teenCrewObserverSummary",
+        "teenCrewObserverSummaryParent",
+        "teenCrewObserverSummaryTeen"
+      ),
+      body: pick(
+        "teenCrewObserverBody",
+        "teenCrewObserverBodyParent",
+        "teenCrewObserverBodyTeen"
+      ),
+      role: pick("teenCrewObserverRole", "teenCrewObserverRole", "teenCrewObserverRoleTeen"),
+      traits:
+        pick("teenCrewObserverTraits", "teenCrewObserverTraits", "teenCrewObserverTraitsTeen") ||
+        [],
     },
     {
       id: "adaptor",
       lean: "neutral",
       name: copy.teenCrewAdaptorName,
       tag: copy.teenCrewAdaptorTag,
-      summary: isParent ? copy.teenCrewAdaptorSummaryParent : copy.teenCrewAdaptorSummary,
-      body: isParent ? copy.teenCrewAdaptorBodyParent : copy.teenCrewAdaptorBody,
-      role: copy.teenCrewAdaptorRole,
-      traits: copy.teenCrewAdaptorTraits || [],
+      summary: pick(
+        "teenCrewAdaptorSummary",
+        "teenCrewAdaptorSummaryParent",
+        "teenCrewAdaptorSummaryTeen"
+      ),
+      body: pick(
+        "teenCrewAdaptorBody",
+        "teenCrewAdaptorBodyParent",
+        "teenCrewAdaptorBodyTeen"
+      ),
+      role: pick("teenCrewAdaptorRole", "teenCrewAdaptorRole", "teenCrewAdaptorRoleTeen"),
+      traits:
+        pick("teenCrewAdaptorTraits", "teenCrewAdaptorTraits", "teenCrewAdaptorTraitsTeen") || [],
     },
     {
       id: "explorer",
       lean: "seeking",
       name: copy.teenCrewExplorerName,
       tag: copy.teenCrewExplorerTag,
-      summary: isParent ? copy.teenCrewExplorerSummaryParent : copy.teenCrewExplorerSummary,
-      body: isParent ? copy.teenCrewExplorerBodyParent : copy.teenCrewExplorerBody,
-      role: copy.teenCrewExplorerRole,
-      traits: copy.teenCrewExplorerTraits || [],
+      summary: pick(
+        "teenCrewExplorerSummary",
+        "teenCrewExplorerSummaryParent",
+        "teenCrewExplorerSummaryTeen"
+      ),
+      body: pick(
+        "teenCrewExplorerBody",
+        "teenCrewExplorerBodyParent",
+        "teenCrewExplorerBodyTeen"
+      ),
+      role: pick("teenCrewExplorerRole", "teenCrewExplorerRole", "teenCrewExplorerRoleTeen"),
+      traits:
+        pick("teenCrewExplorerTraits", "teenCrewExplorerTraits", "teenCrewExplorerTraitsTeen") ||
+        [],
     },
   ];
 }
@@ -5377,16 +5424,22 @@ function getTeenCrewRoster(copy) {
 function teenCrewCharacterArt(id, suffix = id) {
   const assets = {
     explorer: {
-      src: "assets/sensory-character-explorer.png?v=20260809e",
+      src: "assets/sensory-character-explorer.png?v=20260812e",
       alt: "Sensory Explorer — I explore the trail",
+      width: 1536,
+      height: 1024,
     },
     adaptor: {
-      src: "assets/sensory-character-adaptor.png?v=20260809e",
+      src: "assets/sensory-character-adaptor.png?v=20260812e",
       alt: "Sensory Adaptor — I find my way",
+      width: 1024,
+      height: 768,
     },
     observer: {
-      src: "assets/sensory-character-observer.png?v=20260809e",
+      src: "assets/sensory-character-observer.png?v=20260812e",
       alt: "Sensory Observer — I notice the trail",
+      width: 1024,
+      height: 768,
     },
   };
   const asset = assets[id] || assets.adaptor;
@@ -5395,8 +5448,8 @@ function teenCrewCharacterArt(id, suffix = id) {
       class="teen-crew__art teen-crew__art--photo teen-crew__art--${escapeHtml(id)}"
       src="${asset.src}"
       alt="${escapeHtml(asset.alt)}"
-      width="1024"
-      height="768"
+      width="${asset.width}"
+      height="${asset.height}"
       loading="eager"
       decoding="async"
     />`;
@@ -5407,79 +5460,81 @@ function renderTeenCrewSummary(metrics, pageEntry) {
 
   const copy = currentUi();
   const isParent = state.respondent === "parent";
+  const isTeen = state.respondent === "teen";
   const youId = getTeenCrewId(metrics.lean);
   const roster = getTeenCrewRoster(copy);
   const you = roster.find((member) => member.id === youId) || roster[1];
   const title = isParent ? copy.teenCrewTitleParent : copy.teenCrewTitle;
   const intro = isParent ? copy.teenCrewIntroParent : copy.teenCrewIntro;
   const youAre = isParent ? copy.teenCrewYouAreParent : copy.teenCrewYouAre;
-  const detailTitle = isParent ? copy.teenCrewDetailTitleParent : copy.teenCrewDetailTitle;
+  const badge = isParent ? copy.teenCrewBadgeParent : copy.teenCrewBadge;
+  const detailTitle = isTeen
+    ? copy.teenCrewDetailTitleTeen || copy.teenCrewDetailTitle
+    : isParent
+      ? copy.teenCrewDetailTitleParent
+      : copy.teenCrewDetailTitle;
   const footer = isParent ? copy.teenCrewFooterParent : copy.teenCrewFooter;
+  const crewIntro = isTeen
+    ? copy.teenCrewCrewIntroTeen || copy.teenCrewCrewIntro
+    : copy.teenCrewCrewIntro;
+  const traitsTitle = isTeen
+    ? copy.teenCrewTraitsTitleTeen || copy.teenCrewTraitsTitle
+    : copy.teenCrewTraitsTitle;
+  const traits =
+    isTeen && Array.isArray(you.traits) && you.traits.length
+      ? `
+        <div class="trail-profile__traits teen-crew__match-traits">
+          <p class="trail-profile__traits-title">${escapeHtml(traitsTitle)}</p>
+          <ul class="trail-profile__traits-list">
+            ${you.traits.map((trait) => `<li>${escapeHtml(trait)}</li>`).join("")}
+          </ul>
+        </div>`
+      : "";
 
-  const traitItems = (you.traits || [])
-    .map((trait) => `<li>${escapeHtml(trait)}</li>`)
+  const rosterCards = roster
+    .map((member) => {
+      const matched = member.id === youId;
+      return `
+        <article class="trail-roster__card trail-roster__card--${member.id}${matched ? " is-matched" : ""}" data-crew="${member.id}">
+          <div class="trail-roster__art" aria-hidden="true">${teenCrewCharacterArt(member.id, `roster-${member.id}`)}</div>
+          <div class="trail-roster__copy">
+            ${matched ? `<p class="trail-roster__badge">${escapeHtml(badge)}</p>` : ""}
+            <h4 class="trail-roster__name">${escapeHtml(member.name)}</h4>
+            <p class="trail-roster__tag">${escapeHtml(member.tag)}</p>
+            <p class="trail-roster__summary">${escapeHtml(member.summary)}</p>
+          </div>
+        </article>`;
+    })
     .join("");
 
   return `
-    <section class="profile-section teen-crew trail-profile"${reportPageAttrs(pageEntry)} aria-labelledby="teen-crew-title" data-crew-you="${youId}">
-      <header class="trail-profile__header no-print">
+    <section class="profile-section teen-crew trail-profile trail-profile--concise"${reportPageAttrs(pageEntry)} aria-labelledby="teen-crew-title" data-crew-you="${youId}">
+      <header class="trail-profile__header">
         <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
         <h3 id="teen-crew-title">${escapeHtml(title)}</h3>
         ${printMountainRule("section")}
         <p class="profile-section__summary">${escapeHtml(intro)}</p>
+        <p class="trail-profile__crew-intro">${escapeHtml(crewIntro)}</p>
       </header>
 
-      <figure class="trail-profile__figure">
-        <img
-          class="trail-profile__image"
-          src="assets/sensory-trail-profile.png?v=20260810a"
-          alt="${escapeHtml(copy.teenCrewSummaryAria)}"
-          width="682"
-          height="1024"
-          loading="eager"
-          decoding="async"
-          fetchpriority="high"
-        />
-      </figure>
+      <div class="trail-roster" role="list">
+        ${rosterCards}
+      </div>
 
-      <article class="teen-crew__detail teen-crew__match teen-crew__match--${youId}">
-        <header class="teen-crew__match-banner">
-          <div class="teen-crew__match-banner-media" aria-hidden="true">
-            <img
-              class="teen-crew__match-banner-image"
-              src="assets/matched-character-forest.png?v=20260810a"
-              alt=""
-              width="682"
-              height="1024"
-              loading="eager"
-              decoding="async"
-            />
-          </div>
-          <div class="teen-crew__match-banner-veil" aria-hidden="true"></div>
-          <div class="teen-crew__match-banner-content">
-            <p class="teen-crew__detail-title">${escapeHtml(detailTitle)}</p>
-            <p class="teen-crew__you-label">${escapeHtml(youAre)}</p>
-            <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
-            <p class="teen-crew__hero-tag">${escapeHtml(you.tag)}</p>
-          </div>
+      <article class="teen-crew__detail teen-crew__match teen-crew__match--${youId} teen-crew__match--concise">
+        <header class="teen-crew__match-heading">
+          <p class="teen-crew__detail-title">${escapeHtml(detailTitle)}</p>
+          <p class="teen-crew__you-label">${escapeHtml(youAre)}</p>
+          <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
+          <p class="teen-crew__hero-tag">${escapeHtml(you.tag)}</p>
         </header>
-
-        <figure class="teen-crew__match-portrait">
+        <figure class="teen-crew__match-portrait teen-crew__match-portrait--hero">
           ${teenCrewCharacterArt(youId, `hero-${youId}`)}
         </figure>
-
         <div class="teen-crew__match-copy">
           <p class="teen-crew__hero-summary">${escapeHtml(you.summary)}</p>
-          <p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>
-          ${
-            traitItems
-              ? `
-          <div class="trail-profile__traits">
-            <p class="trail-profile__traits-title">${escapeHtml(copy.teenCrewTraitsTitle)}</p>
-            <ul class="trail-profile__traits-list">${traitItems}</ul>
-          </div>`
-              : ""
-          }
+          ${you.body ? `<p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>` : ""}
+          ${traits}
         </div>
       </article>
 
@@ -5488,6 +5543,184 @@ function renderTeenCrewSummary(metrics, pageEntry) {
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
+}
+
+function renderBriefScoreSummary(scores, metrics, pageEntry) {
+  const copy = currentUi();
+  const isParent = state.respondent === "parent";
+  const rows = getScoreRows(scores);
+  const kicker = isParent ? copy.briefScoresKickerParent : copy.briefScoresKicker;
+  const intro = isParent ? copy.briefScoresIntroParent : copy.briefScoresIntro;
+
+  return `
+    <section class="profile-section profile-section--brief-scores"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-viewpoint-forest.png",
+        objectPosition: "center 45%",
+        kicker: "",
+        titleId: "brief-scores-title",
+        title: kicker,
+        lead: intro,
+        variant: "viewpoint",
+        width: 1024,
+        height: 682,
+      })}
+      <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
+      ${renderOverallScoreCard(metrics, copy)}
+      ${renderAdultSenseGlance(rows, copy, null)}
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
+}
+
+function renderSenseSupportGuide(scores, pageEntry) {
+  const copy = currentUi();
+  const isParent = state.respondent === "parent";
+  const rows = getScoreRows(scores);
+  const title = isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle;
+  const intro = isParent ? copy.senseSupportIntroParent : copy.senseSupportIntro;
+
+  const cards = rows
+    .map((row, index) => {
+      const tips = getSenseSupportTips(row.id, row.profile, {
+        language: state.language,
+        respondent: state.respondent || "adult",
+      });
+      if (!tips.length) return "";
+      const tipItems = tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("");
+      const lean = senseInterpretLeanLabel(row.profile, copy);
+      return `
+        <article
+          class="sense-support__card sense-support__card--${escapeHtml(row.profile)}"
+          data-domain="${escapeHtml(row.id)}"
+          data-profile="${escapeHtml(row.profile)}"
+          style="--domain-color:${row.color}; --support-delay:${index * 45}ms"
+        >
+          <header class="sense-support__header">
+            <span class="sense-support__icon" aria-hidden="true">${row.icon}</span>
+            <div class="sense-support__titles">
+              <h4 class="sense-support__name">${escapeHtml(row.shortTitle)}</h4>
+              <p class="sense-support__lean">
+                <span class="sense-support__lean-label">${escapeHtml(copy.senseSupportLeanLabel)}</span>
+                <span class="threshold-pill threshold-pill--${row.thresholdKey}">${escapeHtml(row.thresholdLabel)}</span>
+                <span class="sense-support__lean-text">${escapeHtml(lean)}</span>
+              </p>
+            </div>
+          </header>
+          <div class="sense-support__body">
+            <p class="sense-support__try">${escapeHtml(copy.senseSupportHowLabel)}</p>
+            <ul class="sense-support__tips">${tipItems}</ul>
+          </div>
+        </article>`;
+    })
+    .filter(Boolean)
+    .join("");
+
+  if (!cards) return "";
+
+  return `
+    <section class="profile-section profile-section--sense-support"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-forest-trail.png",
+        objectPosition: "center 40%",
+        kicker: copy.senseSupportKicker,
+        titleId: "sense-support-title",
+        title,
+        lead: intro,
+        variant: "forest",
+        width: 682,
+        height: 1024,
+      })}
+      <div class="sense-support__grid">
+        ${cards}
+      </div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
+}
+
+function getTrailSettingBanner(settingKey) {
+  const banners = {
+    school: {
+      image: "assets/heading-learning-trail.png",
+      objectPosition: "center 42%",
+      variant: "forest",
+      width: 768,
+      height: 1024,
+    },
+    home: {
+      image: "assets/heading-home-trail.png",
+      objectPosition: "center 48%",
+      variant: "forest",
+      width: 683,
+      height: 1024,
+    },
+    homeParent: {
+      image: "assets/heading-home-trail.png",
+      objectPosition: "center 48%",
+      variant: "forest",
+      width: 683,
+      height: 1024,
+    },
+    work: {
+      image: "assets/heading-work-trail.png",
+      objectPosition: "center 40%",
+      variant: "sunlight",
+      width: 1024,
+      height: 768,
+    },
+  };
+  return banners[settingKey] || banners.home;
+}
+
+function renderTrailSettingInterpretations(metrics, pagePlan) {
+  const keys = getTrailSettingKeys(state.respondent, state.lifeContext);
+  if (!keys.length) return "";
+
+  return keys
+    .map((settingKey) => {
+      const guide = getTrailSettingGuide(settingKey, metrics.lean, state.language);
+      if (!guide) return "";
+      const pageEntry = reportPageById(pagePlan, `report-trail-${settingKey}`);
+      const banner = getTrailSettingBanner(settingKey);
+      const supportItems = (guide.support || [])
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("");
+
+      return `
+        <section class="profile-section profile-section--trail-interpret"${reportPageAttrs(pageEntry)} aria-labelledby="trail-interpret-${escapeHtml(settingKey)}" data-trail-setting="${escapeHtml(settingKey)}" data-trail-profile="${escapeHtml(guide.profile)}">
+          ${renderInterpretSectionBanner({
+            image: banner.image,
+            objectPosition: banner.objectPosition,
+            kicker: guide.kicker,
+            titleId: `trail-interpret-${settingKey}`,
+            title: guide.title,
+            variant: banner.variant,
+            width: banner.width,
+            height: banner.height,
+          })}
+          <div class="trail-interpret">
+            <article class="trail-interpret__block trail-interpret__block--needs">
+              <h4 class="trail-interpret__label">${escapeHtml(guide.needsLabel)}</h4>
+              <p class="trail-interpret__needs">${escapeHtml(guide.needs)}</p>
+            </article>
+            ${
+              supportItems
+                ? `
+            <article class="trail-interpret__block trail-interpret__block--support">
+              <h4 class="trail-interpret__label">${escapeHtml(guide.supportLabel)}</h4>
+              <ul class="trail-interpret__list">${supportItems}</ul>
+            </article>`
+                : ""
+            }
+          </div>
+          ${reportPageNumberHtml(currentUi(), pageEntry?.page)}
+          <div class="print-page-motif print-only" aria-hidden="true"></div>
+        </section>`;
+    })
+    .join("");
 }
 
 function renderSettingSectionBridge() {
@@ -5600,10 +5833,20 @@ function renderAdultSettingGuide(scores, metrics, pageEntry) {
   return `
     ${renderSettingSectionBridge()}
     <section class="profile-section profile-section--setting-guide"${reportPageAttrs(pageEntry)} aria-labelledby="setting-guide-title" data-setting-context="${escapeHtml(report.lifeContext)}" data-setting-profile="${escapeHtml(report.profile)}">
-      <p class="profile-kicker">${escapeHtml(report.kicker)}</p>
-      <h3 id="setting-guide-title">${escapeHtml(report.title)}</h3>
-      ${printMountainRule("section")}
-      <p class="profile-section__summary">${escapeHtml(report.intro)}</p>
+      ${renderInterpretSectionBanner({
+        image:
+          report.lifeContext === "work"
+            ? "assets/heading-work-trail.png"
+            : "assets/heading-home-trail.png",
+        objectPosition: report.lifeContext === "work" ? "center 40%" : "center 48%",
+        kicker: report.kicker,
+        titleId: "setting-guide-title",
+        title: report.title,
+        lead: report.intro,
+        variant: report.lifeContext === "work" ? "sunlight" : "forest",
+        width: report.lifeContext === "work" ? 1024 : 683,
+        height: report.lifeContext === "work" ? 768 : 1024,
+      })}
       <div class="setting-guide">
         ${blocks}
         ${domainHints}
@@ -5635,52 +5878,22 @@ function buildReportPagePlan(copy, scores, metrics) {
     return entry;
   };
 
-  add(
-    "report-cover",
-    isParent ? copy.interpretCoverTitleParent : copy.interpretCoverTitle
-  );
-  add("report-toc", copy.tocTitle, { listInToc: false });
-  add("report-glossary", copy.interpretGlossaryTitle);
-  add("report-senses", copy.interpretSensesTitle);
-  add("report-world", copy.interpretWorldTitle);
-  add("report-profile", isParent ? copy.profileTitleParent : copy.profileTitle);
-
   if (shouldShowTrailProfile()) {
-    const trailTitle =
-      state.respondent === "parent" ? copy.teenCrewTitleParent : copy.teenCrewTitle;
+    const trailTitle = isParent ? copy.teenCrewTitleParent : copy.teenCrewTitle;
     add("report-teen-crew", trailTitle);
   }
+
+  add("report-brief-scores", copy.briefScoresTitle);
+  add("report-sense-support", isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle);
+
   if ((state.idealSaturday || "").trim()) {
     add("report-ideal-saturday", copy.idealSaturdayResultsTitle);
   }
 
-  add("report-scores-intro", copy.scoreTableTitleAdult);
-  add("report-sense-glance", copy.scoreGlanceTitle);
-
-  getScoreRows(scores).forEach((row) => {
-    add(`report-sense-${row.id}`, row.shortTitle);
+  getTrailSettingKeys(state.respondent, state.lifeContext).forEach((settingKey) => {
+    const guide = getTrailSettingGuide(settingKey, metrics.lean, state.language);
+    if (guide) add(`report-trail-${settingKey}`, guide.kicker || guide.title);
   });
-
-  if (state.respondent === "adult" && (state.lifeContext === "work" || state.lifeContext === "home")) {
-    const settingReport = getAdultSettingReport(
-      state.lifeContext,
-      metrics.lean,
-      scores,
-      state.language
-    );
-    if (settingReport?.sections?.length) {
-      add("report-setting-guide", settingReport.title);
-    }
-  }
-
-  scores.forEach((score) => {
-    const plan = getSensoryDietPlan(score.id, score.profile, state.language, state.lifeContext);
-    if (plan.contextual.length || plan.general.length) {
-      add(`report-diet-${score.id}`, score.title);
-    }
-  });
-
-  add("report-conclusion", copy.reportConclusionTitle);
 
   return pages;
 }
@@ -5968,7 +6181,11 @@ function renderInterpretSectionBanner({
       </div>
       <div class="interpret-section-banner__veil" aria-hidden="true"></div>
       <div class="interpret-section-banner__content">
-        <p class="interpret-section-banner__kicker">${escapeHtml(kicker)}</p>
+        ${
+          kicker
+            ? `<p class="interpret-section-banner__kicker">${escapeHtml(kicker)}</p>`
+            : ""
+        }
         <${headingTag} id="${escapeHtml(titleId)}" class="interpret-section-banner__title">${escapeHtml(title)}</${headingTag}>
         ${
           lead
@@ -7001,7 +7218,6 @@ function renderResults() {
   const framing = getContextFraming(state.lifeContext, state.language);
   const fromDashboard = Boolean(state.archiveReadOnly) && canAccessTherapistDashboard();
   const pagePlan = buildReportPagePlan(copy, scores, metrics);
-  const profilePage = reportPageById(pagePlan, "report-profile");
 
   if (shouldEmailResultsToClinician()) {
     queueMicrotask(() => ensureResultsSubmitted());
@@ -7040,25 +7256,11 @@ function renderResults() {
 
       ${renderSampleReportBanner()}
 
-      ${renderInterpretCover(copy, reportPageById(pagePlan, "report-cover"))}
-      ${renderInterpretToc(copy, pagePlan, reportPageById(pagePlan, "report-toc"))}
-      ${renderInterpretGlossary(copy, reportPageById(pagePlan, "report-glossary"))}
-      ${renderInterpretOurSenses(copy, reportPageById(pagePlan, "report-senses"))}
-      ${renderInterpretSensoryWorld(copy, reportPageById(pagePlan, "report-world"))}
-
-      <div class="results-intro"${reportPageAttrs(profilePage)} aria-labelledby="profile-title">
-        ${renderInterpretSectionBanner({
-          image: "assets/heading-viewpoint-forest.png",
-          objectPosition: "center 48%",
-          kicker: copy.viewpoint,
-          titleId: "profile-title",
-          title: state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle,
-          lead: copy.profileIntro,
-          variant: "viewpoint",
-          titleTag: "h2",
-          width: 1024,
-          height: 682,
-        })}
+      <div class="results-intro results-intro--concise" aria-labelledby="profile-title">
+        <p class="profile-kicker">${escapeHtml(copy.viewpoint)}</p>
+        <h2 id="profile-title">${escapeHtml(
+          state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle
+        )}</h2>
         ${
           state.demographics.name
             ? `<p class="results-intro__name">${escapeHtml(state.demographics.name)}</p>`
@@ -7080,13 +7282,11 @@ function renderResults() {
       </div>
 
       ${renderSharingPermissionsSummary()}
-      ${renderOverallSummary(metrics, profilePage)}
       ${renderTeenCrewSummary(metrics, reportPageById(pagePlan, "report-teen-crew"))}
+      ${renderBriefScoreSummary(scores, metrics, reportPageById(pagePlan, "report-brief-scores"))}
+      ${renderSenseSupportGuide(scores, reportPageById(pagePlan, "report-sense-support"))}
       ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}
-      ${renderScoreTable(scores, pagePlan)}
-      ${renderAdultSettingGuide(scores, metrics, reportPageById(pagePlan, "report-setting-guide"))}
-      ${renderSensoryDiet(scores, pagePlan)}
-      ${renderReportConclusion(reportPageById(pagePlan, "report-conclusion"))}
+      ${renderTrailSettingInterpretations(metrics, pagePlan)}
 
       <div class="results-contact">
         <h3>${escapeHtml(copy.contactTitle)}</h3>
