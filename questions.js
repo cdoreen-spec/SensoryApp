@@ -136,8 +136,8 @@ const QUESTIONNAIRE_UI = {
     dietContextNote: "The first ideas under each sense are chosen for {setting}. The rest work anywhere in your day.",
     dietContextNoteTeen: "The first ideas under each sense are chosen for home and school. The rest work anywhere in your day.",
     dietEverywhere: "Anytime, anywhere",
-    profileTitle: "Your sensory profile",
-    profileTitleParent: "Your child’s sensory profile",
+    profileTitle: "Your sensory trail profile",
+    profileTitleParent: "Your child’s sensory trail profile",
     profileIntro: "A clear reading of the sensory patterns highlighted in this screening. These results are descriptive and are not a diagnosis.",
     overallPattern: "Overall pattern",
     sensitiveSignals: "sensitive signals",
@@ -541,7 +541,7 @@ const QUESTIONNAIRE_UI = {
     inviteBannerBasic:
       "Your answers will be sent securely to your therapist. After you finish, you’ll see a brief confirmation — a follow-up session is needed to understand your results.",
     inviteBannerFull:
-      "Your answers will be sent securely to your therapist. After you finish, you’ll also see your full sensory profile here.",
+      "Your answers will be sent securely to your therapist. After you finish, you’ll also see your full sensory trail profile here.",
     inviteHomeScroll: "Scroll down to read more — when you’re ready, start the questionnaire at the bottom of the page.",
     inviteHomeStartTitle: "Ready to begin?",
     inviteHomeStartLead: "When you’ve read through the page, tap below to start your sensory screening.",
@@ -828,8 +828,8 @@ const QUESTIONNAIRE_UI = {
     dietContextNote: "Die eerste idees onder elke sintuig is vir {setting} gekies. Die res werk enige plek in jou dag.",
     dietContextNoteTeen: "Die eerste idees onder elke sintuig is vir huis en skool gekies. Die res werk enige plek in jou dag.",
     dietEverywhere: "Enige tyd, enige plek",
-    profileTitle: "Jou sensoriese profiel",
-    profileTitleParent: "Jou kind se sensoriese profiel",
+    profileTitle: "Jou sensoriese roete-profiel",
+    profileTitleParent: "Jou kind se sensoriese roete-profiel",
     profileIntro: "’n Duidelike lesing van die sensoriese patrone wat in hierdie sifting uitgelig is. Hierdie resultate is beskrywend en is nie ’n diagnose nie.",
     overallPattern: "Algehele patroon",
     sensitiveSignals: "sensitiewe seine",
@@ -1233,7 +1233,7 @@ const QUESTIONNAIRE_UI = {
     inviteBannerBasic:
       "Jou antwoorde word veilig aan jou terapeut gestuur. Ná afhandeling sien jy ’n kort bevestiging — ’n opvolgsessie is nodig om jou resultate te verstaan.",
     inviteBannerFull:
-      "Jou antwoorde word veilig aan jou terapeut gestuur. Ná afhandeling sien jy ook jou volle sensoriese profiel hier.",
+      "Jou antwoorde word veilig aan jou terapeut gestuur. Ná afhandeling sien jy ook jou volle sensoriese roete-profiel hier.",
     inviteHomeScroll: "Rol af om meer te lees — wanneer jy gereed is, begin die vraelys onderaan die bladsy.",
     inviteHomeStartTitle: "Gereed om te begin?",
     inviteHomeStartLead: "Wanneer jy die bladsy deurgelees het, tik hieronder om jou sensoriese sifting te begin.",

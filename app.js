@@ -118,7 +118,7 @@ const WHATSAPP_URL =
 const WHATSAPP_FEEDBACK_URL =
   "https://wa.me/27689014209?text=" +
   encodeURIComponent(
-    "Hi Cayley, I've completed the sensory screening and would like to book an online or in-person feedback session for my sensory profile."
+    "Hi Cayley, I've completed the sensory screening and would like to book an online or in-person feedback session for my sensory trail profile."
   );
 
 const CLINICIAN_PIN =
@@ -1624,7 +1624,7 @@ function renderClinicianShare() {
             <input type="radio" name="invite-results" data-invite-results value="full"${access === RESULTS_ACCESS.full ? " checked" : ""} />
             <span>
               <strong>Full detailed report</strong>
-              <em>They see the complete sensory profile in the app. You still receive the email.</em>
+              <em>They see the complete sensory trail profile in the app. You still receive the email.</em>
             </span>
           </label>
         </fieldset>
