@@ -86,12 +86,18 @@ const QUESTIONNAIRE_UI = {
     coupleCompareThriveTitle: "What each of you needs to thrive",
     coupleCompareThriveIntro:
       "A short snapshot for each partner, drawn from the patterns above — use it as a practical checklist at home and after work.",
+    coupleCompareConflictTitle: "Possible areas of conflict due to sensory differences",
+    coupleCompareConflictIntro:
+      "When sensory needs pull in opposite directions, the same home, meal, hug or Saturday plan can feel connecting for one of you and draining for the other. These are common friction points — not proof that either of you is “difficult.” Use them as conversation starters.",
+    coupleCompareConflictTips: "Try this",
     coupleCompareParentingTitle: "Parenting & supporting each other’s recharge",
     coupleCompareParentingIntro:
       "When you are parents, children’s noise, touch and constant demand can empty a sensory battery quickly. This section looks at how you can protect each other’s recharge time — especially if one of you is more touch-sensitive or sound-sensitive.",
     coupleCompareWeek: "During the week",
     coupleCompareWeekend: "Over the weekend",
     coupleCompareTogether: "Together",
+    coupleClosingQuote:
+      "You don’t have to experience the world in the same way to experience it well together. When couples understand each other’s sensory needs, communicate openly and meet each other halfway, their differences can become a strength rather than a source of conflict.",
     coupleWorkTag: "Work & home life",
     coupleWorkTitle: "A few questions about work",
     coupleWorkDesc:
@@ -899,12 +905,18 @@ const QUESTIONNAIRE_UI = {
     coupleCompareThriveTitle: "Wat elkeen van julle nodig het om te floreer",
     coupleCompareThriveIntro:
       "’n Kort greep vir elke vennoot, uit die patrone hierbo — gebruik dit as ’n praktiese kontrolelys by die huis en ná werk.",
+    coupleCompareConflictTitle: "Moontlike konflikareas as gevolg van sensoriese verskille",
+    coupleCompareConflictIntro:
+      "Wanneer sensoriese behoeftes in teenoorgestelde rigtings trek, kan dieselfde huis, ete, drukkie of Saterdagplan vir die een verbindend voel en vir die ander uitputtend. Dit is algemene wrywingpunte — nie bewys dat een van julle “moeilik” is nie. Gebruik dit as gesprekbeginners.",
+    coupleCompareConflictTips: "Probeer dit",
     coupleCompareParentingTitle: "Ouerskap & mekaar se herlaai ondersteun",
     coupleCompareParentingIntro:
       "Wanneer julle ouers is, kan kinders se geraas, aanraking en konstante eise ’n sensoriese battery vinnig leegmaak. Hierdie afdeling kyk hoe julle mekaar se herlaai-tyd kan beskerm — veral as een van julle meer tas-sensitief of klank-sensitief is.",
     coupleCompareWeek: "Gedurende die week",
     coupleCompareWeekend: "Oor die naweek",
     coupleCompareTogether: "Saam",
+    coupleClosingQuote:
+      "Julle hoef nie die wêreld op dieselfde manier te ervaar om dit goed saam te ervaar nie. Wanneer paartjies mekaar se sensoriese behoeftes verstaan, openlik kommunikeer en mekaar halfpad tegemoet kom, kan hulle verskille ’n sterkte word eerder as ’n bron van konflik.",
     coupleWorkTag: "Werk & huislike lewe",
     coupleWorkTitle: "’n Paar vrae oor werk",
     coupleWorkDesc:

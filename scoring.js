@@ -5560,17 +5560,17 @@ function buildCoupleWorkComparison(session, language = "en") {
 
   const everydayCopy = {
     seeking: af
-      ? "het soekende alledaagse sensoriese behoeftes — geniet dikwels mense, besigheid of meer inset ná ’n stil dag"
-      : "has seeking everyday sensory needs — often enjoys people, busyness or more input after a quiet day",
+      ? "Soekend — geniet dikwels mense, besigheid of meer inset ná ’n stil dag"
+      : "Seeking — often enjoys people, busyness or more input after a quiet day",
     sensitive: af
-      ? "het sensitiewe alledaagse sensoriese behoeftes — merk gou wanneer die dag te vol of te besig voel, en het dikwels stilte nodig"
-      : "has sensitive everyday sensory needs — notices quickly when the day feels too full or busy, and often needs quieter recovery",
+      ? "Sensitief — merk gou wanneer die dag te vol of te besig voel, en het dikwels stilte nodig"
+      : "Sensitive — notices quickly when the day feels too full or busy, and often needs quieter recovery",
     neutral: af
-      ? "het meer neutrale of gemengde alledaagse sensoriese behoeftes — dit kan wissel met hoe vol die werkdag was"
-      : "has more neutral or mixed everyday sensory needs — these can shift with how full the workday has been",
+      ? "Meer neutraal of gemeng — kan wissel met hoe vol die werkdag was"
+      : "More neutral or mixed — can shift with how full the workday has been",
     unclear: af
-      ? "het nie duidelike alledaagse sensoriese behoeftes uit hierdie antwoorde gewys nie"
-      : "did not show clear everyday sensory needs from these answers",
+      ? "Nie duidelik uit hierdie antwoorde nie"
+      : "Not clear from these answers",
   };
 
   function endNeedLabels(work) {
@@ -5677,49 +5677,74 @@ function buildCoupleWorkComparison(session, language = "en") {
     return (lean === "sensitive" || lean === "neutral") && peopleHeavy;
   }
 
-  function partnerWorkNarrative(name, work, lean) {
-    if (!work.employment) {
-      return af
-        ? `${name}: werksbesonderhede is nog nie volledig ingevul nie.`
-        : `${name}: work details are not fully completed yet.`;
-    }
-    if (work.employment === "doesNotWork") {
-      return af
-        ? `${name} werk nie tans in betaalde diens nie (byvoorbeeld huis of kinders). Hulle ${everydayCopy[lean]}. Ná ’n volle tuisdag mag herstel steeds lyk soos alleen-tyd, stilte, of — as hulle soekend is — uitgaan en sosiale tyd. Noem hardop wat die aand nodig is, net soos met ’n werkdag.`
-        : `${name} is not currently in paid work (for example home or children). They ${everydayCopy[lean]}. After a full home day, recovery may still look like alone time and quiet — or, if they have seeking everyday sensory needs, getting out and social time. Name out loud what the evening needs, just as you would after a workday.`;
+  function partnerWorkSetup(name, partnerKey, work, lean) {
+    const rows = [];
+    const doesNotWork = work.employment === "doesNotWork";
+    const incomplete = !work.employment;
+
+    if (incomplete) {
+      rows.push({
+        label: af ? "Status" : "Status",
+        value: af ? "Werksbesonderhede nog nie volledig nie" : "Work details not fully completed yet",
+      });
+    } else if (doesNotWork) {
+      rows.push({
+        label: af ? "Werk" : "Work",
+        value: af
+          ? "Werk nie tans in betaalde diens nie (byvoorbeeld huis of kinders)"
+          : "Not currently in paid work (for example home or children)",
+      });
+    } else {
+      let location = locationLabel[work.workLocation] || (af ? "Nie gespesifiseer nie" : "Not specified");
+      if (work.workLocation === "other" && work.workLocationOther) {
+        location = work.workLocationOther;
+      }
+      let withBit = withLabel[work.workWith] || (af ? "Nie gespesifiseer nie" : "Not specified");
+      if (work.workWith === "other" && work.workWithOther) {
+        withBit = work.workWithOther;
+      }
+      rows.push({
+        label: af ? "Waar" : "Where",
+        value: location,
+      });
+      rows.push({
+        label: af ? "Hoe" : "How",
+        value: withBit,
+      });
+      rows.push({
+        label: af ? "Werksure" : "Hours",
+        value: work.workingHours || (af ? "Nie gespesifiseer nie" : "Not specified"),
+      });
+      const endBits = endNeedLabels(work);
+      rows.push({
+        label: af ? "Einde van die dag" : "End of day",
+        value: endBits.length ? formatList(endBits) : af ? "Nie aangedui nie" : "Not indicated",
+      });
+      const rechargeBits = rechargeLabels(work);
+      rows.push({
+        label: af ? "Herlaai ná werk" : "Recharge after work",
+        value: rechargeBits.length ? formatList(rechargeBits) : af ? "Nie aangedui nie" : "Not indicated",
+      });
+      if (work.rechargingSaturday) {
+        rows.push({
+          label: af ? "Herlaai-Saterdag" : "Recharging Saturday",
+          value: work.rechargingSaturday,
+        });
+      }
     }
 
-    let location = locationLabel[work.workLocation] || (af ? "in ’n ongespesifiseerde opset" : "in an unspecified setup");
-    if (work.workLocation === "other" && work.workLocationOther) {
-      location = af ? `soos volg: ${work.workLocationOther}` : `as follows: ${work.workLocationOther}`;
-    }
-    let withBit = withLabel[work.workWith] || (af ? "met ’n ongespesifiseerde werkstyl" : "with an unspecified work style");
-    if (work.workWith === "other" && work.workWithOther) {
-      withBit = af ? `soos volg: ${work.workWithOther}` : `as follows: ${work.workWithOther}`;
-    }
-    const hours = work.workingHours
-      ? af
-        ? ` Werksure: ${work.workingHours}.`
-        : ` Working hours: ${work.workingHours}.`
-      : "";
+    rows.push({
+      label: af ? "Alledaagse sensoriese behoeftes" : "Everyday sensory needs",
+      value: everydayCopy[lean] || everydayCopy.unclear,
+    });
 
-    const statedEnd = formatList(endNeedLabels(work));
-    const statedRecharge = formatList(rechargeLabels(work));
     const inferred = inferredNeeds(work, lean);
-
-    let after = "";
-    if (statedEnd || statedRecharge) {
-      after = af
-        ? ` Ná werk dui hulle antwoorde op: ${[statedEnd, statedRecharge].filter(Boolean).join("; ")}.`
-        : ` After work, their answers point to: ${[statedEnd, statedRecharge].filter(Boolean).join("; ")}.`;
-    }
-    if (inferred.length) {
-      after += af ? ` Gevolglik ${inferred.join(" ")}.` : ` As a result, ${inferred.join(" ")}.`;
-    }
-
-    return af
-      ? `${name} werk ${location}, ${withBit}.${hours} Hulle ${everydayCopy[lean]}.${after}`
-      : `${name} works ${location}, ${withBit}.${hours} They ${everydayCopy[lean]}.${after}`;
+    return {
+      partner: partnerKey,
+      name,
+      rows,
+      note: inferred.length ? inferred.join(" ") : "",
+    };
   }
 
   const workA = workSnapshot(session.partners.a.coupleWork);
@@ -5728,6 +5753,9 @@ function buildCoupleWorkComparison(session, language = "en") {
   const leanB = everydayLean(session.partners.b.answers);
 
   if (!workA.employment && !workB.employment) return null;
+
+  const partnerA = partnerWorkSetup(nameA, "a", workA, leanA);
+  const partnerB = partnerWorkSetup(nameB, "b", workB, leanB);
 
   const outA = needsOutSocial(workA, leanA);
   const outB = needsOutSocial(workB, leanB);
@@ -5807,10 +5835,7 @@ function buildCoupleWorkComparison(session, language = "en") {
     introKey: "coupleCompareWorkIntro",
     nameA,
     nameB,
-    partnerLines: [
-      { partner: "a", text: partnerWorkNarrative(nameA, workA, leanA) },
-      { partner: "b", text: partnerWorkNarrative(nameB, workB, leanB) },
-    ],
+    partners: [partnerA, partnerB],
     together,
   };
 }
@@ -6002,6 +6027,333 @@ function buildCoupleParentingComparison(session, language = "en") {
 /**
  * Short per-partner “needs to thrive” checklist from comparison patterns.
  */
+function buildCoupleConflictAreas(session, language = "en") {
+  const af = language === "af";
+  if (!session?.partners?.a?.answers || !session?.partners?.b?.answers) return null;
+
+  const nameA =
+    String(session.partners.a.label || session.partners.a.demographics?.name || "").trim() ||
+    (af ? "Vennoot 1" : "Partner 1");
+  const nameB =
+    String(session.partners.b.label || session.partners.b.demographics?.name || "").trim() ||
+    (af ? "Vennoot 2" : "Partner 2");
+
+  const ansA = session.partners.a.answers;
+  const ansB = session.partners.b.answers;
+  const areas = [];
+
+  function opposing(a, b) {
+    return (a === "seeking" && b === "sensitive") || (a === "sensitive" && b === "seeking");
+  }
+
+  function leanLabel(lean) {
+    if (lean === "seeking") return af ? "sensories soekend (hoër drempel)" : "sensory seeking (higher threshold)";
+    if (lean === "sensitive") return af ? "sensories sensitief (laer drempel)" : "sensory sensitive (lower threshold)";
+    if (lean === "neutral" || lean === "mixed") {
+      return af ? "meer gebalanseerd / gemeng" : "more balanced / mixed";
+    }
+    return af ? "onduidelik" : "unclear";
+  }
+
+  function partnerOverallLean(slot, answers) {
+    if (slot?.summary?.lean) return slot.summary.lean;
+    if (!answers || typeof getSensoryDomains !== "function") return "unclear";
+    const scores = scoreAllDomains(answers, getSensoryDomains("en", "couple"), "en", "couple");
+    return scoreOverall(scores, "en", "couple")?.profile || "unclear";
+  }
+
+  const overallA = partnerOverallLean(session.partners.a, ansA);
+  const overallB = partnerOverallLean(session.partners.b, ansB);
+  if (opposing(overallA, overallB)) {
+    const seeker = overallA === "seeking" ? nameA : nameB;
+    const observer = overallA === "sensitive" ? nameA : nameB;
+    areas.push({
+      id: "overall",
+      title: af ? "Algehele sensoriese styl" : "Overall sensory style",
+      text: af
+        ? `${seeker} neig ${leanLabel("seeking")}, terwyl ${observer} neig ${leanLabel("sensitive")}. Dit kan voel asof een “meer wil hê” en die ander “vinniger genoeg het” — van gedeelde spasies tot tempo van die dag.`
+        : `${seeker} leans ${leanLabel("seeking")}, while ${observer} leans ${leanLabel("sensitive")}. That can feel like one person “wants more” and the other “has had enough sooner” — from shared spaces to the pace of the day.`,
+      tips: af
+        ? [
+            `Sê hardop: “Dit is ons sensoriese stelsels — nie dat een van ons moeilik is nie.”`,
+            `Vra voor julle ’n plan maak: “Het jy vandag meer of minder inset nodig?”`,
+            `Beplan ’n “hoë-energie” opsie én ’n “kalmer” opsie vir dieselfde uitstappie.`,
+            `Gee ${observer} ’n stil-pouse voor of ná ’n besige gedeelde aktiwiteit.`,
+          ]
+        : [
+            `Say out loud: “This is our sensory systems — not that either of us is difficult.”`,
+            `Before you plan, ask: “Do you need more or less input today?”`,
+            `Plan a higher-energy option and a calmer option for the same outing.`,
+            `Give ${observer} a quiet pause before or after a busy shared activity.`,
+          ],
+    });
+  }
+
+  const visualA = coupleVisualLean(ansA);
+  const visualB = coupleVisualLean(ansB);
+  if (opposing(visualA, visualB)) {
+    const tidy = visualA === "sensitive" ? nameA : nameB;
+    const busy = visualA === "seeking" ? nameA : nameB;
+    areas.push({
+      id: "visual",
+      title: af ? "Visuele rommel & gedeelde spasies" : "Visual clutter & shared spaces",
+      text: af
+        ? `${tidy} mag ’n netter, kalmer spasie nodig hê om te ontspan, terwyl ${busy} meer gemaklik is met visuele besigheid. Konflik ontstaan dikwels wanneer “rommel” vir die een oorstimulasie is en vir die ander net “tuis” voel.`
+        : `${tidy} may need a tidier, calmer space to unwind, while ${busy} is more comfortable with visual busyness. Conflict often shows up when “clutter” is overstimulation for one person and simply “home” for the other.`,
+      tips: af
+        ? [
+            `Kies 1–2 “kalm sones” (byvoorbeeld die slaapkamer of eettafel) wat meestal netjies bly.`,
+            `Laat ${busy} ’n “besige sone” hê (werkhoek, rak of stoorplek) sonder skuldgevoel.`,
+            `Doen ’n 10-minute “oppervlak-opruim” saam voor gaste of voordat julle ontspan.`,
+            `Gebruik toe bokse of mandjies — items is daar, maar die oog sien minder chaos.`,
+          ]
+        : [
+            `Pick 1–2 “calm zones” (for example the bedroom or dining table) that mostly stay tidy.`,
+            `Let ${busy} keep a “busy zone” (desk corner, shelf or cupboard) without guilt.`,
+            `Do a 10-minute “clear the surfaces” tidy together before guests or wind-down.`,
+            `Use closed boxes or baskets — things stay, but the eye sees less chaos.`,
+          ],
+    });
+  }
+
+  const tasteA = coupleTasteLean(ansA);
+  const tasteB = coupleTasteLean(ansB);
+  if (opposing(tasteA, tasteB)) {
+    const seeker = tasteA === "seeking" ? nameA : nameB;
+    const milder = tasteA === "sensitive" ? nameA : nameB;
+    areas.push({
+      id: "taste",
+      title: af ? "Smaak & saam kook" : "Taste & cooking together",
+      text: af
+        ? `${seeker} mag sterker of nuwer smake soek, terwyl ${milder} bekende, sagter kos verkies. Etes kan dan ’n herhaalde wrywing word as een persoon se “lekker” die ander se “te veel” is.`
+        : `${seeker} may seek stronger or newer flavours, while ${milder} prefers familiar, milder food. Meals can become a recurring friction point if one person’s “delicious” is the other’s “too much.”`,
+      tips: af
+        ? [
+            `Kook ’n sagter basis (rys, pasta, roosterbrood, eenvoudige sous) wat albei kan eet.`,
+            `Sit chili, sous, speserye of ekstra geure apart — elkeen voeg by wat hulle wil.`,
+            `Wissel: een aand bekende kos, een aand iets nuuts (of ’n klein “proe-bordjie”).`,
+            `As julle uit eet, kies ’n plek met beide sagte én sterker opsies op die spyskaart.`,
+          ]
+        : [
+            `Cook a milder base (rice, pasta, toast, simple sauce) that both of you can eat.`,
+            `Put chilli, sauces, spices or extra flavours on the side — each person adds what they want.`,
+            `Alternate: one night familiar food, one night something new (or a small “taste plate”).`,
+            `When eating out, pick places with both mild and stronger options on the menu.`,
+          ],
+    });
+  }
+
+  const touchA = coupleTouchProfile(ansA);
+  const touchB = coupleTouchProfile(ansB);
+  const touchClash =
+    opposing(touchA.overall, touchB.overall) ||
+    (touchA.loveLanguage === "physical" && touchB.loveLanguage === "nonPhysical") ||
+    (touchB.loveLanguage === "physical" && touchA.loveLanguage === "nonPhysical") ||
+    (touchA.bubble === "small" && touchB.bubble === "large") ||
+    (touchA.bubble === "large" && touchB.bubble === "small");
+  if (touchClash) {
+    const closer =
+      touchA.overall === "seeking" ||
+      touchA.loveLanguage === "physical" ||
+      touchA.bubble === "small"
+        ? nameA
+        : nameB;
+    const spacer = closer === nameA ? nameB : nameA;
+    areas.push({
+      id: "touch",
+      title: af ? "Aanraking, toegeneentheid & persoonlike ruimte" : "Touch, affection & personal space",
+      text: af
+        ? `${closer} mag nabyheid of fisieke toegeneentheid as verbindend ervaar, terwyl ${spacer} ’n groter borrel of nie-fisiese liefdestale nodig het. Dit is ’n klassieke paartjie-spanning — nie ’n teken dat iemand minder liefhet nie.`
+        : `${closer} may experience closeness or physical affection as connecting, while ${spacer} needs a bigger bubble or non-physical love languages. This is a classic couple tension — not a sign that either person loves less.`,
+      tips: af
+        ? [
+            `Vra eers: “Wil jy ’n drukkie / sit naby / hand hou?” — “nee” beteken nie “ek wil nie naby jou wees nie.”`,
+            `Beplan ’n kort “aanraak-venster” (byvoorbeeld 5 minute saam op die bank) én aparte ruimte-tyd.`,
+            `Lys 3 nie-fisiese maniere wat ${spacer} verbind voel (boodskap, tee bring, saam kyk, loftrompet).`,
+            `In skare of rye: staan sy aan sy, gee ${spacer} die “buitenste” plek, of vat ’n kort pouse buite.`,
+          ]
+        : [
+            `Ask first: “Would you like a hug / to sit close / hold hands?” — “no” does not mean “I don’t want you.”`,
+            `Plan a short “touch window” (for example 5 minutes on the couch) and clear space time too.`,
+            `List 3 non-physical ways ${spacer} feels loved (a message, making tea, watching together, a kind word).`,
+            `In crowds or queues: stand side by side, give ${spacer} the outer spot, or take a short break outside.`,
+          ],
+    });
+  }
+
+  const soundA = coupleDomainLean(ansA, "auditory");
+  const soundB = coupleDomainLean(ansB, "auditory");
+  if (opposing(soundA, soundB)) {
+    const quiet = soundA === "sensitive" ? nameA : nameB;
+    const louder = soundA === "seeking" ? nameA : nameB;
+    areas.push({
+      id: "sound",
+      title: af ? "Geraas & stilte by die huis" : "Noise & quiet at home",
+      text: af
+        ? `${quiet} mag vinniger oorstimuleer deur TV, musiek, praat of huishoudelike geraas, terwyl ${louder} meer klank mag soek of “stil” as leeg ervaar. Konflik ontstaan wanneer een die volume omdraai en die ander dit as verwerping lees.`
+        : `${quiet} may overstimulate faster from TV, music, talking or household noise, while ${louder} may seek more sound or experience “quiet” as empty. Conflict shows up when one turns the volume down and the other reads it as rejection.`,
+      tips: af
+        ? [
+            `Gebruik oorfone of oordopjes vir TV, podcasts of musiek in gedeelde ruimtes.`,
+            `Spreek “stil ure” af (byvoorbeeld eers ná werk of voor slaap) en “klank-aan” tye apart.`,
+            `As ${louder} geraas nodig het, speel dit in ’n ander kamer of met lae volume + oorfone.`,
+            `Gee ’n vriendelike seinin: “Ek is vol — kan ons 20 minute stil hê?” eerder as net die volume af te draai.`,
+          ]
+        : [
+            `Use headphones or earbuds for TV, podcasts or music in shared spaces.`,
+            `Agree “quiet hours” (for example right after work or before sleep) and separate “sound on” times.`,
+            `If ${louder} needs noise, play it in another room or at low volume with headphones.`,
+            `Use a kind signal: “I’m full — can we have 20 minutes quiet?” instead of only turning the volume down.`,
+          ],
+    });
+  }
+
+  const thrillA = coupleMovementThrillLean(ansA);
+  const thrillB = coupleMovementThrillLean(ansB);
+  const styleA = coupleMovementStyleLean(ansA);
+  const styleB = coupleMovementStyleLean(ansB);
+  const thrillClash =
+    (thrillA === "thrill" && thrillB === "relaxed") ||
+    (thrillB === "thrill" && thrillA === "relaxed") ||
+    (styleA === "high" && (styleB === "low" || styleB === "sedentary")) ||
+    (styleB === "high" && (styleA === "low" || styleA === "sedentary"));
+  if (thrillClash) {
+    const seeker = thrillA === "thrill" || styleA === "high" ? nameA : nameB;
+    const calmer = seeker === nameA ? nameB : nameA;
+    areas.push({
+      id: "movement",
+      title: af ? "Beweging, intensiteit & vryetyd" : "Movement, intensity & free time",
+      text: af
+        ? `${seeker} mag sterker beweging, spanning of hoër energie nodig hê, terwyl ${calmer} laer-impak of stilter planne verkies. Gedeelde vryetyd kan dan voel soos ’n sleep-wedstryd.`
+        : `${seeker} may need stronger movement, thrill or higher energy, while ${calmer} prefers lower-impact or quieter plans. Shared free time can then feel like a tug-of-war.`,
+      tips: af
+        ? [
+            `Laat ${seeker} party aktiewe of spannende behoeftes met vriende of alleen doen — dit is nie verwerping nie.`,
+            `Kies saam-tyd wat albei geniet (stap met ’n uitsig, swem, ’n mark) eerder as net “middelgrond.”`,
+            `Wissel naweke: een meer aktief, een meer stil — of oggend aktief en middag kalm.`,
+            `Vra voor julle boek: “Wil jy vandag rus of spanning?” eerder as aanneem.`,
+          ]
+        : [
+            `Let ${seeker} meet some active or thrill needs with friends or alone — that is not rejection.`,
+            `Choose together-time you both enjoy (a walk with a view, a swim, a market) rather than only a “middle” compromise.`,
+            `Alternate weekends: one more active, one quieter — or active morning and calm afternoon.`,
+            `Ask before you book: “Do you want rest or thrill today?” instead of assuming.`,
+          ],
+    });
+  }
+
+  const weekA = coupleRegulationList(ansA, "week", language);
+  const weekB = coupleRegulationList(ansB, "week", language);
+  const weekendA = coupleRegulationList(ansA, "weekend", language);
+  const weekendB = coupleRegulationList(ansB, "weekend", language);
+
+  function modeIds(modes) {
+    return new Set((modes || []).map((m) => m.id));
+  }
+
+  function leansOut(modes) {
+    const ids = modeIds(modes);
+    const out = (ids.has("social") ? 1 : 0) + (ids.has("active") ? 1 : 0);
+    const home = (ids.has("sedentary") ? 1 : 0) + (ids.has("alone") ? 1 : 0);
+    return out > 0 && home === 0;
+  }
+
+  function leansHome(modes) {
+    const ids = modeIds(modes);
+    const out = (ids.has("social") ? 1 : 0) + (ids.has("active") ? 1 : 0);
+    const home = (ids.has("sedentary") ? 1 : 0) + (ids.has("alone") ? 1 : 0);
+    return home > 0 && out === 0;
+  }
+
+  const outHomeTension =
+    (leansOut(weekA) && leansHome(weekB)) ||
+    (leansHome(weekA) && leansOut(weekB)) ||
+    (leansOut(weekendA) && leansHome(weekendB)) ||
+    (leansHome(weekendA) && leansOut(weekendB));
+
+  if (outHomeTension) {
+    let outName = nameA;
+    let homeName = nameB;
+    if (
+      (leansOut(weekendA) && leansHome(weekendB)) ||
+      (leansOut(weekA) && leansHome(weekB))
+    ) {
+      outName = nameA;
+      homeName = nameB;
+    } else {
+      outName = nameB;
+      homeName = nameA;
+    }
+    areas.push({
+      id: "recharge",
+      title: af ? "Hoe julle herlaai (uit vs tuis)" : "How you recharge (out vs home)",
+      text: af
+        ? `${outName} mag herlaai deur uit te gaan, aktief of sosiaal te wees, terwyl ${homeName} tuis, stil of alleen nodig het. Dit is ’n algemene spanning — nie ’n teken dat een “nie wil verbind nie.”`
+        : `${outName} may recharge by going out, being active or social, while ${homeName} needs home, quiet or alone time. This is a common tension — not a sign that one person “doesn’t want to connect.”`,
+      tips: af
+        ? [
+            `Beplan Vrydagaand vroeg: “Wil jy uit of tuis wees hierdie naweek?”`,
+            `Gee ${homeName} alleen- of stil-tyd eers, dan ’n korter gedeelde plan.`,
+            `Laat ${outName} uitgaan sonder skuld — en kom terug vir ’n duidelike “saam-tyd.”`,
+            `Probeer “parallel herlaai”: een lees tuis, een stap buite, dan 30 minute saam tee.`,
+          ]
+        : [
+            `Plan Friday early: “Do you want out or home this weekend?”`,
+            `Give ${homeName} alone or quiet time first, then a shorter shared plan.`,
+            `Let ${outName} go out without guilt — and come back for a clear “us time.”`,
+            `Try “parallel recharge”: one reads at home, one walks outside, then 30 minutes tea together.`,
+          ],
+    });
+  }
+
+  const workA = session.partners.a.coupleWork || {};
+  const workB = session.partners.b.coupleWork || {};
+  if (workA.employment === "works" && workB.employment === "works") {
+    const endA = new Set(Array.isArray(workA.endOfDay) ? workA.endOfDay : []);
+    const endB = new Set(Array.isArray(workB.endOfDay) ? workB.endOfDay : []);
+    const aWantsOut = endA.has("getOut") || endA.has("withPeople");
+    const aWantsRest = endA.has("sitRelax") || endA.has("alone");
+    const bWantsOut = endB.has("getOut") || endB.has("withPeople");
+    const bWantsRest = endB.has("sitRelax") || endB.has("alone");
+    if ((aWantsOut && bWantsRest && !bWantsOut) || (bWantsOut && aWantsRest && !aWantsOut)) {
+      const outName = aWantsOut && !bWantsOut ? nameA : nameB;
+      const restName = outName === nameA ? nameB : nameA;
+      areas.push({
+        id: "afterWork",
+        title: af ? "Ná-werk behoeftes" : "After-work needs",
+        text: af
+          ? `Aan die einde van ’n werksdag mag ${outName} wil uitgaan of mense sien, terwyl ${restName} wil sit, ontspan of alleen wees. Die eerste uur tuis is dikwels wanneer konflik begin.`
+          : `At the end of a workday, ${outName} may want to get out or see people, while ${restName} wants to sit, relax or be alone. The first hour home is often when conflict starts.`,
+        tips: af
+          ? [
+              `Spreek ’n “landing-ritueel” af: eers 20–40 minute elkeen se herstel, dan gedeelde tyd.`,
+              `Moenie belangrike gesprekke die oomblik wat julle by die deur aankom begin nie.`,
+              `As ${outName} wil uitgaan, beplan dit vir ná ${restName} se minimum rus — of gaan kort alleen.`,
+              `Stuur ’n boodskap voor julle tuiskom: “Ek het stilte nodig” of “Ek wil graag uit.”`,
+            ]
+          : [
+              `Agree a “landing ritual”: 20–40 minutes of each person’s recovery first, then shared time.`,
+              `Don’t start big conversations the moment you walk in the door.`,
+              `If ${outName} wants to go out, plan it after ${restName}’s minimum rest — or go briefly alone.`,
+              `Text before you get home: “I need quiet” or “I’d love to go out.”`,
+            ],
+      });
+    }
+  }
+
+  return {
+    titleKey: "coupleCompareConflictTitle",
+    introKey: "coupleCompareConflictIntro",
+    tipsLabelKey: "coupleCompareConflictTips",
+    nameA,
+    nameB,
+    areas,
+    emptyNote: af
+      ? "Julle antwoorde wys nie sterk, teenoorgestelde sensoriese neigings in die hoofareas nie — dit beteken nie daar is geen wrywing nie, maar julle kan waarskynlik meer vanaf ooreenkomste begin en klein verskille vroeg noem."
+      : "Your answers do not show strong opposing sensory leans in the main areas — that does not mean there is never friction, but you can likely start more from overlap and name smaller differences early.",
+  };
+}
+
 function buildCoupleThriveSummary(session, language = "en") {
   const af = language === "af";
   if (!session?.partners?.a?.answers || !session?.partners?.b?.answers) return null;

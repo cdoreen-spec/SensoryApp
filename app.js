@@ -530,6 +530,7 @@ function persistCurrentPartnerToCoupleSession(assessmentId = null) {
     summary: {
       overallLabel: profileLabelPlain(metrics?.meta) || "",
       lean: metrics?.lean || "",
+      balance: typeof metrics?.balance === "number" ? metrics.balance : null,
       leanHeadline: metrics?.leanHeadline || "",
       domainProfiles: getScoreRows(scores).map((row) => ({
         id: row.id,
@@ -5735,6 +5736,37 @@ function renderCoupleCompareBody(partnerLines, together, copy, nameA = "", nameB
   return `${personBlocks}${togetherBlock}`;
 }
 
+function couplePartnerCrewProfile(slot, copy = currentUi()) {
+  let lean = slot?.summary?.lean || "";
+  let balance =
+    typeof slot?.summary?.balance === "number" ? slot.summary.balance : null;
+  let metrics = null;
+
+  if (slot?.answers && typeof getSensoryDomains === "function") {
+    const lang = LANGUAGES.includes(slot.language) ? slot.language : state.language;
+    const scores = scoreAllDomains(
+      slot.answers,
+      getSensoryDomains(lang, "couple"),
+      lang,
+      "couple"
+    );
+    metrics = getProfileMetrics(scores);
+    lean = metrics?.lean || lean;
+    if (typeof metrics?.balance === "number") balance = metrics.balance;
+  }
+
+  if (balance == null) {
+    balance = senseInterpretMarker(lean || "neutral");
+  }
+
+  const crewId = getTeenCrewId(lean || "neutral");
+  const roster = getTeenCrewRoster(copy);
+  const character = roster.find((member) => member.id === crewId) || roster[1];
+  const labels = getProfileLabels(state.language, "couple");
+  const meta = labels[lean] || labels.neutral;
+  return { lean, balance, crewId, character, color: meta.color, metrics };
+}
+
 function renderCoupleMerge(session = null) {
   const copy = currentUi();
   const sess = session || ensureCoupleSession();
@@ -5743,6 +5775,7 @@ function renderCoupleMerge(session = null) {
   const cards = COUPLE_PARTNERS.map((partner) => {
     const slot = sess.partners[partner];
     const name = couplePartnerLabel(partner, sess);
+    const { crewId, character, lean, balance, color } = couplePartnerCrewProfile(slot, copy);
     const domains = (slot.summary?.domainProfiles || [])
       .map(
         (d) =>
@@ -5750,8 +5783,36 @@ function renderCoupleMerge(session = null) {
       )
       .join("");
     return `
-      <article class="couple-merge-card couple-partner--${partner}">
-        <h3 class="couple-merge-card__name">${escapeHtml(name)}</h3>
+      <article class="couple-merge-card couple-partner--${partner}" data-crew="${escapeHtml(crewId)}">
+        <header class="couple-merge-card__header">
+          <figure class="couple-merge-card__portrait" aria-hidden="true">
+            ${teenCrewCharacterArt(crewId, `couple-merge-${partner}`)}
+          </figure>
+          <div class="couple-merge-card__identity">
+            <h3 class="couple-merge-card__name">${escapeHtml(name)}</h3>
+            <div class="couple-merge-card__scale">
+              ${renderBalanceBar(
+                {
+                  profile: lean || "neutral",
+                  color: color || "#5b7fa6",
+                  shortTitle: name,
+                },
+                copy,
+                {
+                  showStatus: false,
+                  compact: true,
+                  percent: balance,
+                }
+              )}
+            </div>
+            <p class="couple-merge-card__character">${escapeHtml(character.name)}</p>
+            ${
+              character.tag
+                ? `<p class="couple-merge-card__character-tag">${escapeHtml(character.tag)}</p>`
+                : ""
+            }
+          </div>
+        </header>
         <p class="couple-merge-card__overall">${escapeHtml(slot.summary?.overallLabel || "—")}</p>
         <p class="couple-merge-card__lean">${escapeHtml(slot.summary?.leanHeadline || "")}</p>
         <ul class="couple-merge-card__domains">${domains}</ul>
@@ -5777,6 +5838,10 @@ function renderCoupleMerge(session = null) {
     typeof buildCoupleParentingComparison === "function"
       ? buildCoupleParentingComparison(sess, state.language)
       : null;
+  const conflictSummary =
+    typeof buildCoupleConflictAreas === "function"
+      ? buildCoupleConflictAreas(sess, state.language)
+      : null;
   const thriveSummary =
     typeof buildCoupleThriveSummary === "function"
       ? buildCoupleThriveSummary(sess, state.language)
@@ -5789,6 +5854,34 @@ function renderCoupleMerge(session = null) {
         ${comparison.sections
           .map((section) => {
             const title = copy[section.titleKey] || section.titleKey;
+            const visualVisuals =
+              section.id === "visual"
+                ? `
+                <div class="couple-visual-visuals" aria-hidden="true">
+                  <figure class="couple-visual-visuals__shot couple-visual-visuals__shot--clutter">
+                    <img
+                      src="assets/couple-visual-clutter.png"
+                      alt=""
+                      class="couple-visual-visuals__image"
+                      width="1024"
+                      height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                  <figure class="couple-visual-visuals__shot couple-visual-visuals__shot--organised">
+                    <img
+                      src="assets/couple-visual-organised.png"
+                      alt=""
+                      class="couple-visual-visuals__image"
+                      width="1024"
+                      height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                </div>`
+                : "";
             const tasteVisuals =
               section.id === "taste"
                 ? `
@@ -5817,10 +5910,29 @@ function renderCoupleMerge(session = null) {
                   </figure>
                 </div>`
                 : "";
+            const touchVisuals =
+              section.id === "touch"
+                ? `
+                <div class="couple-touch-visuals" aria-hidden="true">
+                  <figure class="couple-touch-visuals__shot">
+                    <img
+                      src="assets/couple-touch-hand.png"
+                      alt=""
+                      class="couple-touch-visuals__image"
+                      width="1024"
+                      height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                </div>`
+                : "";
             return `
               <article class="couple-compare__card couple-compare__card--${escapeHtml(section.id || "general")}">
+                ${visualVisuals}
                 <h4 class="couple-compare__card-title">${escapeHtml(title)}</h4>
                 ${tasteVisuals}
+                ${touchVisuals}
                 ${renderCoupleCompareBody(
                   section.partnerLines,
                   section.together,
@@ -5864,15 +5976,86 @@ function renderCoupleMerge(session = null) {
             />
           </figure>
         </div>
-        <article class="couple-compare__card couple-compare__card--work">
-          ${renderCoupleCompareBody(
-            workComparison.partnerLines,
-            workComparison.together,
-            copy,
-            workComparison.nameA || nameA,
-            workComparison.nameB || nameB
-          )}
-        </article>
+        <div class="couple-work-setup-grid">
+          ${(workComparison.partners || [])
+            .map((card) => {
+              const rows = (card.rows || [])
+                .map(
+                  (row) => `
+                  <div class="couple-work-setup__row">
+                    <span class="couple-work-setup__label">${escapeHtml(row.label)}</span>
+                    <span class="couple-work-setup__value">${escapeHtml(row.value)}</span>
+                  </div>`
+                )
+                .join("");
+              const note = card.note
+                ? `<p class="couple-work-setup__note">${escapeHtml(card.note)}</p>`
+                : "";
+              return `
+                <article class="couple-work-setup-card couple-partner--${card.partner}">
+                  <h4 class="couple-work-setup__name">
+                    <span class="couple-partner-dot" aria-hidden="true"></span>
+                    <span class="couple-partner-name">${escapeHtml(card.name)}</span>
+                  </h4>
+                  <div class="couple-work-setup__rows">${rows}</div>
+                  ${note}
+                </article>`;
+            })
+            .join("")}
+        </div>
+        ${
+          (workComparison.together || []).length
+            ? `<article class="couple-compare__card couple-compare__card--work">
+                ${renderCoupleCompareBody(
+                  [],
+                  workComparison.together,
+                  copy,
+                  workComparison.nameA || nameA,
+                  workComparison.nameB || nameB
+                )}
+              </article>`
+            : ""
+        }
+      </section>`
+    : "";
+
+  const conflictCompareHtml = conflictSummary
+    ? `
+      <section class="couple-compare couple-compare--conflict">
+        <h3 class="couple-compare__title">${escapeHtml(
+          copy[conflictSummary.titleKey] || copy.coupleCompareConflictTitle
+        )}</h3>
+        <p class="couple-compare__intro">${escapeHtml(
+          copy[conflictSummary.introKey] || copy.coupleCompareConflictIntro || ""
+        )}</p>
+        ${
+          (conflictSummary.areas || []).length
+            ? `<div class="couple-conflict-list">
+                ${conflictSummary.areas
+                  .map((area) => {
+                    const tips = Array.isArray(area.tips) ? area.tips.filter(Boolean) : [];
+                    const tipsHtml = tips.length
+                      ? `
+                        <div class="couple-conflict-card__tips">
+                          <p class="couple-conflict-card__tips-label">${escapeHtml(
+                            copy.coupleCompareConflictTips || "Try this"
+                          )}</p>
+                          <ul class="couple-conflict-card__tips-list">
+                            ${tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}
+                          </ul>
+                        </div>`
+                      : "";
+                    return `
+                  <article class="couple-conflict-card couple-conflict-card--${escapeHtml(area.id || "general")}">
+                    <h4 class="couple-conflict-card__title">${escapeHtml(area.title)}</h4>
+                    <p class="couple-conflict-card__text">${escapeHtml(area.text)}</p>
+                    ${tipsHtml}
+                  </article>`;
+                  })
+                  .join("")}
+              </div>`
+            : `<p class="couple-conflict-empty">${escapeHtml(conflictSummary.emptyNote || "")}</p>`
+        }
       </section>`
     : "";
 
@@ -5883,6 +6066,19 @@ function renderCoupleMerge(session = null) {
           copy[thriveSummary.titleKey] || copy.coupleCompareThriveTitle
         )}</h3>
         <p class="couple-compare__intro">${escapeHtml(copy[thriveSummary.introKey] || "")}</p>
+        <div class="couple-thrive-visuals" aria-hidden="true">
+          <figure class="couple-thrive-visuals__shot">
+            <img
+              src="assets/couple-thrive-hands.png"
+              alt=""
+              class="couple-thrive-visuals__image"
+              width="1024"
+              height="682"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
+        </div>
         <div class="couple-thrive-grid">
           ${(thriveSummary.partners || [])
             .map((card) => {
@@ -5948,6 +6144,7 @@ function renderCoupleMerge(session = null) {
       <div class="couple-merge-grid">${cards}</div>
       ${compareHtml}
       ${workCompareHtml}
+      ${conflictCompareHtml}
       ${thriveCompareHtml}
       ${parentingCompareHtml}
       ${COUPLE_PARTNERS.map((partner) => {
@@ -5965,6 +6162,11 @@ function renderCoupleMerge(session = null) {
           </section>
         `;
       }).join("")}
+      <figure class="couple-closing-quote">
+        <blockquote class="couple-closing-quote__bubble">
+          <p>${escapeHtml(copy.coupleClosingQuote)}</p>
+        </blockquote>
+      </figure>
       <div class="actions">
         <button type="button" class="btn btn-secondary" data-action="couple-back-hub">${escapeHtml(copy.coupleMergeBack)}</button>
       </div>
