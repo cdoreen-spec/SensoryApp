@@ -6,6 +6,8 @@
  * real submission sends a confirmation email to CLINICIAN_EMAIL; click
  * Confirm once, then every completed adult / teen / parent screening
  * emails the detailed report (subject includes the completer’s name).
+ * AJAX delivery disables FormSubmit reCAPTCHA (_captcha: false) so the
+ * browser gets a JSON response instead of an HTML captcha page.
  */
 const APP_CONFIG = {
   clinicianEmail: "soulfulsensoryot@gmail.com",

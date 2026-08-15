@@ -36,6 +36,7 @@ const state = {
   patientResultsAccess: "none",
   submissionStatus: null, // null | pending | sent | error
   submissionError: null,
+  submissionErrorCode: null, // e.g. formsubmit-activation
   submissionAttempted: false,
   clinicianUnlocked: false,
   clinicianPinInput: "",
@@ -421,6 +422,7 @@ function applyAssessmentRecord(record, options = {}) {
   state.patientResultsAccess = viewMode;
   state.submissionStatus = null;
   state.submissionError = null;
+  state.submissionErrorCode = null;
   state.submissionAttempted = true;
   state.showSensoryDiet = true;
   state.showWorkReport = Boolean(record.isSample) && canOfferSettingReportFor(record.respondent, record.lifeContext);
@@ -460,6 +462,7 @@ function exitArchivedReport() {
   state.patientResultsAccess = RESULTS_ACCESS.none;
   state.submissionStatus = null;
   state.submissionError = null;
+  state.submissionErrorCode = null;
   state.submissionAttempted = false;
   resetSettingReportComposer();
   state.error = null;
@@ -827,6 +830,7 @@ function clearInviteSession() {
   state.patientResultsAccess = RESULTS_ACCESS.none;
   state.submissionStatus = null;
   state.submissionError = null;
+  state.submissionErrorCode = null;
   state.submissionAttempted = false;
 }
 
@@ -1073,6 +1077,7 @@ function applySensoryDraft(draft) {
   resetSettingReportComposer();
   state.submissionStatus = null;
   state.submissionError = null;
+  state.submissionErrorCode = null;
   state.submissionAttempted = false;
   state.error = null;
 }
@@ -1099,6 +1104,7 @@ function resetSensoryQuestionnaireProgress() {
   resetSettingReportComposer();
   state.submissionStatus = null;
   state.submissionError = null;
+  state.submissionErrorCode = null;
   state.submissionAttempted = false;
   state.viewingArchivedId = null;
   state.archiveReadOnly = false;
@@ -1234,7 +1240,7 @@ function buildResultsReport() {
         if (!guide) return [];
         return [
           "",
-          `— ${guide.kicker} —`,
+          `— ${guide.title || guide.kicker} —`,
           guide.needsLabel + ":",
           guide.needs,
           guide.supportLabel + ":",
@@ -1268,6 +1274,14 @@ function buildResultsReport() {
   };
 }
 
+function isDeliverySuccessFlag(value) {
+  return value === true || value === "true";
+}
+
+function isFormSubmitActivationMessage(message) {
+  return /activat/i.test(String(message || ""));
+}
+
 async function sendResultsEmail(report) {
   const demo = state.demographics;
   const completerName = assessmentCompleterName();
@@ -1297,14 +1311,16 @@ async function sendResultsEmail(report) {
         to: getClinicianEmail(),
       }),
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || data.success === false) {
-      throw new Error(data.message || "Web3Forms could not send the email");
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+      throw new Error((data && data.message) || "Web3Forms could not send the email");
     }
-    return;
+    return { provider: "web3forms" };
   }
 
   if (DELIVERY_PROVIDER === "formsubmit") {
+    // AJAX + FormSubmit's default reCAPTCHA often returns HTML instead of JSON.
+    // Disable captcha and include a honeypot so submissions stay JSON-parseable.
     const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(getClinicianEmail())}`, {
       method: "POST",
       headers: {
@@ -1314,6 +1330,9 @@ async function sendResultsEmail(report) {
       body: JSON.stringify({
         _subject: report.subject,
         _template: "table",
+        _captcha: "false",
+        _honey: "",
+        _url: typeof window !== "undefined" ? window.location.href.split("#")[0] : "",
         name: payloadBase.name,
         email: payloadBase.email,
         respondent: payloadBase.respondent,
@@ -1324,14 +1343,39 @@ async function sendResultsEmail(report) {
         message: payloadBase.message,
       }),
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || data.success === "false" || data.success === false) {
-      throw new Error(data.message || "FormSubmit could not send the email");
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+      const detail = (data && data.message) || "";
+      if (isFormSubmitActivationMessage(detail)) {
+        const err = new Error(detail);
+        err.code = "formsubmit-activation";
+        throw err;
+      }
+      throw new Error(detail || "FormSubmit could not send the email");
     }
-    return;
+    if (isFormSubmitActivationMessage(data.message)) {
+      const err = new Error(data.message);
+      err.code = "formsubmit-activation";
+      throw err;
+    }
+    return { provider: "formsubmit" };
   }
 
   throw new Error("Email delivery is disabled in config.js");
+}
+
+function updateSubmissionStatusUi() {
+  const copy = currentUi();
+  const status = app.querySelector("[data-submission-status]");
+  if (status) {
+    const kind = state.submissionStatus || "pending";
+    status.className = `submission-status submission-status--${kind}`;
+    status.textContent = submissionStatusMessage(copy);
+  }
+  const retry = app.querySelector("[data-action='retry-submit']");
+  if (retry) {
+    retry.hidden = state.submissionStatus !== "error";
+  }
 }
 
 function ensureResultsSubmitted({ force = false } = {}) {
@@ -1342,28 +1386,34 @@ function ensureResultsSubmitted({ force = false } = {}) {
   state.submissionAttempted = true;
   state.submissionStatus = "pending";
   state.submissionError = null;
+  state.submissionErrorCode = null;
+  updateSubmissionStatusUi();
 
-  const report = buildResultsReport();
+  let report;
+  try {
+    report = buildResultsReport();
+  } catch (err) {
+    console.error("Could not build results email:", err);
+    state.submissionStatus = "error";
+    state.submissionError = err?.message || "Could not build report";
+    state.submissionErrorCode = null;
+    updateSubmissionStatusUi();
+    return;
+  }
+
   sendResultsEmail(report)
     .then(() => {
       state.submissionStatus = "sent";
       state.submissionError = null;
-      const status = app.querySelector("[data-submission-status]");
-      if (status) {
-        status.className = "submission-status submission-status--sent";
-        status.textContent = currentUi().thankYouSent;
-      }
+      state.submissionErrorCode = null;
+      updateSubmissionStatusUi();
     })
     .catch((err) => {
+      console.error("Results email failed:", err);
       state.submissionStatus = "error";
       state.submissionError = err?.message || "Send failed";
-      const status = app.querySelector("[data-submission-status]");
-      if (status) {
-        status.className = "submission-status submission-status--error";
-        status.textContent = currentUi().thankYouError;
-      }
-      const retry = app.querySelector("[data-action='retry-submit']");
-      if (retry) retry.hidden = false;
+      state.submissionErrorCode = err?.code || null;
+      updateSubmissionStatusUi();
     });
 }
 
@@ -2384,6 +2434,17 @@ function hasAllRequiredConsent() {
   );
 }
 
+function submissionStatusMessage(copy = currentUi()) {
+  if (state.submissionStatus === "sent") return copy.thankYouSent;
+  if (state.submissionStatus === "error") {
+    if (state.submissionErrorCode === "formsubmit-activation") {
+      return copy.thankYouActivation || copy.thankYouError;
+    }
+    return copy.thankYouError;
+  }
+  return copy.thankYouSending;
+}
+
 function renderSubmissionThankYou() {
   clearSensoryDraft();
   if (!state.completedAt) {
@@ -2397,18 +2458,17 @@ function renderSubmissionThankYou() {
 
   if (willEmail) {
     let statusClass = "submission-status";
-    let statusText = copy.thankYouSending;
     if (state.submissionStatus === "sent") {
       statusClass += " submission-status--sent";
-      statusText = copy.thankYouSent;
     } else if (state.submissionStatus === "error") {
       statusClass += " submission-status--error";
-      statusText = copy.thankYouError;
       showRetry = true;
     } else {
       statusClass += " submission-status--pending";
     }
-    statusHtml = `<p class="${statusClass}" data-submission-status role="status">${escapeHtml(statusText)}</p>`;
+    statusHtml = `<p class="${statusClass}" data-submission-status role="status">${escapeHtml(
+      submissionStatusMessage(copy)
+    )}</p>`;
   }
 
   return renderShell(
@@ -5043,9 +5103,15 @@ function renderBalanceBar(
 ) {
   const percent = typeof exactPercent === "number" ? exactPercent : senseInterpretMarker(row.profile);
   const lean = senseInterpretLeanLabel(row.profile, copy);
-  const leftLabel = axisSensitive || copy.scoreLeanSensitive;
-  const midLabel = axisNeutral || copy.scoreLeanNeutral;
-  const rightLabel = axisSeeking || copy.scoreLeanSeeking;
+  const leftLabel =
+    axisSensitive ||
+    (compact ? copy.scoreLeanSensitiveShort || "−" : copy.scoreLeanSensitive);
+  const midLabel =
+    axisNeutral ||
+    (compact ? copy.scoreLeanNeutralShort || "Balanced" : copy.scoreLeanNeutral);
+  const rightLabel =
+    axisSeeking ||
+    (compact ? copy.scoreLeanSeekingShort || "+" : copy.scoreLeanSeeking);
   return `
     <div
       class="balance-bar${compact ? " balance-bar--compact" : ""}"
@@ -5349,6 +5415,143 @@ function shouldShowTrailProfile() {
   return state.respondent === "adult" || state.respondent === "teen" || state.respondent === "parent";
 }
 
+function getTrailDescriptionPage(crewId) {
+  const pages = {
+    explorer: {
+      src: "assets/sensory-description-explorer.png?v=20260815a",
+      width: 723,
+      height: 1024,
+      alt: "Sensory Explorer description — high threshold, sensory seeking",
+    },
+    adaptor: {
+      src: "assets/sensory-description-adaptor.png?v=20260815a",
+      width: 724,
+      height: 1024,
+      alt: "Sensory Adaptor description — medium threshold, sensory neutral",
+    },
+    observer: {
+      src: "assets/sensory-description-observer.png?v=20260815a",
+      width: 724,
+      height: 1024,
+      alt: "Sensory Observer description — low threshold, sensory sensitive",
+    },
+  };
+  return pages[crewId] || pages.adaptor;
+}
+
+function renderTrailProfilePageFigure({ src, alt, width, height, className = "" }) {
+  return `
+    <figure class="trail-profile__figure${className ? ` ${className}` : ""}">
+      <img
+        class="trail-profile__image"
+        src="${escapeHtml(src)}"
+        alt="${escapeHtml(alt)}"
+        width="${Number(width) || 724}"
+        height="${Number(height) || 1024}"
+        loading="eager"
+        decoding="async"
+      />
+    </figure>`;
+}
+
+function renderSensoryTrailOverview(pageEntry) {
+  if (!shouldShowTrailProfile()) return "";
+  const copy = currentUi();
+  const isParent = state.respondent === "parent";
+  const title = isParent
+    ? copy.teenCrewOverviewTitleParent || copy.teenCrewOverviewTitle
+    : copy.teenCrewOverviewTitle;
+
+  return `
+    <section class="profile-section trail-profile trail-profile--page"${reportPageAttrs(pageEntry)} aria-labelledby="trail-overview-title">
+      <h3 id="trail-overview-title" class="visually-hidden">${escapeHtml(title)}</h3>
+      ${renderTrailProfilePageFigure({
+        src: "assets/sensory-trail-profile.png?v=20260815b",
+        alt: copy.teenCrewSummaryAria,
+        width: 682,
+        height: 1024,
+        className: "trail-profile__figure--overview",
+      })}
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>`;
+}
+
+function renderMatchedTrailDescription(metrics, pageEntry) {
+  if (!shouldShowTrailProfile()) return "";
+  const copy = currentUi();
+  const youId = getTeenCrewId(metrics.lean);
+  const roster = getTeenCrewRoster(copy);
+  const you = roster.find((member) => member.id === youId) || roster[1];
+  const page = getTrailDescriptionPage(youId);
+  const isParent = state.respondent === "parent";
+  const title = isParent
+    ? (copy.teenCrewDescriptionTitleParent || copy.teenCrewDescriptionTitle || you.name)
+    : (copy.teenCrewDescriptionTitle || you.name);
+  const alt = `${you.name}: ${page.alt}`;
+
+  return `
+    <section class="profile-section trail-profile trail-profile--page trail-profile--matched"${reportPageAttrs(pageEntry)} aria-labelledby="trail-description-title" data-crew-you="${youId}">
+      <h3 id="trail-description-title" class="visually-hidden">${escapeHtml(title)}</h3>
+      ${renderTrailProfilePageFigure({
+        src: page.src,
+        alt,
+        width: page.width,
+        height: page.height,
+        className: `trail-profile__figure--${youId}`,
+      })}
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>`;
+}
+
+function renderMatchedTrailReveal(metrics, pageEntry) {
+  if (!shouldShowTrailProfile()) return "";
+
+  const copy = currentUi();
+  const isParent = state.respondent === "parent";
+  const youId = getTeenCrewId(metrics.lean);
+  const roster = getTeenCrewRoster(copy);
+  const you = roster.find((member) => member.id === youId) || roster[1];
+  const youAre = isParent ? copy.teenCrewYouAreParent : copy.teenCrewYouAre;
+  const detailTitle = isParent
+    ? copy.teenCrewMatchTitleParent || copy.teenCrewDetailTitleParent
+    : copy.teenCrewMatchTitle || copy.teenCrewDetailTitle;
+  const lead = isParent
+    ? copy.teenCrewMatchLeadParent || copy.teenCrewIntroParent
+    : copy.teenCrewMatchLead || copy.teenCrewIntro;
+
+  return `
+    <section class="profile-section trail-profile trail-profile--reveal"${reportPageAttrs(pageEntry)} aria-labelledby="trail-match-title" data-crew-you="${youId}">
+      <header class="trail-profile__header trail-profile__header--reveal">
+        <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
+        <h3 id="trail-match-title">${escapeHtml(detailTitle)}</h3>
+        ${printMountainRule("section")}
+        <p class="profile-section__summary">${escapeHtml(lead)}</p>
+      </header>
+
+      ${renderOverallScoreCard(metrics, copy)}
+
+      <article class="teen-crew__detail teen-crew__match teen-crew__match--${youId} teen-crew__match--concise teen-crew__match--reveal">
+        <header class="teen-crew__match-heading">
+          <p class="teen-crew__you-label">${escapeHtml(youAre)}</p>
+          <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
+          <p class="teen-crew__hero-tag">${escapeHtml(you.tag)}</p>
+        </header>
+        <figure class="teen-crew__match-portrait teen-crew__match-portrait--hero">
+          ${teenCrewCharacterArt(youId, `reveal-${youId}`)}
+        </figure>
+        <div class="teen-crew__match-copy">
+          <p class="teen-crew__hero-summary">${escapeHtml(you.summary)}</p>
+          ${you.body ? `<p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>` : ""}
+        </div>
+      </article>
+
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>`;
+}
+
 function getTeenCrewRoster(copy) {
   const isParent = state.respondent === "parent";
   const isTeen = state.respondent === "teen";
@@ -5645,10 +5848,10 @@ function getTrailSettingBanner(settingKey) {
   const banners = {
     school: {
       image: "assets/heading-learning-trail.png",
-      objectPosition: "center 42%",
+      objectPosition: "center 40%",
       variant: "forest",
-      width: 768,
-      height: 1024,
+      width: 1024,
+      height: 768,
     },
     home: {
       image: "assets/heading-home-trail.png",
@@ -5697,6 +5900,7 @@ function renderTrailSettingInterpretations(metrics, pagePlan) {
             kicker: guide.kicker,
             titleId: `trail-interpret-${settingKey}`,
             title: guide.title,
+            lead: guide.lead || "",
             variant: banner.variant,
             width: banner.width,
             height: banner.height,
@@ -5879,8 +6083,21 @@ function buildReportPagePlan(copy, scores, metrics) {
   };
 
   if (shouldShowTrailProfile()) {
-    const trailTitle = isParent ? copy.teenCrewTitleParent : copy.teenCrewTitle;
-    add("report-teen-crew", trailTitle);
+    const overviewTitle = isParent
+      ? copy.teenCrewOverviewTitleParent || copy.teenCrewOverviewTitle
+      : copy.teenCrewOverviewTitle;
+    add("report-trail-overview", overviewTitle || "Your Sensory Trail Profile");
+    const youId = getTeenCrewId(metrics.lean);
+    const roster = getTeenCrewRoster(copy);
+    const you = roster.find((member) => member.id === youId);
+    const matchTitle = isParent
+      ? copy.teenCrewMatchTitleParent || copy.teenCrewDetailTitleParent
+      : copy.teenCrewMatchTitle || copy.teenCrewDetailTitle;
+    add("report-trail-match", matchTitle || you?.name || "Your matched trail");
+    const descriptionTitle = isParent
+      ? copy.teenCrewDescriptionTitleParent || you?.name
+      : copy.teenCrewDescriptionTitle || you?.name;
+    add("report-trail-description", descriptionTitle || you?.name || "Matched trail");
   }
 
   add("report-brief-scores", copy.briefScoresTitle);
@@ -5892,7 +6109,7 @@ function buildReportPagePlan(copy, scores, metrics) {
 
   getTrailSettingKeys(state.respondent, state.lifeContext).forEach((settingKey) => {
     const guide = getTrailSettingGuide(settingKey, metrics.lean, state.language);
-    if (guide) add(`report-trail-${settingKey}`, guide.kicker || guide.title);
+    if (guide) add(`report-trail-${settingKey}`, guide.title || guide.kicker);
   });
 
   return pages;
@@ -7113,11 +7330,7 @@ function renderResultsSummary() {
   const submissionNote =
     shouldEmailResultsToClinician() && state.submissionStatus
       ? `<p class="submission-status submission-status--${escapeHtml(state.submissionStatus)}" data-submission-status role="status">${escapeHtml(
-          state.submissionStatus === "sent"
-            ? copy.thankYouSent
-            : state.submissionStatus === "error"
-              ? copy.thankYouError
-              : copy.thankYouSending
+          submissionStatusMessage(copy)
         )}</p>`
       : shouldEmailResultsToClinician()
         ? `<p class="submission-status submission-status--pending" data-submission-status role="status">${escapeHtml(copy.thankYouSending)}</p>`
@@ -7226,11 +7439,7 @@ function renderResults() {
   const submissionNote =
     shouldEmailResultsToClinician() && state.submissionStatus
       ? `<p class="submission-status submission-status--${escapeHtml(state.submissionStatus)}" data-submission-status role="status">${escapeHtml(
-          state.submissionStatus === "sent"
-            ? copy.thankYouSent
-            : state.submissionStatus === "error"
-              ? copy.thankYouError
-              : copy.thankYouSending
+          submissionStatusMessage(copy)
         )}</p>`
       : shouldEmailResultsToClinician()
         ? `<p class="submission-status submission-status--pending" data-submission-status role="status">${escapeHtml(copy.thankYouSending)}</p>`
@@ -7257,10 +7466,18 @@ function renderResults() {
       ${renderSampleReportBanner()}
 
       <div class="results-intro results-intro--concise" aria-labelledby="profile-title">
-        <p class="profile-kicker">${escapeHtml(copy.viewpoint)}</p>
-        <h2 id="profile-title">${escapeHtml(
-          state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle
-        )}</h2>
+        ${renderInterpretSectionBanner({
+          image: "assets/heading-viewpoint-sunrise.png?v=20260815c",
+          objectPosition: "center 48%",
+          kicker: copy.viewpoint,
+          titleId: "profile-title",
+          title:
+            state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle,
+          variant: "viewpoint",
+          titleTag: "h2",
+          width: 1024,
+          height: 639,
+        })}
         ${
           state.demographics.name
             ? `<p class="results-intro__name">${escapeHtml(state.demographics.name)}</p>`
@@ -7282,7 +7499,9 @@ function renderResults() {
       </div>
 
       ${renderSharingPermissionsSummary()}
-      ${renderTeenCrewSummary(metrics, reportPageById(pagePlan, "report-teen-crew"))}
+      ${renderSensoryTrailOverview(reportPageById(pagePlan, "report-trail-overview"))}
+      ${renderMatchedTrailReveal(metrics, reportPageById(pagePlan, "report-trail-match"))}
+      ${renderMatchedTrailDescription(metrics, reportPageById(pagePlan, "report-trail-description"))}
       ${renderBriefScoreSummary(scores, metrics, reportPageById(pagePlan, "report-brief-scores"))}
       ${renderSenseSupportGuide(scores, reportPageById(pagePlan, "report-sense-support"))}
       ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}

@@ -3248,45 +3248,97 @@ body.is-pain-screen .site-footer {
   .sensory-flow__places {
     width: min(100%, calc(100% - 0.75rem));
     margin-top: 1.5rem;
-    padding-bottom: 1.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1.35rem;
+    overflow: hidden;
   }
 
   .sensory-flow__places-heading {
-    padding-top: 1.85rem;
+    width: min(100%, calc(100% - 1.5rem));
+    padding: 1.65rem 0.85rem 0.35rem;
+  }
+
+  .sensory-flow__places .sensory-flow__label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+  }
+
+  .sensory-flow__places .sensory-flow__title {
+    font-size: clamp(1.28rem, 6.4vw, 1.65rem);
+    line-height: 1.18;
   }
 
   .sensory-flow__places-photo {
-    height: min(42%, 12.5rem);
+    height: min(36%, 10.5rem);
   }
 
   .sensory-flow__places-veil {
-    height: min(52%, 14.5rem);
+    height: min(46%, 12.5rem);
   }
 
   .sensory-flow__places-path {
-    top: 9.5rem;
+    display: none;
   }
 
   .sensory-flow__trail {
-    min-width: 36rem;
-    column-gap: 0.55rem;
-    row-gap: 0.28rem;
-    padding: 0.75rem 0.7rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+    margin-top: 1.15rem;
+    padding: 0.55rem 1rem 0;
   }
 
   .sensory-flow__trail::before {
-    left: 9%;
-    right: 9%;
+    top: 1.35rem;
+    bottom: 1.35rem;
+    left: calc(1rem + 0.72rem);
+    right: auto;
+    width: 0;
+    height: auto;
+    border-top: none;
+    border-left: 2px dashed rgba(95, 130, 105, 0.35);
+  }
+
+  .sensory-flow__place {
+    display: grid;
+    grid-template-columns: 1.55rem minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-row: auto;
+    column-gap: 0.85rem;
+    justify-items: stretch;
+    align-items: start;
+    text-align: left;
+  }
+
+  .sensory-flow__marker {
+    margin-bottom: 0;
+  }
+
+  .sensory-flow__stop {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    grid-row: auto;
+    width: 100%;
+    min-width: 0;
+    padding: 0.05rem 0 0;
+    text-align: left;
+  }
+
+  .sensory-flow__place-name {
+    font-size: 1.05rem;
   }
 
   .sensory-flow__place-desc {
-    font-size: 0.72rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
   }
 
   .sensory-flow__place-detail {
-    font-size: 0.66rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin-top: 0.3rem;
+    padding-top: 0.35rem;
   }
 }
 
@@ -4215,7 +4267,19 @@ body.is-pain-screen .site-footer {
 
 .results-intro > .interpret-section-banner {
   margin: 0 0 1.15rem;
-  text-align: left;
+  place-items: center;
+  text-align: center;
+}
+
+.results-intro > .interpret-section-banner .interpret-section-banner__content {
+  max-width: min(34rem, 100%);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.results-intro > .interpret-section-banner .interpret-section-banner__veil {
+  background:
+    linear-gradient(180deg, rgba(18, 28, 22, 0.22) 0%, rgba(14, 24, 18, 0.42) 48%, rgba(8, 16, 12, 0.88) 100%);
 }
 
 .results-intro h2,
@@ -4468,6 +4532,47 @@ body.is-pain-screen .site-footer {
   background: #f3f1ea;
 }
 
+.trail-profile--page {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.trail-profile--page .trail-profile__figure {
+  margin: 0 auto;
+  max-width: min(44rem, 100%);
+}
+
+.trail-profile--reveal {
+  margin: 0 0 1.5rem;
+  padding: 1.25rem 1.1rem 1.4rem;
+  border-radius: 20px;
+  background:
+    linear-gradient(165deg, rgba(255, 252, 245, 0.96) 0%, rgba(232, 240, 230, 0.78) 100%);
+  border: 1px solid rgba(90, 120, 90, 0.16);
+}
+
+.trail-profile__header--reveal {
+  text-align: center;
+  margin-bottom: 1.15rem;
+}
+
+.trail-profile__header--reveal .profile-section__summary {
+  max-width: 38rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.trail-profile--reveal .overall-score {
+  margin: 0 auto 1.25rem;
+  max-width: 40rem;
+}
+
+.teen-crew__match--reveal {
+  margin-top: 0;
+}
+
 .trail-profile__image {
   display: block;
   width: 100%;
@@ -4539,12 +4644,27 @@ body.is-pain-screen .site-footer {
 
 .results-intro--concise {
   margin-bottom: 1.35rem;
-  padding: 1.1rem 1rem 1.2rem;
-  border-radius: 18px;
+  padding: 0 0 1.2rem;
+  border-radius: 20px;
   background:
     linear-gradient(165deg, rgba(255, 252, 245, 0.92) 0%, rgba(232, 240, 230, 0.75) 100%);
   border: 1px solid rgba(90, 120, 90, 0.18);
+  overflow: hidden;
   text-align: center;
+}
+
+.results-intro--concise > .interpret-section-banner {
+  margin: 0 0 1rem;
+  border-radius: 0;
+  min-height: min(38vh, 16.5rem);
+  box-shadow: none;
+}
+
+.results-intro--concise .results-intro__name,
+.results-intro--concise .results-intro__context,
+.results-intro--concise .submission-status {
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .results-intro--concise .profile-kicker {
@@ -4982,7 +5102,6 @@ body.is-pain-screen .site-footer {
   margin-top: 0.5rem;
 }
 
-.profile-section--trail-interpret > .interpret-section-banner,
 .profile-section--brief-scores > .interpret-section-banner,
 .profile-section--sense-support > .interpret-section-banner,
 .profile-section--setting-guide > .interpret-section-banner {
@@ -4991,7 +5110,16 @@ body.is-pain-screen .site-footer {
   min-height: min(44vh, 20rem);
 }
 
-.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__content,
+.profile-section--trail-interpret > .interpret-section-banner {
+  width: min(100%, 34rem);
+  max-width: 34rem;
+  margin: 0 auto 1rem;
+  place-items: center;
+  min-height: min(28vh, 11.5rem);
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(36, 75, 56, 0.12);
+}
+
 .profile-section--brief-scores > .interpret-section-banner .interpret-section-banner__content,
 .profile-section--sense-support > .interpret-section-banner .interpret-section-banner__content,
 .profile-section--setting-guide > .interpret-section-banner .interpret-section-banner__content {
@@ -5002,15 +5130,22 @@ body.is-pain-screen .site-footer {
   color: #fffef9;
 }
 
-.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__kicker,
+.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__content {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: clamp(1.1rem, 3vw, 1.65rem) clamp(1rem, 3vw, 1.5rem);
+  text-align: center;
+  color: #fffef9;
+}
+
 .profile-section--brief-scores > .interpret-section-banner .interpret-section-banner__kicker,
 .profile-section--sense-support > .interpret-section-banner .interpret-section-banner__kicker,
-.profile-section--setting-guide > .interpret-section-banner .interpret-section-banner__kicker {
+.profile-section--setting-guide > .interpret-section-banner .interpret-section-banner__kicker,
+.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__kicker {
   color: rgba(255, 252, 245, 0.92);
   text-shadow: 0 1px 10px rgba(8, 18, 12, 0.45);
 }
 
-.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__title,
 .profile-section--brief-scores > .interpret-section-banner .interpret-section-banner__title,
 .profile-section--sense-support > .interpret-section-banner .interpret-section-banner__title,
 .profile-section--setting-guide > .interpret-section-banner .interpret-section-banner__title {
@@ -5023,13 +5158,30 @@ body.is-pain-screen .site-footer {
     0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
-.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__lead,
+.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__title {
+  font-size: clamp(1.45rem, 3.8vw, 1.95rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #fffef9;
+  text-shadow:
+    0 2px 14px rgba(6, 14, 10, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
 .profile-section--brief-scores > .interpret-section-banner .interpret-section-banner__lead,
 .profile-section--sense-support > .interpret-section-banner .interpret-section-banner__lead,
 .profile-section--setting-guide > .interpret-section-banner .interpret-section-banner__lead {
   margin-left: auto;
   margin-right: auto;
   max-width: 34rem;
+  color: rgba(255, 252, 245, 0.95);
+  text-shadow: 0 1px 12px rgba(6, 14, 10, 0.5);
+}
+
+.profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__lead {
+  margin: 0.55rem auto 0;
+  max-width: 28rem;
+  font-size: clamp(0.88rem, 2.2vw, 1rem);
   color: rgba(255, 252, 245, 0.95);
   text-shadow: 0 1px 12px rgba(6, 14, 10, 0.5);
 }
@@ -5741,8 +5893,7 @@ body.is-pain-screen .site-footer {
 
 .interpret-section-banner--viewpoint .interpret-section-banner__veil {
   background:
-    linear-gradient(180deg, rgba(18, 36, 22, 0.2) 0%, rgba(16, 34, 22, 0.38) 42%, rgba(12, 26, 18, 0.84) 100%),
-    linear-gradient(95deg, rgba(14, 30, 18, 0.42) 0%, transparent 58%);
+    linear-gradient(180deg, rgba(36, 22, 8, 0.22) 0%, rgba(28, 20, 10, 0.4) 40%, rgba(12, 14, 10, 0.86) 100%);
 }
 
 .interpret-section-banner__content {
@@ -7459,7 +7610,16 @@ body.is-pain-screen .site-footer {
 }
 
 .balance-bar--compact .balance-bar__axis {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+.balance-bar--compact .balance-bar__axis span:nth-child(1),
+.balance-bar--compact .balance-bar__axis span:nth-child(3) {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .balance-bar--compact .balance-bar__status {
@@ -10036,6 +10196,29 @@ body.is-pain-screen .site-footer {
     background: transparent;
   }
 
+  body.print-sensory-results .trail-profile--page {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+    margin: 0;
+    padding: 0;
+  }
+
+  body.print-sensory-results .trail-profile--reveal {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+    margin: 0 0 2mm;
+    padding: 4mm;
+  }
+
+  body.print-sensory-results .trail-profile--page .trail-profile__figure {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
   body.print-sensory-results .trail-profile--concise {
     padding: 4mm 0;
     break-inside: avoid;
@@ -10097,11 +10280,20 @@ body.is-pain-screen .site-footer {
   }
 
   body.print-sensory-results .profile-section--brief-scores > .interpret-section-banner,
-  body.print-sensory-results .profile-section--trail-interpret > .interpret-section-banner,
   body.print-sensory-results .profile-section--sense-support > .interpret-section-banner,
   body.print-sensory-results .profile-section--setting-guide > .interpret-section-banner {
     place-items: center;
     min-height: 48mm;
+  }
+
+  body.print-sensory-results .profile-section--trail-interpret > .interpret-section-banner {
+    place-items: center;
+    width: 140mm;
+    max-width: 140mm;
+    min-height: 28mm;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 3mm;
   }
 
   body.print-sensory-results .profile-section--brief-scores > .interpret-section-banner .interpret-section-banner__content,
@@ -10114,11 +10306,20 @@ body.is-pain-screen .site-footer {
     color: #fffef9;
   }
 
+  body.print-sensory-results .profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__content {
+    padding: 3mm 5mm;
+  }
+
   body.print-sensory-results .profile-section--brief-scores > .interpret-section-banner .interpret-section-banner__title,
-  body.print-sensory-results .profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__title,
   body.print-sensory-results .profile-section--sense-support > .interpret-section-banner .interpret-section-banner__title,
   body.print-sensory-results .profile-section--setting-guide > .interpret-section-banner .interpret-section-banner__title {
     font-size: 18pt;
+    line-height: 1.15;
+    color: #fffef9;
+  }
+
+  body.print-sensory-results .profile-section--trail-interpret > .interpret-section-banner .interpret-section-banner__title {
+    font-size: 14pt;
     line-height: 1.15;
     color: #fffef9;
   }
@@ -10495,6 +10696,8 @@ body.is-pain-screen .site-footer {
 
   body.print-sensory-results .results-intro > .interpret-section-banner .interpret-section-banner__content {
     padding: 3.5mm 5mm;
+    margin-inline: auto;
+    text-align: center;
   }
 
   body.print-sensory-results .results-intro .profile-kicker,

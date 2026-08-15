@@ -3599,8 +3599,9 @@ const TRAIL_SETTING_GUIDE = {
       },
     },
     home: {
-      kicker: "Your sensory trail at home",
-      title: "What home needs from this trail",
+      kicker: "",
+      title: "Home",
+      lead: "(how to support sensory needs at home)",
       needsLabel: "What you need",
       supportLabel: "How to support this",
       byProfile: {
@@ -3637,8 +3638,9 @@ const TRAIL_SETTING_GUIDE = {
       },
     },
     homeParent: {
-      kicker: "Your child’s sensory trail at home",
-      title: "What home needs from this trail",
+      kicker: "",
+      title: "Home",
+      lead: "(how to support sensory needs at home)",
       needsLabel: "What they need",
       supportLabel: "How to support them",
       byProfile: {
@@ -3675,8 +3677,9 @@ const TRAIL_SETTING_GUIDE = {
       },
     },
     school: {
-      kicker: "Your sensory trail in learning",
-      title: "What learning needs from this trail",
+      kicker: "",
+      title: "School/Learning",
+      lead: "(how to support sensory needs at school or when learning)",
       needsLabel: "What you need",
       supportLabel: "How to support this",
       byProfile: {
@@ -3756,8 +3759,9 @@ const TRAIL_SETTING_GUIDE = {
       },
     },
     home: {
-      kicker: "Jou sensoriese roete by die huis",
-      title: "Wat die huis van hierdie roete nodig het",
+      kicker: "",
+      title: "Huis",
+      lead: "(hoe om sensoriese behoeftes by die huis te ondersteun)",
       needsLabel: "Wat jy nodig het",
       supportLabel: "Hoe om dit te ondersteun",
       byProfile: {
@@ -3794,8 +3798,9 @@ const TRAIL_SETTING_GUIDE = {
       },
     },
     homeParent: {
-      kicker: "Jou kind se sensoriese roete by die huis",
-      title: "Wat die huis van hierdie roete nodig het",
+      kicker: "",
+      title: "Huis",
+      lead: "(hoe om sensoriese behoeftes by die huis te ondersteun)",
       needsLabel: "Wat hulle nodig het",
       supportLabel: "Hoe om hulle te ondersteun",
       byProfile: {
@@ -3832,8 +3837,9 @@ const TRAIL_SETTING_GUIDE = {
       },
     },
     school: {
-      kicker: "Jou sensoriese roete in leer",
-      title: "Wat leer van hierdie roete nodig het",
+      kicker: "",
+      title: "Skool/Leer",
+      lead: "(hoe om sensoriese behoeftes by die skool of wanneer jy leer te ondersteun)",
       needsLabel: "Wat jy nodig het",
       supportLabel: "Hoe om dit te ondersteun",
       byProfile: {
@@ -3887,6 +3893,7 @@ function getTrailSettingGuide(settingKey, lean, language = "en") {
     profile,
     kicker: setting.kicker,
     title: setting.title,
+    lead: setting.lead || "",
     needsLabel: setting.needsLabel,
     supportLabel: setting.supportLabel,
     needs: content.needs || "",

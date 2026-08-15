@@ -300,6 +300,9 @@ const QUESTIONNAIRE_UI = {
     scoreLeanSensitive: "Notices sensory input quickly",
     scoreLeanNeutral: "Usually balanced",
     scoreLeanSeeking: "Looks for more sensory input",
+    scoreLeanSensitiveShort: "−",
+    scoreLeanNeutralShort: "Balanced",
+    scoreLeanSeekingShort: "+",
     thresholdLegend:
       "Low threshold = notices input quickly (sensitive). Medium = more typical / mixed. High threshold = needs more input (seeking).",
     settingBridgeKicker: "Next",
@@ -326,6 +329,16 @@ const QUESTIONNAIRE_UI = {
     teenCrewKicker: "Your Sensory Trail Character",
     teenCrewTitle: "Your Sensory Trail Character",
     teenCrewTitleParent: "Your child’s Sensory Trail Character",
+    teenCrewOverviewTitle: "Your Sensory Trail Profile",
+    teenCrewOverviewTitleParent: "Your child’s Sensory Trail Profile",
+    teenCrewMatchTitle: "Your matched trail",
+    teenCrewMatchTitleParent: "Your child’s matched trail",
+    teenCrewMatchLead:
+      "Based on the overall score from this screening, here is the trail style that fits your answers most closely.",
+    teenCrewMatchLeadParent:
+      "Based on the overall score from this screening, here is the trail style that fits your child’s answers most closely.",
+    teenCrewDescriptionTitle: "Your matched trail description",
+    teenCrewDescriptionTitleParent: "Your child’s matched trail description",
     teenCrewIntro:
       "We all experience the world differently. Here are the three trail styles — then which one your answers matched most closely.",
     teenCrewIntroParent:
@@ -486,6 +499,8 @@ const QUESTIONNAIRE_UI = {
     thankYouSent: "Your screening was sent successfully.",
     thankYouError:
       "We couldn’t send your screening automatically. Please message Cayley on WhatsApp to let her know you’ve finished, and try Send again.",
+    thankYouActivation:
+      "Your screening was received, but the therapist inbox still needs a one-time email confirmation from FormSubmit. Please message Cayley on WhatsApp to let her know you’ve finished.",
     thankYouRetry: "Send again",
     thankYouHome: "Back to home",
     summaryKicker: "Screening complete",
@@ -973,6 +988,9 @@ const QUESTIONNAIRE_UI = {
     scoreLeanSensitive: "Merk vinnig op",
     scoreLeanNeutral: "Gewoonlik gebalanseerd",
     scoreLeanSeeking: "Soek meer",
+    scoreLeanSensitiveShort: "−",
+    scoreLeanNeutralShort: "Gebalanseerd",
+    scoreLeanSeekingShort: "+",
     thresholdLegend:
       "Lae drempel = merk insette vinnig op (sensitief). Medium = meer tipies / gemeng. Hoë drempel = het meer insette nodig (soekend).",
     settingBridgeKicker: "Volgende",
@@ -999,6 +1017,16 @@ const QUESTIONNAIRE_UI = {
     teenCrewKicker: "Jou Sensoriese Roetekarakter",
     teenCrewTitle: "Jou Sensoriese Roetekarakter",
     teenCrewTitleParent: "Jou kind se Sensoriese Roetekarakter",
+    teenCrewOverviewTitle: "Jou Sensoriese Roeteprofiel",
+    teenCrewOverviewTitleParent: "Jou kind se Sensoriese Roeteprofiel",
+    teenCrewMatchTitle: "Jou ooreenstemmende roete",
+    teenCrewMatchTitleParent: "Jou kind se ooreenstemmende roete",
+    teenCrewMatchLead:
+      "Gebaseer op die algehele telling van hierdie sifting, is hier die roetestyl wat die naaste by jou antwoorde pas.",
+    teenCrewMatchLeadParent:
+      "Gebaseer op die algehele telling van hierdie sifting, is hier die roetestyl wat die naaste by jou kind se antwoorde pas.",
+    teenCrewDescriptionTitle: "Jou ooreenstemmende roete-beskrywing",
+    teenCrewDescriptionTitleParent: "Jou kind se ooreenstemmende roete-beskrywing",
     teenCrewIntro:
       "Ons ervaar almal die wêreld verskillend. Hier is die drie roetestyle — en dan watter een jou antwoorde die naaste gepas het.",
     teenCrewIntroParent:
@@ -1159,6 +1187,8 @@ const QUESTIONNAIRE_UI = {
     thankYouSent: "Jou sifting is suksesvol gestuur.",
     thankYouError:
       "Ons kon nie jou sifting outomaties stuur nie. Stuur asseblief vir Cayley ’n WhatsApp om te sê jy is klaar, en probeer Weer stuur.",
+    thankYouActivation:
+      "Jou sifting is ontvang, maar die terapeut se inkassie moet eers FormSubmit se eenmalige bevestiging-e-pos klik. Stuur asseblief vir Cayley ’n WhatsApp om te sê jy is klaar.",
     thankYouRetry: "Stuur weer",
     thankYouHome: "Terug na tuis",
     summaryKicker: "Sifting voltooi",
@@ -1638,14 +1668,16 @@ const DOMAIN_DEFINITIONS = [
       en: {
         title: "Tactile Processing",
         shortTitle: "Tactile",
-        description: "These questions explore touch, clothing textures and physical contact.",
-        blurb: "Touch, textures and physical contact on the skin.",
+        description:
+          "These questions explore food textures, clothing textures and physical touch.",
+        blurb: "Food textures, clothing textures and physical touch.",
       },
       af: {
         title: "Tasprosessering",
         shortTitle: "Tas",
-        description: "Hierdie vrae ondersoek aanraking, kledingteksture en fisieke kontak.",
-        blurb: "Aanraking, teksture en fisieke kontak op die vel.",
+        description:
+          "Hierdie vrae ondersoek voedselteksture, kledingteksture en fisieke aanraking.",
+        blurb: "Voedselteksture, kledingteksture en fisieke aanraking.",
       },
     },
     questions: {
@@ -1836,14 +1868,16 @@ const DOMAIN_DEFINITIONS = [
       en: {
         title: "Visual Processing",
         shortTitle: "Visual",
-        description: "These questions explore responses to light and visually busy environments.",
-        blurb: "Taking in light, colour and what is seen around you.",
+        description:
+          "These questions explore responses to light, colour, clutter and visually busy environments.",
+        blurb: "Taking in light, colour, clutter and what is seen around you.",
       },
       af: {
         title: "Visuele Prosessering",
         shortTitle: "Visueel",
-        description: "Hierdie vrae ondersoek reaksies op lig en visueel besige omgewings.",
-        blurb: "Inneem van lig, kleur en wat rondom gesien word.",
+        description:
+          "Hierdie vrae ondersoek reaksies op lig, kleur, rommeligheid en visueel besige omgewings.",
+        blurb: "Inneem van lig, kleur, rommeligheid en wat rondom gesien word.",
       },
     },
     questions: {
