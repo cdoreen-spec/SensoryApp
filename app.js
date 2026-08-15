@@ -1282,7 +1282,143 @@ function isFormSubmitActivationMessage(message) {
   return /activat/i.test(String(message || ""));
 }
 
+function assertEmailDeliveryContext() {
+  if (typeof window === "undefined") return;
+  if (window.location.protocol === "file:") {
+    const err = new Error(
+      "This page was opened as a file. Host it on a local or public web address (for example http://127.0.0.1:8777) so the report can be emailed."
+    );
+    err.code = "file-protocol";
+    throw err;
+  }
+}
+
+function classifyDeliveryError(err, fallbackMessage) {
+  const message = String(err?.message || fallbackMessage || "Send failed");
+  if (err?.code) return { message, code: err.code };
+  if (isFormSubmitActivationMessage(message)) {
+    return { message, code: "formsubmit-activation" };
+  }
+  if (/failed to fetch|networkerror|load failed|network request failed/i.test(message)) {
+    return {
+      message:
+        "The browser blocked the email request (often an ad blocker, privacy extension, or offline connection). Turn the blocker off for this site, or try another browser, then tap Send again.",
+      code: "network-blocked",
+    };
+  }
+  return { message, code: null };
+}
+
+async function postFormSubmitJson(payload) {
+  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(getClinicianEmail())}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+    const detail = (data && data.message) || "";
+    const err = new Error(detail || "FormSubmit could not send the email");
+    if (isFormSubmitActivationMessage(detail)) err.code = "formsubmit-activation";
+    throw err;
+  }
+  if (isFormSubmitActivationMessage(data.message)) {
+    const err = new Error(data.message);
+    err.code = "formsubmit-activation";
+    throw err;
+  }
+  return { provider: "formsubmit-json" };
+}
+
+async function postFormSubmitFormData(payload) {
+  const body = new FormData();
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value == null) return;
+    body.append(key, String(value));
+  });
+  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(getClinicianEmail())}`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+    const detail = (data && data.message) || "";
+    const err = new Error(detail || "FormSubmit could not send the email");
+    if (isFormSubmitActivationMessage(detail)) err.code = "formsubmit-activation";
+    throw err;
+  }
+  if (isFormSubmitActivationMessage(data.message)) {
+    const err = new Error(data.message);
+    err.code = "formsubmit-activation";
+    throw err;
+  }
+  return { provider: "formsubmit-formdata" };
+}
+
+/** Last-resort delivery when fetch/AJAX is blocked (ad blockers, etc.). */
+function postFormSubmitViaHiddenForm(payload) {
+  return new Promise((resolve, reject) => {
+    const iframeName = `ssot-mail-${Date.now()}`;
+    const iframe = document.createElement("iframe");
+    iframe.name = iframeName;
+    iframe.title = "Email delivery";
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = `https://formsubmit.co/${encodeURIComponent(getClinicianEmail())}`;
+    form.target = iframeName;
+    form.style.display = "none";
+
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value == null) return;
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = String(value);
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+
+    let settled = false;
+    const cleanup = () => {
+      window.setTimeout(() => {
+        form.remove();
+        iframe.remove();
+      }, 1500);
+    };
+    const finishOk = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve({ provider: "formsubmit-form" });
+    };
+    const finishErr = (message) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error(message || "FormSubmit form fallback failed"));
+    };
+
+    iframe.addEventListener("load", () => finishOk());
+    form.submit();
+    // FormSubmit redirects inside the iframe; treat load as success.
+    // If nothing loads (blocked), time out.
+    window.setTimeout(() => {
+      if (!settled) finishErr("Email fallback timed out. Check for an ad blocker, then try Send again.");
+    }, 8000);
+  });
+}
+
 async function sendResultsEmail(report) {
+  assertEmailDeliveryContext();
+
   const demo = state.demographics;
   const completerName = assessmentCompleterName();
   const payloadBase = {
@@ -1319,46 +1455,35 @@ async function sendResultsEmail(report) {
   }
 
   if (DELIVERY_PROVIDER === "formsubmit") {
-    // AJAX + FormSubmit's default reCAPTCHA often returns HTML instead of JSON.
-    // Disable captcha and include a honeypot so submissions stay JSON-parseable.
-    const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(getClinicianEmail())}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        _subject: report.subject,
-        _template: "table",
-        _captcha: "false",
-        _honey: "",
-        _url: typeof window !== "undefined" ? window.location.href.split("#")[0] : "",
-        name: payloadBase.name,
-        email: payloadBase.email,
-        respondent: payloadBase.respondent,
-        lifeContext: payloadBase.lifeContext,
-        language: payloadBase.language,
-        overallProfile: payloadBase.overallProfile,
-        patientResultsAccess: payloadBase.patientResultsAccess,
-        message: payloadBase.message,
-      }),
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
-      const detail = (data && data.message) || "";
-      if (isFormSubmitActivationMessage(detail)) {
-        const err = new Error(detail);
-        err.code = "formsubmit-activation";
-        throw err;
+    const formSubmitPayload = {
+      _subject: report.subject,
+      _template: "table",
+      _captcha: "false",
+      _honey: "",
+      _url: typeof window !== "undefined" ? window.location.href.split("#")[0] : "",
+      name: payloadBase.name,
+      email: payloadBase.email,
+      respondent: payloadBase.respondent,
+      lifeContext: payloadBase.lifeContext,
+      language: payloadBase.language,
+      overallProfile: payloadBase.overallProfile,
+      patientResultsAccess: payloadBase.patientResultsAccess,
+      message: payloadBase.message,
+    };
+
+    try {
+      return await postFormSubmitJson(formSubmitPayload);
+    } catch (jsonErr) {
+      if (jsonErr?.code === "formsubmit-activation") throw jsonErr;
+      console.warn("FormSubmit JSON send failed, trying FormData…", jsonErr);
+      try {
+        return await postFormSubmitFormData(formSubmitPayload);
+      } catch (formDataErr) {
+        if (formDataErr?.code === "formsubmit-activation") throw formDataErr;
+        console.warn("FormSubmit FormData send failed, trying hidden form…", formDataErr);
+        return await postFormSubmitViaHiddenForm(formSubmitPayload);
       }
-      throw new Error(detail || "FormSubmit could not send the email");
     }
-    if (isFormSubmitActivationMessage(data.message)) {
-      const err = new Error(data.message);
-      err.code = "formsubmit-activation";
-      throw err;
-    }
-    return { provider: "formsubmit" };
   }
 
   throw new Error("Email delivery is disabled in config.js");
@@ -1371,6 +1496,12 @@ function updateSubmissionStatusUi() {
     const kind = state.submissionStatus || "pending";
     status.className = `submission-status submission-status--${kind}`;
     status.textContent = submissionStatusMessage(copy);
+  }
+  const detail = app.querySelector("[data-submission-error-detail]");
+  if (detail) {
+    const show = state.submissionStatus === "error" && state.submissionError;
+    detail.hidden = !show;
+    detail.textContent = show ? state.submissionError : "";
   }
   const retry = app.querySelector("[data-action='retry-submit']");
   if (retry) {
@@ -1394,9 +1525,10 @@ function ensureResultsSubmitted({ force = false } = {}) {
     report = buildResultsReport();
   } catch (err) {
     console.error("Could not build results email:", err);
+    const classified = classifyDeliveryError(err, "Could not build report");
     state.submissionStatus = "error";
-    state.submissionError = err?.message || "Could not build report";
-    state.submissionErrorCode = null;
+    state.submissionError = classified.message;
+    state.submissionErrorCode = classified.code;
     updateSubmissionStatusUi();
     return;
   }
@@ -1410,9 +1542,10 @@ function ensureResultsSubmitted({ force = false } = {}) {
     })
     .catch((err) => {
       console.error("Results email failed:", err);
+      const classified = classifyDeliveryError(err, "Send failed");
       state.submissionStatus = "error";
-      state.submissionError = err?.message || "Send failed";
-      state.submissionErrorCode = err?.code || null;
+      state.submissionError = classified.message;
+      state.submissionErrorCode = classified.code;
       updateSubmissionStatusUi();
     });
 }
@@ -2440,9 +2573,22 @@ function submissionStatusMessage(copy = currentUi()) {
     if (state.submissionErrorCode === "formsubmit-activation") {
       return copy.thankYouActivation || copy.thankYouError;
     }
+    if (state.submissionErrorCode === "file-protocol") {
+      return copy.thankYouFileProtocol || copy.thankYouError;
+    }
+    if (state.submissionErrorCode === "network-blocked") {
+      return copy.thankYouNetworkBlocked || copy.thankYouError;
+    }
     return copy.thankYouError;
   }
   return copy.thankYouSending;
+}
+
+function renderSubmissionErrorDetail() {
+  if (state.submissionStatus !== "error" || !state.submissionError) return "";
+  return `<p class="submission-status__detail" data-submission-error-detail role="status">${escapeHtml(
+    state.submissionError
+  )}</p>`;
 }
 
 function renderSubmissionThankYou() {
@@ -2466,9 +2612,10 @@ function renderSubmissionThankYou() {
     } else {
       statusClass += " submission-status--pending";
     }
-    statusHtml = `<p class="${statusClass}" data-submission-status role="status">${escapeHtml(
-      submissionStatusMessage(copy)
-    )}</p>`;
+    statusHtml = `
+      <p class="${statusClass}" data-submission-status role="status">${escapeHtml(submissionStatusMessage(copy))}</p>
+      ${renderSubmissionErrorDetail()}
+    `;
   }
 
   return renderShell(
@@ -7331,7 +7478,7 @@ function renderResultsSummary() {
     shouldEmailResultsToClinician() && state.submissionStatus
       ? `<p class="submission-status submission-status--${escapeHtml(state.submissionStatus)}" data-submission-status role="status">${escapeHtml(
           submissionStatusMessage(copy)
-        )}</p>`
+        )}</p>${renderSubmissionErrorDetail()}`
       : shouldEmailResultsToClinician()
         ? `<p class="submission-status submission-status--pending" data-submission-status role="status">${escapeHtml(copy.thankYouSending)}</p>`
         : "";
@@ -7440,7 +7587,7 @@ function renderResults() {
     shouldEmailResultsToClinician() && state.submissionStatus
       ? `<p class="submission-status submission-status--${escapeHtml(state.submissionStatus)}" data-submission-status role="status">${escapeHtml(
           submissionStatusMessage(copy)
-        )}</p>`
+        )}</p>${renderSubmissionErrorDetail()}`
       : shouldEmailResultsToClinician()
         ? `<p class="submission-status submission-status--pending" data-submission-status role="status">${escapeHtml(copy.thankYouSending)}</p>`
         : "";

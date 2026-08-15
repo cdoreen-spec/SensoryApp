@@ -500,7 +500,11 @@ const QUESTIONNAIRE_UI = {
     thankYouError:
       "We couldn’t send your screening automatically. Please message Cayley on WhatsApp to let her know you’ve finished, and try Send again.",
     thankYouActivation:
-      "Your screening was received, but the therapist inbox still needs a one-time email confirmation from FormSubmit. Please message Cayley on WhatsApp to let her know you’ve finished.",
+      "Your screening was received, but the therapist inbox still needs a one-time email confirmation from FormSubmit. Check soulfulsensoryot@gmail.com (and Spam), click Activate/Confirm, then tap Send again.",
+    thankYouFileProtocol:
+      "This page was opened as a saved file, so email cannot send. Open it through a web address (for example a local server), complete again, or tap Send again from that address.",
+    thankYouNetworkBlocked:
+      "The browser blocked the email request — often an ad blocker or privacy extension. Pause the blocker for this site (or try another browser), then tap Send again.",
     thankYouRetry: "Send again",
     thankYouHome: "Back to home",
     summaryKicker: "Screening complete",
@@ -1188,7 +1192,11 @@ const QUESTIONNAIRE_UI = {
     thankYouError:
       "Ons kon nie jou sifting outomaties stuur nie. Stuur asseblief vir Cayley ’n WhatsApp om te sê jy is klaar, en probeer Weer stuur.",
     thankYouActivation:
-      "Jou sifting is ontvang, maar die terapeut se inkassie moet eers FormSubmit se eenmalige bevestiging-e-pos klik. Stuur asseblief vir Cayley ’n WhatsApp om te sê jy is klaar.",
+      "Jou sifting is ontvang, maar die terapeut se inkassie moet eers FormSubmit se eenmalige bevestiging-e-pos klik. Kyk in soulfulsensoryot@gmail.com (en Spam), klik Bevestig/Activate, en tik dan Weer stuur.",
+    thankYouFileProtocol:
+      "Hierdie bladsy is as ’n gestoorde lêer oopgemaak, so e-pos kan nie stuur nie. Maak dit oop via ’n webadres (bv. ’n plaaslike bediener) en probeer Weer stuur.",
+    thankYouNetworkBlocked:
+      "Die blaaier het die e-posversoek geblokkeer — dikwels ’n advertensieblokkering of privaatheiduitbreiding. Skakel dit tydelik af vir hierdie werf (of probeer ’n ander blaaier), en tik dan Weer stuur.",
     thankYouRetry: "Stuur weer",
     thankYouHome: "Terug na tuis",
     summaryKicker: "Sifting voltooi",
