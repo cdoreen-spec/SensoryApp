@@ -6,18 +6,26 @@ const state = {
   painSelected: [], // ordered category ids chosen on the map
   painAnswers: {},
   language: "en",
-  /** Shown once at the start of a fresh questionnaire (adult, teen, or parent). */
+  /** Shown once at the start of a fresh questionnaire (adult, teen, parent, or couple). */
   showIntroModal: false,
   respondent: null,
   lifeContext: null, // work | home | school | homeSchool
+  /** Couple dual-questionnaire session (shared code + partner a|b). */
+  coupleId: null,
+  couplePartner: null, // "a" | "b" while one partner is filling
+  coupleShowMerge: false,
+  coupleHubNotice: null,
+  coupleImportText: "",
   consent: [],
   sharingConsent: { parents: false, school: false, treatingTeam: false },
-  demographics: { name: "", age: "", email: "", occupation: "", parentName: "" },
+  demographics: { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" },
   /** ISO timestamp set when results are first shown — used on the print cover. */
   completedAt: null,
   answers: Object.fromEntries(SENSORY_DOMAIN_IDS.map((id) => [id, []])),
   /** Free-text closing reflection (ideal Saturday). */
   idealSaturday: "",
+  /** Couple-only work & lifestyle section (after sensory questions). */
+  coupleWork: null,
   contactPreference: null,
   showSensoryDiet: false,
   showWorkReport: false,
@@ -103,11 +111,13 @@ const SENSORY_AREAS = [
 const STEPS = [
   { type: "welcome" },
   { type: "respondent" },
+  { type: "coupleHub" },
   { type: "context" },
   { type: "consent" },
   { type: "demographics" },
   ...SENSORY_DOMAIN_IDS.map((domainId) => ({ type: "domain", domainId })),
   { type: "idealSaturday" },
+  { type: "coupleWork" },
   { type: "results" },
 ];
 
@@ -187,6 +197,9 @@ const SENSORY_DRAFT_KEY = "ssot-sensory-draft";
 const SENSORY_DRAFT_VERSION = 1;
 const ASSESSMENTS_KEY = "ssot-assessments-v1";
 const ASSESSMENTS_VERSION = 1;
+const COUPLE_SESSIONS_KEY = "ssot-couple-sessions-v1";
+const COUPLE_SESSIONS_VERSION = 1;
+const COUPLE_PARTNERS = ["a", "b"];
 
 /** Patient on-screen results after an invite: none | basic | full */
 const RESULTS_ACCESS = {
@@ -298,6 +311,653 @@ function writeAssessments(items) {
   }
 }
 
+function createCoupleId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  }
+  return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function emptyCouplePartnerSlot(label = "") {
+  return {
+    label: String(label || "").trim(),
+    status: "not_started",
+    assessmentId: null,
+    completedAt: null,
+    demographics: null,
+    answers: null,
+    idealSaturday: "",
+    language: "en",
+    summary: null,
+  };
+}
+
+function createCoupleSession(partial = {}) {
+  return {
+    id: partial.id || createCoupleId(),
+    version: COUPLE_SESSIONS_VERSION,
+    createdAt: partial.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    partners: {
+      a: emptyCouplePartnerSlot(partial.partnerAName || partial.aName || ""),
+      b: emptyCouplePartnerSlot(partial.partnerBName || partial.bName || ""),
+    },
+  };
+}
+
+function readCoupleSessionsMap() {
+  try {
+    const raw = localStorage.getItem(COUPLE_SESSIONS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== COUPLE_SESSIONS_VERSION || typeof parsed.sessions !== "object") {
+      return {};
+    }
+    return parsed.sessions || {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function writeCoupleSessionsMap(sessions) {
+  try {
+    localStorage.setItem(
+      COUPLE_SESSIONS_KEY,
+      JSON.stringify({ version: COUPLE_SESSIONS_VERSION, sessions })
+    );
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function getCoupleSession(id) {
+  if (!id) return null;
+  const sessions = readCoupleSessionsMap();
+  return sessions[id] || null;
+}
+
+function saveCoupleSession(session) {
+  if (!session?.id) return null;
+  session.updatedAt = new Date().toISOString();
+  const sessions = readCoupleSessionsMap();
+  sessions[session.id] = session;
+  writeCoupleSessionsMap(sessions);
+  return session;
+}
+
+function ensureCoupleSession(id = state.coupleId) {
+  let session = id ? getCoupleSession(id) : null;
+  if (!session) {
+    session = createCoupleSession({ id: id || undefined });
+    saveCoupleSession(session);
+  }
+  state.coupleId = session.id;
+  return session;
+}
+
+function couplePartnerLabel(partner, session = null) {
+  const copy = currentUi();
+  const sess = session || (state.coupleId ? getCoupleSession(state.coupleId) : null);
+  const slot = sess?.partners?.[partner];
+  const custom = String(slot?.label || "").trim();
+  if (custom) return custom;
+  return partner === "b" ? copy.couplePartnerB : copy.couplePartnerA;
+}
+
+function isCouplePathway() {
+  return state.respondent === "couple";
+}
+
+function needsCoupleHub(respondent = state.respondent) {
+  return respondent === "couple";
+}
+
+function bothCouplePartnersComplete(session = null) {
+  const sess = session || (state.coupleId ? getCoupleSession(state.coupleId) : null);
+  if (!sess) return false;
+  return COUPLE_PARTNERS.every((p) => sess.partners?.[p]?.status === "complete" && sess.partners[p].answers);
+}
+
+function buildCouplePartnerUrl(coupleId, partner) {
+  const url = new URL(getClinicianBaseUrl());
+  url.searchParams.set("couple", coupleId);
+  url.searchParams.set("partner", partner);
+  const session = getCoupleSession(coupleId);
+  const aName = session?.partners?.a?.label;
+  const bName = session?.partners?.b?.label;
+  if (aName) url.searchParams.set("aName", aName);
+  if (bName) url.searchParams.set("bName", bName);
+  return url.toString();
+}
+
+function encodeCoupleCompletionPackage(coupleId, partner) {
+  const session = getCoupleSession(coupleId);
+  const slot = session?.partners?.[partner];
+  if (!slot || slot.status !== "complete" || !slot.answers) return "";
+  const payload = {
+    v: 1,
+    coupleId,
+    partner,
+    label: slot.label || "",
+    completedAt: slot.completedAt,
+    language: slot.language || "en",
+    demographics: slot.demographics,
+    answers: slot.answers,
+    idealSaturday: slot.idealSaturday || "",
+    coupleWork: slot.coupleWork || null,
+    summary: slot.summary || null,
+  };
+  try {
+    return `SSOTC1.${btoa(unescape(encodeURIComponent(JSON.stringify(payload))))}`;
+  } catch (_) {
+    return "";
+  }
+}
+
+function decodeCoupleCompletionPackage(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return null;
+  try {
+    const body = text.startsWith("SSOTC1.") ? text.slice(7) : text;
+    const json = decodeURIComponent(escape(atob(body)));
+    const payload = JSON.parse(json);
+    if (!payload || payload.v !== 1 || !payload.coupleId || !COUPLE_PARTNERS.includes(payload.partner)) {
+      return null;
+    }
+    if (!payload.answers || typeof payload.answers !== "object") return null;
+    return payload;
+  } catch (_) {
+    return null;
+  }
+}
+
+function applyCoupleCompletionPackage(payload, { allowForeignSession = false } = {}) {
+  if (!payload) return { ok: false, reason: "bad" };
+  if (state.coupleId && payload.coupleId !== state.coupleId && !allowForeignSession) {
+    return { ok: false, reason: "mismatch" };
+  }
+  const session = ensureCoupleSession(payload.coupleId);
+  const partner = payload.partner;
+  session.partners[partner] = {
+    ...emptyCouplePartnerSlot(payload.label || session.partners[partner]?.label || ""),
+    label: String(payload.label || session.partners[partner]?.label || "").trim(),
+    status: "complete",
+    assessmentId: session.partners[partner]?.assessmentId || null,
+    completedAt: payload.completedAt || new Date().toISOString(),
+    demographics: payload.demographics || null,
+    answers: cloneAnswers(payload.answers),
+    idealSaturday: payload.idealSaturday || "",
+    language: LANGUAGES.includes(payload.language) ? payload.language : "en",
+    summary: payload.summary || null,
+    coupleWork: normalizeCoupleWork(payload.coupleWork),
+  };
+  saveCoupleSession(session);
+  state.coupleId = session.id;
+  return { ok: true, session, partner };
+}
+
+function persistCurrentPartnerToCoupleSession(assessmentId = null) {
+  if (!isCouplePathway() || !state.coupleId || !COUPLE_PARTNERS.includes(state.couplePartner)) {
+    return null;
+  }
+  const session = ensureCoupleSession(state.coupleId);
+  const partner = state.couplePartner;
+  const scores = scoreAllDomains(
+    state.answers,
+    currentDomains(),
+    state.language,
+    "couple"
+  );
+  const metrics = getProfileMetrics(scores);
+  const name = String(state.demographics?.name || "").trim();
+  session.partners[partner] = {
+    ...session.partners[partner],
+    label: name || session.partners[partner].label || "",
+    status: "complete",
+    assessmentId: assessmentId || session.partners[partner].assessmentId || null,
+    completedAt: state.completedAt || new Date().toISOString(),
+    demographics: {
+      name: state.demographics?.name || "",
+      age: state.demographics?.age || "",
+      email: state.demographics?.email || "",
+      occupation: state.demographics?.occupation || "",
+      parentName: state.demographics?.parentName || "",
+      partnerName: state.demographics?.partnerName || "",
+    },
+    answers: cloneAnswers(state.answers),
+    idealSaturday: state.idealSaturday || "",
+    language: state.language,
+    summary: {
+      overallLabel: profileLabelPlain(metrics?.meta) || "",
+      lean: metrics?.lean || "",
+      leanHeadline: metrics?.leanHeadline || "",
+      domainProfiles: getScoreRows(scores).map((row) => ({
+        id: row.id,
+        title: row.title,
+        short: row.profileShort || row.thresholdLabel || "",
+      })),
+    },
+    coupleWork: normalizeCoupleWork(state.coupleWork),
+  };
+  // Mirror the other partner's display name into demographics.partnerName when known.
+  const other = partner === "a" ? "b" : "a";
+  const otherName = String(session.partners[other]?.label || session.partners[other]?.demographics?.name || "").trim();
+  if (otherName && session.partners[partner].demographics) {
+    session.partners[partner].demographics.partnerName = otherName;
+  }
+  saveCoupleSession(session);
+  return session;
+}
+
+function markCouplePartnerInProgress(partner) {
+  const session = ensureCoupleSession();
+  if (!COUPLE_PARTNERS.includes(partner)) return session;
+  if (session.partners[partner].status !== "complete") {
+    session.partners[partner].status = "in_progress";
+    saveCoupleSession(session);
+  }
+  return session;
+}
+
+function findStepIndex(type) {
+  return STEPS.findIndex((step) => step.type === type);
+}
+
+function startCouplePartnerQuestionnaire(partner) {
+  if (!COUPLE_PARTNERS.includes(partner)) return;
+  const session = ensureCoupleSession();
+  state.respondent = "couple";
+  state.couplePartner = partner;
+  state.coupleShowMerge = false;
+  state.lifeContext = null;
+  state.error = null;
+  state.coupleHubNotice = null;
+  state.view = "questionnaire";
+  state.showIntroModal = true;
+  state.archiveReadOnly = false;
+  state.viewingArchivedId = null;
+  state.sampleReportPreview = false;
+  state.completedAt = null;
+  state.showSensoryDiet = false;
+  state.showWorkReport = false;
+  state.workReportDeclined = false;
+  state.submissionStatus = null;
+  state.submissionError = null;
+  state.submissionErrorCode = null;
+  state.submissionAttempted = false;
+
+  const slot = session.partners[partner];
+  if (slot.status === "complete" && slot.answers) {
+    // Re-open completed partner results from the session payload.
+    state.demographics = {
+      name: slot.demographics?.name || slot.label || "",
+      age: slot.demographics?.age || "",
+      email: slot.demographics?.email || "",
+      occupation: slot.demographics?.occupation || "",
+      parentName: slot.demographics?.parentName || "",
+      partnerName: slot.demographics?.partnerName || "",
+    };
+    state.answers = cloneAnswers(slot.answers);
+    state.idealSaturday = slot.idealSaturday || "";
+    state.coupleWork = normalizeCoupleWork(slot.coupleWork);
+    state.language = LANGUAGES.includes(slot.language) ? slot.language : state.language;
+    document.documentElement.lang = state.language;
+    state.completedAt = slot.completedAt || new Date().toISOString();
+    state.consent = getConsentItems(state.language, "couple").map(() => true);
+    state.sharingConsent = createEmptySharingConsent(state.language, "couple", null);
+    state.viewingArchivedId = slot.assessmentId || `couple-${session.id}-${partner}`;
+    state.archiveReadOnly = true;
+    state.step = findStepIndex("results");
+    state.showIntroModal = false;
+    state.showSensoryDiet = true;
+    return;
+  }
+
+  markCouplePartnerInProgress(partner);
+  state.consent = getConsentItems(state.language, "couple").map(() => false);
+  state.sharingConsent = createEmptySharingConsent(state.language, "couple", null);
+  state.demographics = {
+    name: slot.label || "",
+    age: "",
+    email: "",
+    occupation: "",
+    parentName: "",
+    partnerName: couplePartnerLabel(partner === "a" ? "b" : "a", session),
+  };
+  state.answers = emptyAnswers();
+  state.idealSaturday = "";
+  state.coupleWork = emptyCoupleWork();
+  state.contactPreference = null;
+  state.step = findStepIndex("consent");
+}
+
+function needsCoupleWork(respondent = state.respondent) {
+  return respondent === "couple";
+}
+
+/** Couples answer a recharging-Saturday question in the work section instead. */
+function needsIdealSaturday(respondent = state.respondent) {
+  return respondent !== "couple";
+}
+
+function emptyCoupleWork() {
+  return {
+    employment: null, // "works" | "doesNotWork"
+    workLocation: null, // office | home | both | other
+    workLocationOther: "",
+    workWith: null, // people | alone | screens | screensAndPeople | other
+    workWithOther: "",
+    workingHours: "",
+    endOfDay: [], // multi: getOut | sitRelax | withPeople | alone
+    rechargeAfterWork: [], // multi: activeOutdoors | relaxHome | othersHome | othersOutside | other
+    rechargeAfterWorkOther: "",
+    rechargingSaturday: "",
+    isParent: null, // "yes" | "no"
+  };
+}
+
+function ensureCoupleWorkState() {
+  if (!state.coupleWork || typeof state.coupleWork !== "object") {
+    state.coupleWork = emptyCoupleWork();
+  } else {
+    state.coupleWork = normalizeCoupleWork(state.coupleWork);
+  }
+  return state.coupleWork;
+}
+
+function normalizeCoupleWorkEndOfDay(raw) {
+  const allowed = ["getOut", "sitRelax", "withPeople", "alone"];
+  if (Array.isArray(raw)) {
+    return raw.filter((value) => allowed.includes(value));
+  }
+  if (allowed.includes(raw)) return [raw];
+  return [];
+}
+
+function normalizeCoupleWorkRecharge(raw) {
+  const allowed = ["activeOutdoors", "relaxHome", "othersHome", "othersOutside", "other"];
+  if (Array.isArray(raw)) {
+    return raw.filter((value) => allowed.includes(value));
+  }
+  if (allowed.includes(raw)) return [raw];
+  return [];
+}
+
+function normalizeCoupleWork(raw) {
+  const base = emptyCoupleWork();
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    ...base,
+    employment: raw.employment === "works" || raw.employment === "doesNotWork" ? raw.employment : null,
+    workLocation: ["office", "home", "both", "other"].includes(raw.workLocation) ? raw.workLocation : null,
+    workLocationOther: String(raw.workLocationOther || ""),
+    workWith: ["people", "alone", "screens", "screensAndPeople", "other"].includes(raw.workWith)
+      ? raw.workWith
+      : null,
+    workWithOther: String(raw.workWithOther || ""),
+    workingHours: String(raw.workingHours || ""),
+    endOfDay: normalizeCoupleWorkEndOfDay(raw.endOfDay),
+    rechargeAfterWork: normalizeCoupleWorkRecharge(raw.rechargeAfterWork),
+    rechargeAfterWorkOther: String(raw.rechargeAfterWorkOther || ""),
+    rechargingSaturday: String(raw.rechargingSaturday || ""),
+    isParent: raw.isParent === "yes" || raw.isParent === "no" ? raw.isParent : null,
+  };
+}
+
+function coupleWorkChoiceButton(group, value, label, selected) {
+  return `
+    <button
+      type="button"
+      class="couple-work-option ${selected ? "is-selected" : ""}"
+      data-couple-work-field="${group}"
+      data-couple-work-value="${value}"
+      aria-pressed="${selected}"
+    >${escapeHtml(label)}</button>
+  `;
+}
+
+function renderCoupleWork() {
+  const copy = currentUi();
+  const work = ensureCoupleWorkState();
+  const skipsWorkQs = work.employment === "doesNotWork";
+
+  const employmentOptions = [
+    coupleWorkChoiceButton("employment", "works", copy.coupleWorkEmploymentYes, work.employment === "works"),
+    coupleWorkChoiceButton(
+      "employment",
+      "doesNotWork",
+      copy.coupleWorkEmploymentNo,
+      work.employment === "doesNotWork"
+    ),
+  ].join("");
+
+  let workFields = "";
+  if (work.employment === "works") {
+    workFields = `
+      <fieldset class="couple-work-fieldset">
+        <legend>${escapeHtml(copy.coupleWorkLocationLabel)}</legend>
+        <div class="couple-work-options">
+          ${coupleWorkChoiceButton("workLocation", "office", copy.coupleWorkLocationOffice, work.workLocation === "office")}
+          ${coupleWorkChoiceButton("workLocation", "home", copy.coupleWorkLocationHome, work.workLocation === "home")}
+          ${coupleWorkChoiceButton("workLocation", "both", copy.coupleWorkLocationBoth, work.workLocation === "both")}
+          ${coupleWorkChoiceButton("workLocation", "other", copy.coupleWorkLocationOther, work.workLocation === "other")}
+        </div>
+        ${
+          work.workLocation === "other"
+            ? `<input type="text" class="couple-work-other" data-couple-work-text="workLocationOther" value="${escapeHtml(work.workLocationOther)}" placeholder="${escapeHtml(copy.coupleWorkLocationOtherPlaceholder)}" />`
+            : ""
+        }
+      </fieldset>
+
+      <fieldset class="couple-work-fieldset">
+        <legend>${escapeHtml(copy.coupleWorkWithLabel)}</legend>
+        <div class="couple-work-options">
+          ${coupleWorkChoiceButton("workWith", "people", copy.coupleWorkWithPeople, work.workWith === "people")}
+          ${coupleWorkChoiceButton("workWith", "alone", copy.coupleWorkWithAlone, work.workWith === "alone")}
+          ${coupleWorkChoiceButton("workWith", "screens", copy.coupleWorkWithScreens, work.workWith === "screens")}
+          ${coupleWorkChoiceButton("workWith", "screensAndPeople", copy.coupleWorkWithScreensPeople, work.workWith === "screensAndPeople")}
+          ${coupleWorkChoiceButton("workWith", "other", copy.coupleWorkWithOther, work.workWith === "other")}
+        </div>
+        ${
+          work.workWith === "other"
+            ? `<input type="text" class="couple-work-other" data-couple-work-text="workWithOther" value="${escapeHtml(work.workWithOther)}" placeholder="${escapeHtml(copy.coupleWorkWithOtherPlaceholder)}" />`
+            : ""
+        }
+      </fieldset>
+
+      <div class="field couple-work-field">
+        <label for="couple-work-hours">${escapeHtml(copy.coupleWorkHoursLabel)}</label>
+        <input id="couple-work-hours" type="text" data-couple-work-text="workingHours" value="${escapeHtml(work.workingHours)}" placeholder="${escapeHtml(copy.coupleWorkHoursPlaceholder)}" />
+      </div>
+
+      <fieldset class="couple-work-fieldset">
+        <legend>${escapeHtml(copy.coupleWorkEndOfDayLabel)}</legend>
+        <p class="couple-work-multi-hint">${escapeHtml(copy.coupleWorkEndOfDayHint)}</p>
+        <div class="couple-work-options">
+          ${coupleWorkChoiceButton("endOfDay", "getOut", copy.coupleWorkEndGetOut, work.endOfDay.includes("getOut"))}
+          ${coupleWorkChoiceButton("endOfDay", "sitRelax", copy.coupleWorkEndSitRelax, work.endOfDay.includes("sitRelax"))}
+          ${coupleWorkChoiceButton("endOfDay", "withPeople", copy.coupleWorkEndWithPeople, work.endOfDay.includes("withPeople"))}
+          ${coupleWorkChoiceButton("endOfDay", "alone", copy.coupleWorkEndAlone, work.endOfDay.includes("alone"))}
+        </div>
+      </fieldset>
+
+      <fieldset class="couple-work-fieldset">
+        <legend>${escapeHtml(copy.coupleWorkRechargeLabel)}</legend>
+        <p class="couple-work-multi-hint">${escapeHtml(copy.coupleWorkRechargeHint)}</p>
+        <div class="couple-work-options">
+          ${coupleWorkChoiceButton("rechargeAfterWork", "activeOutdoors", copy.coupleWorkRechargeActive, work.rechargeAfterWork.includes("activeOutdoors"))}
+          ${coupleWorkChoiceButton("rechargeAfterWork", "relaxHome", copy.coupleWorkRechargeHome, work.rechargeAfterWork.includes("relaxHome"))}
+          ${coupleWorkChoiceButton("rechargeAfterWork", "othersHome", copy.coupleWorkRechargeOthersHome, work.rechargeAfterWork.includes("othersHome"))}
+          ${coupleWorkChoiceButton("rechargeAfterWork", "othersOutside", copy.coupleWorkRechargeOthersOut, work.rechargeAfterWork.includes("othersOutside"))}
+          ${coupleWorkChoiceButton("rechargeAfterWork", "other", copy.coupleWorkRechargeOther, work.rechargeAfterWork.includes("other"))}
+        </div>
+        ${
+          work.rechargeAfterWork.includes("other")
+            ? `<input type="text" class="couple-work-other" data-couple-work-text="rechargeAfterWorkOther" value="${escapeHtml(work.rechargeAfterWorkOther)}" placeholder="${escapeHtml(copy.coupleWorkRechargeOtherPlaceholder)}" />`
+            : ""
+        }
+      </fieldset>
+
+      <div class="field couple-work-field">
+        <label for="couple-work-saturday">${escapeHtml(copy.coupleWorkSaturdayLabel)}</label>
+        <textarea id="couple-work-saturday" class="couple-work-textarea" data-couple-work-text="rechargingSaturday" rows="5" placeholder="${escapeHtml(copy.coupleWorkSaturdayPlaceholder)}">${escapeHtml(work.rechargingSaturday)}</textarea>
+      </div>
+    `;
+  } else if (skipsWorkQs) {
+    workFields = `<p class="couple-work-skip-note">${escapeHtml(copy.coupleWorkSkipNote)}</p>`;
+  }
+
+  return renderShell(
+    `
+      ${state.error ? `<div class="error-banner">${escapeHtml(state.error)}</div>` : ""}
+      <span class="section-tag">${escapeHtml(copy.coupleWorkTag)}</span>
+      <h2 class="step-title">${escapeHtml(copy.coupleWorkTitle)}</h2>
+      <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+      <p class="step-desc">${escapeHtml(copy.coupleWorkDesc)}</p>
+
+      <fieldset class="couple-work-fieldset">
+        <legend>${escapeHtml(copy.coupleWorkEmploymentLabel)}</legend>
+        <div class="couple-work-options couple-work-options--stack">${employmentOptions}</div>
+      </fieldset>
+
+      ${workFields}
+
+      <fieldset class="couple-work-fieldset">
+        <legend>${escapeHtml(copy.coupleWorkParentLabel)}</legend>
+        <div class="couple-work-options">
+          ${coupleWorkChoiceButton("isParent", "yes", copy.coupleWorkParentYes, work.isParent === "yes")}
+          ${coupleWorkChoiceButton("isParent", "no", copy.coupleWorkParentNo, work.isParent === "no")}
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
+        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(copy.seeResults || copy.continue)}</button>
+      </div>
+    `,
+    renderProgress(),
+    { stepType: "coupleWork" }
+  );
+}
+
+function coupleWorkLabel(copy, field, value, otherText = "") {
+  const maps = {
+    employment: {
+      works: copy.coupleWorkEmploymentYes,
+      doesNotWork: copy.coupleWorkEmploymentNo,
+    },
+    workLocation: {
+      office: copy.coupleWorkLocationOffice,
+      home: copy.coupleWorkLocationHome,
+      both: copy.coupleWorkLocationBoth,
+      other: otherText || copy.coupleWorkLocationOther,
+    },
+    workWith: {
+      people: copy.coupleWorkWithPeople,
+      alone: copy.coupleWorkWithAlone,
+      screens: copy.coupleWorkWithScreens,
+      screensAndPeople: copy.coupleWorkWithScreensPeople,
+      other: otherText || copy.coupleWorkWithOther,
+    },
+    endOfDay: {
+      getOut: copy.coupleWorkEndGetOut,
+      sitRelax: copy.coupleWorkEndSitRelax,
+      withPeople: copy.coupleWorkEndWithPeople,
+      alone: copy.coupleWorkEndAlone,
+    },
+    rechargeAfterWork: {
+      activeOutdoors: copy.coupleWorkRechargeActive,
+      relaxHome: copy.coupleWorkRechargeHome,
+      othersHome: copy.coupleWorkRechargeOthersHome,
+      othersOutside: copy.coupleWorkRechargeOthersOut,
+      other: otherText || copy.coupleWorkRechargeOther,
+    },
+    isParent: {
+      yes: copy.coupleWorkParentYes,
+      no: copy.coupleWorkParentNo,
+    },
+  };
+  return maps[field]?.[value] || value || "—";
+}
+
+function formatCoupleWorkEndOfDay(work, copy = currentUi()) {
+  const selected = normalizeCoupleWorkEndOfDay(work?.endOfDay);
+  if (!selected.length) return "—";
+  return selected.map((value) => coupleWorkLabel(copy, "endOfDay", value)).join("; ");
+}
+
+function formatCoupleWorkRecharge(work, copy = currentUi()) {
+  const selected = normalizeCoupleWorkRecharge(work?.rechargeAfterWork);
+  if (!selected.length) return "—";
+  return selected
+    .map((value) =>
+      coupleWorkLabel(
+        copy,
+        "rechargeAfterWork",
+        value,
+        value === "other" ? work.rechargeAfterWorkOther : ""
+      )
+    )
+    .join("; ");
+}
+
+function formatCoupleWorkSummary(work, copy = currentUi()) {
+  if (!work?.employment) return "";
+  const lines = [];
+  lines.push(`${copy.coupleWorkEmploymentLabel} ${coupleWorkLabel(copy, "employment", work.employment)}`);
+  if (work.employment === "works") {
+    lines.push(
+      `${copy.coupleWorkLocationLabel} ${coupleWorkLabel(copy, "workLocation", work.workLocation, work.workLocationOther)}`
+    );
+    lines.push(
+      `${copy.coupleWorkWithLabel} ${coupleWorkLabel(copy, "workWith", work.workWith, work.workWithOther)}`
+    );
+    if (work.workingHours?.trim()) lines.push(`${copy.coupleWorkHoursLabel} ${work.workingHours.trim()}`);
+    lines.push(`${copy.coupleWorkEndOfDayLabel} ${formatCoupleWorkEndOfDay(work, copy)}`);
+    lines.push(`${copy.coupleWorkRechargeLabel} ${formatCoupleWorkRecharge(work, copy)}`);
+    if (work.rechargingSaturday?.trim()) {
+      lines.push(`${copy.coupleWorkSaturdayLabel} ${work.rechargingSaturday.trim()}`);
+    }
+  }
+  if (work.isParent) {
+    lines.push(`${copy.coupleWorkParentLabel}: ${coupleWorkLabel(copy, "isParent", work.isParent)}`);
+  }
+  return lines.join("\n");
+}
+
+function renderCoupleWorkResults() {
+  if (!isCouplePathway()) return "";
+  const work = normalizeCoupleWork(state.coupleWork);
+  if (!work.employment) return "";
+  const copy = currentUi();
+  const summary = formatCoupleWorkSummary(work, copy);
+  if (!summary) return "";
+  const paragraphs = summary
+    .split("\n")
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join("");
+  return `
+    <section class="report-block couple-work-results no-break">
+      <p class="profile-kicker">${escapeHtml(copy.coupleWorkTag)}</p>
+      <h3>${escapeHtml(copy.coupleWorkResultsTitle)}</h3>
+      <div class="couple-work-results__body">${paragraphs}</div>
+    </section>
+  `;
+}
+
+function openCoupleHub(options = {}) {
+  state.respondent = "couple";
+  state.couplePartner = null;
+  state.coupleShowMerge = Boolean(options.showMerge);
+  state.lifeContext = null;
+  state.view = "questionnaire";
+  state.step = findStepIndex("coupleHub");
+  state.showIntroModal = false;
+  state.error = null;
+  if (options.coupleId) state.coupleId = options.coupleId;
+  ensureCoupleSession(state.coupleId);
+}
+
 function getAssessmentById(id) {
   if (!id) return null;
   return readAssessments().find((item) => item.id === id) || null;
@@ -313,6 +973,9 @@ function buildAssessmentSummary(scores, metrics) {
     firstName,
     surname,
     parentName: String(demo.parentName || "").trim(),
+    partnerName: String(demo.partnerName || "").trim(),
+    coupleId: state.coupleId || null,
+    couplePartner: state.couplePartner || null,
     completerName: assessmentCompleterName(),
     email: String(demo.email || "").trim(),
     age: String(demo.age || "").trim(),
@@ -348,15 +1011,19 @@ function buildAssessmentRecord() {
     respondent: state.respondent,
     language: state.language,
     lifeContext: state.lifeContext,
+    coupleId: state.coupleId || null,
+    couplePartner: state.couplePartner || null,
     demographics: {
       name: state.demographics?.name || "",
       age: state.demographics?.age || "",
       email: state.demographics?.email || "",
       occupation: state.demographics?.occupation || "",
       parentName: state.demographics?.parentName || "",
+      partnerName: state.demographics?.partnerName || "",
     },
     answers: cloneAnswers(state.answers),
     idealSaturday: state.idealSaturday || "",
+    coupleWork: normalizeCoupleWork(state.coupleWork),
     sharingConsent: { ...(state.sharingConsent || {}) },
     contactPreference: state.contactPreference,
     inviteMode: Boolean(state.inviteMode),
@@ -381,6 +1048,7 @@ function ensureAssessmentArchived() {
   items.unshift(record);
   writeAssessments(items.slice(0, 200));
   state.viewingArchivedId = record.id;
+  persistCurrentPartnerToCoupleSession(record.id);
   return record.id;
 }
 
@@ -413,9 +1081,11 @@ function applyAssessmentRecord(record, options = {}) {
     email: record.demographics?.email || "",
     occupation: record.demographics?.occupation || "",
     parentName: record.demographics?.parentName || "",
+    partnerName: record.demographics?.partnerName || "",
   };
   state.answers = cloneAnswers(record.answers);
   state.idealSaturday = record.idealSaturday || "";
+  state.coupleWork = normalizeCoupleWork(record.coupleWork);
   state.sharingConsent = { ...(record.sharingConsent || {}) };
   state.contactPreference = record.contactPreference || null;
   state.inviteMode = false;
@@ -451,10 +1121,11 @@ function exitArchivedReport() {
   state.lifeContext = null;
   state.consent = [];
   state.sharingConsent = { parents: false, school: false, treatingTeam: false };
-  state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "" };
+  state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" };
   state.completedAt = null;
   state.answers = emptyAnswers();
   state.idealSaturday = "";
+  state.coupleWork = emptyCoupleWork();
   state.contactPreference = null;
   state.showSensoryDiet = false;
   state.showWorkReport = false;
@@ -482,7 +1153,7 @@ function canOfferSettingReportFor(respondent, lifeContext) {
 /** Teens always use a combined home + school setting. */
 function normalizeRespondentLifeContext(respondent, lifeContext) {
   if (respondent === "teen") return "homeSchool";
-  if (respondent === "parent") return null;
+  if (respondent === "parent" || respondent === "couple") return null;
   return lifeContext || null;
 }
 
@@ -552,7 +1223,17 @@ function buildSampleAssessmentRecord(options = {}) {
           email: "parent.sample@example.com",
           occupation: "Grade 3",
           parentName: "Jordan Alberts",
+          partnerName: "",
         }
+      : respondent === "couple"
+        ? {
+            name: "Taylor Ndlovu",
+            age: "34",
+            email: "couple.sample@example.com",
+            occupation: "",
+            parentName: "",
+            partnerName: "Jordan Ndlovu",
+          }
       : respondent === "teen"
         ? {
             name: "Alex Molefe",
@@ -560,6 +1241,7 @@ function buildSampleAssessmentRecord(options = {}) {
             email: "teen.sample@example.com",
             occupation: "Grade 10",
             parentName: "",
+            partnerName: "",
           }
         : {
             name: "Taylor Ndlovu",
@@ -567,6 +1249,7 @@ function buildSampleAssessmentRecord(options = {}) {
             email: "adult.sample@example.com",
             occupation: lifeContext === "work" ? "Project coordinator" : "Adult",
             parentName: "",
+            partnerName: "",
           };
 
   const sharingConsent = createEmptySharingConsent("en", respondent, lifeContext);
@@ -645,6 +1328,7 @@ function renderSampleReportPreviewControls() {
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="adult" data-sample-context="home">Adult · home</button>
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="teen" data-sample-context="homeSchool">Teen · home &amp; school</button>
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="parent">Parent / child</button>
+        <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="couple">Couple</button>
       </div>
     </div>
   `;
@@ -913,10 +1597,37 @@ function readInviteFromUrl() {
     } else {
       continueInviteSession();
     }
+    return;
+  }
+
+  const coupleId = params.get("couple");
+  if (coupleId) {
+    const partner = String(params.get("partner") || "").toLowerCase();
+    const aName = params.get("aName") || "";
+    const bName = params.get("bName") || "";
+    let session = getCoupleSession(coupleId);
+    if (!session) {
+      session = createCoupleSession({ id: coupleId, partnerAName: aName, partnerBName: bName });
+    } else {
+      if (aName && !session.partners.a.label) session.partners.a.label = aName;
+      if (bName && !session.partners.b.label) session.partners.b.label = bName;
+    }
+    saveCoupleSession(session);
+    state.coupleId = coupleId;
+    state.respondent = "couple";
+    state.view = "questionnaire";
+    if (COUPLE_PARTNERS.includes(partner)) {
+      startCouplePartnerQuestionnaire(partner);
+    } else {
+      openCoupleHub({ coupleId });
+    }
   }
 }
 
 function sensoryDraftStorageKey() {
+  if (isCouplePathway() && state.coupleId && state.couplePartner) {
+    return `${SENSORY_DRAFT_KEY}-couple-${state.coupleId}-${state.couplePartner}`;
+  }
   return isPatientInvite() ? `${SENSORY_DRAFT_KEY}-invite` : SENSORY_DRAFT_KEY;
 }
 
@@ -956,6 +1667,8 @@ function buildSensoryDraft() {
     language: state.language,
     respondent: state.respondent,
     lifeContext: state.lifeContext,
+    coupleId: state.coupleId || null,
+    couplePartner: state.couplePartner || null,
     consent: Array.isArray(state.consent) ? state.consent.map(Boolean) : [],
     sharingConsent: { ...(state.sharingConsent || {}) },
     demographics: {
@@ -964,9 +1677,11 @@ function buildSensoryDraft() {
       email: state.demographics?.email || "",
       occupation: state.demographics?.occupation || "",
       parentName: state.demographics?.parentName || "",
+      partnerName: state.demographics?.partnerName || "",
     },
     answers: cloneAnswers(state.answers),
     idealSaturday: state.idealSaturday || "",
+    coupleWork: normalizeCoupleWork(state.coupleWork),
     sensoryArea: state.sensoryArea,
     contactPreference: state.contactPreference,
   };
@@ -1032,9 +1747,14 @@ function applySensoryDraft(draft) {
   document.documentElement.lang = state.language;
   state.respondent = RESPONDENT_TYPES.includes(draft.respondent) ? draft.respondent : null;
   state.lifeContext = normalizeRespondentLifeContext(state.respondent, draft.lifeContext || null);
+  state.coupleId = draft.coupleId || null;
+  state.couplePartner = COUPLE_PARTNERS.includes(draft.couplePartner) ? draft.couplePartner : null;
   // Teens no longer use the home/school choice step — skip it if a draft landed there.
   if (state.respondent === "teen" && STEPS[state.step]?.type === "context") {
     state.step += 1;
+  }
+  if (state.respondent === "couple" && STEPS[state.step]?.type === "coupleHub" && state.couplePartner) {
+    state.step = findStepIndex("consent");
   }
   state.consent = Array.isArray(draft.consent) ? draft.consent.map(Boolean) : [];
   if (state.respondent) {
@@ -1059,9 +1779,11 @@ function applySensoryDraft(draft) {
     email: draft.demographics?.email || "",
     occupation: draft.demographics?.occupation || "",
     parentName: draft.demographics?.parentName || "",
+    partnerName: draft.demographics?.partnerName || "",
   };
   state.answers = cloneAnswers(draft.answers);
   state.idealSaturday = draft.idealSaturday || "";
+  state.coupleWork = normalizeCoupleWork(draft.coupleWork);
   state.sensoryArea = draft.sensoryArea || null;
   state.contactPreference = draft.contactPreference || null;
   if (isPatientInvite() && draft.patientResultsAccess) {
@@ -1088,12 +1810,18 @@ function resetSensoryQuestionnaireProgress() {
   state.showIntroModal = true;
   state.respondent = null;
   state.lifeContext = null;
+  state.coupleId = null;
+  state.couplePartner = null;
+  state.coupleShowMerge = false;
+  state.coupleHubNotice = null;
+  state.coupleImportText = "";
   state.consent = [];
   state.sharingConsent = { parents: false, school: false, treatingTeam: false };
-  state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "" };
+  state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" };
   state.completedAt = null;
   state.answers = emptyAnswers();
   state.idealSaturday = "";
+  state.coupleWork = emptyCoupleWork();
   state.contactPreference = null;
   state.showSensoryDiet = false;
   state.showWorkReport = false;
@@ -1156,7 +1884,13 @@ function buildResultsReport() {
   const completerName = assessmentCompleterName();
   const context = lifeContextLabel() || "—";
   const respondent =
-    state.respondent === "parent" ? "Parent (about child)" : state.respondent === "teen" ? "Teen" : "Adult";
+    state.respondent === "parent"
+      ? "Parent (about child)"
+      : state.respondent === "teen"
+        ? "Teen"
+        : state.respondent === "couple"
+          ? `Couple · ${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}`
+          : "Adult";
 
   const detailRows = getScoreRows(scores);
   const domainDetailLines = detailRows
@@ -1199,10 +1933,15 @@ function buildResultsReport() {
       ? `Child’s name: ${demo.name || "—"}`
       : `Name: ${demo.name || "—"}`,
     demo.parentName ? `Parent / guardian (completed assessment): ${demo.parentName}` : null,
+    demo.partnerName ? `Partner: ${demo.partnerName}` : null,
     `Age: ${demo.age || "—"}`,
     `Email: ${demo.email || "—"}`,
     demo.occupation ? `Occupation / school: ${demo.occupation}` : null,
     `Respondent: ${respondent}`,
+    state.coupleId ? `Couple session: ${state.coupleId}` : null,
+    state.couplePartner
+      ? `Couple partner: ${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}`
+      : null,
     `Language: ${state.language === "af" ? "Afrikaans" : "English"}`,
     `Life context: ${context}`,
     state.contactPreference ? `Contact preference: ${state.contactPreference}` : null,
@@ -1248,8 +1987,11 @@ function buildResultsReport() {
         ];
       })
       .flat()),
-    ...(state.idealSaturday?.trim()
+    ...(state.idealSaturday?.trim() && !isCouplePathway()
       ? ["", "— Best Saturday —", state.idealSaturday.trim()]
+      : []),
+    ...(isCouplePathway() && state.coupleWork?.employment
+      ? ["", "— Work & home life —", formatCoupleWorkSummary(normalizeCoupleWork(state.coupleWork))]
       : []),
     `Questions asked: ${metrics.scored}`,
     `Sensitive / avoiding: ${metrics.sensitive}`,
@@ -1264,6 +2006,8 @@ function buildResultsReport() {
   const subject =
     state.respondent === "parent" && demo.name
       ? `${completerName} — Sensory screening (about ${demo.name})${profileBit ? ` — ${profileBit}` : ""}`
+      : state.respondent === "couple"
+        ? `${completerName} — Couple screening (${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}${state.coupleId ? ` · ${state.coupleId}` : ""})${profileBit ? ` — ${profileBit}` : ""}`
       : `${completerName} — Sensory screening${profileBit ? ` — ${profileBit}` : ""}`;
 
   return {
@@ -1669,6 +2413,7 @@ function respondentLabel(respondent) {
   if (respondent === "parent") return "Parent (child)";
   if (respondent === "teen") return "Teen";
   if (respondent === "adult") return "Adult";
+  if (respondent === "couple") return "Couple";
   return "—";
 }
 
@@ -1695,6 +2440,7 @@ function getDashboardStats(items) {
     adults: items.filter((i) => i.respondent === "adult").length,
     teens: items.filter((i) => i.respondent === "teen").length,
     parents: items.filter((i) => i.respondent === "parent").length,
+    couples: items.filter((i) => i.respondent === "couple").length,
     recent: items.filter((i) => {
       const t = new Date(i.completedAt).getTime();
       return !Number.isNaN(t) && now - t <= weekMs;
@@ -1715,6 +2461,7 @@ function filteredDashboardAssessments() {
       s.firstName,
       s.surname,
       s.parentName,
+      s.partnerName,
       s.completerName,
       s.email,
       s.overallLabel,
@@ -1755,6 +2502,14 @@ function renderDashboardAssessmentRow(item) {
             ${
               item.respondent === "parent" && summary.parentName
                 ? `<span>By ${escapeHtml(summary.parentName)}</span>`
+                : item.respondent === "couple"
+                  ? `<span>${escapeHtml(
+                      summary.couplePartner === "b"
+                        ? "Partner 2"
+                        : summary.couplePartner === "a"
+                          ? "Partner 1"
+                          : "Couple"
+                    )}${summary.partnerName ? ` · with ${escapeHtml(summary.partnerName)}` : ""}</span>`
                 : email
                   ? `<span>${escapeHtml(email)}</span>`
                   : `<span>${escapeHtml(respondentLabel(item.respondent))}</span>`
@@ -1900,6 +2655,10 @@ function renderDashboard() {
         <div class="dashboard__stat" role="listitem">
           <span class="dashboard__stat-value">${stats.parents}</span>
           <span class="dashboard__stat-label">Parent / child</span>
+        </div>
+        <div class="dashboard__stat" role="listitem">
+          <span class="dashboard__stat-value">${stats.couples}</span>
+          <span class="dashboard__stat-label">Couple</span>
         </div>
       </div>
 
@@ -3150,8 +3909,25 @@ function lifeContextLabel() {
 
 function moveStep(delta) {
   let next = state.step + delta;
-  while (next > 0 && next < STEPS.length && STEPS[next].type === "context" && !needsLifeContext()) {
-    next += delta;
+  while (next > 0 && next < STEPS.length) {
+    const type = STEPS[next]?.type;
+    if (type === "coupleHub" && !needsCoupleHub()) {
+      next += delta;
+      continue;
+    }
+    if (type === "coupleWork" && !needsCoupleWork()) {
+      next += delta;
+      continue;
+    }
+    if (type === "idealSaturday" && !needsIdealSaturday()) {
+      next += delta;
+      continue;
+    }
+    if (type === "context" && !needsLifeContext()) {
+      next += delta;
+      continue;
+    }
+    break;
   }
   state.step = Math.min(Math.max(next, 0), STEPS.length - 1);
 }
@@ -4782,6 +5558,416 @@ function renderRespondent() {
   );
 }
 
+function coupleStatusLabel(status, copy) {
+  if (status === "complete") return copy.coupleStatusComplete;
+  if (status === "in_progress") return copy.coupleStatusInProgress;
+  return copy.coupleStatusNotStarted;
+}
+
+function renderCouplePartnerCard(partner, session, copy) {
+  const slot = session.partners[partner];
+  const status = slot?.status || "not_started";
+  const title = couplePartnerLabel(partner, session);
+  const defaultTitle = partner === "b" ? copy.couplePartnerB : copy.couplePartnerA;
+  let primaryAction = "";
+  if (status === "complete") {
+    primaryAction = `
+      <button type="button" class="btn btn-primary" data-action="couple-start" data-partner="${partner}">
+        ${escapeHtml(copy.coupleViewResults)}
+      </button>
+      <button type="button" class="btn btn-secondary" data-action="couple-export" data-partner="${partner}">
+        ${escapeHtml(copy.coupleExport)}
+      </button>`;
+  } else if (status === "in_progress") {
+    primaryAction = `
+      <button type="button" class="btn btn-primary" data-action="couple-start" data-partner="${partner}">
+        ${escapeHtml(copy.coupleContinue)}
+      </button>`;
+  } else {
+    primaryAction = `
+      <button type="button" class="btn btn-primary" data-action="couple-start" data-partner="${partner}">
+        ${escapeHtml(copy.coupleStart)}
+      </button>`;
+  }
+
+  return `
+    <article class="couple-card" data-couple-card="${partner}">
+      <div class="couple-card__header">
+        <h3 class="couple-card__title">${escapeHtml(defaultTitle)}</h3>
+        <span class="couple-card__status couple-card__status--${status}">${escapeHtml(coupleStatusLabel(status, copy))}</span>
+      </div>
+      <label class="field couple-card__name">
+        <span class="visually-hidden">${escapeHtml(copy.coupleNamePlaceholder)}</span>
+        <input
+          type="text"
+          data-couple-name="${partner}"
+          value="${escapeHtml(slot?.label || "")}"
+          placeholder="${escapeHtml(copy.coupleNamePlaceholder)}"
+          autocomplete="nickname"
+        />
+      </label>
+      ${title && title !== defaultTitle ? `<p class="couple-card__who">${escapeHtml(title)}</p>` : ""}
+      <div class="couple-card__actions">
+        ${primaryAction}
+        <button type="button" class="btn btn-secondary" data-action="couple-copy-link" data-partner="${partner}">
+          ${escapeHtml(copy.coupleCopyLink)}
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+function renderCoupleHub() {
+  const copy = currentUi();
+  const session = ensureCoupleSession();
+  const bothDone = bothCouplePartnersComplete(session);
+  if (state.coupleShowMerge && bothDone) {
+    return renderCoupleMerge(session);
+  }
+
+  const notice = state.coupleHubNotice
+    ? `<div class="couple-hub__notice" role="status">${escapeHtml(state.coupleHubNotice)}</div>`
+    : "";
+
+  return renderShell(
+    `
+      ${state.error ? `<div class="error-banner">${escapeHtml(state.error)}</div>` : ""}
+      ${notice}
+      <span class="section-tag">${escapeHtml(copy.coupleHubTag)}</span>
+      <h2 class="step-title">${escapeHtml(copy.coupleHubTitle)}</h2>
+      <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+      <p class="step-desc">${escapeHtml(copy.coupleHubDesc)}</p>
+      <p class="couple-hub__code"><span>${escapeHtml(copy.coupleSessionLabel)}</span> <strong>${escapeHtml(session.id)}</strong></p>
+      <p class="step-desc couple-hub__hint">${escapeHtml(copy.coupleShareHint)}</p>
+      <div class="couple-cards">
+        ${renderCouplePartnerCard("a", session, copy)}
+        ${renderCouplePartnerCard("b", session, copy)}
+      </div>
+      ${
+        bothDone
+          ? `<div class="couple-hub__merge">
+              <p class="couple-hub__ready">${escapeHtml(copy.coupleBothReady)}</p>
+              <button type="button" class="btn btn-primary" data-action="couple-view-merge">${escapeHtml(copy.coupleViewMerge)}</button>
+            </div>`
+          : `<p class="couple-hub__waiting">${escapeHtml(copy.coupleWaitingOther)}</p>`
+      }
+      <div class="couple-import">
+        <h3 class="couple-import__title">${escapeHtml(copy.coupleImportTitle)}</h3>
+        <p class="couple-import__desc">${escapeHtml(copy.coupleImportDesc)}</p>
+        <textarea
+          class="couple-import__input"
+          data-couple-import
+          rows="3"
+          placeholder="${escapeHtml(copy.coupleImportPlaceholder)}"
+        >${escapeHtml(state.coupleImportText || "")}</textarea>
+        <button type="button" class="btn btn-secondary" data-action="couple-import">${escapeHtml(copy.coupleImportBtn)}</button>
+      </div>
+      <p class="couple-hub__local-note">${escapeHtml(copy.coupleSavedLocal)}</p>
+      <div class="actions">
+        <button class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
+      </div>
+    `,
+    renderProgress(),
+    { stepType: "coupleHub" }
+  );
+}
+
+function stripLeadingCoupleName(text, name) {
+  const raw = String(text || "");
+  const label = String(name || "").trim();
+  if (!label || !raw.startsWith(label)) return raw;
+  const rest = raw.slice(label.length).replace(/^[\s,:.\-–—]+/, "").trim();
+  if (!rest) return raw;
+  return rest.charAt(0).toUpperCase() + rest.slice(1);
+}
+
+/** Partner 1 / Partner 2 / Together layout for comparison cards. */
+function renderCoupleCompareBody(partnerLines, together, copy, nameA = "", nameB = "") {
+  const groups = { a: [], b: [] };
+  (partnerLines || []).forEach((entry, index) => {
+    const partner =
+      entry && typeof entry === "object" && (entry.partner === "a" || entry.partner === "b")
+        ? entry.partner
+        : index % 2 === 0
+          ? "a"
+          : "b";
+    const text =
+      entry && typeof entry === "object" && typeof entry.text === "string"
+        ? entry.text
+        : String(entry || "");
+    if (partner === "a" || partner === "b") groups[partner].push(text);
+  });
+
+  const personBlocks = [
+    ["a", nameA],
+    ["b", nameB],
+  ]
+    .map(([partner, name]) => {
+      const lines = groups[partner] || [];
+      if (!lines.length) return "";
+      const paragraphs = lines
+        .map((line) => {
+          const body = stripLeadingCoupleName(line, name) || line;
+          return `<p class="couple-compare__line">${escapeHtml(body)}</p>`;
+        })
+        .join("");
+      return `
+        <div class="couple-compare__person couple-partner--${partner}">
+          <h5 class="couple-compare__person-heading">${escapeHtml(name)}</h5>
+          ${paragraphs}
+        </div>
+      `;
+    })
+    .join("");
+
+  const togetherParts = Array.isArray(together) ? together : together ? [together] : [];
+  const togetherBlock = togetherParts.length
+    ? `
+      <div class="couple-compare__together-block">
+        <h5 class="couple-compare__together-heading">${escapeHtml(copy.coupleCompareTogether)}</h5>
+        ${togetherParts
+          .map((part) => `<p class="couple-compare__together">${escapeHtml(part)}</p>`)
+          .join("")}
+      </div>
+    `
+    : "";
+
+  return `${personBlocks}${togetherBlock}`;
+}
+
+function renderCoupleMerge(session = null) {
+  const copy = currentUi();
+  const sess = session || ensureCoupleSession();
+  const nameA = couplePartnerLabel("a", sess);
+  const nameB = couplePartnerLabel("b", sess);
+  const cards = COUPLE_PARTNERS.map((partner) => {
+    const slot = sess.partners[partner];
+    const name = couplePartnerLabel(partner, sess);
+    const domains = (slot.summary?.domainProfiles || [])
+      .map(
+        (d) =>
+          `<li><span>${escapeHtml(d.title || d.id)}</span><strong>${escapeHtml(d.short || "—")}</strong></li>`
+      )
+      .join("");
+    return `
+      <article class="couple-merge-card couple-partner--${partner}">
+        <h3 class="couple-merge-card__name">${escapeHtml(name)}</h3>
+        <p class="couple-merge-card__overall">${escapeHtml(slot.summary?.overallLabel || "—")}</p>
+        <p class="couple-merge-card__lean">${escapeHtml(slot.summary?.leanHeadline || "")}</p>
+        <ul class="couple-merge-card__domains">${domains}</ul>
+        <button type="button" class="btn btn-secondary btn--compact" data-action="couple-start" data-partner="${partner}">
+          ${escapeHtml(copy.coupleViewResults)}
+        </button>
+      </article>
+    `;
+  }).join("");
+
+  const colorKey = `
+    <div class="couple-color-key" aria-label="${escapeHtml(copy.coupleCompareTogether)}">
+      <span class="couple-color-key__item couple-partner--a"><span class="couple-partner-dot" aria-hidden="true"></span>${escapeHtml(nameA)}</span>
+      <span class="couple-color-key__item couple-partner--b"><span class="couple-partner-dot" aria-hidden="true"></span>${escapeHtml(nameB)}</span>
+    </div>
+  `;
+
+  const comparison = buildCoupleComparisonReport(sess, state.language);
+  const workComparison = typeof buildCoupleWorkComparison === "function"
+    ? buildCoupleWorkComparison(sess, state.language)
+    : null;
+  const parentingComparison =
+    typeof buildCoupleParentingComparison === "function"
+      ? buildCoupleParentingComparison(sess, state.language)
+      : null;
+  const thriveSummary =
+    typeof buildCoupleThriveSummary === "function"
+      ? buildCoupleThriveSummary(sess, state.language)
+      : null;
+  const compareHtml = comparison
+    ? `
+      <section class="couple-compare">
+        <h3 class="couple-compare__title">${escapeHtml(copy.coupleCompareTitle)}</h3>
+        <p class="couple-compare__intro">${escapeHtml(copy.coupleCompareIntro)}</p>
+        ${comparison.sections
+          .map((section) => {
+            const title = copy[section.titleKey] || section.titleKey;
+            return `
+              <article class="couple-compare__card couple-compare__card--${escapeHtml(section.id || "general")}">
+                <h4 class="couple-compare__card-title">${escapeHtml(title)}</h4>
+                ${renderCoupleCompareBody(
+                  section.partnerLines,
+                  section.together,
+                  copy,
+                  comparison.nameA || nameA,
+                  comparison.nameB || nameB
+                )}
+              </article>
+            `;
+          })
+          .join("")}
+      </section>`
+    : "";
+
+  const workCompareHtml = workComparison
+    ? `
+      <section class="couple-compare couple-compare--work">
+        <h3 class="couple-compare__title">${escapeHtml(copy[workComparison.titleKey] || copy.coupleWorkResultsTitle)}</h3>
+        <p class="couple-compare__intro">${escapeHtml(copy[workComparison.introKey] || "")}</p>
+        <article class="couple-compare__card couple-compare__card--work">
+          ${renderCoupleCompareBody(
+            workComparison.partnerLines,
+            workComparison.together,
+            copy,
+            workComparison.nameA || nameA,
+            workComparison.nameB || nameB
+          )}
+        </article>
+      </section>`
+    : "";
+
+  const thriveCompareHtml = thriveSummary
+    ? `
+      <section class="couple-compare couple-compare--thrive">
+        <h3 class="couple-compare__title">${escapeHtml(
+          copy[thriveSummary.titleKey] || copy.coupleCompareThriveTitle
+        )}</h3>
+        <p class="couple-compare__intro">${escapeHtml(copy[thriveSummary.introKey] || "")}</p>
+        <div class="couple-thrive-grid">
+          ${(thriveSummary.partners || [])
+            .map((card) => {
+              const items = (card.needs || [])
+                .map((need) => `<li>${escapeHtml(need)}</li>`)
+                .join("");
+              const empty = items
+                ? ""
+                : `<li>${escapeHtml(
+                    state.language === "af"
+                      ? "Nog nie genoeg antwoorde vir ’n kort opsomming nie."
+                      : "Not enough answers yet for a short summary."
+                  )}</li>`;
+              return `
+                <article class="couple-thrive-card couple-partner--${card.partner}">
+                  <h4 class="couple-thrive-card__name">
+                    <span class="couple-partner-dot" aria-hidden="true"></span>
+                    <span class="couple-partner-name">${escapeHtml(card.name)}</span>
+                  </h4>
+                  <ul class="couple-thrive-card__list">${items || empty}</ul>
+                </article>
+              `;
+            })
+            .join("")}
+        </div>
+      </section>`
+    : "";
+
+  const parentingCompareHtml = parentingComparison
+    ? `
+      <section class="couple-compare couple-compare--parenting">
+        <h3 class="couple-compare__title">${escapeHtml(
+          copy[parentingComparison.titleKey] || copy.coupleCompareParentingTitle
+        )}</h3>
+        <p class="couple-compare__intro">${escapeHtml(copy[parentingComparison.introKey] || "")}</p>
+        <article class="couple-compare__card couple-compare__card--parenting">
+          ${renderCoupleCompareBody(
+            parentingComparison.partnerLines,
+            parentingComparison.together,
+            copy,
+            parentingComparison.nameA || nameA,
+            parentingComparison.nameB || nameB
+          )}
+        </article>
+      </section>`
+    : "";
+
+  return renderShell(
+    `
+      <span class="section-tag">${escapeHtml(copy.coupleHubTag)}</span>
+      <h2 class="step-title couple-merge-title">${escapeHtml(copy.coupleMergeTitle)}</h2>
+      <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+      <p class="step-desc">${escapeHtml(copy.coupleMergeDesc)}</p>
+      ${colorKey}
+      <div class="couple-merge-grid">${cards}</div>
+      ${compareHtml}
+      ${workCompareHtml}
+      ${thriveCompareHtml}
+      ${parentingCompareHtml}
+      ${COUPLE_PARTNERS.map((partner) => {
+        const slot = sess.partners[partner];
+        const workSummary = formatCoupleWorkSummary(normalizeCoupleWork(slot.coupleWork), copy);
+        if (!workSummary) return "";
+        const name = couplePartnerLabel(partner, sess);
+        return `
+          <section class="couple-compare__card couple-work-merge couple-partner--${partner}">
+            <h4 class="couple-compare__card-title">${escapeHtml(copy.coupleWorkResultsTitle)} · <span class="couple-partner-name">${escapeHtml(name)}</span></h4>
+            ${workSummary
+              .split("\n")
+              .map((line) => `<p class="couple-compare__line">${escapeHtml(line)}</p>`)
+              .join("")}
+          </section>
+        `;
+      }).join("")}
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" data-action="couple-back-hub">${escapeHtml(copy.coupleMergeBack)}</button>
+      </div>
+    `,
+    renderProgress(),
+    { stepType: "coupleHub" }
+  );
+}
+
+function renderCoupleResultsBanner() {
+  if (!isCouplePathway() || !state.coupleId) return "";
+  const copy = currentUi();
+  const session = getCoupleSession(state.coupleId);
+  const bothDone = bothCouplePartnersComplete(session);
+  const other = state.couplePartner === "a" ? "b" : "a";
+  const otherDone = session?.partners?.[other]?.status === "complete";
+  const waitingForPartner = !bothDone && !otherDone;
+
+  const nextSteps = waitingForPartner
+    ? `
+      <div class="couple-next-steps">
+        <h3 class="couple-next-steps__title">${escapeHtml(copy.coupleNextStepsTitle)}</h3>
+        <p class="couple-next-steps__lead">${escapeHtml(copy.coupleNextStepsLead)}</p>
+        <ol class="couple-next-steps__list">
+          <li>${escapeHtml(copy.coupleNextStep1)}</li>
+          <li>${escapeHtml(copy.coupleNextStep2)}</li>
+          <li>${escapeHtml(copy.coupleNextStep3)}</li>
+          <li>${escapeHtml(copy.coupleNextStep4)}</li>
+        </ol>
+        <p class="couple-next-steps__same">${escapeHtml(copy.coupleNextStepsSameDevice)}</p>
+      </div>
+    `
+    : "";
+
+  return `
+    <div class="couple-results-banner no-print" role="status">
+      <p><strong>${escapeHtml(copy.coupleYourTurn)} ${escapeHtml(couplePartnerLabel(state.couplePartner, session))}.</strong>
+      ${bothDone || otherDone ? escapeHtml(copy.coupleBothReady) : escapeHtml(copy.coupleWaitingOther)}</p>
+      ${nextSteps}
+      <div class="couple-results-banner__actions">
+        <button type="button" class="btn btn-secondary btn--compact" data-action="couple-back-hub">${escapeHtml(copy.coupleBackToHub)}</button>
+        ${
+          waitingForPartner
+            ? `<button type="button" class="btn btn-primary btn--compact" data-action="couple-copy-link" data-partner="${other}">${escapeHtml(copy.coupleCopyPartnerLink)}</button>`
+            : ""
+        }
+        ${
+          state.couplePartner
+            ? `<button type="button" class="btn btn-secondary btn--compact" data-action="couple-export" data-partner="${state.couplePartner}">${escapeHtml(copy.coupleExport)}</button>`
+            : ""
+        }
+        ${
+          bothDone
+            ? `<button type="button" class="btn btn-primary btn--compact" data-action="couple-view-merge">${escapeHtml(copy.coupleViewMerge)}</button>`
+            : ""
+        }
+      </div>
+      <p class="couple-results-banner__hint">${escapeHtml(
+        waitingForPartner ? copy.coupleExportHint : copy.coupleExportHint
+      )}</p>
+    </div>
+  `;
+}
+
 function renderContext() {
   const copy = currentUi();
   const options = getLifeContextOptions()
@@ -4921,7 +6107,13 @@ function renderDemographics() {
       ${state.error ? `<div class="error-banner">${escapeHtml(state.error)}</div>` : ""}
       <span class="section-tag">${escapeHtml(copy.detailsTag)}</span>
       <h2 class="step-title">${escapeHtml(state.respondent === "parent" ? copy.detailsTitleParent : copy.detailsTitle)}</h2>
-      <p class="step-desc">${escapeHtml(state.respondent === "parent" ? copy.detailsDescParent : copy.detailsDesc)}</p>
+      <p class="step-desc">${escapeHtml(
+        state.respondent === "parent"
+          ? copy.detailsDescParent
+          : state.respondent === "couple" && state.couplePartner
+            ? `${copy.coupleYourTurn} ${couplePartnerLabel(state.couplePartner)}.`
+            : copy.detailsDesc
+      )}</p>
       ${fields}
       <div class="actions">
         <button class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
@@ -5125,7 +6317,9 @@ function renderIdealSaturday() {
       </label>
       <div class="actions">
         <button type="button" class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
-        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(copy.seeResults || copy.continue)}</button>
+        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(
+          isCouplePathway() ? copy.continue : copy.seeResults || copy.continue
+        )}</button>
       </div>
     `,
     renderProgress(),
@@ -5134,6 +6328,7 @@ function renderIdealSaturday() {
 }
 
 function renderIdealSaturdayResults(pageEntry) {
+  if (isCouplePathway()) return "";
   const text = (state.idealSaturday || "").trim();
   if (!text) return "";
   const copy = currentUi();
@@ -5559,7 +6754,12 @@ function getTeenCrewId(lean) {
 }
 
 function shouldShowTrailProfile() {
-  return state.respondent === "adult" || state.respondent === "teen" || state.respondent === "parent";
+  return (
+    state.respondent === "adult" ||
+    state.respondent === "teen" ||
+    state.respondent === "parent" ||
+    state.respondent === "couple"
+  );
 }
 
 function getTrailDescriptionPage(crewId) {
@@ -6250,7 +7450,7 @@ function buildReportPagePlan(copy, scores, metrics) {
   add("report-brief-scores", copy.briefScoresTitle);
   add("report-sense-support", isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle);
 
-  if ((state.idealSaturday || "").trim()) {
+  if ((state.idealSaturday || "").trim() && !isCouplePathway()) {
     add("report-ideal-saturday", copy.idealSaturdayResultsTitle);
   }
 
@@ -7610,6 +8810,8 @@ function renderResults() {
           : ""
       }
 
+      ${renderCoupleResultsBanner()}
+
       ${renderSampleReportBanner()}
 
       <div class="results-intro results-intro--concise" aria-labelledby="profile-title">
@@ -7652,6 +8854,7 @@ function renderResults() {
       ${renderBriefScoreSummary(scores, metrics, reportPageById(pagePlan, "report-brief-scores"))}
       ${renderSenseSupportGuide(scores, reportPageById(pagePlan, "report-sense-support"))}
       ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}
+      ${renderCoupleWorkResults()}
       ${renderTrailSettingInterpretations(metrics, pagePlan)}
 
       <div class="results-contact">
@@ -7776,6 +8979,14 @@ function render({ scrollToTop = false } = {}) {
       case "respondent":
         html = renderRespondent();
         break;
+      case "coupleHub":
+        if (!needsCoupleHub()) {
+          moveStep(1);
+          html = needsLifeContext() ? renderContext() : renderConsent();
+        } else {
+          html = renderCoupleHub();
+        }
+        break;
       case "context":
         if (!needsLifeContext()) {
           moveStep(1);
@@ -7796,7 +9007,20 @@ function render({ scrollToTop = false } = {}) {
         break;
       }
       case "idealSaturday":
-        html = renderIdealSaturday();
+        if (!needsIdealSaturday()) {
+          moveStep(1);
+          html = needsCoupleWork() ? renderCoupleWork() : renderResults();
+        } else {
+          html = renderIdealSaturday();
+        }
+        break;
+      case "coupleWork":
+        if (!needsCoupleWork()) {
+          moveStep(1);
+          html = renderResults();
+        } else {
+          html = renderCoupleWork();
+        }
         break;
       case "results":
         try {
@@ -7940,9 +9164,59 @@ function validateStep() {
   }
 
   if (step.type === "idealSaturday") {
-    if (!(state.idealSaturday || "").trim()) {
+    if (needsIdealSaturday() && !(state.idealSaturday || "").trim()) {
       state.error = copy.idealSaturdayRequired;
       return false;
+    }
+  }
+
+  if (step.type === "coupleWork") {
+    const work = ensureCoupleWorkState();
+    if (!work.employment) {
+      state.error = copy.coupleWorkRequiredEmployment;
+      return false;
+    }
+    if (!work.isParent) {
+      state.error = copy.coupleWorkRequired;
+      return false;
+    }
+    if (work.employment === "works") {
+      if (!work.workLocation) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (work.workLocation === "other" && !work.workLocationOther.trim()) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (!work.workWith) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (work.workWith === "other" && !work.workWithOther.trim()) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (!work.workingHours.trim()) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (!work.endOfDay.length) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (!work.rechargeAfterWork.length) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (work.rechargeAfterWork.includes("other") && !work.rechargeAfterWorkOther.trim()) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
+      if (!work.rechargingSaturday.trim()) {
+        state.error = copy.coupleWorkRequired;
+        return false;
+      }
     }
   }
 
@@ -8058,16 +9332,28 @@ function bindEvents() {
       if (state.respondent !== nextRespondent) {
         state.respondent = nextRespondent;
         state.lifeContext = nextRespondent === "teen" ? "homeSchool" : null;
+        if (nextRespondent === "couple") {
+          state.couplePartner = null;
+          state.coupleShowMerge = false;
+          state.coupleHubNotice = null;
+          ensureCoupleSession();
+        } else {
+          state.coupleId = null;
+          state.couplePartner = null;
+          state.coupleShowMerge = false;
+          state.coupleHubNotice = null;
+        }
         state.consent = getConsentItems(state.language, nextRespondent).map(() => false);
         state.sharingConsent = createEmptySharingConsent(
           state.language,
           nextRespondent,
           state.lifeContext
         );
-        state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "" };
+        state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" };
         state.completedAt = null;
         state.answers = emptyAnswers();
         state.idealSaturday = "";
+        state.coupleWork = emptyCoupleWork();
         state.contactPreference = null;
         state.showWorkReport = false;
         state.workReportDeclined = false;
@@ -8081,6 +9367,46 @@ function bindEvents() {
       state.view = "questionnaire";
       saveSensoryDraft();
       render({ scrollToTop: true });
+      return;
+    }
+
+    const coupleWorkBtn = e.target.closest("[data-couple-work-field]");
+    if (coupleWorkBtn) {
+      const field = coupleWorkBtn.dataset.coupleWorkField;
+      const value = coupleWorkBtn.dataset.coupleWorkValue;
+      const work = ensureCoupleWorkState();
+      if (field && value && Object.prototype.hasOwnProperty.call(work, field)) {
+        if (field === "endOfDay") {
+          const current = normalizeCoupleWorkEndOfDay(work.endOfDay);
+          work.endOfDay = current.includes(value)
+            ? current.filter((item) => item !== value)
+            : [...current, value];
+        } else if (field === "rechargeAfterWork") {
+          const current = normalizeCoupleWorkRecharge(work.rechargeAfterWork);
+          work.rechargeAfterWork = current.includes(value)
+            ? current.filter((item) => item !== value)
+            : [...current, value];
+          if (!work.rechargeAfterWork.includes("other")) {
+            work.rechargeAfterWorkOther = "";
+          }
+        } else {
+          work[field] = value;
+        }
+        if (field === "employment" && value === "doesNotWork") {
+          work.workLocation = null;
+          work.workLocationOther = "";
+          work.workWith = null;
+          work.workWithOther = "";
+          work.workingHours = "";
+          work.endOfDay = [];
+          work.rechargeAfterWork = [];
+          work.rechargeAfterWorkOther = "";
+          work.rechargingSaturday = "";
+        }
+        state.error = null;
+        saveSensoryDraft();
+        render();
+      }
       return;
     }
 
@@ -8436,6 +9762,108 @@ function bindEvents() {
       return;
     }
 
+    if (action === "couple-start") {
+      const partner = btn.dataset.partner;
+      if (!COUPLE_PARTNERS.includes(partner)) return;
+      ensureCoupleSession();
+      startCouplePartnerQuestionnaire(partner);
+      saveSensoryDraft();
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "couple-copy-link") {
+      const partner = btn.dataset.partner;
+      if (!COUPLE_PARTNERS.includes(partner)) return;
+      const session = ensureCoupleSession();
+      const url = buildCouplePartnerUrl(session.id, partner);
+      const copy = currentUi();
+      const notice =
+        state.couplePartner && partner !== state.couplePartner
+          ? copy.couplePartnerLinkCopied
+          : copy.coupleLinkCopied;
+      const done = () => {
+        state.coupleHubNotice = notice;
+        render();
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => {
+          window.prompt(copy.coupleCopyLink, url);
+          done();
+        });
+      } else {
+        window.prompt(copy.coupleCopyLink, url);
+        done();
+      }
+      return;
+    }
+
+    if (action === "couple-export") {
+      const partner = btn.dataset.partner || state.couplePartner;
+      if (!COUPLE_PARTNERS.includes(partner)) return;
+      ensureCoupleSession();
+      if (isCouplePathway() && state.couplePartner === partner && STEPS[state.step]?.type === "results") {
+        persistCurrentPartnerToCoupleSession(state.viewingArchivedId);
+      }
+      const code = encodeCoupleCompletionPackage(state.coupleId, partner);
+      const copy = currentUi();
+      if (!code) {
+        state.coupleHubNotice = copy.coupleImportBad;
+        openCoupleHub();
+        render({ scrollToTop: true });
+        return;
+      }
+      const done = () => {
+        state.coupleHubNotice = copy.coupleExportCopied;
+        if (STEPS[state.step]?.type === "coupleHub") render();
+        else render();
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(code).then(done).catch(() => {
+          window.prompt(copy.coupleExport, code);
+          done();
+        });
+      } else {
+        window.prompt(copy.coupleExport, code);
+        done();
+      }
+      return;
+    }
+
+    if (action === "couple-import") {
+      const copy = currentUi();
+      const payload = decodeCoupleCompletionPackage(state.coupleImportText);
+      if (!payload) {
+        state.coupleHubNotice = copy.coupleImportBad;
+        render();
+        return;
+      }
+      const result = applyCoupleCompletionPackage(payload);
+      if (!result.ok) {
+        state.coupleHubNotice =
+          result.reason === "mismatch" ? copy.coupleImportMismatch : copy.coupleImportBad;
+        render();
+        return;
+      }
+      state.coupleImportText = "";
+      state.coupleHubNotice = copy.coupleImportOk;
+      openCoupleHub({ coupleId: result.session.id });
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "couple-view-merge") {
+      openCoupleHub({ showMerge: true });
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "couple-back-hub") {
+      openCoupleHub();
+      render({ scrollToTop: true });
+      return;
+    }
+
     if (action === "preview-sample-report") {
       if (!isSampleReportPreviewEnabled()) return;
       if (!canAccessTherapistDashboard()) {
@@ -8667,6 +10095,10 @@ function bindEvents() {
     if (action === "back") {
       state.error = null;
       moveStep(-1);
+      if (STEPS[state.step]?.type === "coupleHub") {
+        state.couplePartner = null;
+        state.coupleShowMerge = false;
+      }
       if (state.step === 0) {
         state.view = "sensory";
         state.showIntroModal = false;
@@ -8764,6 +10196,16 @@ function bindEvents() {
       state.demographics[e.target.dataset.demo] = e.target.value;
       state.error = null;
       saveSensoryDraft();
+    }
+
+    if (e.target.matches("[data-couple-work-text]")) {
+      const field = e.target.dataset.coupleWorkText;
+      const work = ensureCoupleWorkState();
+      if (field && Object.prototype.hasOwnProperty.call(work, field)) {
+        work[field] = e.target.value;
+        state.error = null;
+        saveSensoryDraft();
+      }
     }
 
     if (e.target.matches("[data-ideal-saturday]")) {
@@ -8902,6 +10344,31 @@ function bindEvents() {
       state.demographics[e.target.dataset.demo] = e.target.value;
       state.error = null;
       saveSensoryDraft();
+      return;
+    }
+
+    if (e.target.matches("[data-couple-name]")) {
+      const partner = e.target.dataset.coupleName;
+      if (!COUPLE_PARTNERS.includes(partner)) return;
+      const session = ensureCoupleSession();
+      session.partners[partner].label = e.target.value;
+      saveCoupleSession(session);
+      return;
+    }
+
+    if (e.target.matches("[data-couple-import]")) {
+      state.coupleImportText = e.target.value;
+      return;
+    }
+
+    if (e.target.matches("[data-couple-work-text]")) {
+      const field = e.target.dataset.coupleWorkText;
+      const work = ensureCoupleWorkState();
+      if (field && Object.prototype.hasOwnProperty.call(work, field)) {
+        work[field] = e.target.value;
+        state.error = null;
+        saveSensoryDraft();
+      }
       return;
     }
 

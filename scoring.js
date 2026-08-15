@@ -3904,6 +3904,7 @@ function getTrailSettingGuide(settingKey, lean, language = "en") {
 /** Which concise trail-setting pages to show for the current pathway. */
 function getTrailSettingKeys(respondent, lifeContext) {
   if (respondent === "parent") return ["homeParent"];
+  if (respondent === "couple") return ["home"];
   if (respondent === "adult" && lifeContext === "work") return ["work"];
   if (respondent === "adult" && lifeContext === "home") return ["home"];
   if (respondent === "teen") return ["school", "home"];
@@ -4673,3 +4674,1544 @@ function scoreOverall(domainScores, language = "en", respondent = "adult") {
     meta: profileLabels[profile],
   };
 }
+
+/** Answer markers used to build couple comparison narratives. */
+const COUPLE_COMPARE_MARKERS = {
+  visualOrganised: { domainId: "visual", index: 7 },
+  visualClutterOk: { domainId: "visual", index: 8 },
+  tasteMild: { domainId: "smellTaste", index: 3 },
+  tasteSpicy: { domainId: "smellTaste", index: 6 },
+  tasteNew: { domainId: "smellTaste", index: 7 },
+  touchComfortSpace: { domainId: "tactile", index: 2 },
+  touchCrowds: { domainId: "tactile", index: 3 },
+  touchEnjoysAffection: { domainId: "tactile", index: 5 },
+  touchAffection: { domainId: "tactile", index: 7 },
+  touchPersonalSpace: { domainId: "tactile", index: 8 },
+  movementRestless: { domainId: "movement", index: 0 },
+  movementEnjoysActivity: { domainId: "movement", index: 1 },
+  movementSedentary: { domainId: "movement", index: 2 },
+  movementHeavy: { domainId: "movement", index: 3 },
+  movementHighImpact: { domainId: "movement", index: 4 },
+  movementLowImpact: { domainId: "movement", index: 5 },
+  movementSpinSensitive: { domainId: "movement", index: 6 },
+  movementFeetGround: { domainId: "movement", index: 7 },
+  movementAdrenaline: { domainId: "movement", index: 9 },
+  movementHelpsRegulate: { domainId: "movement", index: 10 },
+  weekSedentary: { domainId: "everyday", index: 4 },
+  weekActive: { domainId: "everyday", index: 5 },
+  weekSocial: { domainId: "everyday", index: 6 },
+  weekAlone: { domainId: "everyday", index: 7 },
+  weekendSedentary: { domainId: "everyday", index: 8 },
+  weekendActive: { domainId: "everyday", index: 9 },
+  weekendSocial: { domainId: "everyday", index: 10 },
+  weekendAlone: { domainId: "everyday", index: 11 },
+};
+
+function coupleAnswerYes(answers, marker) {
+  if (!marker || !answers) return null;
+  const list = answers[marker.domainId];
+  if (!Array.isArray(list) || typeof list[marker.index] !== "boolean") return null;
+  return list[marker.index] === true;
+}
+
+function coupleVisualLean(answers) {
+  const organised = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.visualOrganised);
+  const clutterOk = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.visualClutterOk);
+  if (organised === true && clutterOk !== true) return "sensitive";
+  if (clutterOk === true && organised !== true) return "seeking";
+  if (organised === true && clutterOk === true) return "mixed";
+  if (organised === false && clutterOk === false) return "unclear";
+  if (organised === true) return "sensitive";
+  if (clutterOk === true) return "seeking";
+  return "unclear";
+}
+
+function coupleTasteLean(answers) {
+  const mild = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.tasteMild);
+  const spicy = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.tasteSpicy);
+  const tryNew = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.tasteNew);
+  const seeking = spicy === true || tryNew === true;
+  const sensitive = mild === true;
+  if (sensitive && !seeking) return "sensitive";
+  if (seeking && !sensitive) return "seeking";
+  if (sensitive && seeking) return "mixed";
+  return "unclear";
+}
+
+function coupleTouchLean(answers) {
+  const profile = coupleTouchProfile(answers);
+  return profile.overall;
+}
+
+/**
+ * Detailed tactile / affection / personal-space profile for couple comparison.
+ * @returns {{ bubble: string, hugs: string, loveLanguage: string, overall: string }}
+ */
+function coupleTouchProfile(answers) {
+  const okSpace = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.touchComfortSpace);
+  const crowdUncomf = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.touchCrowds);
+  const enjoysHugs = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.touchEnjoysAffection);
+  const lovePhysical = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.touchAffection);
+  const loveSpace = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.touchPersonalSpace);
+
+  let bubble = "unclear";
+  if (okSpace === true && crowdUncomf === true) bubble = "mixed";
+  else if (okSpace === true && crowdUncomf !== true) bubble = "small";
+  else if (crowdUncomf === true && okSpace !== true) bubble = "large";
+  else if (okSpace === false && crowdUncomf === false) bubble = "unclear";
+  else if (okSpace === true) bubble = "small";
+  else if (crowdUncomf === true) bubble = "large";
+
+  let hugs = "unclear";
+  if (enjoysHugs === true) hugs = "enjoys";
+  else if (enjoysHugs === false) hugs = "less";
+
+  let loveLanguage = "unclear";
+  if (lovePhysical === true && loveSpace === true) loveLanguage = "mixed";
+  else if (lovePhysical === true && loveSpace !== true) loveLanguage = "physical";
+  else if (loveSpace === true && lovePhysical !== true) loveLanguage = "nonPhysical";
+  else if (lovePhysical === true) loveLanguage = "physical";
+  else if (loveSpace === true) loveLanguage = "nonPhysical";
+
+  // If couple love-language items are unanswered, infer lightly from bubble/hugs.
+  if (loveLanguage === "unclear") {
+    if (hugs === "enjoys" && bubble === "small") loveLanguage = "physical";
+    else if (hugs === "less" || bubble === "large") loveLanguage = "nonPhysical";
+  }
+
+  let seekingPoints = 0;
+  let sensitivePoints = 0;
+  if (bubble === "small") seekingPoints += 1;
+  if (bubble === "large") sensitivePoints += 1;
+  if (hugs === "enjoys") seekingPoints += 1;
+  if (hugs === "less") sensitivePoints += 1;
+  if (loveLanguage === "physical") seekingPoints += 1;
+  if (loveLanguage === "nonPhysical") sensitivePoints += 1;
+  if (bubble === "mixed" || loveLanguage === "mixed") {
+    seekingPoints += 0.5;
+    sensitivePoints += 0.5;
+  }
+
+  let overall = "unclear";
+  if (seekingPoints >= 2 && sensitivePoints < 1.5) overall = "seeking";
+  else if (sensitivePoints >= 2 && seekingPoints < 1.5) overall = "sensitive";
+  else if (seekingPoints >= 1 && sensitivePoints >= 1) overall = "mixed";
+  else if (seekingPoints > sensitivePoints && seekingPoints >= 1) overall = "seeking";
+  else if (sensitivePoints > seekingPoints && sensitivePoints >= 1) overall = "sensitive";
+
+  return { bubble, hugs, loveLanguage, overall };
+}
+
+/** How strongly movement shows up as a regulation tool. */
+function coupleMovementRegulatorLean(answers) {
+  const helps = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementHelpsRegulate);
+  const restless = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementRestless);
+  if (helps === true || restless === true) return "important";
+  if (helps === false && restless !== true) return "less";
+  return "unclear";
+}
+
+/**
+ * Preferred movement “dose”: high-impact / forceful, low-impact, sedentary, or mixed.
+ */
+function coupleMovementStyleLean(answers) {
+  const high =
+    coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementHighImpact) === true ||
+    coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementHeavy) === true;
+  const low = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementLowImpact) === true;
+  const sedentary = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementSedentary) === true;
+  const gentle = low || sedentary;
+
+  if (high && gentle) return "mixed";
+  if (high) return "high";
+  if (low && sedentary) return "low";
+  if (low) return "low";
+  if (sedentary) return "sedentary";
+  return "unclear";
+}
+
+/** Thrill / adrenaline seeking vs preferring relaxed, lower-arousal activity. */
+function coupleMovementThrillLean(answers) {
+  const adrenaline = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementAdrenaline);
+  const sedentary = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementSedentary);
+  const low = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementLowImpact);
+  const spinSensitive = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementSpinSensitive);
+  const feetGround = coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS.movementFeetGround);
+  const relaxedSignals =
+    sedentary === true || low === true || spinSensitive === true || feetGround === true;
+
+  if (adrenaline === true && relaxedSignals) return "mixed";
+  if (adrenaline === true) return "thrill";
+  if (adrenaline === false || relaxedSignals) return "relaxed";
+  return "unclear";
+}
+
+function coupleRegulationLabels(language = "en") {
+  const af = language === "af";
+  return {
+    sedentary: af
+      ? "stiller, sittende aktiwiteite (lees, teken, kuns, TV)"
+      : "quieter sedentary activities (reading, drawing, art, TV)",
+    active: af ? "beweging en aktiewe aktiwiteite" : "movement and active activities",
+    social: af ? "sosiaal wees en tussen mense wees" : "being social and around people",
+    alone: af ? "alleen-tyd" : "alone time",
+  };
+}
+
+function coupleRegulationList(answers, period, language = "en") {
+  const map =
+    period === "weekend"
+      ? [
+          ["weekendSedentary", "sedentary"],
+          ["weekendActive", "active"],
+          ["weekendSocial", "social"],
+          ["weekendAlone", "alone"],
+        ]
+      : [
+          ["weekSedentary", "sedentary"],
+          ["weekActive", "active"],
+          ["weekSocial", "social"],
+          ["weekAlone", "alone"],
+        ];
+  const labels = coupleRegulationLabels(language);
+  return map
+    .filter(([key]) => coupleAnswerYes(answers, COUPLE_COMPARE_MARKERS[key]) === true)
+    .map(([, id]) => ({ id, label: labels[id] }));
+}
+
+function coupleRegulationHasBothActiveAndSedentary(modes) {
+  const ids = modes.map((m) => m.id);
+  return ids.includes("active") && ids.includes("sedentary");
+}
+
+function coupleRegulationIsBroadMix(modes) {
+  return modes.length >= 3;
+}
+
+function buildCoupleComparisonReport(session, language = "en") {
+  const af = language === "af";
+  if (!session?.partners?.a?.answers || !session?.partners?.b?.answers) return null;
+
+  const nameA =
+    String(session.partners.a.label || session.partners.a.demographics?.name || "").trim() ||
+    (af ? "Vennoot 1" : "Partner 1");
+  const nameB =
+    String(session.partners.b.label || session.partners.b.demographics?.name || "").trim() ||
+    (af ? "Vennoot 2" : "Partner 2");
+
+  const ansA = session.partners.a.answers;
+  const ansB = session.partners.b.answers;
+
+  const visualCopy = {
+    sensitive: af
+      ? "neig na ’n meer georganiseerde ruimte en kan visueel sensitief wees vir rommel of besige omgewings"
+      : "tends to prefer a more organised space and may be visually sensitive to clutter or busy scenes",
+    seeking: af
+      ? "word nie juis deur rommel of visueel besige spasies gepla nie — meer soekend na visuele inset"
+      : "is not particularly bothered by clutter or visually busy spaces — more seeking of visual input",
+    mixed: af
+      ? "kan beide ’n netjiese spasie waardeer en soms gemaklik wees met meer visuele besigheid"
+      : "can both value a tidy space and sometimes feel fine with more visual busyness",
+    unclear: af
+      ? "het nie ’n duidelike rommel-voorkeur uit hierdie antwoorde gewys nie"
+      : "did not show a clear clutter preference from these answers",
+  };
+
+  const tasteCopy = {
+    sensitive: af
+      ? "verkies sagter, bekende smake en is dikwels gelukkig met kos wat hulle ken"
+      : "prefers milder, familiar flavours and is often happiest with food they already know",
+    seeking: af
+      ? "geniet sterker of pittiger smake en hou daarvan om nuwe geure te probeer"
+      : "enjoys stronger or spicier flavours and likes trying new tastes",
+    mixed: af
+      ? "toon gemengde smaakvoorkeure — soms bekende, sagter kos en soms sterker of nuwe smake"
+      : "shows mixed taste preferences — sometimes familiar milder food, sometimes stronger or new flavours",
+    unclear: af
+      ? "het nie ’n duidelike smaakneiging uit hierdie antwoorde gewys nie"
+      : "did not show a clear taste lean from these answers",
+  };
+
+  const touchBubbleCopy = {
+    small: af
+      ? "is gemakliker met mense in hul persoonlike ruimte en het waarskynlik ’n kleiner “borrel”"
+      : "is more comfortable with people in their personal space and likely has a smaller bubble",
+    large: af
+      ? "beskerm ’n groter persoonlike borrel en kan vinnig oorweldig voel wanneer mense te naby is"
+      : "protects a bigger personal bubble and can feel overwhelmed quickly when people are too close",
+    mixed: af
+      ? "kan soms gemaklik wees met nabyheid én soms meer afstand nodig hê — konteks en energie speel ’n rol"
+      : "can sometimes be comfortable with closeness and sometimes need more distance — context and energy matter",
+    unclear: af
+      ? "het nie ’n duidelike persoonlike-ruimte voorkeur uit hierdie antwoorde gewys nie"
+      : "did not show a clear personal-space preference from these answers",
+  };
+
+  const touchCrowdCopy = {
+    large: af
+      ? "rye of oorvol plekke kan ongemaklik voel wanneer mense baie naby staan"
+      : "queues or crowded spaces can feel uncomfortable when people stand very close",
+    small: af
+      ? "is nie tipies so gevoelig vir digte skare-nabyheid nie"
+      : "is not typically as sensitive to dense crowd closeness",
+    mixed: af
+      ? "mag in skares wissel — soms okay, soms te veel"
+      : "may vary in crowds — sometimes okay, sometimes too much",
+    unclear: af
+      ? "het nie duidelik aangedui hoe skares vir hulle voel nie"
+      : "did not clearly indicate how crowds feel for them",
+  };
+
+  const touchHugsCopy = {
+    enjoys: af
+      ? "geniet gepaste fisieke toegeneentheid (soos drukkies) van mense wat hulle vertrou"
+      : "enjoys appropriate physical affection (such as hugs) from people they trust",
+    less: af
+      ? "steun minder op hugge of fisieke toegeneentheid as ’n gemaklike inset"
+      : "leans less on hugs or physical affection as a comfortable form of input",
+    unclear: af
+      ? "het nie duidelik aangedui hoe gemaklik hugge of toegeneentheid vir hulle is nie"
+      : "did not clearly indicate how comfortable hugs or affection feel for them",
+  };
+
+  const touchLoveCopy = {
+    physical: af
+      ? "fisieke aanraking is ’n belangrike liefdestaal (drukkies, soene, nabyheid)"
+      : "physical touch is an important love language (hugs, kisses, closeness)",
+    nonPhysical: af
+      ? "wys liefde eerder deur woorde, tyd saam of deurdagte gebare — nie hoofsaaklik fisieke aanraking nie"
+      : "shows love more through words, time together or thoughtful acts — not mainly physical touch",
+    mixed: af
+      ? "waardeer fisieke toegeneentheid én het ook behoefte aan nie-fisiese maniere om liefde te wys"
+      : "values physical affection and also needs non-physical ways of showing love",
+    unclear: af
+      ? "het nie ’n duidelike liefdestaal-neiging uit hierdie antwoorde gewys nie"
+      : "did not show a clear love-language lean from these answers",
+  };
+
+  const movementRegulatorCopy = {
+    important: af
+      ? "gebruik beweging as ’n belangrike reguleerder — aktiwiteit help hulle dikwels om kalmer en meer gefokus te voel"
+      : "uses movement as an important regulator — activity often helps them feel calmer and more focused",
+    less: af
+      ? "steun nie so sterk op beweging as ’n hoofreguleerder nie"
+      : "does not lean as strongly on movement as a main regulator",
+    unclear: af
+      ? "het nie duidelik aangedui hoe belangrik beweging as reguleerder vir hulle is nie"
+      : "did not clearly indicate how important movement is as a regulator for them",
+  };
+
+  const movementStyleCopy = {
+    high: af
+      ? "verkies hoër-impak of kragtiger beweging (byvoorbeeld hardloop, swaar inspanning of hoë-energie aktiwiteit)"
+      : "prefers higher-impact or more forceful movement (for example running, heavy effort or high-energy activity)",
+    low: af
+      ? "verkies laer-impak beweging soos stap, swem of pilates"
+      : "prefers lower-impact movement such as walking, swimming or pilates",
+    sedentary: af
+      ? "neig meer na stiller, sittende aktiwiteite"
+      : "leans more toward quieter, sedentary activities",
+    mixed: af
+      ? "kan beide hoër-impak én sagter of stiller opsies geniet — dosis hang van die dag af"
+      : "can enjoy both higher-impact and gentler or quieter options — dose depends on the day",
+    unclear: af
+      ? "het nie ’n duidelike voorkeur vir bewegingsintensiteit uit hierdie antwoorde gewys nie"
+      : "did not show a clear movement-intensity preference from these answers",
+  };
+
+  const movementThrillCopy = {
+    thrill: af
+      ? "toon spanning- of adrenalinesoekende gedrag — opwindende of avontuurlustige aktiwiteite voel dikwels reguleerend"
+      : "shows thrill- or adrenaline-seeking behaviour — exciting or adventurous activities often feel regulating",
+    relaxed: af
+      ? "verkies meer ontspanne aktiwiteite en is nie adrenalinesoekend nie"
+      : "prefers more relaxed activities and is not adrenaline-seeking",
+    mixed: af
+      ? "kan soms spanning of avontuur geniet, én ook ontspanne of laer-arousal aktiwiteite verkies — konteks is belangrik"
+      : "can sometimes enjoy thrill or adventure, and also prefer relaxed or lower-arousal activities — context matters",
+    unclear: af
+      ? "het nie ’n duidelike spanning- versus ontspan-voorkeur uit hierdie antwoorde gewys nie"
+      : "did not show a clear thrill-versus-relaxed preference from these answers",
+  };
+
+  const visualA = coupleVisualLean(ansA);
+  const visualB = coupleVisualLean(ansB);
+  const tasteA = coupleTasteLean(ansA);
+  const tasteB = coupleTasteLean(ansB);
+  const touchProfA = coupleTouchProfile(ansA);
+  const touchProfB = coupleTouchProfile(ansB);
+  const touchA = touchProfA.overall;
+  const touchB = touchProfB.overall;
+  const moveRegA = coupleMovementRegulatorLean(ansA);
+  const moveRegB = coupleMovementRegulatorLean(ansB);
+  const moveStyleA = coupleMovementStyleLean(ansA);
+  const moveStyleB = coupleMovementStyleLean(ansB);
+  const moveThrillA = coupleMovementThrillLean(ansA);
+  const moveThrillB = coupleMovementThrillLean(ansB);
+
+  function partnerTouchNarrative(name, profile) {
+    const bubbleBit = touchBubbleCopy[profile.bubble] || touchBubbleCopy.unclear;
+    const crowdBit =
+      profile.bubble === "large" || profile.bubble === "mixed"
+        ? touchCrowdCopy[profile.bubble]
+        : profile.bubble === "small"
+          ? touchCrowdCopy.small
+          : touchCrowdCopy.unclear;
+    const hugsBit = touchHugsCopy[profile.hugs] || touchHugsCopy.unclear;
+    const loveBit = touchLoveCopy[profile.loveLanguage] || touchLoveCopy.unclear;
+    if (af) {
+      return `${name} ${bubbleBit}. ${crowdBit.charAt(0).toUpperCase()}${crowdBit.slice(1)}. ${name} ${hugsBit}, en ${loveBit}.`;
+    }
+    return `${name} ${bubbleBit}. ${crowdBit.charAt(0).toUpperCase()}${crowdBit.slice(1)}. ${name} ${hugsBit}, and ${loveBit}.`;
+  }
+
+  function togetherVisual() {
+    if (visualA === "sensitive" && visualB === "seeking") {
+      return af
+        ? `${nameA} mag ’n netjiese, kalmer spasie nodig hê, terwyl ${nameB} meer gemaklik is met visuele besigheid. Spreek gedeelde sones af (byvoorbeeld ’n rommel-vrye tafel of slaapkamer) sodat albei se stelsels gerespekteer word.`
+        : `${nameA} may need a tidier, calmer space, while ${nameB} is more comfortable with visual busyness. Agree shared zones (for example a clutter-light table or bedroom) so both sensory systems are respected.`;
+    }
+    if (visualA === "seeking" && visualB === "sensitive") {
+      return af
+        ? `${nameB} mag ’n netjiese, kalmer spasie nodig hê, terwyl ${nameA} meer gemaklik is met visuele besigheid. Spreek gedeelde sones af sodat albei se stelsels gerespekteer word.`
+        : `${nameB} may need a tidier, calmer space, while ${nameA} is more comfortable with visual busyness. Agree shared zones so both sensory systems are respected.`;
+    }
+    if (visualA === "sensitive" && visualB === "sensitive") {
+      return af
+        ? "Julle albei neig na ordeliker ruimtes — gedeelde netheid kan julle albei help om kalmer te voel."
+        : "You both lean toward more ordered spaces — shared tidiness may help you both feel calmer.";
+    }
+    if (visualA === "seeking" && visualB === "seeking") {
+      return af
+        ? "Julle albei is meer gemaklik met visuele besigheid — maak net seker dat “gemaklik vir albei” nie stilweg een persoon se drempel oorskry nie."
+        : "You are both more comfortable with visual busyness — just check that “fine for both” is not quietly overshooting one person’s threshold.";
+    }
+    return af
+      ? "Gebruik hierdie verskille as ’n gesprek oor hoe julle huis of gedeelde spasies voel vir elkeen."
+      : "Use these differences as a conversation about how home or shared spaces feel for each of you.";
+  }
+
+  function togetherTaste() {
+    if (
+      (tasteA === "seeking" && tasteB === "sensitive") ||
+      (tasteA === "sensitive" && tasteB === "seeking")
+    ) {
+      const seeker = tasteA === "seeking" ? nameA : nameB;
+      const milder = tasteA === "sensitive" ? nameA : nameB;
+      return af
+        ? `${seeker} mag meer pittige of nuwe geure soek, terwyl ${milder} eerder bekende, sagter kos verkies. Dit kan beïnvloed watter resepte julle kies — byvoorbeeld basisse wat sagter gehou word, met sterker geure as opsionele byvoegings.`
+        : `${seeker} may seek spicier or newer flavours, while ${milder} prefers familiar, milder food. That can shape what you cook — for example keep a milder base, with stronger flavours as optional add-ons.`;
+    }
+    if (tasteA === "seeking" && tasteB === "seeking") {
+      return af
+        ? "Julle albei geniet sterker of nuwer smake — dit kan saam-eksperimenteer in die kombuis makliker maak."
+        : "You both enjoy stronger or newer tastes — that can make experimenting together in the kitchen easier.";
+    }
+    if (tasteA === "sensitive" && tasteB === "sensitive") {
+      return af
+        ? "Julle albei neig na bekende, sagter smake — herhaalbare gunstelinge kan veiliger en meer ondersteunend voel."
+        : "You both lean toward familiar, milder flavours — repeat favourites may feel safer and more supportive.";
+    }
+    return af
+      ? "Praat oor watter etes vir elkeen voel “genoeg” versus “te veel”, veral wanneer julle saam kook of uitgaan eet."
+      : "Talk about which meals feel “enough” versus “too much” for each of you, especially when cooking or eating out together.";
+  }
+
+  function togetherTouch() {
+    let seekingName = null;
+    let sensitiveName = null;
+    if (touchA === "seeking") seekingName = nameA;
+    if (touchB === "seeking") seekingName = seekingName || nameB;
+    if (touchA === "sensitive") sensitiveName = nameA;
+    if (touchB === "sensitive") sensitiveName = sensitiveName || nameB;
+
+    if (!seekingName || !sensitiveName) {
+      if (touchProfA.loveLanguage === "physical" && touchProfB.loveLanguage === "nonPhysical") {
+        seekingName = nameA;
+        sensitiveName = nameB;
+      } else if (touchProfB.loveLanguage === "physical" && touchProfA.loveLanguage === "nonPhysical") {
+        seekingName = nameB;
+        sensitiveName = nameA;
+      } else if (touchProfA.bubble === "small" && touchProfB.bubble === "large") {
+        seekingName = nameA;
+        sensitiveName = nameB;
+      } else if (touchProfB.bubble === "small" && touchProfA.bubble === "large") {
+        seekingName = nameB;
+        sensitiveName = nameA;
+      }
+    }
+
+    const differ = Boolean(seekingName && sensitiveName && seekingName !== sensitiveName);
+
+    const bothSeeking = touchA === "seeking" && touchB === "seeking";
+    const bothSensitive = touchA === "sensitive" && touchB === "sensitive";
+    const bothPhysicalLove =
+      touchProfA.loveLanguage === "physical" && touchProfB.loveLanguage === "physical";
+    const bothNonPhysicalLove =
+      touchProfA.loveLanguage === "nonPhysical" && touchProfB.loveLanguage === "nonPhysical";
+    const bothLargeBubble = touchProfA.bubble === "large" && touchProfB.bubble === "large";
+    const bothSmallBubble = touchProfA.bubble === "small" && touchProfB.bubble === "small";
+
+    const paragraphs = [];
+
+    if (differ) {
+      paragraphs.push(
+        af
+          ? `${seekingName} neig meer tas-soekend te wees: gemakliker met nabyheid, ’n kleiner borrel, en fisieke aanraking as liefdestaal. ${sensitiveName} neig meer tas-sensitief te wees: groter borrel, kan in skares gou oorweldig voel, en liefde nie hoofsaaklik deur aanraking wys nie. Dit is ’n algemene paartjie-spanning — nie ’n teken dat iemand minder liefhet nie.`
+          : `${seekingName} leans more touch-seeking: more comfortable with closeness, a smaller bubble, and physical touch as a love language. ${sensitiveName} leans more touch-sensitive: a bigger bubble, can get overwhelmed in crowds more easily, and does not mainly show love through touch. This is a common couple tension — not a sign that either person loves less.`
+      );
+      paragraphs.push(
+        af
+          ? `Praktiese idees: vra voor hugge of nabyheid; beplan kort “aanraak-vensters” én duidelike ruimte-tye; laat ${seekingName} ook liefde deur woorde, tyd of gebare ontvang; beskerm ${sensitiveName} in rye of besige plekke (byvoorbeeld ’n buitelyntjie of ’n kort pouse); en onthou toestemming verander — wat gister okay was, is dalk vandag te veel.`
+          : `Practical ideas: ask before hugs or closeness; plan short “touch windows” and clear space times; let ${seekingName} also receive love through words, time or acts; protect ${sensitiveName} in queues or busy places (for example an outside aisle or a short break); and remember consent shifts — what felt okay yesterday may be too much today.`
+      );
+    } else if (bothSeeking || bothPhysicalLove || bothSmallBubble) {
+      paragraphs.push(
+        af
+          ? "Julle albei neig na meer nabyheid of fisieke toegeneentheid — dit kan ’n gedeelde taal wees. Gaan steeds na tempo en toestemming, veral ná lang of oorstimulerende dae, sodat “meer aanraking” nie stilweg een persoon se limiet oorskry nie."
+          : "You both lean toward more closeness or physical affection — that can be a shared language. Still check pace and consent, especially after long or overstimulating days, so “more touch” does not quietly overshoot one person’s limit."
+      );
+      paragraphs.push(
+        af
+          ? "Idees: ooreenkomste oor oggend- of aand-drukkies, hande vashou in die openbaar as julle albei daarvan hou, en ’n eenvoudige sein wanneer iemand ’n bietjie meer ruimte nodig het."
+          : "Ideas: agree morning or evening hug rituals, hold hands in public if you both enjoy it, and keep a simple signal for when either of you needs a little more space."
+      );
+    } else if (bothSensitive || bothNonPhysicalLove || bothLargeBubble) {
+      paragraphs.push(
+        af
+          ? "Julle albei beskerm persoonlike ruimte of steun minder op fisieke aanraking as liefdestaal — ander maniere om liefde te wys (woorde, tyd, gebare) is veral belangrik. Moenie mekaar druk tot nabyheid net omdat “paartjies so moet wees” nie."
+          : "You both protect personal space or lean less on physical touch as a love language — other ways of showing love (words, time, acts) matter especially. Do not push each other into closeness just because “couples are supposed to.”"
+      );
+      paragraphs.push(
+        af
+          ? "Idees: beplan sy-aan-sy tyd (saam kyk, stap, kook) sonder verpligte hugge; kies stiller of minder digte uitstappies; en noem hardop watter nie-fisiese gebare vir elkeen verbindend voel."
+          : "Ideas: plan side-by-side time (watching, walking, cooking together) without obligatory hugs; choose quieter or less dense outings; and name out loud which non-physical gestures feel connecting for each of you."
+      );
+    } else {
+      paragraphs.push(
+        af
+          ? "Julle tas- en ruimtebehoeftes lyk gemeng of nie identies nie. Gebruik die besonderhede hierbo om te vra: wanneer voel nabyheid verbindend, wanneer voel skares te veel, en watter liefdestaal elkeen werklik ontvang."
+          : "Your touch and space needs look mixed or not identical. Use the details above to ask: when does closeness feel connecting, when do crowds feel like too much, and which love language each of you actually receives."
+      );
+      paragraphs.push(
+        af
+          ? "Idees: ooreenkomste oor aanraak én ruimte; alternatiewe liefdestale; en ’n plan vir besige plekke sodat niemand se borrel stilweg geïgnoreer word nie."
+          : "Ideas: agreements about both touch and space; alternative love languages; and a plan for busy places so neither person’s bubble is quietly ignored."
+      );
+    }
+
+    return paragraphs;
+  }
+
+  function togetherMovement() {
+    const styleClash =
+      (moveStyleA === "high" && (moveStyleB === "low" || moveStyleB === "sedentary")) ||
+      (moveStyleB === "high" && (moveStyleA === "low" || moveStyleA === "sedentary"));
+    const regulatorClash =
+      (moveRegA === "important" && moveRegB === "less") ||
+      (moveRegB === "important" && moveRegA === "less");
+
+    if (styleClash || regulatorClash) {
+      let needsMoreName = nameA;
+      let quieterName = nameB;
+      if (moveStyleA === "high" && (moveStyleB === "low" || moveStyleB === "sedentary")) {
+        needsMoreName = nameA;
+        quieterName = nameB;
+      } else if (moveStyleB === "high" && (moveStyleA === "low" || moveStyleA === "sedentary")) {
+        needsMoreName = nameB;
+        quieterName = nameA;
+      } else if (moveRegA === "important" && moveRegB === "less") {
+        needsMoreName = nameA;
+        quieterName = nameB;
+      } else if (moveRegB === "important" && moveRegA === "less") {
+        needsMoreName = nameB;
+        quieterName = nameA;
+      }
+      return af
+        ? `${needsMoreName} mag sterker of meer gereelde beweging nodig hê om te reguleer, terwyl ${quieterName} eerder laer-impak of stiller opsies verkies. Julle hoef nie dieselfde “dosis” te deel nie — soek ’n paar aktiwiteite wat julle saam kan doen, en laat ruimte vir aparte beweging of rus sonder om dit persoonlik op te neem.`
+        : `${needsMoreName} may need stronger or more frequent movement to regulate, while ${quieterName} prefers lower-impact or quieter options. You do not have to share the same “dose” — look for a few activities you can do together, and leave room for separate movement or rest without taking it personally.`;
+    }
+    if (moveStyleA === "high" && moveStyleB === "high") {
+      return af
+        ? "Julle albei neig na hoër-impak of kragtiger beweging — gedeelde aktiewe uitstappies of oefening kan julle albei se stelsels ondersteun, solank julle ook herstel inbou."
+        : "You both lean toward higher-impact or more forceful movement — shared active outings or exercise can support both of your systems, as long as you also build in recovery.";
+    }
+    if (
+      (moveStyleA === "low" || moveStyleA === "sedentary") &&
+      (moveStyleB === "low" || moveStyleB === "sedentary")
+    ) {
+      return af
+        ? "Julle albei neig na sagter of stiller ritmes — gedeelde wandelinge, swem of kalmer tuisaktiwiteite kan goed pas, sonder om mekaar tot hoë-impak te druk."
+        : "You both lean toward gentler or quieter rhythms — shared walks, swimming or calmer at-home activities may fit well, without pushing each other into high-impact.";
+    }
+    if (moveRegA === "important" && moveRegB === "important") {
+      return af
+        ? "Beweging lyk belangrik vir julle albei as reguleerder — beplan dit doelbewus in julle week, en kies intensiteit wat vir elkeen werk eerder as een vaste “saam-oefen”-reël."
+        : "Movement looks important as a regulator for both of you — plan it on purpose into your week, and choose intensity that works for each person rather than one fixed “we must exercise together” rule.";
+    }
+    return af
+      ? "Praat oor watter soort beweging elkeen kalmeer of wakker maak — hoë-impak, lae-impak of stiller tyd — en waar julle kan oorvleuel sonder om mekaar se behoeftes te ignoreer."
+      : "Talk about which kind of movement settles or wakes each of you — high-impact, low-impact or quieter time — and where you can overlap without ignoring each other’s needs.";
+  }
+
+  function togetherThrill() {
+    if (
+      (moveThrillA === "thrill" && moveThrillB === "relaxed") ||
+      (moveThrillB === "thrill" && moveThrillA === "relaxed")
+    ) {
+      const seeker = moveThrillA === "thrill" ? nameA : nameB;
+      const calmer = moveThrillA === "relaxed" ? nameA : nameB;
+      return af
+        ? `${seeker} soek spanning of adrenalien; ${calmer} verkies ontspanne aktiwiteite sonder daardie “rush”. Moenie aanneem gedeelde vryetyd moet dieselfde intensiteit hê nie — laat ${seeker} soms spanning elders of met vriende kry, beplan kalmer saam-tyd wat ${calmer} werklik geniet, en kyk of daar sagte oorvleuelings is (byvoorbeeld ’n staproete met ’n bietjie uitsig) sonder om enigiemand te druk. Kommunikasie is noodsaaklik; verskillende arousal-behoeftes is nie ’n verwerping nie.`
+        : `${seeker} seeks thrill or adrenaline; ${calmer} prefers relaxed activities without that rush. Do not assume shared free time must match the same intensity — let ${seeker} get some thrill elsewhere or with friends, plan calmer together-time that ${calmer} genuinely enjoys, and look for gentle overlaps (for example a walk with a bit of a view) without pressuring anyone. Communication is essential; different arousal needs are not rejection.`;
+    }
+    if (moveThrillA === "thrill" && moveThrillB === "thrill") {
+      return af
+        ? "Julle albei toon spanning- of adrenalinesoekende neigings — gedeelde avontuur kan verbindend wees. Spreek steeds tempo en grense af, en bou ook herstel in sodat die “rush” nie die enigste manier word waarop julle saam voel lewendig nie."
+        : "You both show thrill- or adrenaline-seeking leanings — shared adventure can be connecting. Still agree pace and boundaries, and build in recovery so the rush is not the only way you feel alive together.";
+    }
+    if (moveThrillA === "relaxed" && moveThrillB === "relaxed") {
+      return af
+        ? "Julle albei verkies meer ontspanne aktiwiteite en is nie adrenalinesoekend nie — kalmer gedeelde planne pas waarskynlik goed. Moenie mekaar tot spanning druk net omdat dit “opwindend” lyk vir ander paartjies nie."
+        : "You both prefer more relaxed activities and are not adrenaline-seeking — calmer shared plans likely fit well. Do not push each other into thrill just because it looks “exciting” for other couples.";
+    }
+    if (moveThrillA === "mixed" || moveThrillB === "mixed") {
+      return af
+        ? "Een of albei van julle kan spanning én ontspanning nodig hê, afhangend van die dag. Vra hardop watter arousal elkeen nou nodig het voor julle naweek of aand beplan — dieselfde persoon mag die een Saterdag avontuur wil hê en die volgende stilte."
+        : "One or both of you may need both thrill and ease, depending on the day. Ask out loud what arousal each of you needs before you plan a weekend or evening — the same person may want adventure one Saturday and quiet the next.";
+    }
+    return af
+      ? "Noem spanning versus ontspanning hardop wanneer julle vryetyd beplan — of julle behoeftes dieselfde of verskillend is, werk dit beter wanneer niemand aanneem die ander wil dieselfde “rush” (of stilte) hê nie."
+      : "Name thrill versus ease out loud when you plan free time — whether your needs match or differ, it works better when neither of you assumes the other wants the same rush (or the same quiet).";
+  }
+
+  function formatModes(modes) {
+    const list = modes.map((m) => m.label);
+    if (!list.length) {
+      return af ? "geen duidelike voorkeur aangedui nie" : "no clear preference indicated";
+    }
+    if (list.length === 1) return list[0];
+    if (list.length === 2) return af ? `${list[0]} en ${list[1]}` : `${list[0]} and ${list[1]}`;
+    const last = list[list.length - 1];
+    const head = list.slice(0, -1).join(af ? ", " : ", ");
+    return af ? `${head} en ${last}` : `${head}, and ${last}`;
+  }
+
+  function periodRegulateNarrative(name, period, modes) {
+    const isWeekend = period === "weekend";
+    const periodLabel = isWeekend
+      ? af
+        ? "Oor die naweek"
+        : "Over the weekend"
+      : af
+        ? "Gedurende die week"
+        : "During the week";
+
+    if (!modes.length) {
+      return af
+        ? `${periodLabel} het ${name} nie ’n duidelike herlaai-voorkeur aangedui nie.`
+        : `${periodLabel}, ${name} did not indicate a clear recharge preference.`;
+    }
+
+    const bothActiveSedentary = coupleRegulationHasBothActiveAndSedentary(modes);
+    const broad = coupleRegulationIsBroadMix(modes);
+    const allFour = modes.length >= 4;
+
+    if (allFour || (broad && bothActiveSedentary)) {
+      return af
+        ? `${periodLabel} wys ${name} ’n wye herlaai-gereedskapkas: ${formatModes(modes)}. Dit is nie “óf-óf” nie — ${name} het waarskynlik ’n balans van al hierdie nodig, afhangend van hoe besig of stil die week was.`
+        : `${periodLabel}, ${name} shows a wide recharge toolkit: ${formatModes(modes)}. This is not either/or — ${name} likely needs a balance of all of these, depending on how busy or quiet the week has been.`;
+    }
+
+    if (bothActiveSedentary) {
+      return af
+        ? `${periodLabel} geniet ${name} beide beweging/aktiewe aktiwiteite én stiller, sittende aktiwiteite (${formatModes(modes)}). Beide kan waar wees — kies volgens energie en hoe vol die week was.`
+        : `${periodLabel}, ${name} enjoys both movement/active activities and quieter sedentary activities (${formatModes(modes)}). Both can be true — choose according to energy and how full the week has been.`;
+    }
+
+    if (modes.length >= 2) {
+      return af
+        ? `${periodLabel} herlaai ${name} deur meer as een roete: ${formatModes(modes)}. Gemengde voorkeure is normaal — wissel volgens wat die week gevra het.`
+        : `${periodLabel}, ${name} recharges through more than one route: ${formatModes(modes)}. Mixed preferences are normal — shift according to what the week asked of them.`;
+    }
+
+    return af
+      ? `${periodLabel} herlaai ${name} veral deur ${formatModes(modes)}.`
+      : `${periodLabel}, ${name} recharges especially through ${formatModes(modes)}.`;
+  }
+
+  function partnerRegulateLines(name, answers) {
+    const week = coupleRegulationList(answers, "week", language);
+    const weekend = coupleRegulationList(answers, "weekend", language);
+    return {
+      name,
+      week: periodRegulateNarrative(name, "week", week),
+      weekend: periodRegulateNarrative(name, "weekend", weekend),
+      weekModes: week,
+      weekendModes: weekend,
+    };
+  }
+
+  const regA = partnerRegulateLines(nameA, ansA);
+  const regB = partnerRegulateLines(nameB, ansB);
+
+  const weekDiffer = regA.weekModes.map((m) => m.id).join("|") !== regB.weekModes.map((m) => m.id).join("|");
+  const weekendDiffer =
+    regA.weekendModes.map((m) => m.id).join("|") !== regB.weekendModes.map((m) => m.id).join("|");
+  const eitherBroad =
+    coupleRegulationIsBroadMix(regA.weekendModes) ||
+    coupleRegulationIsBroadMix(regB.weekendModes) ||
+    coupleRegulationIsBroadMix(regA.weekModes) ||
+    coupleRegulationIsBroadMix(regB.weekModes);
+  const eitherActiveAndQuiet =
+    coupleRegulationHasBothActiveAndSedentary(regA.weekModes) ||
+    coupleRegulationHasBothActiveAndSedentary(regA.weekendModes) ||
+    coupleRegulationHasBothActiveAndSedentary(regB.weekModes) ||
+    coupleRegulationHasBothActiveAndSedentary(regB.weekendModes);
+
+  function regulationLeanOut(modes) {
+    const ids = new Set(modes.map((m) => m.id));
+    const out = (ids.has("social") ? 1 : 0) + (ids.has("active") ? 1 : 0);
+    const home = (ids.has("sedentary") ? 1 : 0) + (ids.has("alone") ? 1 : 0);
+    return out > 0 && home === 0;
+  }
+
+  function regulationLeanHome(modes) {
+    const ids = new Set(modes.map((m) => m.id));
+    const out = (ids.has("social") ? 1 : 0) + (ids.has("active") ? 1 : 0);
+    const home = (ids.has("sedentary") ? 1 : 0) + (ids.has("alone") ? 1 : 0);
+    return home > 0 && out === 0;
+  }
+
+  const outHomeTension =
+    (regulationLeanOut(regA.weekModes) && regulationLeanHome(regB.weekModes)) ||
+    (regulationLeanHome(regA.weekModes) && regulationLeanOut(regB.weekModes)) ||
+    (regulationLeanOut(regA.weekendModes) && regulationLeanHome(regB.weekendModes)) ||
+    (regulationLeanHome(regA.weekendModes) && regulationLeanOut(regB.weekendModes));
+
+  let regulateTogether = af
+    ? "Onthou: herlaai is selde óf aktief óf stil — baie mense het albei nodig. Pas die naweek by hoe besig of stil die week was."
+    : "Remember: recharge is rarely either active or quiet — many people need both. Match the weekend to how busy or quiet the week has been.";
+
+  if (outHomeTension) {
+    let outName = nameA;
+    let homeName = nameB;
+    if (regulationLeanOut(regA.weekendModes) && regulationLeanHome(regB.weekendModes)) {
+      outName = nameA;
+      homeName = nameB;
+    } else if (regulationLeanHome(regA.weekendModes) && regulationLeanOut(regB.weekendModes)) {
+      outName = nameB;
+      homeName = nameA;
+    } else if (regulationLeanOut(regA.weekModes) && regulationLeanHome(regB.weekModes)) {
+      outName = nameA;
+      homeName = nameB;
+    } else if (regulationLeanHome(regA.weekModes) && regulationLeanOut(regB.weekModes)) {
+      outName = nameB;
+      homeName = nameA;
+    }
+    regulateTogether = af
+      ? `${outName} mag meer buite, aktief of sosiaal wil herlaai, terwyl ${homeName} eerder tuis, stil of alleen wil herstel. Dit is ’n klassieke spanning — nie ’n teken dat iemand “verkeerd” is nie.`
+      : `${outName} may need to recharge by going out, being active or social, while ${homeName} may need to stay in, rest or be alone. That is a common tension — not a sign that either of you is “wrong.”`;
+  } else if (eitherBroad || eitherActiveAndQuiet) {
+    regulateTogether = af
+      ? "Een of albei van julle wys gemengde herlaai-behoeftes (beweging, stilte, sosiaal én alleen kan almal waar wees). Dit is nie teenstrydig nie — beplan ’n balans volgens hoe vol of stil die week was, eerder as om een “regte” manier te kies."
+      : "One or both of you show mixed recharge needs (movement, quiet time, social time and alone time can all be true). That is not contradictory — plan a balance according to how full or quiet the week has been, rather than choosing one “right” way.";
+  } else if (weekDiffer || weekendDiffer) {
+    regulateTogether = af
+      ? "Julle herlaai-ritmes lyk nie identies nie. Beplan doelbewus: wie het alleen-tyd na werk nodig, wie wil beweeg of sosiaal wees, en hoe lyk naweke anders as weeksdae — sonder om aan te neem dit moet óf-óf wees."
+      : "Your recharge rhythms do not look identical. Plan on purpose: who needs alone time after work, who wants movement or social time, and how weekends differ from weekdays — without assuming it has to be either/or.";
+  }
+
+  const regulateBalance = af
+    ? "Die beste manier om albei se behoeftes in ag te neem is om dit hardop te bespreek — moenie aanneem een plan moet vir albei werk nie. Julle kan nie mekaar se emmers heeltemal volmaak nie, en dit is okay. Soek aktiwiteite wat julle werklik saam kan geniet, én maak ruimte vir verskil: die een mag tuis moet rus terwyl die ander uit moet gaan, aktief of sosiaal wees. Noem dit vroegtydig, spreek gedeelde tyd af, en beskerm aparte herstel sonder om dit persoonlik op te neem."
+    : "The best way to take both needs into account is to talk it through — do not assume one plan has to work for both of you. You cannot fill each other’s buckets completely, and that is okay. Look for activities you can genuinely enjoy together, and also make room for difference: one of you may need to rest at home while the other needs to go out, be active, or be social. Name that early, agree what shared time looks like, and protect separate recovery without taking it personally.";
+
+  return {
+    nameA,
+    nameB,
+    sections: [
+      {
+        id: "visual",
+        titleKey: "coupleCompareVisualTitle",
+        partnerLines: [
+          { partner: "a", text: `${nameA} ${visualCopy[visualA]}.` },
+          { partner: "b", text: `${nameB} ${visualCopy[visualB]}.` },
+        ],
+        together: togetherVisual(),
+      },
+      {
+        id: "movement",
+        titleKey: "coupleCompareMovementTitle",
+        partnerLines: [
+          {
+            partner: "a",
+            text: af
+              ? `${nameA} ${movementRegulatorCopy[moveRegA]}, ${movementStyleCopy[moveStyleA]}, en ${movementThrillCopy[moveThrillA]}.`
+              : `${nameA} ${movementRegulatorCopy[moveRegA]}, ${movementStyleCopy[moveStyleA]}, and ${movementThrillCopy[moveThrillA]}.`,
+          },
+          {
+            partner: "b",
+            text: af
+              ? `${nameB} ${movementRegulatorCopy[moveRegB]}, ${movementStyleCopy[moveStyleB]}, en ${movementThrillCopy[moveThrillB]}.`
+              : `${nameB} ${movementRegulatorCopy[moveRegB]}, ${movementStyleCopy[moveStyleB]}, and ${movementThrillCopy[moveThrillB]}.`,
+          },
+        ],
+        together: [togetherMovement(), togetherThrill()],
+      },
+      {
+        id: "taste",
+        titleKey: "coupleCompareTasteTitle",
+        partnerLines: [
+          { partner: "a", text: `${nameA} ${tasteCopy[tasteA]}.` },
+          { partner: "b", text: `${nameB} ${tasteCopy[tasteB]}.` },
+        ],
+        together: togetherTaste(),
+      },
+      {
+        id: "touch",
+        titleKey: "coupleCompareTouchTitle",
+        partnerLines: [
+          { partner: "a", text: partnerTouchNarrative(nameA, touchProfA) },
+          { partner: "b", text: partnerTouchNarrative(nameB, touchProfB) },
+        ],
+        together: togetherTouch(),
+      },
+      {
+        id: "regulate",
+        titleKey: "coupleCompareRegulateTitle",
+        partnerLines: [
+          { partner: "a", text: regA.week },
+          { partner: "a", text: regA.weekend },
+          { partner: "b", text: regB.week },
+          { partner: "b", text: regB.weekend },
+        ],
+        together: [regulateTogether, regulateBalance],
+      },
+    ],
+  };
+}
+
+/**
+ * Compare couple work setups, everyday sensory needs, and after-work needs.
+ */
+/**
+ * Score lean for one sensory domain from couple answers.
+ * @returns {"sensitive"|"seeking"|"neutral"|"unclear"}
+ */
+function coupleDomainLean(answers, domainId) {
+  if (!answers?.[domainId] || !Array.isArray(answers[domainId])) return "unclear";
+  let domain = null;
+  if (typeof getSensoryDomains === "function") {
+    domain = getSensoryDomains("en", "couple").find((d) => d.id === domainId);
+  }
+  if (!domain?.questions?.length) return "unclear";
+  const result = scoreDomain(domain.questions, answers[domainId]);
+  if (!result.scored) return "unclear";
+  return result.profile || "neutral";
+}
+
+function buildCoupleWorkComparison(session, language = "en") {
+  const af = language === "af";
+  if (!session?.partners?.a || !session?.partners?.b) return null;
+
+  const nameA =
+    String(session.partners.a.label || session.partners.a.demographics?.name || "").trim() ||
+    (af ? "Vennoot 1" : "Partner 1");
+  const nameB =
+    String(session.partners.b.label || session.partners.b.demographics?.name || "").trim() ||
+    (af ? "Vennoot 2" : "Partner 2");
+
+  function everydayLean(answers) {
+    return coupleDomainLean(answers, "everyday");
+  }
+
+  function workSnapshot(raw) {
+    const work = raw && typeof raw === "object" ? raw : {};
+    return {
+      employment: work.employment === "works" || work.employment === "doesNotWork" ? work.employment : null,
+      workLocation: ["office", "home", "both", "other"].includes(work.workLocation) ? work.workLocation : null,
+      workLocationOther: String(work.workLocationOther || "").trim(),
+      workWith: ["people", "alone", "screens", "screensAndPeople", "other"].includes(work.workWith)
+        ? work.workWith
+        : null,
+      workWithOther: String(work.workWithOther || "").trim(),
+      workingHours: String(work.workingHours || "").trim(),
+      endOfDay: Array.isArray(work.endOfDay) ? work.endOfDay : [],
+      rechargeAfterWork: Array.isArray(work.rechargeAfterWork) ? work.rechargeAfterWork : [],
+      rechargeAfterWorkOther: String(work.rechargeAfterWorkOther || "").trim(),
+      rechargingSaturday: String(work.rechargingSaturday || "").trim(),
+    };
+  }
+
+  const locationLabel = {
+    office: af ? "by die kantoor" : "at the office",
+    home: af ? "van die huis af" : "from home",
+    both: af ? "beide by die kantoor en van die huis af" : "both at the office and from home",
+    other: af ? "in ’n ander opset" : "in another setup",
+  };
+
+  const withLabel = {
+    people: af ? "hoofsaaklik met mense" : "mainly with people",
+    alone: af ? "hoofsaaklik alleen" : "mainly alone",
+    screens: af ? "hoofsaaklik op skerms" : "mainly on screens",
+    screensAndPeople: af ? "met skerms en mense gekombineer" : "with screens and people combined",
+    other: af ? "in ’n ander werkstyl" : "in another work style",
+  };
+
+  const everydayCopy = {
+    seeking: af
+      ? "het soekende alledaagse sensoriese behoeftes — geniet dikwels mense, besigheid of meer inset ná ’n stil dag"
+      : "has seeking everyday sensory needs — often enjoys people, busyness or more input after a quiet day",
+    sensitive: af
+      ? "het sensitiewe alledaagse sensoriese behoeftes — merk gou wanneer die dag te vol of te besig voel, en het dikwels stilte nodig"
+      : "has sensitive everyday sensory needs — notices quickly when the day feels too full or busy, and often needs quieter recovery",
+    neutral: af
+      ? "het meer neutrale of gemengde alledaagse sensoriese behoeftes — dit kan wissel met hoe vol die werkdag was"
+      : "has more neutral or mixed everyday sensory needs — these can shift with how full the workday has been",
+    unclear: af
+      ? "het nie duidelike alledaagse sensoriese behoeftes uit hierdie antwoorde gewys nie"
+      : "did not show clear everyday sensory needs from these answers",
+  };
+
+  function endNeedLabels(work) {
+    const map = {
+      getOut: af ? "uitgaan ná werk" : "getting out after work",
+      sitRelax: af ? "sit en ontspan" : "sitting and relaxing",
+      withPeople: af ? "tyd saam met mense" : "time with other people",
+      alone: af ? "alleen-tyd" : "alone time",
+    };
+    return (work.endOfDay || []).map((id) => map[id]).filter(Boolean);
+  }
+
+  function rechargeLabels(work) {
+    const map = {
+      activeOutdoors: af ? "aktief en buite wees" : "being active and outdoors",
+      relaxHome: af ? "tuis ontspan met iets waarvan hulle hou" : "relaxing at home doing something they love",
+      othersHome: af ? "tyd saam met ander by die huis" : "time with others at home",
+      othersOutside: af ? "tyd saam met ander buite die huis" : "time with others outside the home",
+      other: work.rechargeAfterWorkOther
+        ? work.rechargeAfterWorkOther
+        : af
+          ? "’n ander herlaai-roete"
+          : "another recharge route",
+    };
+    return (work.rechargeAfterWork || []).map((id) => map[id]).filter(Boolean);
+  }
+
+  function formatList(items) {
+    if (!items.length) return "";
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return af ? `${items[0]} en ${items[1]}` : `${items[0]} and ${items[1]}`;
+    const last = items[items.length - 1];
+    return af ? `${items.slice(0, -1).join(", ")} en ${last}` : `${items.slice(0, -1).join(", ")}, and ${last}`;
+  }
+
+  function inferredNeeds(work, lean) {
+    const needs = [];
+    const indoorScreen =
+      work.employment === "works" &&
+      (work.workLocation === "home" || work.workWith === "screens" || work.workWith === "alone");
+    const peopleHeavy =
+      work.employment === "works" &&
+      (work.workWith === "people" || work.workWith === "screensAndPeople" || work.workLocation === "office");
+
+    if (indoorScreen && lean === "seeking") {
+      needs.push(
+        af
+          ? "ná ’n binnenshuise of skerm-swaar dag mag hulle sterk nodig hê om uit te kom, sosiaal te wees, of tyd saam met vriende en familie te hê"
+          : "after an indoor or screen-heavy day they may strongly need to get out, socialise, or spend time with friends and family"
+      );
+    } else if (peopleHeavy && (lean === "sensitive" || lean === "neutral")) {
+      needs.push(
+        af
+          ? "ná ’n mense-swaar werkdag mag hulle alleen-tyd, eie ruimte of stil herstel nodig hê voordat hulle weer sosiaal beskikbaar is"
+          : "after a people-heavy workday they may need alone time, their own space, or quiet recovery before they are socially available again"
+      );
+    } else if (indoorScreen && (lean === "sensitive" || lean === "neutral")) {
+      needs.push(
+        af
+          ? "kan tuisherstel nodig hê, maar steeds baat by sagte beweging of ’n kort buite-oomblik sonder swaar sosiale druk"
+          : "may need recovery at home, while still benefiting from gentle movement or a short outdoor moment without heavy social demand"
+      );
+    } else if (peopleHeavy && lean === "seeking") {
+      needs.push(
+        af
+          ? "kan ná mense-werk steeds beweging, fris lug of gekose sosiale tyd nodig hê — nie noodwendig stilte nie"
+          : "may still need movement, fresh air or chosen social time after people-work — not necessarily silence"
+      );
+    } else if (lean === "seeking") {
+      needs.push(
+        af
+          ? "alledaagse soekende sensoriese behoeftes dui dikwels op ’n behoefte aan uitgaan, sosiale inset of meer stimulasie ná die dag"
+          : "seeking everyday sensory needs often point to needing to get out, social input or more stimulation after the day"
+      );
+    } else if (lean === "sensitive") {
+      needs.push(
+        af
+          ? "alledaagse sensitiewe sensoriese behoeftes dui dikwels op ’n behoefte aan rus, alleen-tyd of ’n laer-inset aand"
+          : "sensitive everyday sensory needs often point to needing rest, alone time or a lower-input evening"
+      );
+    }
+    return needs;
+  }
+
+  function needsOutSocial(work, lean) {
+    const ends = work.endOfDay || [];
+    const recharge = work.rechargeAfterWork || [];
+    if (ends.includes("getOut") || ends.includes("withPeople")) return true;
+    if (recharge.includes("activeOutdoors") || recharge.includes("othersOutside") || recharge.includes("othersHome")) {
+      return true;
+    }
+    const indoorScreen =
+      work.workLocation === "home" || work.workWith === "screens" || work.workWith === "alone";
+    return lean === "seeking" && indoorScreen;
+  }
+
+  function needsRestAlone(work, lean) {
+    const ends = work.endOfDay || [];
+    const recharge = work.rechargeAfterWork || [];
+    if (ends.includes("alone") || ends.includes("sitRelax")) return true;
+    if (recharge.includes("relaxHome")) return true;
+    const peopleHeavy =
+      work.workWith === "people" || work.workWith === "screensAndPeople" || work.workLocation === "office";
+    return (lean === "sensitive" || lean === "neutral") && peopleHeavy;
+  }
+
+  function partnerWorkNarrative(name, work, lean) {
+    if (!work.employment) {
+      return af
+        ? `${name}: werksbesonderhede is nog nie volledig ingevul nie.`
+        : `${name}: work details are not fully completed yet.`;
+    }
+    if (work.employment === "doesNotWork") {
+      return af
+        ? `${name} werk nie tans in betaalde diens nie (byvoorbeeld huis of kinders). Hulle ${everydayCopy[lean]}. Ná ’n volle tuisdag mag herstel steeds lyk soos alleen-tyd, stilte, of — as hulle soekend is — uitgaan en sosiale tyd. Noem hardop wat die aand nodig is, net soos met ’n werkdag.`
+        : `${name} is not currently in paid work (for example home or children). They ${everydayCopy[lean]}. After a full home day, recovery may still look like alone time and quiet — or, if they have seeking everyday sensory needs, getting out and social time. Name out loud what the evening needs, just as you would after a workday.`;
+    }
+
+    let location = locationLabel[work.workLocation] || (af ? "in ’n ongespesifiseerde opset" : "in an unspecified setup");
+    if (work.workLocation === "other" && work.workLocationOther) {
+      location = af ? `soos volg: ${work.workLocationOther}` : `as follows: ${work.workLocationOther}`;
+    }
+    let withBit = withLabel[work.workWith] || (af ? "met ’n ongespesifiseerde werkstyl" : "with an unspecified work style");
+    if (work.workWith === "other" && work.workWithOther) {
+      withBit = af ? `soos volg: ${work.workWithOther}` : `as follows: ${work.workWithOther}`;
+    }
+    const hours = work.workingHours
+      ? af
+        ? ` Werksure: ${work.workingHours}.`
+        : ` Working hours: ${work.workingHours}.`
+      : "";
+
+    const statedEnd = formatList(endNeedLabels(work));
+    const statedRecharge = formatList(rechargeLabels(work));
+    const inferred = inferredNeeds(work, lean);
+
+    let after = "";
+    if (statedEnd || statedRecharge) {
+      after = af
+        ? ` Ná werk dui hulle antwoorde op: ${[statedEnd, statedRecharge].filter(Boolean).join("; ")}.`
+        : ` After work, their answers point to: ${[statedEnd, statedRecharge].filter(Boolean).join("; ")}.`;
+    }
+    if (inferred.length) {
+      after += af ? ` Gevolglik ${inferred.join(" ")}.` : ` As a result, ${inferred.join(" ")}.`;
+    }
+
+    return af
+      ? `${name} werk ${location}, ${withBit}.${hours} Hulle ${everydayCopy[lean]}.${after}`
+      : `${name} works ${location}, ${withBit}.${hours} They ${everydayCopy[lean]}.${after}`;
+  }
+
+  const workA = workSnapshot(session.partners.a.coupleWork);
+  const workB = workSnapshot(session.partners.b.coupleWork);
+  const leanA = everydayLean(session.partners.a.answers);
+  const leanB = everydayLean(session.partners.b.answers);
+
+  if (!workA.employment && !workB.employment) return null;
+
+  const outA = needsOutSocial(workA, leanA);
+  const outB = needsOutSocial(workB, leanB);
+  const restA = needsRestAlone(workA, leanA);
+  const restB = needsRestAlone(workB, leanB);
+
+  const together = [];
+
+  if (outA && restB) {
+    together.push(
+      af
+        ? `${nameA} mag ná werk uit of sosiaal wil gaan, terwyl ${nameB} eerder rus of alleen-tyd nodig het. Dit is ’n belangrike verskil — nie ’n verwerping nie.`
+        : `${nameA} may need to get out or be social after work, while ${nameB} may need rest or alone time. That is an important difference — not rejection.`
+    );
+    together.push(
+      af
+        ? `Ondersteun mekaar waar dit oorvleuel (byvoorbeeld ’n kort gedeelde oorgang tuis), maar wees proaktief oor eie behoeftes: ${nameA} mag vriendetyd of ’n uitstappie self moet reël as ${nameB} oorweldig sou voel; ${nameB} mag ’n stil kamer of alleen-venster nodig hê sonder om skuldig te voel. Kommunikeer die plan vroeg — “ek gaan ’n uur uit, dan is ek meer teenwoordig” of “ek het eers 30 minute stilte nodig”.`
+        : `Support each other where needs overlap (for example a short shared transition at home), but be proactive about your own needs: ${nameA} may need to arrange friend time or an outing independently if joining would overwhelm ${nameB}; ${nameB} may need a quiet room or alone window without guilt. Name the plan early — “I’m going out for an hour, then I’ll be more present” or “I need 30 minutes quiet first.”`
+    );
+  } else if (outB && restA) {
+    together.push(
+      af
+        ? `${nameB} mag ná werk uit of sosiaal wil gaan, terwyl ${nameA} eerder rus of alleen-tyd nodig het. Dit is ’n belangrike verskil — nie ’n verwerping nie.`
+        : `${nameB} may need to get out or be social after work, while ${nameA} may need rest or alone time. That is an important difference — not rejection.`
+    );
+    together.push(
+      af
+        ? `Ondersteun mekaar waar dit oorvleuel, maar wees proaktief oor eie behoeftes: ${nameB} mag vriendetyd of ’n uitstappie self moet reël as ${nameA} oorweldig sou voel; ${nameA} mag ’n stil kamer of alleen-venster nodig hê sonder skuld. Kommunikeer die plan vroeg.`
+        : `Support each other where needs overlap, but be proactive about your own needs: ${nameB} may need to arrange friend time or an outing independently if joining would overwhelm ${nameA}; ${nameA} may need a quiet room or alone window without guilt. Name the plan early.`
+    );
+  } else if (outA && outB) {
+    together.push(
+      af
+        ? "Julle albei neig daarna om ná werk uit, aktief of sosiaal te wil wees — dit is ’n ooreenkoms julle kan saam beplan (wandeling, vriende, familie), solank dosis en tempo vir albei werk."
+        : "You both tend to want to get out, be active or be social after work — that is a similarity you can plan together (a walk, friends, family), as long as dose and pace work for both."
+    );
+    together.push(
+      af
+        ? "Steun mekaar deur die uitgaan nie as “ekstra” te behandel nie, maar as herstel. As een se sosiale battery vinniger leeg is, laat daardie persoon proaktief ’n korter of stiller opsie kies eerder as om die ander se behoefte te blokkeer."
+        : "Support each other by treating getting out as recovery, not as “extra.” If one person’s social battery empties faster, let that partner proactively choose a shorter or quieter option rather than blocking the other’s need."
+    );
+  } else if (restA && restB) {
+    together.push(
+      af
+        ? "Julle albei neig na rus, alleen-tyd of laer inset ná die dag — beskerm ’n gedeelde stil oorgang, en moenie mekaar tot aandplanne druk net omdat dit “produktief” lyk nie."
+        : "You both lean toward rest, alone time or lower input after the day — protect a shared quiet transition, and do not push each other into evening plans just because they look “productive.”"
+    );
+    together.push(
+      af
+        ? "Steun mekaar deur skerms, geraas en besoekers doelbewus te beperk in die eerste ruk ná werk. As een later wél sosiaal wil wees, kan hulle dit proaktief noem eerder as om aan te neem die ander is outomaties reg."
+        : "Support each other by deliberately limiting screens, noise and visitors in the first stretch after work. If one later does want social time, they can name that proactively rather than assuming the other is automatically ready."
+    );
+  } else {
+    together.push(
+      af
+        ? "Julle ná-werk behoeftes is nie identies of nog nie ten volle duidelik nie. Vergelyk werksure, tuis-versus-kantoor, mense-versus-skerms, en julle alledaagse sensoriese behoeftes — dan beplan die aand volgens wat die dag werklik gevra het."
+        : "Your after-work needs are not identical or not yet fully clear. Compare working hours, home-versus-office, people-versus-screens, and your everyday sensory needs — then plan the evening according to what the day actually asked of each of you."
+    );
+    together.push(
+      af
+        ? "Waar behoeftes bots, ondersteun die oorvleueling en wees proaktief oor dit wat die ander sou oorweldig: elkeen bly verantwoordelik om hul eie emmer op ’n manier vol te maak wat die verhouding respekteer."
+        : "Where needs clash, support the overlap and be proactive about what would overwhelm the other: each of you stays responsible for filling your own bucket in a way that respects the relationship."
+    );
+  }
+
+  // Hours clash note
+  if (workA.workingHours && workB.workingHours && workA.workingHours !== workB.workingHours) {
+    together.push(
+      af
+        ? `Werksure verskil (${nameA}: ${workA.workingHours}; ${nameB}: ${workB.workingHours}) — beplan herstel rondom wanneer elkeen eers tuiskom, nie asof julle dieselfde “klok-af” oomblik deel nie.`
+        : `Working hours differ (${nameA}: ${workA.workingHours}; ${nameB}: ${workB.workingHours}) — plan recovery around when each of you first gets home, not as if you share the same clock-off moment.`
+    );
+  }
+
+  return {
+    titleKey: "coupleCompareWorkTitle",
+    introKey: "coupleCompareWorkIntro",
+    nameA,
+    nameB,
+    partnerLines: [
+      { partner: "a", text: partnerWorkNarrative(nameA, workA, leanA) },
+      { partner: "b", text: partnerWorkNarrative(nameB, workB, leanB) },
+    ],
+    together,
+  };
+}
+
+/**
+ * Parenting-specific comparison: supporting recharge, touch/sound sensitivity with children.
+ * Shown when at least one partner marks that they are a parent.
+ */
+function buildCoupleParentingComparison(session, language = "en") {
+  const af = language === "af";
+  if (!session?.partners?.a || !session?.partners?.b) return null;
+
+  const nameA =
+    String(session.partners.a.label || session.partners.a.demographics?.name || "").trim() ||
+    (af ? "Vennoot 1" : "Partner 1");
+  const nameB =
+    String(session.partners.b.label || session.partners.b.demographics?.name || "").trim() ||
+    (af ? "Vennoot 2" : "Partner 2");
+
+  const parentA = session.partners.a.coupleWork?.isParent === "yes";
+  const parentB = session.partners.b.coupleWork?.isParent === "yes";
+  if (!parentA && !parentB) return null;
+
+  function domainLean(answers, domainId) {
+    return coupleDomainLean(answers, domainId);
+  }
+
+  const touchA = domainLean(session.partners.a.answers, "tactile");
+  const touchB = domainLean(session.partners.b.answers, "tactile");
+  const soundA = domainLean(session.partners.a.answers, "auditory");
+  const soundB = domainLean(session.partners.b.answers, "auditory");
+  const touchProfA = coupleTouchProfile(session.partners.a.answers || {});
+  const touchProfB = coupleTouchProfile(session.partners.b.answers || {});
+
+  function touchSensitive(lean, prof) {
+    return lean === "sensitive" || prof.overall === "sensitive" || prof.bubble === "large";
+  }
+
+  function soundSensitive(lean) {
+    return lean === "sensitive";
+  }
+
+  function partnerParentNarrative(name, isParent, touchLean, soundLean, touchProf) {
+    if (!isParent) {
+      return af
+        ? `${name} het nie aangedui dat hulle tans ’n ouer is nie — hierdie ouerskap-wenke geld steeds as julle saam kinders grootmaak.`
+        : `${name} did not indicate that they are currently a parent — these parenting tips still apply if you are raising children together.`;
+    }
+
+    const bits = [];
+    bits.push(
+      af
+        ? `${name} is ’n ouer.`
+        : `${name} is a parent.`
+    );
+
+    if (touchSensitive(touchLean, touchProf)) {
+      bits.push(
+        af
+          ? `Hulle toon meer tas-sensitiewe behoeftes — kinders se klimmery, kleef, hugge en konstante nabyheid kan hulle vinnig oorstimuleer, selfs wanneer hulle die kinders liefhet.`
+          : `They show more touch-sensitive needs — children’s climbing, clinging, hugs and constant closeness can overstimulate them quickly, even when they love their children.`
+      );
+    } else if (touchLean === "seeking" || touchProf.overall === "seeking") {
+      bits.push(
+        af
+          ? `Hulle mag fisieke nabyheid met kinders meer reguleerend ervaar — maar het steeds beurtelingse spasie nodig.`
+          : `They may experience physical closeness with children as more regulating — and still need turns of space.`
+      );
+    } else {
+      bits.push(
+        af
+          ? `Hulle tas-behoeftes met kinders lyk meer gemeng of tipies — konteks en moegheid speel steeds ’n rol.`
+          : `Their touch needs with children look more mixed or typical — context and tiredness still matter.`
+      );
+    }
+
+    if (soundSensitive(soundLean)) {
+      bits.push(
+        af
+          ? `Hulle is ook meer klank-sensitief — kinders se geraas, TV, speel en oorvleuelende stemme kan die battery vinnig leegtrek.`
+          : `They are also more sound-sensitive — children’s noise, TV, play and overlapping voices can drain the battery quickly.`
+      );
+    } else if (soundLean === "seeking") {
+      bits.push(
+        af
+          ? `Klank-inset van ’n besige huis mag vir hulle meer draaglik of selfs stimulerend voel — maar stil herstel help steeds ná ’n lang dag.`
+          : `Sound input from a busy home may feel more tolerable or even stimulating for them — but quiet recovery still helps after a long day.`
+      );
+    } else {
+      bits.push(
+        af
+          ? `Hulle klank-behoeftes lyk meer gemeng — kort stil oomblikke ná ’n harde speelsessie bly nuttig.`
+          : `Their sound needs look more mixed — short quiet moments after a loud play stretch remain useful.`
+      );
+    }
+
+    return bits.join(" ");
+  }
+
+  const together = [];
+
+  together.push(
+    af
+      ? "As ouers is die beste ondersteuning dikwels om mekaar se herlaai-beurte te beskerm: een hou die kinders besig (bad, speel buite, storie) terwyl die ander 10–20 minute werklik herstel — sonder skuld of onderbreking tensy dit dringend is. Ruil beurte; moenie aanneem die een wat “sterker lyk” nooit ’n pouse nodig het nie."
+      : "As parents, the best support is often protecting each other’s recharge turns: one holds the children’s attention (bath, outdoor play, story) while the other truly recovers for 10–20 minutes — without guilt or interruption unless it is urgent. Swap turns; do not assume the one who “looks stronger” never needs a break."
+  );
+
+  const touchSensNames = [];
+  if (parentA && touchSensitive(touchA, touchProfA)) touchSensNames.push(nameA);
+  if (parentB && touchSensitive(touchB, touchProfB)) touchSensNames.push(nameB);
+
+  if (touchSensNames.length) {
+    const who =
+      touchSensNames.length === 2
+        ? af
+          ? "Julle albei"
+          : "You both"
+        : touchSensNames[0];
+    together.push(
+      af
+        ? `${who} mag tas-sensitief wees as ouer(s). Kinders vra dikwels konstante aanraking — dit kan vinnig te veel word. Gee doelbewuste “tas-pouses”: die ander ouer neem die klimmery/kleef-tyd oor; bied kinders alternatiewe nabyheid (sy-aan-sy speel, storie op die bank met spasie, high-fives); en noem hardop “ek het ’n kort geen-aanraak-breuk nodig, dan is ek weer beskikbaar.” Dit is regulering, nie verwerping van die kind nie.`
+        : `${who} may be touch-sensitive as a parent. Children often ask for constant contact — that can become too much quickly. Build deliberate “touch breaks”: the other parent takes over climbing/clingy time; offer children alternative closeness (side-by-side play, a story on the couch with space, high-fives); and name out loud “I need a short no-touch break, then I’ll be available again.” That is regulation, not rejection of the child.`
+    );
+  }
+
+  const soundSensNames = [];
+  if (parentA && soundSensitive(soundA)) soundSensNames.push(nameA);
+  if (parentB && soundSensitive(soundB)) soundSensNames.push(nameB);
+
+  if (soundSensNames.length) {
+    const who =
+      soundSensNames.length === 2
+        ? af
+          ? "Julle albei"
+          : "You both"
+        : soundSensNames[0];
+    together.push(
+      af
+        ? `${who} mag klank-sensitief wees. Beplan “stil-pouses” in die dag: die ander ouer neem ’n lawaaierige speelblok of skerm-tyd in ’n ander kamer; gebruik oorfone of ’n kort stap buite; verlaag TV-volume; en vermy om belangrike gesprekke te stapel bo-op kindergeraas. Stilte is herstel — nie onttrekking uit die gesin nie.`
+        : `${who} may be sound-sensitive. Plan “quiet breaks” into the day: the other parent takes a noisy play block or screen time in another room; use headphones or a short step outside; lower the TV volume; and avoid stacking important conversations on top of children’s noise. Quiet is recovery — not withdrawal from the family.`
+    );
+  }
+
+  if (touchSensNames.length || soundSensNames.length) {
+    const overloaded =
+      touchSensNames.length && soundSensNames.length
+        ? af
+          ? "Waar tas- én klank-sensitiwiteit speel"
+          : "Where both touch and sound sensitivity are in play"
+        : touchSensNames.length
+          ? af
+            ? "Vir die meer tas-sensitiewe ouer"
+            : "For the more touch-sensitive parent"
+          : af
+            ? "Vir die meer klank-sensitiewe ouer"
+            : "For the more sound-sensitive parent";
+    together.push(
+      af
+        ? `${overloaded}: die ander vennoot kan proaktief “dekking” bied sonder om te wag tot ’n smeltpunt — en die sensitiewe ouer moet ook self ’n pouse vra voordat hulle oorweldig is. Julle kan nie mekaar se emmers heeltemal volmaak nie; kinders se behoeftes is werklik, en so ook ’n ouer se senuweestelsel.`
+        : `${overloaded}: the other partner can proactively offer “cover” without waiting for a meltdown — and the sensitive parent also needs to ask for a break before they are overwhelmed. You cannot fill each other’s buckets completely; children’s needs are real, and so is a parent’s nervous system.`
+    );
+  } else {
+    together.push(
+      af
+        ? "Selfs sonder ’n sterk tas- of klank-sensitiewe neiging help beurtelingse herlaai: kort alleen-oomblikke, stilte ná ’n besige speelsessie, en duidelike kommunikasie oor wie “aan diens” is sodat niemand se battery stilweg leegloop nie."
+        : "Even without a strong touch- or sound-sensitive lean, taking turns to recharge helps: short alone moments, quiet after a busy play stretch, and clear communication about who is “on duty” so neither person’s battery quietly runs empty."
+    );
+  }
+
+  return {
+    titleKey: "coupleCompareParentingTitle",
+    introKey: "coupleCompareParentingIntro",
+    nameA,
+    nameB,
+    partnerLines: [
+      {
+        partner: "a",
+        text: partnerParentNarrative(nameA, parentA, touchA, soundA, touchProfA),
+      },
+      {
+        partner: "b",
+        text: partnerParentNarrative(nameB, parentB, touchB, soundB, touchProfB),
+      },
+    ],
+    together,
+  };
+}
+
+/**
+ * Short per-partner “needs to thrive” checklist from comparison patterns.
+ */
+function buildCoupleThriveSummary(session, language = "en") {
+  const af = language === "af";
+  if (!session?.partners?.a?.answers || !session?.partners?.b?.answers) return null;
+
+  const nameA =
+    String(session.partners.a.label || session.partners.a.demographics?.name || "").trim() ||
+    (af ? "Vennoot 1" : "Partner 1");
+  const nameB =
+    String(session.partners.b.label || session.partners.b.demographics?.name || "").trim() ||
+    (af ? "Vennoot 2" : "Partner 2");
+
+  function thriveNeedsFor(partnerKey, name) {
+    const slot = session.partners[partnerKey];
+    const answers = slot.answers || {};
+    const work = slot.coupleWork && typeof slot.coupleWork === "object" ? slot.coupleWork : {};
+    const needs = [];
+
+    const visual = coupleVisualLean(answers);
+    const taste = coupleTasteLean(answers);
+    const touch = coupleTouchProfile(answers);
+    const moveReg = coupleMovementRegulatorLean(answers);
+    const moveStyle = coupleMovementStyleLean(answers);
+    const thrill = coupleMovementThrillLean(answers);
+    const sound = coupleDomainLean(answers, "auditory");
+    const everyday = coupleDomainLean(answers, "everyday");
+    const weekModes = coupleRegulationList(answers, "week", language);
+    const weekendModes = coupleRegulationList(answers, "weekend", language);
+    const isParent = work.isParent === "yes";
+
+    if (visual === "sensitive") {
+      needs.push(
+        af
+          ? "Kalmer, netter gedeelde spasies — veral ’n rommel-ligter sone om te herstel."
+          : "Calmer, tidier shared spaces — especially a clutter-light zone to reset."
+      );
+    } else if (visual === "seeking") {
+      needs.push(
+        af
+          ? "Visuele belangstelling of besigheid is okay — moenie alles steriel hoef te hou nie."
+          : "Visual interest or busyness is fine — home does not need to be sterile."
+      );
+    }
+
+    if (touch.overall === "sensitive" || touch.bubble === "large" || touch.loveLanguage === "nonPhysical") {
+      needs.push(
+        af
+          ? "Groter persoonlike borrel; vra voor hugge; liefde ook deur woorde, tyd of gebare."
+          : "A bigger personal bubble; ask before hugs; love through words, time or acts too."
+      );
+    } else if (touch.overall === "seeking" || touch.loveLanguage === "physical") {
+      needs.push(
+        af
+          ? "Gereelde fisieke toegeneentheid (met toestemming) as ’n belangrike manier om verbind te voel."
+          : "Regular physical affection (with consent) as an important way to feel connected."
+      );
+    }
+
+    if (sound === "sensitive") {
+      needs.push(
+        af
+          ? "Stil-pouses en laer geraas — veral ná besige of mense-swaar dele van die dag."
+          : "Quiet breaks and lower noise — especially after busy or people-heavy parts of the day."
+      );
+    }
+
+    if (moveReg === "important" || moveStyle === "high") {
+      needs.push(
+        af
+          ? "Gereelde beweging as regulering — moenie dit as “ekstra” behandel nie."
+          : "Regular movement as regulation — treat it as essential, not optional."
+      );
+    } else if (moveStyle === "low" || moveStyle === "sedentary") {
+      needs.push(
+        af
+          ? "Sagter of stiller aktiwiteit eerder as hoë-impak druk."
+          : "Gentler or quieter activity rather than high-impact pressure."
+      );
+    }
+
+    if (thrill === "thrill") {
+      needs.push(
+        af
+          ? "Party spanning of avontuur — kan apart van die vennoot gebeur as nodig."
+          : "Some thrill or adventure — can happen apart from their partner when needed."
+      );
+    } else if (thrill === "relaxed") {
+      needs.push(
+        af
+          ? "Ontspanne planne sonder adrenalien-druk."
+          : "Relaxed plans without adrenaline pressure."
+      );
+    }
+
+    if (taste === "sensitive") {
+      needs.push(
+        af
+          ? "Bekende, sagter smake by gedeelde etes — sterker geure as opsie, nie verpligting nie."
+          : "Familiar, milder flavours at shared meals — stronger tastes as optional, not required."
+      );
+    } else if (taste === "seeking") {
+      needs.push(
+        af
+          ? "Ruimte om sterker of nuwer smake te geniet sonder om die ander te druk."
+          : "Room to enjoy stronger or newer flavours without pressuring the other."
+      );
+    }
+
+    const socialWeek = weekModes.some((m) => m.id === "social");
+    const aloneWeek = weekModes.some((m) => m.id === "alone");
+    const activeWeek = weekModes.some((m) => m.id === "active");
+    const sedentaryWeek = weekModes.some((m) => m.id === "sedentary");
+    const socialWeekend = weekendModes.some((m) => m.id === "social");
+    const aloneWeekend = weekendModes.some((m) => m.id === "alone");
+    const end = Array.isArray(work.endOfDay) ? work.endOfDay : [];
+    const recharge = Array.isArray(work.rechargeAfterWork) ? work.rechargeAfterWork : [];
+
+    let socialPoints = 0;
+    let alonePoints = 0;
+    if (socialWeek || socialWeekend) socialPoints += 2;
+    if (aloneWeek || aloneWeekend) alonePoints += 2;
+    if (end.includes("withPeople")) socialPoints += 1;
+    if (recharge.includes("othersHome") || recharge.includes("othersOutside")) socialPoints += 1;
+    if (end.includes("alone")) alonePoints += 1;
+    if (end.includes("sitRelax") || recharge.includes("relaxHome")) alonePoints += 1;
+    if (everyday === "seeking") socialPoints += 1;
+    if (everyday === "sensitive") alonePoints += 1;
+    // People-heavy work often increases need for alone recovery afterward
+    if (
+      work.employment === "works" &&
+      (work.workWith === "people" || work.workWith === "screensAndPeople")
+    ) {
+      alonePoints += 1;
+    }
+    // Indoor/screen work + seeking everyday often increases need to be social after
+    if (
+      work.employment === "works" &&
+      everyday === "seeking" &&
+      (work.workLocation === "home" || work.workWith === "screens" || work.workWith === "alone")
+    ) {
+      socialPoints += 1;
+    }
+
+    let socialNeed = "unclear";
+    if (socialPoints > 0 && alonePoints > 0) socialNeed = "both";
+    else if (socialPoints > alonePoints) socialNeed = "social";
+    else if (alonePoints > socialPoints) socialNeed = "alone";
+
+    const socialNeedLine = {
+      social: af
+        ? "Sosiale behoefte: wil baie sosiaal wees — gereelde tyd saam met mense, vriende of familie."
+        : "Social need: tends to need to be very social — regular time with people, friends or family.",
+      both: af
+        ? "Sosiale behoefte: het beide alleen-tyd én sosiale tyd nodig — beplan albei, nie óf-óf nie."
+        : "Social need: needs both alone time and social time — plan for both, not either/or.",
+      alone: af
+        ? "Sosiale behoefte: het meer alleen-tyd nodig om te herlaai."
+        : "Social need: tends to need more alone time to recharge.",
+      unclear: af
+        ? "Sosiale behoefte: nie duidelik uit hierdie antwoorde nie — vra hardop of vanand sosiaal of stil moet wees."
+        : "Social need: not clear from these answers — ask out loud whether tonight needs to be social or quiet.",
+    };
+
+    // Lead with a clear social / alone / both statement
+    needs.unshift(socialNeedLine[socialNeed]);
+
+    if (activeWeek && !sedentaryWeek && socialNeed !== "alone") {
+      needs.push(
+        af
+          ? "Aktiewe herlaai (beweging) help ook — nie net sit nie."
+          : "Active recharge (movement) also helps — not only sitting still."
+      );
+    }
+
+    if (end.includes("getOut") || recharge.includes("activeOutdoors")) {
+      needs.push(
+        af
+          ? "Uitgaan of buite-tyd ná werk as deel van herstel."
+          : "Getting out or outdoor time after work as part of recovery."
+      );
+    }
+
+    if (isParent && (touch.overall === "sensitive" || touch.bubble === "large" || sound === "sensitive")) {
+      needs.push(
+        af
+          ? "As ouer: beskermde stil- en/of tas-pouses terwyl die ander diens doen."
+          : "As a parent: protected quiet and/or touch breaks while the other is on duty."
+      );
+    } else if (isParent) {
+      needs.push(
+        af
+          ? "As ouer: beurtelingse herlaai-tyd wat werklik ononderbroke is."
+          : "As a parent: turn-taking recharge time that is truly uninterrupted."
+      );
+    }
+
+    // Keep it to-the-point: max 6 items (social need is always first)
+    return needs.slice(0, 6);
+  }
+
+  return {
+    titleKey: "coupleCompareThriveTitle",
+    introKey: "coupleCompareThriveIntro",
+    nameA,
+    nameB,
+    partners: [
+      { partner: "a", name: nameA, needs: thriveNeedsFor("a", nameA) },
+      { partner: "b", name: nameB, needs: thriveNeedsFor("b", nameB) },
+    ],
+  };
+}
+
+
+

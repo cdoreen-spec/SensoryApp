@@ -1,5 +1,5 @@
 const LANGUAGES = ["en", "af"];
-const RESPONDENT_TYPES = ["adult", "teen", "parent"];
+const RESPONDENT_TYPES = ["adult", "teen", "parent", "couple"];
 
 const QUESTIONNAIRE_UI = {
   en: {
@@ -21,6 +21,127 @@ const QUESTIONNAIRE_UI = {
     teenDesc: "I am answering about my own sensory experiences at home and at school.",
     parent: "I'm a parent",
     parentDesc: "I am answering about my child’s sensory experiences.",
+    couple: "We're a couple",
+    coupleDesc: "We each complete our own questionnaire — on this device or another — then compare and merge our profiles.",
+    coupleHubTag: "Couples trail",
+    coupleHubTitle: "Two questionnaires, one shared profile",
+    coupleHubDesc:
+      "Each of you completes a separate sensory questionnaire. You can do them at different times, on different phones or computers. When both are finished, we’ll bring your profiles together.",
+    coupleSessionLabel: "Couple session code",
+    coupleShareHint:
+      "Send your partner their personal link. They can open it later on any device. When they finish, they can send you their completion code (or you can paste it here) so both results live in this session.",
+    couplePartnerA: "Partner 1",
+    couplePartnerB: "Partner 2",
+    coupleNamePlaceholder: "First name (optional)",
+    coupleStatusNotStarted: "Not started",
+    coupleStatusInProgress: "In progress",
+    coupleStatusComplete: "Complete",
+    coupleStart: "Start questionnaire",
+    coupleContinue: "Continue questionnaire",
+    coupleViewResults: "View my results",
+    coupleCopyLink: "Copy my link",
+    coupleLinkCopied: "Link copied",
+    coupleExport: "Copy completion code",
+    coupleExportCopied: "Completion code copied",
+    coupleExportHint: "Paste this into the couple hub on another device to add these results to the shared session.",
+    coupleImportTitle: "Add a partner’s results from another device",
+    coupleImportDesc: "Paste the completion code they copied after finishing.",
+    coupleImportPlaceholder: "Paste completion code here…",
+    coupleImportBtn: "Import results",
+    coupleImportOk: "Partner results imported.",
+    coupleImportBad: "That code could not be read. Ask your partner to copy it again.",
+    coupleImportMismatch: "That code belongs to a different couple session.",
+    coupleBothReady: "Both questionnaires are complete.",
+    coupleViewMerge: "View combined couple profile",
+    coupleWaitingOther: "Waiting for the other partner to finish.",
+    coupleNextStepsTitle: "What happens next",
+    coupleNextStepsLead:
+      "You’ve finished your part. Your partner still needs to complete their own questionnaire before you can view the combined couple profile.",
+    coupleNextStep1:
+      "Copy your partner’s link and send it to them (WhatsApp, email, or text). They can open it later on their own phone or computer.",
+    coupleNextStep2:
+      "Also copy your completion code and keep it somewhere safe — or send it to them. If they finish on another device, this code lets their results join the same couple session.",
+    coupleNextStep3:
+      "When they have finished, ask them to copy their completion code and send it back to you.",
+    coupleNextStep4:
+      "Return to the couple hub, paste their code under “Add a partner’s results from another device”, then open the combined couple profile.",
+    coupleNextStepsSameDevice:
+      "If your partner will use this same device: go back to the couple hub and start their questionnaire when they are ready.",
+    coupleCopyPartnerLink: "Copy partner’s link",
+    couplePartnerLinkCopied: "Partner’s link copied",
+    coupleBackToHub: "Back to couple hub",
+    coupleMergeTitle: "Your combined sensory profiles",
+    coupleMergeDesc: "Side-by-side snapshots of how each of you tends to respond. Use this as a starting point for conversation — your OT can explore the detail with you.",
+    coupleCompareTitle: "How your sensory preferences meet",
+    coupleCompareIntro:
+      "These comparisons draw on your answers about vision, movement, taste, touch and how you each recharge — useful starting points for shared spaces, activity, meals, affection and downtime.",
+    coupleCompareVisualTitle: "Visual clutter & shared spaces",
+    coupleCompareMovementTitle: "Movement, intensity & thrill-seeking",
+    coupleCompareTasteTitle: "Taste, flavour & cooking together",
+    coupleCompareTouchTitle: "Touch, affection & personal space",
+    coupleCompareRegulateTitle: "How each of you regulates and recharges",
+    coupleCompareWorkTitle: "Work situations & after-work needs",
+    coupleCompareWorkIntro:
+      "This compares where and how you each work, your everyday sensory needs, and what you tend to need after the workday — including where you can support each other, and where one of you may need to meet a need independently.",
+    coupleCompareThriveTitle: "What each of you needs to thrive",
+    coupleCompareThriveIntro:
+      "A short snapshot for each partner, drawn from the patterns above — use it as a practical checklist at home and after work.",
+    coupleCompareParentingTitle: "Parenting & supporting each other’s recharge",
+    coupleCompareParentingIntro:
+      "When you are parents, children’s noise, touch and constant demand can empty a sensory battery quickly. This section looks at how you can protect each other’s recharge time — especially if one of you is more touch-sensitive or sound-sensitive.",
+    coupleCompareWeek: "During the week",
+    coupleCompareWeekend: "Over the weekend",
+    coupleCompareTogether: "Together",
+    coupleWorkTag: "Work & home life",
+    coupleWorkTitle: "A few questions about work",
+    coupleWorkDesc:
+      "This short section helps compare how work shapes your energy, downtime and home life. If you do not currently work (for example you mainly look after children or the home), you can skip the work questions.",
+    coupleWorkEmploymentLabel: "Do you currently work (paid employment)?",
+    coupleWorkEmploymentYes: "Yes, I work",
+    coupleWorkEmploymentNo: "No — I don’t currently work / I mainly look after children or the home",
+    coupleWorkSkipNote: "We’ll only ask the parenting question below, then you can continue.",
+    coupleWorkLocationLabel: "I work…",
+    coupleWorkLocationOffice: "At the office",
+    coupleWorkLocationHome: "At home",
+    coupleWorkLocationBoth: "Both office and at home",
+    coupleWorkLocationOther: "Other",
+    coupleWorkLocationOtherPlaceholder: "Please describe…",
+    coupleWorkWithLabel: "I work…",
+    coupleWorkWithPeople: "With people",
+    coupleWorkWithAlone: "Alone",
+    coupleWorkWithScreens: "On screens",
+    coupleWorkWithScreensPeople: "Screens and people combined",
+    coupleWorkWithOther: "Other",
+    coupleWorkWithOtherPlaceholder: "Please describe…",
+    coupleWorkHoursLabel: "My working hours look like…",
+    coupleWorkHoursPlaceholder: "e.g. 8:00–16:30, shift work, mornings only…",
+    coupleWorkEndOfDayLabel: "At the end of a working day I like to:",
+    coupleWorkEndOfDayHint: "You can choose more than one.",
+    coupleWorkEndGetOut: "Get out",
+    coupleWorkEndSitRelax: "Just sit and relax",
+    coupleWorkEndWithPeople: "Do something with other people",
+    coupleWorkEndAlone: "Be alone",
+    coupleWorkRechargeLabel: "The best way for me to recharge after a long day of work is…",
+    coupleWorkRechargeHint: "You can choose more than one.",
+    coupleWorkRechargeActive: "To be active and outdoors",
+    coupleWorkRechargeHome: "To relax at home doing something I love",
+    coupleWorkRechargeOthersHome: "To spend time with others at home",
+    coupleWorkRechargeOthersOut: "To spend time with others outside of the home",
+    coupleWorkRechargeOther: "Other",
+    coupleWorkRechargeOtherPlaceholder: "Please describe…",
+    coupleWorkSaturdayLabel:
+      "If you have had a fairly busy week of work, what would a recharging Saturday look like for you (you can be selfish)?",
+    coupleWorkSaturdayPlaceholder: "Describe your ideal recharging Saturday…",
+    coupleWorkParentLabel: "I am a parent",
+    coupleWorkParentYes: "Yes",
+    coupleWorkParentNo: "No",
+    coupleWorkRequired: "Please complete the work section before continuing.",
+    coupleWorkRequiredEmployment: "Please choose whether you currently work.",
+    coupleWorkResultsTitle: "Work & home life",
+    coupleMergeBack: "Back to couple hub",
+    coupleYourTurn: "You are completing as",
+    coupleSavedLocal:
+      "Progress for this couple session is saved in this browser. Use each partner’s link and completion codes so the other device can join the same session.",
     answerMixedNote:
       "It is completely fine to say yes to questions that seem opposite. You might enjoy both high-impact and low-impact sport, or like a busy environment as well as your own quiet space. Answer each question on its own — mixed preferences are common and expected.",
     answerMixedNoteParent:
@@ -713,6 +834,127 @@ const QUESTIONNAIRE_UI = {
     teenDesc: "Ek antwoord oor my eie sensoriese ervarings by die huis én by die skool.",
     parent: "Ek is ’n ouer",
     parentDesc: "Ek antwoord oor my kind se sensoriese ervarings.",
+    couple: "Ons is ’n paartjie",
+    coupleDesc: "Elkeen voltooi ons eie vraelys — op hierdie toestel of ’n ander — en daarna vergelyk en saamvoeg ons profiele.",
+    coupleHubTag: "Paartjie-roete",
+    coupleHubTitle: "Twee vraelyste, een gedeelde profiel",
+    coupleHubDesc:
+      "Elkeen van julle voltooi ’n aparte sensoriese vraelys. Julle kan dit op verskillende tye, op verskillende fone of rekenaars doen. Wanneer albei klaar is, bring ons julle profiele bymekaar.",
+    coupleSessionLabel: "Paartjie-sessiekode",
+    coupleShareHint:
+      "Stuur jou vennoot hul eie skakel. Hulle kan dit later op enige toestel oopmaak. Wanneer hulle klaarmaak, kan hulle hul voltooiingskode vir jou stuur (of jy kan dit hier plak) sodat albei resultate in hierdie sessie leef.",
+    couplePartnerA: "Vennoot 1",
+    couplePartnerB: "Vennoot 2",
+    coupleNamePlaceholder: "Voornaam (opsioneel)",
+    coupleStatusNotStarted: "Nog nie begin nie",
+    coupleStatusInProgress: "Besig",
+    coupleStatusComplete: "Klaar",
+    coupleStart: "Begin vraelys",
+    coupleContinue: "Gaan voort met vraelys",
+    coupleViewResults: "Sien my resultate",
+    coupleCopyLink: "Kopieer my skakel",
+    coupleLinkCopied: "Skakel gekopieer",
+    coupleExport: "Kopieer voltooiingskode",
+    coupleExportCopied: "Voltooiingskode gekopieer",
+    coupleExportHint: "Plak dit in die paartjie-spilpunt op ’n ander toestel om hierdie resultate by die gedeelde sessie te voeg.",
+    coupleImportTitle: "Voeg ’n vennoot se resultate van ’n ander toestel by",
+    coupleImportDesc: "Plak die voltooiingskode wat hulle na klaarmaak gekopieer het.",
+    coupleImportPlaceholder: "Plak voltooiingskode hier…",
+    coupleImportBtn: "Voer resultate in",
+    coupleImportOk: "Vennoot se resultate is ingevoer.",
+    coupleImportBad: "Daardie kode kon nie gelees word nie. Vra jou vennoot om dit weer te kopieer.",
+    coupleImportMismatch: "Daardie kode behoort aan ’n ander paartjie-sessie.",
+    coupleBothReady: "Albei vraelyste is klaar.",
+    coupleViewMerge: "Sien gekombineerde paartjie-profiel",
+    coupleWaitingOther: "Wag dat die ander vennoot klaarmaak.",
+    coupleNextStepsTitle: "Wat gebeur nou",
+    coupleNextStepsLead:
+      "Jy het jou deel klaargemaak. Jou vennoot moet nog hul eie vraelys voltooi voordat julle die gekombineerde paartjie-profiel kan sien.",
+    coupleNextStep1:
+      "Kopieer jou vennoot se skakel en stuur dit vir hulle (WhatsApp, e-pos of boodskap). Hulle kan dit later op hul eie foon of rekenaar oopmaak.",
+    coupleNextStep2:
+      "Kopieer ook jou voltooiingskode en hou dit veilig — of stuur dit vir hulle. As hulle op ’n ander toestel klaarmaak, laat hierdie kode hul resultate by dieselfde paartjie-sessie aansluit.",
+    coupleNextStep3:
+      "Wanneer hulle klaar is, vra hulle om hul voltooiingskode te kopieer en terug te stuur.",
+    coupleNextStep4:
+      "Gaan terug na die paartjie-spilpunt, plak hul kode onder “Voeg ’n vennoot se resultate van ’n ander toestel by”, en open dan die gekombineerde paartjie-profiel.",
+    coupleNextStepsSameDevice:
+      "As jou vennoot hierdie selfde toestel gaan gebruik: gaan terug na die paartjie-spilpunt en begin hul vraelys wanneer hulle gereed is.",
+    coupleCopyPartnerLink: "Kopieer vennoot se skakel",
+    couplePartnerLinkCopied: "Vennoot se skakel is gekopieer",
+    coupleBackToHub: "Terug na paartjie-spilpunt",
+    coupleMergeTitle: "Julle gekombineerde sensoriese profiele",
+    coupleMergeDesc: "Sy-aan-sy grepe van hoe elkeen van julle geneig is om te reageer. Gebruik dit as ’n beginpunt vir gesprek — julle arbeidsterapeut kan die besonderhede saam met julle verken.",
+    coupleCompareTitle: "Hoe julle sensoriese voorkeure mekaar ontmoet",
+    coupleCompareIntro:
+      "Hierdie vergelykings kom uit julle antwoorde oor sig, beweging, smaak, tas en hoe elkeen herlaai — nuttige beginpunte vir gedeelde ruimtes, aktiwiteit, etes, toegeneentheid en stilte-tyd.",
+    coupleCompareVisualTitle: "Visuele rommel & gedeelde ruimtes",
+    coupleCompareMovementTitle: "Beweging, intensiteit & spanningsoeke",
+    coupleCompareTasteTitle: "Smaak, geur & saam kook",
+    coupleCompareTouchTitle: "Aanraking, toegeneentheid & persoonlike ruimte",
+    coupleCompareRegulateTitle: "Hoe elkeen van julle reguleer en herlaai",
+    coupleCompareWorkTitle: "Werksituasies & behoeftes ná werk",
+    coupleCompareWorkIntro:
+      "Hierdie vergelyk waar en hoe elkeen van julle werk, julle alledaagse sensoriese behoeftes, en wat julle ná die werkdag nodig het — insluitend waar julle mekaar kan ondersteun, en waar een van julle dalk ’n behoefte self moet vervul.",
+    coupleCompareThriveTitle: "Wat elkeen van julle nodig het om te floreer",
+    coupleCompareThriveIntro:
+      "’n Kort greep vir elke vennoot, uit die patrone hierbo — gebruik dit as ’n praktiese kontrolelys by die huis en ná werk.",
+    coupleCompareParentingTitle: "Ouerskap & mekaar se herlaai ondersteun",
+    coupleCompareParentingIntro:
+      "Wanneer julle ouers is, kan kinders se geraas, aanraking en konstante eise ’n sensoriese battery vinnig leegmaak. Hierdie afdeling kyk hoe julle mekaar se herlaai-tyd kan beskerm — veral as een van julle meer tas-sensitief of klank-sensitief is.",
+    coupleCompareWeek: "Gedurende die week",
+    coupleCompareWeekend: "Oor die naweek",
+    coupleCompareTogether: "Saam",
+    coupleWorkTag: "Werk & huislike lewe",
+    coupleWorkTitle: "’n Paar vrae oor werk",
+    coupleWorkDesc:
+      "Hierdie kort afdeling help om te vergelyk hoe werk julle energie, stilte-tyd en huislike lewe vorm. As jy nie tans werk nie (byvoorbeeld jy pas hoofsaaklik kinders of die huis op), kan jy die werkvrae oorslaan.",
+    coupleWorkEmploymentLabel: "Werk jy tans (betaalde werk)?",
+    coupleWorkEmploymentYes: "Ja, ek werk",
+    coupleWorkEmploymentNo: "Nee — ek werk nie tans nie / ek pas hoofsaaklik kinders of die huis op",
+    coupleWorkSkipNote: "Ons vra net die ouerskap-vraag hieronder, en dan kan jy voortgaan.",
+    coupleWorkLocationLabel: "Ek werk…",
+    coupleWorkLocationOffice: "By die kantoor",
+    coupleWorkLocationHome: "By die huis",
+    coupleWorkLocationBoth: "Beide kantoor en by die huis",
+    coupleWorkLocationOther: "Ander",
+    coupleWorkLocationOtherPlaceholder: "Beskryf asseblief…",
+    coupleWorkWithLabel: "Ek werk…",
+    coupleWorkWithPeople: "Met mense",
+    coupleWorkWithAlone: "Alleen",
+    coupleWorkWithScreens: "Op skerms",
+    coupleWorkWithScreensPeople: "Skerms en mense gekombineer",
+    coupleWorkWithOther: "Ander",
+    coupleWorkWithOtherPlaceholder: "Beskryf asseblief…",
+    coupleWorkHoursLabel: "My werksure lyk so…",
+    coupleWorkHoursPlaceholder: "bv. 8:00–16:30, skofwerk, net oggende…",
+    coupleWorkEndOfDayLabel: "Aan die einde van ’n werkdag hou ek daarvan om:",
+    coupleWorkEndOfDayHint: "Jy mag meer as een kies.",
+    coupleWorkEndGetOut: "Uitgaan",
+    coupleWorkEndSitRelax: "Net sit en ontspan",
+    coupleWorkEndWithPeople: "Iets saam met ander mense doen",
+    coupleWorkEndAlone: "Alleen wees",
+    coupleWorkRechargeLabel: "Die beste manier vir my om na ’n lang werkdag te herlaai is…",
+    coupleWorkRechargeHint: "Jy mag meer as een kies.",
+    coupleWorkRechargeActive: "Om aktief en buite te wees",
+    coupleWorkRechargeHome: "Om by die huis te ontspan met iets waarvan ek hou",
+    coupleWorkRechargeOthersHome: "Om tyd saam met ander by die huis deur te bring",
+    coupleWorkRechargeOthersOut: "Om tyd saam met ander buite die huis deur te bring",
+    coupleWorkRechargeOther: "Ander",
+    coupleWorkRechargeOtherPlaceholder: "Beskryf asseblief…",
+    coupleWorkSaturdayLabel:
+      "As jy ’n redelik besige week van werk gehad het, hoe sou ’n herladende Saterdag vir jou lyk (jy mag selfsugtig wees)?",
+    coupleWorkSaturdayPlaceholder: "Beskryf jou ideale herladende Saterdag…",
+    coupleWorkParentLabel: "Ek is ’n ouer",
+    coupleWorkParentYes: "Ja",
+    coupleWorkParentNo: "Nee",
+    coupleWorkRequired: "Voltooi asseblief die werksafdeling voordat jy voortgaan.",
+    coupleWorkRequiredEmployment: "Kies asseblief of jy tans werk.",
+    coupleWorkResultsTitle: "Werk & huislike lewe",
+    coupleMergeBack: "Terug na paartjie-spilpunt",
+    coupleYourTurn: "Jy voltooi as",
+    coupleSavedLocal:
+      "Vordering vir hierdie paartjie-sessie word in hierdie blaaier gestoor. Gebruik elkeen se skakel en voltooiingskodes sodat die ander toestel by dieselfde sessie kan aansluit.",
     answerMixedNote:
       "Dit is heeltemal reg om ja te sê op vrae wat teenoorgesteld lyk. Jy kan byvoorbeeld van beide hoë-impak- en lae-impaksport hou, of van ’n besige omgewing én van jou eie stil ruimte. Beantwoord elke vraag op sy eie — gemengde voorkeure is algemeen en verwag.",
     answerMixedNoteParent:
@@ -1392,6 +1634,7 @@ const RESPONDENT_OPTIONS = {
   adult: { labelKey: "adult", descKey: "adultDesc" },
   teen: { labelKey: "teen", descKey: "teenDesc" },
   parent: { labelKey: "parent", descKey: "parentDesc" },
+  couple: { labelKey: "couple", descKey: "coupleDesc" },
 };
 
 const CONSENT_COPY = {
@@ -1574,11 +1817,13 @@ const DEMOGRAPHIC_COPY = {
     adult: [["name", "Name and surname", "text", true], ["age", "Age", "number", true], ["email", "Email", "email", true], ["occupation", "Occupation / university / college", "text", false]],
     teen: [["name", "Name and surname", "text", true], ["age", "Age", "number", true], ["email", "Your or a parent / guardian’s email", "email", true], ["occupation", "School / grade", "text", false]],
     parent: [["name", "Child’s name and surname", "text", true], ["age", "Child’s age", "number", true], ["parentName", "Parent / guardian name and surname", "text", true], ["email", "Parent / guardian email", "email", true], ["occupation", "School / grade", "text", false]],
+    couple: [["name", "Your name and surname", "text", true], ["age", "Your age", "number", true], ["email", "Email", "email", true]],
   },
   af: {
     adult: [["name", "Naam en van", "text", true], ["age", "Ouderdom", "number", true], ["email", "E-posadres", "email", true], ["occupation", "Beroep / universiteit / kollege", "text", false]],
     teen: [["name", "Naam en van", "text", true], ["age", "Ouderdom", "number", true], ["email", "Jou of ’n ouer / voog se e-posadres", "email", true], ["occupation", "Skool / graad", "text", false]],
     parent: [["name", "Kind se naam en van", "text", true], ["age", "Kind se ouderdom", "number", true], ["parentName", "Ouer / voog se naam en van", "text", true], ["email", "Ouer / voog se e-posadres", "email", true], ["occupation", "Skool / graad", "text", false]],
+    couple: [["name", "Jou naam en van", "text", true], ["age", "Jou ouderdom", "number", true], ["email", "E-posadres", "email", true]],
   },
 };
 
@@ -1671,7 +1916,7 @@ const DOMAIN_DEFINITIONS = [
   {
     id: "tactile",
     icon: "✋",
-    types: ["sensitive", "sensitive", "seeking", "sensitive", "sensitive", "seeking", "sensitive"],
+    types: ["sensitive", "sensitive", "seeking", "sensitive", "sensitive", "seeking", "sensitive", "seeking", "sensitive"],
     copy: {
       en: {
         title: "Tactile Processing",
@@ -1717,6 +1962,17 @@ const DOMAIN_DEFINITIONS = [
           "My child enjoys appropriate physical affection, such as hugs, from people they trust.",
           "My child avoids certain foods because the texture feels unpleasant.",
         ],
+        couple: [
+          "Certain clothing textures, such as scratchy or tight-fitting fabrics, are uncomfortable for me.",
+          "Clothing labels or seams irritate me, and I often remove them.",
+          "I am comfortable when people are in my personal space.",
+          "I feel uncomfortable in queues or crowded spaces where people are very close to me.",
+          "I dislike getting my hands messy, for example with paint, sand, glue or food.",
+          "I enjoy appropriate physical affection, such as hugs, from people I trust.",
+          "I avoid certain foods because their texture feels unpleasant.",
+          "I like to show love to my partner through physical affection like hugs and kisses.",
+          "I prefer more personal space with my partner and tend to show love in ways that are not mainly physical touch (for example words, time together, or thoughtful acts).",
+        ],
       },
       af: {
         adult: [
@@ -1745,6 +2001,17 @@ const DOMAIN_DEFINITIONS = [
           "My kind hou nie daarvan om hulle hande vuil te maak met verf, sand, gom of kos nie.",
           "My kind geniet gepaste fisieke aanraking, soos drukkies, van mense wat hulle vertrou.",
           "My kind vermy sekere kosse omdat die tekstuur onaangenaam voel.",
+        ],
+        couple: [
+          "Sekere kledingteksture, soos krapperige of styfpassende materiaal, voel vir my ongemaklik.",
+          "Etikette of nate in klere irriteer my, en ek verwyder dit dikwels.",
+          "Ek is gemaklik wanneer mense in my persoonlike ruimte is.",
+          "Ek voel ongemaklik in rye of oorvol plekke waar mense baie naby aan my is.",
+          "Ek hou nie daarvan om my hande vuil te maak met verf, sand, gom of kos nie.",
+          "Ek geniet gepaste fisieke aanraking, soos drukkies, van mense wat ek vertrou.",
+          "Ek vermy sekere kosse omdat die tekstuur onaangenaam voel.",
+          "Ek hou daarvan om liefde aan my vennoot te wys deur fisieke aanraking soos drukkies en soene.",
+          "Ek verkies meer persoonlike ruimte met my vennoot en is geneig om liefde te wys op maniere wat nie hoofsaaklik fisieke aanraking is nie (byvoorbeeld woorde, tyd saam, of deurdagte gebare).",
         ],
       },
     },
@@ -1871,7 +2138,7 @@ const DOMAIN_DEFINITIONS = [
   {
     id: "visual",
     icon: "👁",
-    types: ["neutral", "sensitive", "seeking", "sensitive", "sensitive", "sensitive", "seeking"],
+    types: ["neutral", "sensitive", "seeking", "sensitive", "sensitive", "sensitive", "seeking", "sensitive", "seeking"],
     copy: {
       en: {
         title: "Visual Processing",
@@ -1917,6 +2184,17 @@ const DOMAIN_DEFINITIONS = [
           "My child appears more comfortable in dimly lit rooms.",
           "My child enjoys natural light and opening curtains or blinds.",
         ],
+        couple: [
+          "I keep my surroundings organised and generally prefer a tidy space.",
+          "I am sensitive to bright lights, fluorescent lighting or glare.",
+          "When dressing or decorating, I enjoy bright colours and bold patterns.",
+          "When dressing or decorating, I prefer softer, neutral colours such as beige, white, green or navy.",
+          "I become distracted when there is a lot happening visually around me.",
+          "I feel more comfortable in dimly lit rooms.",
+          "I enjoy opening curtains or blinds to let in natural light.",
+          "I have to have a neat, organised space at home.",
+          "I am comfortable with some clutter at home.",
+        ],
       },
       af: {
         adult: [
@@ -1945,6 +2223,17 @@ const DOMAIN_DEFINITIONS = [
           "My kind raak afgelei wanneer daar visueel baie rondom hulle gebeur.",
           "My kind lyk gemakliker in vertrekke met dowwe lig.",
           "My kind geniet natuurlike lig en om gordyne of blindings oop te maak.",
+        ],
+        couple: [
+          "Ek hou my omgewing georganiseerd en verkies gewoonlik ’n netjiese ruimte.",
+          "Ek is sensitief vir helder ligte, fluoresserende lig of glans.",
+          "Wanneer ek aantrek of dekor, geniet ek helder kleure en opvallende patrone.",
+          "Wanneer ek aantrek of dekor, verkies ek sagter, neutrale kleure soos beige, wit, groen of vlootblou.",
+          "Ek raak afgelei wanneer daar visueel baie rondom my gebeur.",
+          "Ek voel gemakliker in vertrekke met dowwe lig.",
+          "Ek geniet dit om gordyne of blindings oop te maak sodat natuurlike lig kan inkom.",
+          "Ek moet ’n netjiese, georganiseerde ruimte by die huis hê.",
+          "Ek is gemaklik met ’n bietjie rommel by die huis.",
         ],
       },
     },
@@ -2037,7 +2326,20 @@ const DOMAIN_DEFINITIONS = [
   {
     id: "everyday",
     icon: "🌿",
-    types: ["sensitive", "seeking", "sensitive", "sensitive"],
+    types: [
+      "sensitive",
+      "seeking",
+      "sensitive",
+      "sensitive",
+      "neutral",
+      "seeking",
+      "seeking",
+      "sensitive",
+      "neutral",
+      "seeking",
+      "seeking",
+      "sensitive",
+    ],
     copy: {
       en: {
         title: "Everyday Sensory Moments",
@@ -2072,6 +2374,20 @@ const DOMAIN_DEFINITIONS = [
           "My child prefers quieter environments and small groups to large gatherings.",
           "After spending time in a busy environment, my child usually needs quiet time to recharge.",
         ],
+        couple: [
+          "Busy places, such as shopping centres or restaurants, leave me feeling tired or drained.",
+          "I enjoy being around lots of people and social activity.",
+          "I prefer quieter environments and small groups to large gatherings.",
+          "After spending time in a busy environment, I usually need quiet time to recharge.",
+          "During the week I recharge best with quieter, sedentary activities such as reading, drawing, art or watching TV.",
+          "During the week I recharge best through movement or active activities.",
+          "During the week I recharge best by being social and around people.",
+          "During the week I recharge best with alone time.",
+          "Over the weekend I recharge best with quieter, sedentary activities such as reading, drawing, art or watching TV.",
+          "Over the weekend I recharge best through movement or active activities.",
+          "Over the weekend I recharge best by being social and around people.",
+          "Over the weekend I recharge best with alone time.",
+        ],
       },
       af: {
         adult: [
@@ -2091,6 +2407,20 @@ const DOMAIN_DEFINITIONS = [
           "My kind geniet dit om tussen baie mense en sosiale aktiwiteit te wees.",
           "My kind verkies stiller omgewings en klein groepies bo groot byeenkomste.",
           "Nadat my kind tyd in ’n besige omgewing deurgebring het, het hulle gewoonlik stiltetyd nodig om te herlaai.",
+        ],
+        couple: [
+          "Besige plekke, soos winkelsentrums of restaurante, laat my moeg of uitgeput voel.",
+          "Ek geniet dit om tussen baie mense en sosiale aktiwiteit te wees.",
+          "Ek verkies stiller omgewings en klein groepies bo groot byeenkomste.",
+          "Nadat ek tyd in ’n besige omgewing deurgebring het, het ek gewoonlik stilte nodig om te herlaai.",
+          "Gedurende die week herlaai ek die beste met stiller, sittende aktiwiteite soos lees, teken, kuns of TV kyk.",
+          "Gedurende die week herlaai ek die beste deur beweging of aktiewe aktiwiteite.",
+          "Gedurende die week herlaai ek die beste deur sosiaal te wees en tussen mense te wees.",
+          "Gedurende die week herlaai ek die beste met alleen-tyd.",
+          "Oor die naweek herlaai ek die beste met stiller, sittende aktiwiteite soos lees, teken, kuns of TV kyk.",
+          "Oor die naweek herlaai ek die beste deur beweging of aktiewe aktiwiteite.",
+          "Oor die naweek herlaai ek die beste deur sosiaal te wees en tussen mense te wees.",
+          "Oor die naweek herlaai ek die beste met alleen-tyd.",
         ],
       },
     },
@@ -2142,16 +2472,21 @@ function getDemographics(language = "en", respondent = "adult") {
 function getSensoryDomains(language = "en", respondent = "adult") {
   const safeLanguage = LANGUAGES.includes(language) ? language : "en";
   const safeRespondent = RESPONDENT_TYPES.includes(respondent) ? respondent : "adult";
-  return DOMAIN_DEFINITIONS.map((domain) => ({
-    id: domain.id,
-    icon: domain.icon,
-    title: domain.copy[safeLanguage].title,
-    shortTitle: domain.copy[safeLanguage].shortTitle,
-    description: domain.copy[safeLanguage].description,
-    blurb: domain.copy[safeLanguage].blurb || "",
-    questions: domain.questions[safeLanguage][safeRespondent].map((text, index) => ({
-      text,
-      type: domain.types[index],
-    })),
-  }));
+  return DOMAIN_DEFINITIONS.map((domain) => {
+    const bank = domain.questions[safeLanguage] || domain.questions.en;
+    // Couple uses adult self-report questions until couple-specific wording is added.
+    const questionTexts = bank[safeRespondent] || bank.adult;
+    return {
+      id: domain.id,
+      icon: domain.icon,
+      title: domain.copy[safeLanguage].title,
+      shortTitle: domain.copy[safeLanguage].shortTitle,
+      description: domain.copy[safeLanguage].description,
+      blurb: domain.copy[safeLanguage].blurb || "",
+      questions: questionTexts.map((text, index) => ({
+        text,
+        type: domain.types[index],
+      })),
+    };
+  });
 }
