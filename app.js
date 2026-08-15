@@ -5789,9 +5789,38 @@ function renderCoupleMerge(session = null) {
         ${comparison.sections
           .map((section) => {
             const title = copy[section.titleKey] || section.titleKey;
+            const tasteVisuals =
+              section.id === "taste"
+                ? `
+                <div class="couple-taste-visuals" aria-hidden="true">
+                  <figure class="couple-taste-visuals__feature">
+                    <img
+                      src="assets/couple-taste-plates.png"
+                      alt=""
+                      class="couple-taste-visuals__image"
+                      width="1024"
+                      height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                  <figure class="couple-taste-visuals__inset">
+                    <img
+                      src="assets/couple-taste-prep.png"
+                      alt=""
+                      class="couple-taste-visuals__image"
+                      width="1024"
+                      height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                </div>`
+                : "";
             return `
               <article class="couple-compare__card couple-compare__card--${escapeHtml(section.id || "general")}">
                 <h4 class="couple-compare__card-title">${escapeHtml(title)}</h4>
+                ${tasteVisuals}
                 ${renderCoupleCompareBody(
                   section.partnerLines,
                   section.together,
@@ -5811,6 +5840,30 @@ function renderCoupleMerge(session = null) {
       <section class="couple-compare couple-compare--work">
         <h3 class="couple-compare__title">${escapeHtml(copy[workComparison.titleKey] || copy.coupleWorkResultsTitle)}</h3>
         <p class="couple-compare__intro">${escapeHtml(copy[workComparison.introKey] || "")}</p>
+        <div class="couple-work-visuals" aria-hidden="true">
+          <figure class="couple-work-visuals__shot couple-work-visuals__shot--desk">
+            <img
+              src="assets/couple-work-desk.png"
+              alt=""
+              class="couple-work-visuals__image"
+              width="1024"
+              height="682"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
+          <figure class="couple-work-visuals__shot couple-work-visuals__shot--people">
+            <img
+              src="assets/couple-work-people.png"
+              alt=""
+              class="couple-work-visuals__image"
+              width="1024"
+              height="682"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
+        </div>
         <article class="couple-compare__card couple-compare__card--work">
           ${renderCoupleCompareBody(
             workComparison.partnerLines,
@@ -5879,10 +5932,18 @@ function renderCoupleMerge(session = null) {
 
   return renderShell(
     `
-      <span class="section-tag">${escapeHtml(copy.coupleHubTag)}</span>
-      <h2 class="step-title couple-merge-title">${escapeHtml(copy.coupleMergeTitle)}</h2>
-      <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
-      <p class="step-desc">${escapeHtml(copy.coupleMergeDesc)}</p>
+      ${renderInterpretSectionBanner({
+        image: "assets/couple-report-banner.png",
+        objectPosition: "center 72%",
+        kicker: copy.coupleHubTag,
+        titleId: "couple-merge-title",
+        title: copy.coupleMergeTitle,
+        lead: copy.coupleMergeDesc,
+        variant: "couple",
+        titleTag: "h2",
+        width: 1024,
+        height: 682,
+      })}
       ${colorKey}
       <div class="couple-merge-grid">${cards}</div>
       ${compareHtml}
