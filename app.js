@@ -5737,6 +5737,51 @@ function renderCoupleCompareBody(partnerLines, together, copy, nameA = "", nameB
   return `${personBlocks}${togetherBlock}`;
 }
 
+/** Educational panel: work sensory load and the sensory bucket (adult + couples). */
+function renderWorkBucketExplain(copy = currentUi()) {
+  if (!copy?.coupleWorkBucketTitle) return "";
+  return `
+    <article class="couple-work-bucket work-bucket-explain">
+      <header class="couple-work-bucket__header">
+        <h4 class="couple-work-bucket__title">${escapeHtml(copy.coupleWorkBucketTitle)}</h4>
+        <p class="couple-work-bucket__lead">${escapeHtml(copy.coupleWorkBucketLead)}</p>
+      </header>
+      <aside class="couple-work-bucket__insight">
+        <p class="couple-work-bucket__insight-label">${escapeHtml(copy.coupleWorkBucketInsightLabel)}</p>
+        <p class="couple-work-bucket__insight-text"><strong>${escapeHtml(copy.coupleWorkBucketInsight)}</strong></p>
+        <p class="couple-work-bucket__insight-note">${escapeHtml(copy.coupleWorkBucketInsightNote)}</p>
+      </aside>
+      <p class="couple-work-bucket__bridge">
+        ${escapeHtml(copy.coupleWorkBucketBridgeBefore)}
+        <strong>${escapeHtml(copy.coupleWorkBucketBridgeEmphasis)}</strong>.
+      </p>
+      <div class="couple-work-bucket__contrast">
+        <article class="couple-work-bucket__card couple-work-bucket__card--under">
+          <p class="couple-work-bucket__card-label">${escapeHtml(copy.coupleWorkBucketUnderLabel)}</p>
+          <p class="couple-work-bucket__card-text">${escapeHtml(copy.coupleWorkBucketUnderText)}</p>
+        </article>
+        <article class="couple-work-bucket__card couple-work-bucket__card--over">
+          <p class="couple-work-bucket__card-label">${escapeHtml(copy.coupleWorkBucketOverLabel)}</p>
+          <p class="couple-work-bucket__card-text">${escapeHtml(copy.coupleWorkBucketOverText)}</p>
+        </article>
+      </div>
+      <aside class="couple-work-bucket__system">
+        <p class="couple-work-bucket__system-label">${escapeHtml(copy.coupleWorkBucketSystemLabel)}</p>
+        <p class="couple-work-bucket__system-text">
+          ${escapeHtml(copy.coupleWorkBucketSystemBefore)}
+          <strong>${escapeHtml(copy.coupleWorkBucketSystemEmphasis)}</strong>.
+          ${escapeHtml(copy.coupleWorkBucketSystemAfter)}
+          <strong>${escapeHtml(copy.coupleWorkBucketSystemEmphasisEnd)}</strong>.
+        </p>
+      </aside>
+      <p class="couple-work-bucket__close">
+        ${escapeHtml(copy.coupleWorkBucketCloseBefore)}
+        <strong>${escapeHtml(copy.coupleWorkBucketCloseEmphasis)}</strong>.
+        ${escapeHtml(copy.coupleWorkBucketCloseAfter)}
+      </p>
+    </article>`;
+}
+
 function couplePartnerCrewProfile(slot, copy = currentUi()) {
   let lean = slot?.summary?.lean || "";
   let balance =
@@ -6057,6 +6102,7 @@ function renderCoupleMerge(session = null) {
             />
           </figure>
         </div>
+        ${renderWorkBucketExplain(copy)}
         <div class="couple-work-setup-grid">
           ${(workComparison.partners || [])
             .map((card) => {
@@ -7611,6 +7657,7 @@ function renderTrailSettingInterpretations(metrics, pagePlan) {
             width: banner.width,
             height: banner.height,
           })}
+          ${settingKey === "work" ? renderWorkBucketExplain(currentUi()) : ""}
           <div class="trail-interpret">
             <article class="trail-interpret__block trail-interpret__block--needs">
               <h4 class="trail-interpret__label">${escapeHtml(guide.needsLabel)}</h4>

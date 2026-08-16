@@ -85,6 +85,35 @@ const QUESTIONNAIRE_UI = {
     coupleCompareWorkTitle: "Work situations & after-work needs",
     coupleCompareWorkIntro:
       "This compares where and how you each work, your everyday sensory needs, and what you tend to need after the workday — including where you can support each other, and where one of you may need to meet a need independently.",
+    coupleWorkBucketTitle: "Work, sensory load & your sensory bucket",
+    coupleWorkBucketLead:
+      "Work is one of the biggest contributors to your overall sensory experience because a significant portion of your week is spent in your work environment. The type of work you do, your working hours, social demands, physical activity, noise levels, amount of change and opportunities for quiet or recovery can all influence how quickly your sensory bucket fills.",
+    coupleWorkBucketInsightLabel: "Key idea",
+    coupleWorkBucketInsight:
+      "A person’s sensory needs do not necessarily change because of their job — but their capacity for additional sensory input can change throughout the day.",
+    coupleWorkBucketInsightNote:
+      "When your sensory bucket becomes fuller, you may have less capacity to tolerate input that you would normally manage comfortably.",
+    coupleWorkBucketBridgeBefore: "Your work environment can also either",
+    coupleWorkBucketBridgeEmphasis: "meet or leave unmet your natural sensory needs",
+    coupleWorkBucketUnderLabel: "When work underfills",
+    coupleWorkBucketUnderText:
+      "A sensory-seeking or highly social person who works alone from home in a quiet environment may receive too little movement, social interaction and stimulation during the day. They may therefore have a stronger need to get out, socialise or seek stimulation after work.",
+    coupleWorkBucketOverLabel: "When work overfills",
+    coupleWorkBucketOverText:
+      "Someone who is more socially reserved and works in a busy open-plan environment — particularly in a people-focused or helping profession — may have their social, auditory and emotional sensory buckets filled very quickly. They may benefit from quieter independent work, administrative tasks, a private workspace or occasional work-from-home days.",
+    coupleWorkBucketSystemLabel: "Across the senses",
+    coupleWorkBucketSystemBefore:
+      "The same principle applies to individual sensory systems. An auditory-seeking person may enjoy sound and conversation, but if their job involves continuous talking, background noise and a busy environment,",
+    coupleWorkBucketSystemEmphasis:
+      "their auditory bucket may become full by the end of the working day",
+    coupleWorkBucketSystemAfter:
+      "At home they may then seek quiet and become much less tolerant of additional noise — not because their profile has changed, but because",
+    coupleWorkBucketSystemEmphasisEnd: "their available capacity has already been used",
+    coupleWorkBucketCloseBefore:
+      "Understanding your work environment helps identify whether your daily routine is",
+    coupleWorkBucketCloseEmphasis: "meeting, exceeding or leaving gaps in your sensory needs",
+    coupleWorkBucketCloseAfter:
+      "Small adjustments — incorporating movement, varying social interaction, creating quieter periods or changing your workspace — may help you keep a more balanced sensory bucket through the day and reduce the need for significant recovery afterwards.",
     coupleCompareThriveTitle: "What each of you needs to thrive",
     coupleCompareThriveIntro:
       "A short snapshot for each partner, drawn from the patterns above — use it as a practical checklist at home and after work.",
@@ -914,6 +943,35 @@ const QUESTIONNAIRE_UI = {
     coupleCompareWorkTitle: "Werksituasies & behoeftes ná werk",
     coupleCompareWorkIntro:
       "Hierdie vergelyk waar en hoe elkeen van julle werk, julle alledaagse sensoriese behoeftes, en wat julle ná die werkdag nodig het — insluitend waar julle mekaar kan ondersteun, en waar een van julle dalk ’n behoefte self moet vervul.",
+    coupleWorkBucketTitle: "Werk, sensoriese lading & jou sensoriese emmer",
+    coupleWorkBucketLead:
+      "Werk is een van die grootste bydraers tot jou algehele sensoriese ervaring, omdat ’n beduidende deel van jou week in jou werksomgewing deurgebring word. Die tipe werk wat jy doen, jou werksure, sosiale eise, fisieke aktiwiteit, geraasvlakke, hoeveelheid verandering en geleenthede vir stilte of herstel kan alles beïnvloed hoe vinnig jou sensoriese emmer vol raak.",
+    coupleWorkBucketInsightLabel: "Kernidee",
+    coupleWorkBucketInsight:
+      "’n Persoon se sensoriese behoeftes verander nie noodwendig as gevolg van hul werk nie — maar hul kapasiteit vir bykomende sensoriese inset kan deur die dag verander.",
+    coupleWorkBucketInsightNote:
+      "Wanneer jou sensoriese emmer voller word, mag jy minder kapasiteit hê om inset te verdra wat jy normaalweg gemaklik sou hanteer.",
+    coupleWorkBucketBridgeBefore: "Jou werksomgewing kan ook óf jou natuurlike sensoriese behoeftes",
+    coupleWorkBucketBridgeEmphasis: "bevredig, óf dit onvervul laat",
+    coupleWorkBucketUnderLabel: "Wanneer werk te min gee",
+    coupleWorkBucketUnderText:
+      "’n Sensories-soekende of hoogs sosiale persoon wat alleen van die huis af in ’n stil omgewing werk, mag te min beweging, sosiale interaksie en stimulasie gedurende die dag ontvang. Hulle mag daarom ’n sterker behoefte hê om ná werk uit te gaan, sosiaal te wees of stimulasie te soek.",
+    coupleWorkBucketOverLabel: "Wanneer werk te vol maak",
+    coupleWorkBucketOverText:
+      "Iemand wat sosiaal meer gereserveerd is en in ’n besige oopplan-omgewing werk — veral in ’n mense-gerigte of versorgende beroep — mag hul sosiale, ouditiewe en emosionele sensoriese emmers baie vinnig vol hê. Hulle mag baat by stiller onafhanklike werk, administratiewe take, ’n private werkplek of soms tuiswerk-dae.",
+    coupleWorkBucketSystemLabel: "Oor die sintuie heen",
+    coupleWorkBucketSystemBefore:
+      "Dieselfde beginsel geld vir individuele sensoriese stelsels. ’n Ouditief-soekende persoon mag klank en gesprek geniet, maar as hul werk deurlopende praat, agtergrondgeraas en ’n besige omgewing behels,",
+    coupleWorkBucketSystemEmphasis:
+      "mag hul ouditiewe emmer teen die einde van die werkdag vol wees",
+    coupleWorkBucketSystemAfter:
+      "By die huis mag hulle dan stilte soek en baie minder verdraagsaam teenoor bykomende geraas wees — nie omdat hul profiel verander het nie, maar omdat",
+    coupleWorkBucketSystemEmphasisEnd: "hul beskikbare kapasiteit reeds gedurende die dag gebruik is",
+    coupleWorkBucketCloseBefore:
+      "Om jou werksomgewing te verstaan help om te sien of jou daaglikse roetine jou sensoriese behoeftes",
+    coupleWorkBucketCloseEmphasis: "bevredig, oorskry of gapings laat",
+    coupleWorkBucketCloseAfter:
+      "Klein aanpassings — beweging inbou, sosiale interaksie wissel, stiller periodes skep of jou werkplek verander — kan help om ’n meer gebalanseerde sensoriese emmer deur die dag te hou en die behoefte aan groot herstel daarna te verminder.",
     coupleCompareThriveTitle: "Wat elkeen van julle nodig het om te floreer",
     coupleCompareThriveIntro:
       "’n Kort greep vir elke vennoot, uit die patrone hierbo — gebruik dit as ’n praktiese kontrolelys by die huis en ná werk.",
