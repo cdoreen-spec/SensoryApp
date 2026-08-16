@@ -5910,17 +5910,95 @@ function renderCoupleMerge(session = null) {
                   </figure>
                 </div>`
                 : "";
+            const movementVisuals =
+              section.id === "movement"
+                ? `
+                <div class="couple-movement-visuals" aria-hidden="true">
+                  <figure class="couple-movement-visuals__shot couple-movement-visuals__shot--gym">
+                    <img
+                      src="assets/couple-movement-gym.png"
+                      alt=""
+                      class="couple-movement-visuals__image"
+                      width="1024"
+                      height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                  <figure class="couple-movement-visuals__shot couple-movement-visuals__shot--walk">
+                    <img
+                      src="assets/couple-movement-walk.png"
+                      alt=""
+                      class="couple-movement-visuals__image"
+                      width="1024"
+                      height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                  <figure class="couple-movement-visuals__shot couple-movement-visuals__shot--run">
+                    <img
+                      src="assets/couple-movement-run.png"
+                      alt=""
+                      class="couple-movement-visuals__image"
+                      width="1024"
+                      height="681"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                </div>`
+                : "";
             const touchVisuals =
               section.id === "touch"
                 ? `
                 <div class="couple-touch-visuals" aria-hidden="true">
-                  <figure class="couple-touch-visuals__shot">
+                  <figure class="couple-touch-visuals__water">
                     <img
-                      src="assets/couple-touch-hand.png"
+                      src="assets/couple-touch-water.png"
                       alt=""
                       class="couple-touch-visuals__image"
                       width="1024"
                       height="682"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                  <figure class="couple-touch-visuals__grass">
+                    <img
+                      src="assets/couple-touch-grass.png"
+                      alt=""
+                      class="couple-touch-visuals__image"
+                      width="682"
+                      height="1024"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                </div>`
+                : "";
+            const regulateVisuals =
+              section.id === "regulate"
+                ? `
+                <div class="couple-regulate-visuals" aria-hidden="true">
+                  <figure class="couple-regulate-visuals__feature">
+                    <img
+                      src="assets/couple-regulate-tree.png"
+                      alt=""
+                      class="couple-regulate-visuals__image"
+                      width="1023"
+                      height="1024"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </figure>
+                  <figure class="couple-regulate-visuals__inset">
+                    <img
+                      src="assets/couple-regulate-coffee.png"
+                      alt=""
+                      class="couple-regulate-visuals__image"
+                      width="768"
+                      height="1024"
                       loading="eager"
                       decoding="async"
                     />
@@ -5932,7 +6010,9 @@ function renderCoupleMerge(session = null) {
                 ${visualVisuals}
                 <h4 class="couple-compare__card-title">${escapeHtml(title)}</h4>
                 ${tasteVisuals}
+                ${movementVisuals}
                 ${touchVisuals}
+                ${regulateVisuals}
                 ${renderCoupleCompareBody(
                   section.partnerLines,
                   section.together,
@@ -6028,6 +6108,19 @@ function renderCoupleMerge(session = null) {
         <p class="couple-compare__intro">${escapeHtml(
           copy[conflictSummary.introKey] || copy.coupleCompareConflictIntro || ""
         )}</p>
+        <div class="couple-conflict-visuals" aria-hidden="true">
+          <figure class="couple-conflict-visuals__shot">
+            <img
+              src="assets/couple-conflict-differences.png"
+              alt=""
+              class="couple-conflict-visuals__image"
+              width="1024"
+              height="576"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
+        </div>
         ${
           (conflictSummary.areas || []).length
             ? `<div class="couple-conflict-list">
@@ -6163,9 +6256,11 @@ function renderCoupleMerge(session = null) {
         `;
       }).join("")}
       <figure class="couple-closing-quote">
-        <blockquote class="couple-closing-quote__bubble">
+        <span class="couple-closing-quote__mark" aria-hidden="true">“</span>
+        <blockquote class="couple-closing-quote__text">
           <p>${escapeHtml(copy.coupleClosingQuote)}</p>
         </blockquote>
+        <span class="couple-closing-quote__rule" aria-hidden="true"></span>
       </figure>
       <div class="actions">
         <button type="button" class="btn btn-secondary" data-action="couple-back-hub">${escapeHtml(copy.coupleMergeBack)}</button>
@@ -7294,7 +7389,7 @@ function renderTeenCrewSummary(metrics, pageEntry) {
     ? copy.teenCrewTraitsTitleTeen || copy.teenCrewTraitsTitle
     : copy.teenCrewTraitsTitle;
   const traits =
-    isTeen && Array.isArray(you.traits) && you.traits.length
+    Array.isArray(you.traits) && you.traits.length
       ? `
         <div class="trail-profile__traits teen-crew__match-traits">
           <p class="trail-profile__traits-title">${escapeHtml(traitsTitle)}</p>
