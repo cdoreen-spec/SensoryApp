@@ -10,6 +10,8 @@ const QUESTIONNAIRE_UI = {
       "In this questionnaire you will simply answer yes or no questions. You may need to generalise a little — if you are unsure, ask yourself: if I had to choose, would this be a yes or a no?",
     introModalPurpose:
       "The idea is to identify sensory preferences — what you (or your child) tend to prefer and how the senses respond — so we can see how best to support you going forward.",
+    introModalDisclaimer:
+      "This is not a standardised assessment tool. It is a questionnaire used to guide therapy and to help increase self-awareness. It is in no way a diagnostic tool.",
     introModalNote:
       "There are no right or wrong answers. It is also fine if some of your answers seem to pull in opposite directions — sensory preferences are often mixed. Take your time, and go with your first instinct.",
     introModalCta: "Got it — let’s begin",
@@ -837,6 +839,8 @@ const QUESTIONNAIRE_UI = {
       "In hierdie vraelys hoef jy net ja/nee-vrae te beantwoord. Jy sal dalk ’n bietjie moet veralgemeen — as jy onseker is, vra jouself: as ek moet kies, sou dit ’n ja of ’n nee wees?",
     introModalPurpose:
       "Die doel is om sensoriese voorkeure te identifiseer — wat jy (of jou kind) verkies en hoe die sintuie reageer — sodat ons kan sien hoe om jou vorentoe die beste te ondersteun.",
+    introModalDisclaimer:
+      "Dit is nie ’n gestandaardiseerde assesseringshulpmiddel nie. Dit is ’n vraelys wat gebruik word om terapie te lei en selfbewustheid te help verhoog. Dit is geensins ’n diagnostiese hulpmiddel nie.",
     introModalNote:
       "Daar is geen regte of verkeerde antwoorde nie. Dit is ook reg as party antwoorde in teenoorgestelde rigtings lyk trek — sensoriese voorkeure is dikwels gemeng. Neem jou tyd, en volg jou eerste intuïsie.",
     introModalCta: "Ek verstaan — kom ons begin",

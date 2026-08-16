@@ -5507,6 +5507,7 @@ function renderIntroModal() {
         <div class="intro-modal__body">
           <p>${escapeHtml(copy.introModalLead)}</p>
           <p>${escapeHtml(copy.introModalPurpose)}</p>
+          <p class="intro-modal__disclaimer">${escapeHtml(copy.introModalDisclaimer)}</p>
           <p class="intro-modal__note">${escapeHtml(copy.introModalNote)}</p>
         </div>
         <button type="button" class="btn btn-primary intro-modal__cta" data-action="dismiss-intro">

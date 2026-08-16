@@ -12936,6 +12936,18 @@ body.has-intro-modal {
   margin-bottom: 0;
 }
 
+.intro-modal__disclaimer {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 244, 0.98) 0%, rgba(247, 226, 218, 0.88) 100%);
+  border: 1.5px solid rgba(169, 84, 70, 0.38);
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  color: #4f2924 !important;
+}
+
 .intro-modal__note {
   padding: 0.85rem 1rem;
   border-radius: 12px;
