@@ -2288,27 +2288,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Open-plan noise, notifications, overlapping conversations and constant background sound can make concentration harder than the work itself, and leave the person drained after meetings or busy floor days.",
-        recommendations: [
-          "Consider work-from-home or hybrid days for focus-heavy tasks, where the business allows it.",
-          "Provide a quieter separate workspace, focus room or booked quiet zone rather than only open-plan seating.",
-          "Allow noise-cancelling headphones or earplugs as a normal work tool, not a last resort.",
-          "Protect one or two low-interruption focus blocks each day for cognitively demanding work.",
+        prepare: [
+          "Build a quieter start into the morning: a buffer before the first meeting so you are not walking straight into noise already loaded.",
+          "On noisy commutes, use noise-reducing headphones or choose a quieter route or departure time when you can.",
+        ],
+        during: [
+          "Use a quieter workspace, booked focus room, or hybrid / work-from-home day for cognitively demanding work.",
+          "Treat noise-cancelling headphones as a normal work tool, and protect one or two low-interruption focus blocks each day.",
+        ],
+        recover: [
+          "After a noisy workday, decompress with reduced sound — a quieter commute, a walk without audio, or a low-conversation first hour at home before more talking is needed.",
         ],
       },
       neutral: {
         challenge:
           "Sound is usually manageable, but on tired, deadline-heavy or meeting-dense days the same office noise can become intrusive and interrupt focus.",
-        recommendations: [
-          "Keep headphones available so sound can be reduced for complex work and added for routine tasks.",
-          "Offer flexibility to move to a quieter spot when the open-plan floor becomes too busy.",
+        prepare: [
+          "Pack headphones so sound can be reduced or added once the day’s load is clear.",
+          "Glance at the meeting calendar and match the commute (quieter versus more audio) to the likely sensory load.",
+        ],
+        during: [
+          "Reduce sound for complex thinking work and add helpful audio for routine tasks.",
+          "Move to a quieter spot when the open-plan floor becomes too busy.",
+        ],
+        recover: [
+          "Match after-work sound to the day: quiet recovery after heavy meeting noise, or some audio or conversation after a silent admin stretch.",
         ],
       },
       seeking: {
         challenge:
           "Very quiet offices or long silent admin blocks can feel flat, making it harder to stay alert and get started without some background sound or rhythm.",
-        recommendations: [
-          "Allow helpful background audio (music or ambient sound) during independent work.",
-          "Pair routine admin with sound, and build short walk-and-listen breaks between calls where helpful.",
+        prepare: [
+          "Use a playlist or podcast while getting ready or commuting so the morning does not start too quiet.",
+          "Set up helpful background audio at the desk before independent work begins.",
+        ],
+        during: [
+          "Allow background music or ambient sound during independent work.",
+          "Pair routine admin with sound, and use short walk-and-listen breaks between calls.",
+        ],
+        recover: [
+          "After a quiet, low-stimulation desk day, restore energy with sound or social contact rather than more silence — music, a stop with colleagues, or an audio-filled commute.",
         ],
       },
     },
@@ -2316,27 +2335,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Crowded spaces, people working shoulder-to-shoulder, scratchy seating, uniforms or lanyards, and unexpected proximity can nag at attention and increase tension through the day.",
-        recommendations: [
-          "Look at alternative seating options with more personal space — end of row, edge of open plan, or a less crowded desk zone.",
-          "Allow preferred work clothing or soft layers within dress-code limits.",
-          "Avoid placing the person in tightly packed meeting layouts when a less crowded option is available.",
-          "Build in brief sensory breaks when the person feels overwhelmed by proximity or physical discomfort.",
+        prepare: [
+          "Choose work clothing and layers you can stay comfortable in for a full day, and pack a soft spare layer.",
+          "If the commute is crowded, leave a little earlier or later, or stand at the edge of the carriage / queue to reduce unexpected contact.",
+        ],
+        during: [
+          "Use seating with more personal space — end of row, edge of open plan, or a less crowded desk zone.",
+          "Avoid tightly packed meeting layouts when a less crowded option is available, and take a brief break when proximity or clothing discomfort builds.",
+        ],
+        recover: [
+          "After a crowded workday, decompress with comfortable clothing, a warm shower, or time in a room where you will not be brushed against or asked for hugs straight away.",
         ],
       },
       neutral: {
         challenge:
           "Clothing, seating and proximity usually go unnoticed, but become an early irritation on demanding or depleted days.",
-        recommendations: [
+        prepare: [
+          "Keep a comfort option packed (soft layer, spare socks, or a seat cushion) so small irritations can be fixed early.",
+          "Check whether the day is meeting-heavy or desk-heavy and dress for the more demanding stretch.",
+        ],
+        during: [
           "Treat early clothing or seating discomfort as a cue to change posture, seat or take a short break before irritation builds.",
-          "Keep a small comfort adjustment available at the desk (soft layer, seat cushion, posture change).",
+          "Keep a small comfort adjustment available at the desk.",
+        ],
+        recover: [
+          "Change out of work clothes soon after finishing, and use a familiar comfortable texture (soft layer, warm drink in a preferred mug) as a simple reset.",
         ],
       },
       seeking: {
         challenge:
           "Long meetings and screen blocks may leave the hands and body looking for grounding touch — fidgeting, warm mugs or firm pressure help the person stay settled.",
-        recommendations: [
-          "Allow a discreet desk fidget during long meetings and calls.",
-          "Encourage short heavy-work or grounding resets between tasks (wall pushes, carrying items, palm presses).",
+        prepare: [
+          "Pack a discreet desk fidget and, if helpful, a warm drink flask so grounding touch is available from the first meeting.",
+          "Use a firm, organizing morning task (making the bed, carrying a bag, a wall push) to give the body input before sitting begins.",
+        ],
+        during: [
+          "Allow a discreet fidget during long meetings and calls.",
+          "Use short grounding resets between tasks — wall pushes, carrying items, palm presses, or a warm mug.",
+        ],
+        recover: [
+          "After a long seated day, decompress with grounding touch: a warm shower, cooking, carrying shopping, or a firm walk rather than going straight to more sitting.",
         ],
       },
     },
@@ -2344,27 +2382,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Rushed transitions between meetings, hurrying across site, or being moved from task to task with no pause can leave the body unsettled and thinking slower to arrive.",
-        recommendations: [
-          "Allow a few minutes to arrive and settle before high-demand meetings or focus work.",
-          "Prefer steady movement (short walk or stretch) over sudden rushed transitions where possible.",
-          "Protect brief buffers in the calendar between back-to-back meetings.",
+        prepare: [
+          "Leave a few extra minutes for the commute and arrival so the first task does not begin in a rush.",
+          "Use slow, steady movement on the way in (an unhurried walk from the car or station) rather than a last-minute dash.",
+        ],
+        during: [
+          "Protect brief buffers in the calendar between back-to-back meetings so the body can settle before the next demand.",
+          "Prefer a calm walk or stretch over sudden rushing, and plant both feet on the floor when concentration is needed.",
+        ],
+        recover: [
+          "After a rushed day, decompress with slow movement — a steady walk, gentle stretching, or sitting still with feet grounded — before more errands or social plans.",
         ],
       },
       neutral: {
         challenge:
           "Sitting still is sometimes easy, and at other times the body clearly needs movement before focus returns.",
-        recommendations: [
-          "Allow short movement breaks when restlessness appears, rather than waiting until focus has already dropped.",
-          "Keep two or three movement options that take under three minutes available during the workday.",
+        prepare: [
+          "Notice whether the morning body feels restless or already tired, and choose a slightly more active or calmer commute to match.",
+          "Keep two or three under-three-minute movement options in mind before the day starts.",
+        ],
+        during: [
+          "Take a short movement break when restlessness appears, rather than waiting until focus has already dropped.",
+          "Change posture across the day — sit, stand, brief walk — instead of one unbroken seated block.",
+        ],
+        recover: [
+          "After work, use movement as a check-in: a short walk if the day was too still, or a slower settle if it was rushed, before the evening routine begins.",
         ],
       },
       seeking: {
         challenge:
           "Long seated stretches at a desk or in meetings drain focus; the person may fidget, rock, or walk around because sitting still for long periods is genuinely hard.",
-        recommendations: [
-          "Build in regular movement breaks across the day — stairs, corridor walks, standing stretches.",
-          "Allow standing for some calls and walking meetings where the work allows it.",
-          "Avoid scheduling long unbroken seated blocks without a movement opportunity.",
+        prepare: [
+          "Get movement in before sitting starts — stairs, a brisk walk from parking, or a short cycle — so the first desk block is easier.",
+          "Pack shoes or clothes that make a lunchtime walk realistic.",
+        ],
+        during: [
+          "Build regular movement breaks across the day: stairs, corridor walks, standing stretches, or standing for some calls.",
+          "Use walking meetings where the work allows it, and avoid long unbroken seated blocks.",
+        ],
+        recover: [
+          "After a desk-heavy day, decompress with bigger movement before sitting again at home — a walk, run, gym session, or active chore — so restlessness is not carried into the evening.",
         ],
       },
     },
@@ -2372,26 +2429,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Fluorescent lighting, screen glare, cluttered desks, dual monitors and busy walkways in the line of sight can build visual strain, tired eyes or irritability by mid-afternoon.",
-        recommendations: [
-          "Soften lighting where possible (desk lamp instead of harsh overheads) and allow lower screen brightness or warmer display settings.",
-          "Face the desk away from busy walkways when focus work is needed.",
-          "Support a clear desk and simplified screen layout before demanding visual tasks.",
+        prepare: [
+          "Simplify what you will look at first: pack a clear task list and, if you can, arrive a few minutes early to clear the desk before notifications start.",
+          "Set screen brightness and warmer display settings before the commute or as you sit down, rather than waiting until eyes already ache.",
+        ],
+        during: [
+          "Soften lighting where possible (desk lamp instead of harsh overheads) and face the desk away from busy walkways for focus work.",
+          "Keep a clear desk and a simplified screen layout before demanding visual tasks, with short look-away breaks.",
+        ],
+        recover: [
+          "After heavy screen work, decompress by dimming lights at home, looking into the distance outdoors, and postponing more screens for the first part of the evening.",
         ],
       },
       neutral: {
         challenge:
           "Lighting and visual clutter matter more on some work days than others, especially when the person is already tired.",
-        recommendations: [
+        prepare: [
+          "Check whether the day is screen-heavy and pack sunglasses or a visor for a bright commute if glare is likely.",
+          "Decide in advance which block of the day needs the simplest desk and screen setup.",
+        ],
+        during: [
           "Simplify the desk and screen for the hardest block of the day.",
           "Allow more visual interest for routine or creative work when helpful.",
+        ],
+        recover: [
+          "After work, match the visual load: soften lighting after a bright, busy floor day, or add a view / outdoor light after a plain, windowless stretch.",
         ],
       },
       seeking: {
         challenge:
           "A plain desk, blank walls and long dense documents may feel flat, so attention drifts looking for colour, movement or a view.",
-        recommendations: [
-          "Use colour-coded planners, visual timers or checklists so attention has something clear to lock onto.",
-          "Allow a plant, window view or brief ‘look far’ breaks after dense screen work.",
+        prepare: [
+          "Give the eyes something to lock onto before work: a colourful planner, outdoor light on the commute, or a brief look at the day’s visual checklist.",
+          "Set up colour-coded lists or a visual timer at the desk as you arrive.",
+        ],
+        during: [
+          "Use colour-coded planners, visual timers or checklists so attention has something clear to hold.",
+          "Keep a plant, window view or brief ‘look far’ breaks after dense screen work.",
+        ],
+        recover: [
+          "After a visually flat desk day, decompress with colour, outdoor light or a change of scene before more reading or screens at home.",
         ],
       },
     },
@@ -2400,26 +2477,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Perfume, kitchen odours, cleaning products and strong food smells in shared spaces can distract, nauseate or put the person off communal areas and mealtimes at work.",
-        recommendations: [
+        prepare: [
+          "Choose milder personal products in the morning, and pack a familiar, milder lunch so the day is not dependent on a strong-smelling canteen.",
+          "If the commute involves petrol, perfume or food courts, keep a short outdoor reset in mind before entering the building.",
+        ],
+        during: [
           "Support fragrance-aware shared spaces and ventilated kitchen or cleaning routines where possible.",
-          "Allow the person to choose a fresher desk or lunch location when smells build.",
-          "Protect brief outdoor or corridor resets when scent load becomes high.",
+          "Choose a fresher desk or lunch location when smells build, with brief outdoor or corridor resets when scent load is high.",
+        ],
+        recover: [
+          "After a high-scent workday, decompress in fresher air on the way home and keep the first meal milder, with windows open, before stronger cooking smells or fragrance at home.",
         ],
       },
       neutral: {
         challenge:
           "Smell and taste at work are usually manageable, but on tired or deadline-heavy days the same office scents or strong lunch flavours can become intrusive.",
-        recommendations: [
+        prepare: [
+          "Pack both a milder and a more interesting lunch option so you can match flavour to how loaded the day already feels.",
+          "Notice whether yesterday’s scent load lingered, and choose milder products if you are already tired.",
+        ],
+        during: [
           "Keep flexibility to move to fresher air or choose a milder lunch when needed.",
           "Notice early cues and adjust scent or flavour intensity before focus drops.",
+        ],
+        recover: [
+          "Use the commute and first meal at home to reset: fresher air and a familiar flavour after a strong-smelling day, or a little more taste interest after a bland one.",
         ],
       },
       seeking: {
         challenge:
           "A low-scent office and bland food options can feel flat, making it harder to stay alert without some pleasant smell or flavour interest through the day.",
-        recommendations: [
+        prepare: [
+          "Use a pleasant morning cue — citrus, coffee, herbal tea, or a flavourful breakfast — so the day does not start sensory-flat.",
+          "Pack a flavoured drink or snack that is allowed at the desk for a mid-morning lift.",
+        ],
+        during: [
           "Allow subtle pleasant scent options at the desk if policy permits (herbal tea, citrus).",
           "Support flavour variety at mealtimes so lunch can act as a useful sensory reset.",
+        ],
+        recover: [
+          "After a low-scent desk day, decompress with cooking, a flavoured drink, or a meal with more taste interest rather than another bland hour at home.",
         ],
       },
     },
@@ -2427,30 +2524,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "It is often the pile-up — noise, light, people, chats and pace together — rather than one single thing that leaves little energy for the commute or for home by late afternoon.",
-        recommendations: [
-          "Plan more energy- and cognitively demanding work earlier in the day when possible.",
-          "Keep less draining or routine tasks for later when the person is more tired.",
-          "Protect lunch away from the desk, ideally in a quieter space.",
-          "Allow regular sensory breaks when the person feels overwhelmed, before overload builds.",
-          "Explore flexi-hours or adjusted start/finish times where the business can support it.",
+        prepare: [
+          "Front-load a calmer morning routine and, where the business allows, a slightly earlier start so the most demanding work happens while capacity is highest.",
+          "Look at the day’s stacked demands (meetings, open-plan, commute) and decide in advance where one quieter buffer will sit.",
+        ],
+        during: [
+          "Schedule more energy- and cognitively demanding work earlier in the day, and keep lighter tasks for later.",
+          "Protect lunch away from the desk in a quieter space, and take sensory breaks before overload builds.",
+        ],
+        recover: [
+          "After work, decompress before more demands: a quiet commute, a pause in the car, or a short alone-time buffer at home before conversation, chores or screens.",
         ],
       },
       neutral: {
         challenge:
           "How much workplace input the person can take depends on how the day has gone so far — some afternoons need recovery, others need activation.",
-        recommendations: [
-          "Use lunch as a check-in point: does the afternoon need quieter recovery, or more activation to get going?",
-          "Protect lunch away from the desk when possible.",
-          "Keep some flexibility to reorder tasks according to energy across the day.",
+        prepare: [
+          "Check in before leaving home: does today need a calmer start, or a little more activation to get going?",
+          "Keep both a quieter and a more stimulating commute option available (headphones off vs on, walk vs crowded transport).",
+        ],
+        during: [
+          "Use lunch as a check-in point: does the afternoon need quieter recovery, or more activation?",
+          "Protect lunch away from the desk, and keep some flexibility to reorder tasks according to energy.",
+        ],
+        recover: [
+          "After work, match the evening to the day: quieter recovery after a stacked sensory load, or a change of scene after a flat one, before the next set of demands.",
         ],
       },
       seeking: {
         challenge:
           "A day of low-stimulation desk work can leave the person understimulated and unfocused, with the deepest dip often in the quiet mid-afternoon stretch.",
-        recommendations: [
-          "Front-load stimulating tasks or a movement break into the mid-afternoon dip.",
+        prepare: [
+          "Build some activation into the morning — movement, audio, or a social hello — so the first desk block does not start already flat.",
+          "Plan one stimulating task or a movement break into the known mid-afternoon dip before the day begins.",
+        ],
+        during: [
           "Change posture, room or task type often enough that the day does not go flat.",
-          "Plan demanding cognitive work for periods when the person is most alert, and use variety to sustain energy.",
+          "Place demanding cognitive work in alert periods, and use variety (movement, sound, people) to sustain energy.",
+        ],
+        recover: [
+          "After a low-stimulation workday, decompress by adding input on purpose — a walk, errand, class, or time with people — rather than going straight to more sitting and quiet.",
         ],
       },
     },
@@ -2478,27 +2591,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Oopplan-geraas, kennisgewings, oorvleuelende gesprekke en konstante agtergrondklank kan konsentrasie moeiliker maak as die werk self, en die persoon uitgeput laat ná vergaderings of besige vloerdrae.",
-        recommendations: [
-          "Oorweeg tuiswerk- of hibriede dae vir fokusswaar take, waar die besigheid dit toelaat.",
-          "Voorsien ’n stiller aparte werkspasie, fokuskamer of bespreekte stil sone eerder as slegs oopplan-sitplekke.",
-          "Laat geraasdempende oorfone of oordoppies as ’n normale werkhulpmiddel toe, nie as ’n laaste uitweg nie.",
-          "Beskerm een of twee lae-onderbreking fokusblokke elke dag vir kognitief veeleisende werk.",
+        prepare: [
+          "Bou ’n stiller begin in die oggend in: ’n buffer voor die eerste vergadering sodat jy nie al gelaai in geraas instap nie.",
+          "Op lawaaierige pendelritte, gebruik geraasdempende oorfone of kies ’n stiller roete of vertrektyd wanneer jy kan.",
+        ],
+        during: [
+          "Gebruik ’n stiller werkspasie, bespreekte fokuskamer, of hibriede / tuiswerk-dag vir kognitief veeleisende werk.",
+          "Behandel geraasdempende oorfone as ’n normale werkhulpmiddel, en beskerm een of twee lae-onderbreking fokusblokke elke dag.",
+        ],
+        recover: [
+          "Ná ’n lawaaierige werksdag, herstel met minder klank — ’n stiller pendel, ’n stap sonder oudio, of ’n eerste stil uur by die huis voordat meer gesprekke nodig is.",
         ],
       },
       neutral: {
         challenge:
           "Klank is gewoonlik hanteerbaar, maar op moë, sperdatum-swaar of vergadering-digte dae kan dieselfde kantoorgeraas indringend raak en fokus onderbreek.",
-        recommendations: [
-          "Hou oorfone beskikbaar sodat klank verminder kan word vir komplekse werk en bygevoeg kan word vir roetinetake.",
-          "Bied buigsaamheid om na ’n stiller plek te skuif wanneer die oopplan-vloer te besig raak.",
+        prepare: [
+          "Pak oorfone in sodat klank verminder of bygevoeg kan word sodra die dag se lading duidelik is.",
+          "Kyk na die vergaderkalender en pas die pendel (stiller teenoor meer oudio) by die waarskynlike sensoriese lading.",
+        ],
+        during: [
+          "Verminder klank vir komplekse denkwerk en voeg nuttige oudio by vir roetinetake.",
+          "Skuif na ’n stiller plek wanneer die oopplan-vloer te besig raak.",
+        ],
+        recover: [
+          "Pas ná-werk klank by die dag: stil herstel ná swaar vergaderinggeraas, of ’n bietjie oudio of gesprek ná ’n stille admin-strek.",
         ],
       },
       seeking: {
         challenge:
           "Baie stil kantore of lang stil adminblokke kan plat voel, wat dit moeiliker maak om wakker te bly en te begin sonder agtergrondklank of ritme.",
-        recommendations: [
-          "Laat nuttige agtergrondoudio (musiek of omgewingsklank) tydens selfstandige werk toe.",
-          "Kombineer roetine-admin met klank, en bou kort loop-en-luister-pouses tussen oproepe in waar dit help.",
+        prepare: [
+          "Gebruik ’n speellys of podsending terwyl jy gereed maak of pendel sodat die oggend nie té stil begin nie.",
+          "Stel nuttige agtergrondoudio by die lessenaar op voordat selfstandige werk begin.",
+        ],
+        during: [
+          "Laat agtergrondmusiek of omgewingsklank tydens selfstandige werk toe.",
+          "Kombineer roetine-admin met klank, en gebruik kort loop-en-luister-pouses tussen oproepe.",
+        ],
+        recover: [
+          "Ná ’n stil, lae-stimulasie lessenaardag, herstel energie met klank of sosiale kontak eerder as meer stilte — musiek, ’n stop by kollegas, of ’n oudio-pendel.",
         ],
       },
     },
@@ -2506,27 +2638,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Vol ruimtes, mense wat skouer-aan-skouer werk, growwe sitplekke, uniforms of laniere, en onverwagte nabyheid kan aandag knaag en spanning deur die dag verhoog.",
-        recommendations: [
-          "Kyk na alternatiewe sitplekopsies met meer persoonlike ruimte — einde van die ry, rand van oopplan, of ’n minder vol lessenaar-sone.",
-          "Laat voorkeur werkklere of sagte lae binne kledingkode-grense toe.",
-          "Vermy om die persoon in dig gepakte vergaderingsuitlegte te plaas wanneer ’n minder vol opsie beskikbaar is.",
-          "Bou kort sensoriese pouses in wanneer die persoon oorweldig voel deur nabyheid of fisiese ongemak.",
+        prepare: [
+          "Kies werkklere en lae waarin jy ’n volle dag gemaklik kan bly, en pak ’n sagte ekstra laag in.",
+          "As die pendel vol is, vertrek ’n bietjie vroeër of later, of staan aan die kant van die wa / tou om onverwagte kontak te verminder.",
+        ],
+        during: [
+          "Gebruik sitplekke met meer persoonlike ruimte — einde van die ry, rand van oopplan, of ’n minder vol lessenaar-sone.",
+          "Vermy dig gepakte vergaderingsuitlegte wanneer ’n minder vol opsie beskikbaar is, en neem ’n kort pouse wanneer nabyheid of klere-ongemak opbou.",
+        ],
+        recover: [
+          "Ná ’n vol werksdag, herstel met gemaklike klere, ’n warm stort, of tyd in ’n kamer waar jy nie dadelik gebots of omhels word nie.",
         ],
       },
       neutral: {
         challenge:
           "Klere, sitplekke en nabyheid gaan gewoonlik ongemerk verby, maar word vroeg irriterend op veeleisende of uitgeputte dae.",
-        recommendations: [
+        prepare: [
+          "Hou ’n gemaksopsie ingepak (sagte laag, ekstra sokkies, of ’n sitkussing) sodat klein irritasies vroeg reggemaak kan word.",
+          "Kyk of die dag vergadering-swaar of lessenaar-swaar is en klee vir die meer veeleisende strek.",
+        ],
+        during: [
           "Behandel vroeë klere- of sitplekonngemak as ’n sein om posisie of sitplek te verander, of ’n kort pouse te neem voordat irritasie opbou.",
-          "Hou ’n klein gemaksaanpassing by die lessenaar beskikbaar (sagte laag, sitkussing, posisieverandering).",
+          "Hou ’n klein gemaksaanpassing by die lessenaar beskikbaar.",
+        ],
+        recover: [
+          "Trek werkklere gou ná werk uit, en gebruik ’n bekende gemaklike tekstuur (sagte laag, warm drankie in ’n voorkeurbeker) as ’n eenvoudige herstel.",
         ],
       },
       seeking: {
         challenge:
           "Lang vergaderings en skermblokke kan die hande en liggaam laat soek na grondende aanraking — friemel, warm bekers of ferm druk help die persoon bedaard bly.",
-        recommendations: [
-          "Laat ’n diskrete lessenaar-friemel tydens lang vergaderings en oproepe toe.",
-          "Moedig kort swaarwerk- of grondende herstellings tussen take aan (muurdrukke, items dra, palmdrukke).",
+        prepare: [
+          "Pak ’n diskrete lessenaar-friemel en, indien dit help, ’n warm drankie-fles in sodat grondende aanraking van die eerste vergadering af beskikbaar is.",
+          "Gebruik ’n ferm, ordenende oggendtaak (die bed opmaak, ’n sak dra, ’n muurdruk) om die liggaam insette te gee voordat sit begin.",
+        ],
+        during: [
+          "Laat ’n diskrete friemel tydens lang vergaderings en oproepe toe.",
+          "Gebruik kort grondende herstellings tussen take — muurdrukke, items dra, palmdrukke, of ’n warm beker.",
+        ],
+        recover: [
+          "Ná ’n lang sittende dag, herstel met grondende aanraking: ’n warm stort, kook, inkopies dra, of ’n ferm stap eerder as om dadelik weer te sit.",
         ],
       },
     },
@@ -2534,27 +2685,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Gehaaste oorgange tussen vergaderings, haastig oor die terrein, of van taak tot taak beweeg sonder ’n pouse kan die liggaam onrustig laat en denke stadiger laat aankom.",
-        recommendations: [
-          "Laat ’n paar minute toe om aan te kom en te bedaar voor hoë-vraag vergaderings of fokuswerk.",
-          "Verkies bestendige beweging (kort stap of strekoefening) bo skielike gehaaste oorgange waar moontlik.",
-          "Beskerm kort buffers in die kalender tussen agtereenvolgende vergaderings.",
+        prepare: [
+          "Los ’n paar ekstra minute vir die pendel en aankoms sodat die eerste taak nie in ’n haast begin nie.",
+          "Gebruik stadige, bestendige beweging op pad in (’n onhaastige stap vanaf die motor of stasie) eerder as ’n laaste-oomblik-stormloop.",
+        ],
+        during: [
+          "Beskerm kort buffers in die kalender tussen agtereenvolgende vergaderings sodat die liggaam kan bedaar voor die volgende vraag.",
+          "Verkies ’n kalm stap of strekoefening bo skielike gejaag, en plant albei voete op die vloer wanneer konsentrasie nodig is.",
+        ],
+        recover: [
+          "Ná ’n gehaaste dag, herstel met stadige beweging — ’n bestendige stap, sagte strek, of stil sit met voete gegrond — voordat meer boodskappe of sosiale planne volg.",
         ],
       },
       neutral: {
         challenge:
           "Stil sit is soms maklik, en ander kere het die liggaam duidelik beweging nodig voordat fokus terugkom.",
-        recommendations: [
-          "Laat kort bewegingspouses toe wanneer rusteloosheid verskyn, eerder as om te wag tot fokus al geval het.",
-          "Hou twee of drie bewegingsopsies wat onder drie minute neem tydens die werksdag beskikbaar.",
+        prepare: [
+          "Let op of die oggendliggaam rusteloos of al moeg voel, en kies ’n ietwat meer aktiewe of kalmer pendel om te pas.",
+          "Hou twee of drie bewegingsopsies van onder drie minute in gedagte voordat die dag begin.",
+        ],
+        during: [
+          "Neem ’n kort bewegingspouse wanneer rusteloosheid verskyn, eerder as om te wag tot fokus al geval het.",
+          "Verander posisie deur die dag — sit, staan, kort stap — in plaas van een ononderbroke sittende blok.",
+        ],
+        recover: [
+          "Ná werk, gebruik beweging as ’n kontrole: ’n kort stap as die dag té stil was, of ’n stadiger bedaring as dit gejaag was, voordat die aandroetine begin.",
         ],
       },
       seeking: {
         challenge:
           "Lang sittende strekke by ’n lessenaar of in vergaderings dreineer fokus; die persoon mag friemel, wieg of rondloop omdat stil sit vir lank werklik moeilik is.",
-        recommendations: [
-          "Bou gereelde bewegingspouses deur die dag in — trappe, gangstap, staan-strekoefeninge.",
-          "Laat staan vir party oproepe en loopvergaderings toe waar die werk dit toelaat.",
-          "Vermy lang ononderbroke sittende blokke sonder ’n bewegingsgeleentheid.",
+        prepare: [
+          "Kry beweging in voordat sit begin — trappe, ’n ferm stap vanaf parkering, of ’n kort fietsrit — sodat die eerste lessenaarblok makliker is.",
+          "Pak skoene of klere in wat ’n middagete-stap realisties maak.",
+        ],
+        during: [
+          "Bou gereelde bewegingspouses deur die dag in: trappe, gangstap, staan-strekoefeninge, of staan vir party oproepe.",
+          "Gebruik loopvergaderings waar die werk dit toelaat, en vermy lang ononderbroke sittende blokke.",
+        ],
+        recover: [
+          "Ná ’n lessenaar-swaar dag, herstel met groter beweging voordat jy weer by die huis sit — ’n stap, hardloop, oefensessie, of aktiewe taak — sodat rusteloosheid nie in die aand oorgedra word nie.",
         ],
       },
     },
@@ -2562,26 +2732,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Fluorescerende beligting, skermglans, rommelige lessenaars, dubbele monitors en besige gange in die siglyn kan visuele spanning, moë oë of geïrriteerdheid teen midderniddag opbou.",
-        recommendations: [
-          "Versag beligting waar moontlik (lessenaarlamp eerder as harde boonste ligte) en laat laer skermhelderheid of warmer vertooninstellings toe.",
-          "Sit die lessenaar weg van besige gange wanneer fokuswerk nodig is.",
-          "Ondersteun ’n skoon lessenaar en vereenvoudigde skermuitleg voor veeleisende visuele take.",
+        prepare: [
+          "Vereenvoudig wat jy eerste gaan sien: pak ’n duidelike taaklys in en, indien moontlik, kom ’n paar minute vroeg aan om die lessenaar skoon te maak voordat kennisgewings begin.",
+          "Stel skermhelderheid en warmer vertooninstellings voor die pendel of soos jy sit, eerder as om te wag tot die oë al seer is.",
+        ],
+        during: [
+          "Versag beligting waar moontlik (lessenaarlamp eerder as harde boonste ligte) en sit die lessenaar weg van besige gange vir fokuswerk.",
+          "Hou ’n skoon lessenaar en vereenvoudigde skermuitleg voor veeleisende visuele take, met kort wegkyk-pouses.",
+        ],
+        recover: [
+          "Ná swaar skermwerk, herstel deur ligte by die huis te dim, in die verte buite te kyk, en meer skerms vir die eerste deel van die aand uit te stel.",
         ],
       },
       neutral: {
         challenge:
           "Beligting en visuele rommel maak meer saak op party werkdae as ander, veral wanneer die persoon al moeg is.",
-        recommendations: [
+        prepare: [
+          "Kyk of die dag skerm-swaar is en pak sonbrille of ’n visier vir ’n helder pendel as glans waarskynlik is.",
+          "Besluit vooraf watter blok van die dag die eenvoudigste lessenaar- en skermopstelling nodig het.",
+        ],
+        during: [
           "Vereenvoudig die lessenaar en skerm vir die moeilikste blok van die dag.",
           "Laat meer visuele belangstelling vir roetine- of kreatiewe werk toe wanneer dit help.",
+        ],
+        recover: [
+          "Ná werk, pas die visuele lading: versag beligting ná ’n helder, besige vloerdag, of voeg ’n uitsig / buite-lig by ná ’n kaal, vensterlose strek.",
         ],
       },
       seeking: {
         challenge:
           "’n Eenvoudige lessenaar, blanke mure en lang digte dokumente kan plat voel, sodat aandag wegdryf op soek na kleur, beweging of ’n uitsig.",
-        recommendations: [
-          "Gebruik kleurgekodeerde beplanners, visuele timers of kontrolelyste sodat aandag iets duideliks het om op te fokus.",
-          "Laat ’n plant, vensteruitsig of kort ‘kyk vêr’-pouses ná digte skermwerk toe.",
+        prepare: [
+          "Gee die oë iets om op te fokus voor werk: ’n kleurvolle beplanner, buite-lig op die pendel, of ’n kort blik op die dag se visuele kontrolelys.",
+          "Stel kleurgekodeerde lyste of ’n visuele timer by die lessenaar op soos jy aankom.",
+        ],
+        during: [
+          "Gebruik kleurgekodeerde beplanners, visuele timers of kontrolelyste sodat aandag iets duideliks het om vas te hou.",
+          "Hou ’n plant, vensteruitsig of kort ‘kyk vêr’-pouses ná digte skermwerk.",
+        ],
+        recover: [
+          "Ná ’n visueel plat lessenaardag, herstel met kleur, buite-lig of ’n toneelverandering voordat meer lees of skerms by die huis volg.",
         ],
       },
     },
@@ -2590,26 +2780,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Parfuum, kombuisreuke, skoonmaakprodukte en sterk kosreuke in gedeelde ruimtes kan die persoon aflei, naar maak of van gemeenskaplike areas en maaltye by die werk afsit.",
-        recommendations: [
+        prepare: [
+          "Kies sagter persoonlike produkte in die oggend, en pak ’n bekende, sagter middagete in sodat die dag nie van ’n sterk-ruikende kafeteria afhanklik is nie.",
+          "As die pendel petrol, parfuum of voedsale insluit, hou ’n kort buite-herstel in gedagte voordat jy die gebou binnegaan.",
+        ],
+        during: [
           "Ondersteun geur-bewuste gedeelde ruimtes en geventileerde kombuis- of skoonmaakroetines waar moontlik.",
-          "Laat die persoon ’n varsers lessenaar of middagete-plek kies wanneer reuke ophoop.",
-          "Beskerm kort buite- of gangherstels wanneer geurlading hoog raak.",
+          "Kies ’n varsers lessenaar of middagete-plek wanneer reuke ophoop, met kort buite- of gangherstels wanneer geurlading hoog is.",
+        ],
+        recover: [
+          "Ná ’n hoë-geur werksdag, herstel in vars lug op pad huis toe en hou die eerste maaltyd sagter, met oop vensters, voordat sterker kookreuke of geur by die huis volg.",
         ],
       },
       neutral: {
         challenge:
           "Reuk en smaak by die werk is gewoonlik hanteerbaar, maar op moeg of sperdatum-swaar dae kan dieselfde kantoorgeure of sterk middagete-smake indringend raak.",
-        recommendations: [
+        prepare: [
+          "Pak beide ’n sagter en ’n meer interessante middagete-opsie in sodat jy smaak by hoe gelaai die dag al voel, kan pas.",
+          "Let op of gister se geurlading nog hang, en kies sagter produkte as jy al moeg is.",
+        ],
+        during: [
           "Hou buigsaamheid om na vars lug te beweeg of ’n sagter middagete te kies wanneer nodig.",
           "Let op vroeë seine en pas geur- of smaakintensiteit aan voordat fokus sak.",
+        ],
+        recover: [
+          "Gebruik die pendel en eerste maaltyd by die huis om te herstel: vars lug en ’n bekende smaak ná ’n sterk-ruikende dag, of ’n bietjie meer smaakbelangstelling ná ’n flou een.",
         ],
       },
       seeking: {
         challenge:
           "’n Lae-geur kantoor en flou kosopsies kan plat voel, wat dit moeiliker maak om wakker te bly sonder aangename reuk- of smaakbelangstelling deur die dag.",
-        recommendations: [
+        prepare: [
+          "Gebruik ’n aangename oggendsein — sitrus, koffie, kruie-tee, of ’n smaakvolle ontbyt — sodat die dag nie sensories plat begin nie.",
+          "Pak ’n gegeurde drankie of peuselhappie in wat by die lessenaar toegelaat word vir ’n middeloggend-oplig.",
+        ],
+        during: [
           "Laat subtiele aangename geuropsies by die lessenaar toe as beleid dit toelaat (kruie-tee, sitrus).",
           "Ondersteun smaakverskeidenheid by maaltye sodat middagete as ’n nuttige sensoriese herstel kan dien.",
+        ],
+        recover: [
+          "Ná ’n lae-geur lessenaardag, herstel met kook, ’n gegeurde drankie, of ’n maaltyd met meer smaakbelangstelling eerder as nóg ’n flou uur by die huis.",
         ],
       },
     },
@@ -2617,30 +2827,46 @@ const WORK_REPORT_GUIDANCE = {
       sensitive: {
         challenge:
           "Dit is dikwels die opeenhoping — geraas, lig, mense, kletsboodskappe en tempo saam — eerder as een enkele ding wat min energie vir die pendel of huis teen laatmiddag oorlaat.",
-        recommendations: [
-          "Beplan meer energie- en kognitief veeleisende werk vroeër in die dag waar moontlik.",
-          "Hou minder dreinerende of roetinetake vir later wanneer die persoon meer moeg is.",
-          "Beskerm middagete weg van die lessenaar, ideaal in ’n stiller ruimte.",
-          "Laat gereelde sensoriese pouses toe wanneer die persoon oorweldig voel, voordat oorlading opbou.",
-          "Verken fleksi-ure of aangepaste begin-/eindtye waar die besigheid dit kan ondersteun.",
+        prepare: [
+          "Sit ’n kalmer oggendroetine voor, en waar die besigheid dit toelaat, ’n ietwat vroeër begin sodat die mees veeleisende werk gebeur terwyl kapasiteit die hoogste is.",
+          "Kyk na die dag se gestapelde eise (vergaderings, oopplan, pendel) en besluit vooraf waar een stiller buffer sal sit.",
+        ],
+        during: [
+          "Beplan meer energie- en kognitief veeleisende werk vroeër in die dag, en hou ligter take vir later.",
+          "Beskerm middagete weg van die lessenaar in ’n stiller ruimte, en neem sensoriese pouses voordat oorlading opbou.",
+        ],
+        recover: [
+          "Ná werk, herstel voordat meer eise volg: ’n stil pendel, ’n pouse in die motor, of ’n kort alleen-tyd buffer by die huis voor gesprek, take of skerms.",
         ],
       },
       neutral: {
         challenge:
           "Hoeveel werkplekinsette die persoon kan vat, hang af van hoe die dag tot dusver gegaan het — party middae het herstel nodig, ander aktivering.",
-        recommendations: [
-          "Gebruik middagete as ’n kontrolepunt: het die middag stiller herstel nodig, of meer aktivering om te begin?",
-          "Beskerm middagete weg van die lessenaar waar moontlik.",
-          "Hou ’n mate van buigsaamheid om take volgens energie deur die dag te herrangskik.",
+        prepare: [
+          "Kontroleer voor jy die huis verlaat: het vandag ’n kalmer begin nodig, of ’n bietjie meer aktivering om te begin?",
+          "Hou beide ’n stiller en ’n meer stimulerende pendelopsie beskikbaar (oorfone af teenoor aan, stap teenoor vol vervoer).",
+        ],
+        during: [
+          "Gebruik middagete as ’n kontrolepunt: het die middag stiller herstel nodig, of meer aktivering?",
+          "Beskerm middagete weg van die lessenaar, en hou ’n mate van buigsaamheid om take volgens energie te herrangskik.",
+        ],
+        recover: [
+          "Ná werk, pas die aand by die dag: stiller herstel ná ’n gestapelde sensoriese lading, of ’n toneelverandering ná ’n plat een, voordat die volgende stel eise volg.",
         ],
       },
       seeking: {
         challenge:
           "’n Dag van lae-stimulasie lessenaarwerk kan die persoon onderstimuleer en ongefokus laat, met die diepste dip dikwels in die stil midderniddag-strek.",
-        recommendations: [
-          "Sit stimulerende take of ’n bewegingspouse voor in die midderniddag-dip.",
+        prepare: [
+          "Bou ’n bietjie aktivering in die oggend in — beweging, oudio, of ’n sosiale hallo — sodat die eerste lessenaarblok nie al plat begin nie.",
+          "Beplan een stimulerende taak of ’n bewegingspouse in die bekende midderniddag-dip voordat die dag begin.",
+        ],
+        during: [
           "Verander posisie, kamer of taaktipe genoeg dat die dag nie plat raak nie.",
-          "Beplan veeleisende kognitiewe werk vir periodes wanneer die persoon die wakkerste is, en gebruik variasie om energie te onderhou.",
+          "Plaas veeleisende kognitiewe werk in wakker periodes, en gebruik variasie (beweging, klank, mense) om energie te onderhou.",
+        ],
+        recover: [
+          "Ná ’n lae-stimulasie werksdag, herstel deur insette doelbewus by te voeg — ’n stap, boodskap, klas, of tyd saam met mense — eerder as om dadelik weer te sit en stil te wees.",
         ],
       },
     },
@@ -3906,7 +4132,7 @@ function getTrailSettingKeys(respondent, lifeContext) {
   if (respondent === "parent") return ["homeParent"];
   if (respondent === "couple") return ["home"];
   if (respondent === "adult" && lifeContext === "work") return ["work"];
-  if (respondent === "adult" && lifeContext === "home") return ["home"];
+  if (respondent === "adult" && lifeContext === "home") return [];
   if (respondent === "teen") return ["school", "home"];
   return [];
 }
@@ -3992,7 +4218,14 @@ function getWorkReportGuidance(scores, language = "en") {
       profile: score.profile,
       thresholdLabel: threshold.label,
       thresholdFull: threshold.full,
-      items: entry.recommendations || [],
+      text: entry.challenge,
+      prepare: Array.isArray(entry.prepare) ? entry.prepare : [],
+      during: Array.isArray(entry.during)
+        ? entry.during
+        : Array.isArray(entry.recommendations)
+          ? entry.recommendations
+          : [],
+      recover: Array.isArray(entry.recover) ? entry.recover : [],
     });
   });
 
@@ -4098,6 +4331,480 @@ const SENSE_SUPPORT_TIPS = {
         seeking: [
           "Change posture, place, or task type so the day does not stay flat.",
           "Use a lively task or movement break in the afternoon dip.",
+        ],
+      },
+    },
+    home: {
+      auditory: {
+        sensitive: [
+          "Create a quieter pocket at home — even ten minutes behind a closed door when you walk in.",
+          "Agree a household signal for quiet time when noise is stacking (TV, talking, appliances).",
+          "Keep only one sound source on during meals and wind-down.",
+          "Use noise-reducing headphones or a steady white-noise option in the room you recover in.",
+          "Group noisy chores (vacuum, blender, dishwasher), then follow with a quiet stretch.",
+          "Soften the room you rest in with rugs, curtains, or a door you can close so sound does not bounce.",
+        ],
+        seeking: [
+          "Use music or a podcast on purpose while cooking, tidying, or winding down.",
+          "Keep a speaker for shared sound and headphones for when others need quiet.",
+          "Pair still evening jobs (admin, folding laundry) with background audio so starting is easier.",
+          "If the house feels too empty, add a low, steady soundtrack rather than only snacks or scrolling.",
+          "Use a favourite playlist as a “home arriving” cue after a quiet or indoor day.",
+          "Leave a radio, kettle, or open window in the room you spend the evening in so the space is not silent.",
+        ],
+        neutral: [
+          "At the door, notice: do you need silence, or a little sound to settle?",
+          "Keep headphones and a favourite playlist equally easy to reach.",
+          "Match sound to the evening — quieter for recovery, more audio for chores or cooking.",
+          "Turn competing sources down before a conversation or meal.",
+          "On tired days, treat household noise as a cue to step into one quieter room first.",
+          "Keep one room that can go fully quiet, and one that can hold background sound.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Have soft, preferred clothes ready by the door so you can change out of day clothes immediately.",
+          "Choose bedding, towels and sofa throws you can tolerate when already tired.",
+          "Use tools instead of bare hands for messy kitchen jobs (brushes, gloves, tongs).",
+          "Tell people you live with when you need space first, and when a hug helps.",
+          "Make your rest seat physically comfortable — no scratchy fabrics, no tight waistbands.",
+          "Reduce unexpected touch in the first half hour home (pets jumping, people leaning on you) until you have reset.",
+        ],
+        seeking: [
+          "Build grounding touch into home routines: a warm shower, a heavy duvet, or a lap pad in the evening.",
+          "Use hands-on jobs when you feel restless — baking, gardening, washing up, folding, or repairs.",
+          "Keep a fidget, stress ball, or textured object in the room where you sit at night.",
+          "If welcome, use firm hugs or a weighted blanket rather than only sitting still.",
+          "Warm hands around a mug, a hot-water bottle, or a wheat bag as a settle cue.",
+          "Set up one “hands busy” station at home (craft, dough, plants) so you are not only reaching for a screen.",
+        ],
+        neutral: [
+          "Let clothing and seating change with how tired or wired you are.",
+          "Keep a small comfort kit (soft layer, familiar fabric) and a small wake-up kit (cool cloth, textured object).",
+          "Change position or take a short break as soon as clothes or the sofa start to bother you.",
+          "Have both a snug option (weighted throw) and a light option (cool sheet) ready for the same chair.",
+          "Notice whether you want to be touched or left alone in the first half hour home, and say it.",
+          "Keep preferred textures in the rooms you actually use — not only in a cupboard.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Slow down between rooms and tasks; rushing through a busy kitchen often costs more than the job itself.",
+          "After outings, take a short settling pause before the evening routine starts.",
+          "Use calm movement before sleep — stretching, rocking, or a slow walk around the block.",
+          "Sit with back support for admin or screens; avoid perching on the edge of furniture.",
+          "Give yourself extra minutes for transitions (bag down, shoes off, sit) before anyone needs you.",
+          "Clear tight walkways if being bumped or weaving around clutter unsettle you.",
+        ],
+        seeking: [
+          "Build movement into home life: cook while standing and shifting, vacuum, garden, or take an evening walk.",
+          "Move before homework, admin, or a long seated evening — not after you are already restless.",
+          "Keep a yoga mat, resistance band, or skipping rope in sight so movement needs no setup.",
+          "Use walking phone calls, or stand at a kitchen counter for some tasks.",
+          "If the evening feels flat, go outside for ten minutes of movement before screens.",
+          "Treat pacing and fidgeting as a cue to change posture or room, not as a failure to sit still.",
+        ],
+        neutral: [
+          "Keep two or three under-three-minute home movement options ready (stairs, stretch, kettle walk).",
+          "Match the evening: settling stretches, or something more active first.",
+          "Treat fidgeting as a cue to move, not to push through stillness.",
+          "After a desk-heavy day, stand or walk before collapsing on the sofa.",
+          "After a physical day, choose slower, supported movement instead of more rushing.",
+          "Keep walking shoes by the door and a mat for indoor stretching equally handy.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Switch to lamps and warmer light as the evening goes on; avoid harsh overheads in rest spaces.",
+          "Keep at least one rest corner clear of clutter, post, and laundry.",
+          "Dim screens and busy backgrounds well before bed.",
+          "Face away from the busiest sightlines (hallway, TV, kitchen chaos) when you need to recover.",
+          "Close unused tabs and put devices out of the main rest view.",
+          "Use curtains or a screen to hide visual clutter you cannot tidy every night.",
+        ],
+        seeking: [
+          "Add colour, plants, or changing visual interest to the rooms you live in.",
+          "Use a visual planner, whiteboard, or family calendar so home jobs are easy to see.",
+          "Look far into the distance or step outside after heavy screen time.",
+          "Keep a view, artwork, or a window in the place you sit in the evening.",
+          "Colour-code keys, drawers, or evening routines if plain spaces feel dead.",
+          "After a visually dull day, take a short walk where there is something to look at (garden, street, sky).",
+        ],
+        neutral: [
+          "If space allows, keep one calmer corner and one more visually lively area.",
+          "Soften lighting as energy drops; brighten it if you still need to get things done.",
+          "Simplify the table or desk for hard thinking; allow more visual interest for cooking or creative tasks.",
+          "Notice whether clutter is waking you up or wearing you out tonight, and adjust one surface.",
+          "Use a lamp you can dim rather than one fixed overhead setting.",
+          "Put tomorrow’s visual noise (post, laundry) in a basket so the rest space can go quieter.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Ventilate while cooking or cleaning; open a window or run an extractor.",
+          "Choose milder soaps, candles, and cleaning products for evening routines.",
+          "Keep a familiar, milder meal ready for nights when smells and flavours feel like too much.",
+          "Store strong foods sealed, and take bins out before wind-down.",
+          "Eat in a less-scented room if the kitchen is still heavy after cooking.",
+          "Ask household members to keep perfume and strong products away from your rest space.",
+        ],
+        seeking: [
+          "Cook or bake something aromatic when home feels flat — herbs, citrus, garlic, spices.",
+          "Add flavour interest at meals: a pickle, sauce, crunchy topping, or stronger tea or coffee.",
+          "Use a pleasant scent on purpose during wind-down (citrus, tea, herbs) rather than waiting for boredom.",
+          "Keep a flavoured snack, mint, or gum option for restless evenings.",
+          "Open spices or cut fruit when you need a quick lift without a full cook.",
+          "Pair a bland leftover with one strong extra (chilli, lemon, pickle) so dinner can match your state.",
+        ],
+        neutral: [
+          "Match evening meals to your state: milder when overloaded, more flavoured when understimulated.",
+          "Keep both low-scent and pleasant-scent options easy to reach.",
+          "Notice early cues (wanting to leave the kitchen, distraction) and reduce or add intensity.",
+          "Ventilate after cooking even on good days so smell does not stack later.",
+          "Have a simple “mild plate” and a “flavour plate” option in the fridge.",
+          "Check in at dinner: is tonight about comfort-bland, or about waking the senses up?",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Protect a short low-demand refuge after you walk in — before cooking, messages, or family needs.",
+          "During dinner and bedtime, do one thing at a time: one sound source, softer light, one task.",
+          "Leave gaps between demanding blocks instead of stacking chores, screens, and conversations.",
+          "Group noisy or busy jobs, then follow with quieter recovery.",
+          "Share or stagger household jobs so cooking, noise and people-needing-you do not all land at once.",
+          "Make the first hour home a set routine (change clothes, drink water, sit in your corner) so recovery is automatic.",
+        ],
+        seeking: [
+          "Layer helpful input into still evenings — music while you move, outdoor light after a day indoors.",
+          "Change posture, room, or task type so the evening does not stay flat.",
+          "Use a lively task or movement break in the evening dip instead of only scrolling.",
+          "Keep a short menu of “wake-up at home” options on the fridge or phone (walk, playlist, shower, tidy-with-music).",
+          "Do something active with the people you live with before expecting a long seated conversation.",
+          "If the day was too still, add one extra layer tonight: lights up, window open, a moving chore, or going out briefly.",
+        ],
+        neutral: [
+          "At the door, check in: quieter recovery next, or more energy to get going?",
+          "Keep both a settle kit and an activate kit by the entrance (headphones vs walking shoes).",
+          "Let evening plans flex — a quieter dinner one night, a livelier outing the next.",
+          "Protect a short transition before major household demands when the day was heavy.",
+          "Mid-evening, re-check: do you now need less input, or a second wind of activity?",
+          "Tell the people you live with which mode you are in, so they are not guessing.",
+        ],
+      },
+    },
+    teenSchool: {
+      auditory: {
+        sensitive: [
+          "Sit away from the loudest spot if you can — doors, bins, chatty rows.",
+          "Ask for one instruction at a time when the class is noisy.",
+          "Use school-allowed earplugs or quiet headphones in study or tests if that’s an option.",
+          "Take a short quiet reset after corridors, assemblies, or the dining hall.",
+          "Walk the edge of the corridor instead of the middle of the rush.",
+          "After a loud lesson, give yourself a minute before you start the next one.",
+        ],
+        seeking: [
+          "Use quiet background sound for homework and solo study if you’re allowed.",
+          "Take a short sound-and-movement break between silent lessons.",
+          "Save humming or tapping for break — not mid-lesson.",
+          "Sit where a bit of classroom buzz helps you stay awake.",
+          "If silent study feels dead, ask to work in a busier allowed space.",
+          "Pair revision with a playlist at home; at school, use a legal fidget plus a stretch.",
+        ],
+        neutral: [
+          "Notice which lessons need quiet tools and which feel fine as they are.",
+          "Keep headphones in your bag for the noisy days.",
+          "After a loud period, take thirty seconds before the next one starts.",
+          "One sound source at a time when you are trying to hear the teacher.",
+          "Match break to the morning: a quieter corner, or music with friends.",
+          "You don’t need the same plan every period — noisy days and calm days are different.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Fix what you can in uniform: seamless socks, labels out, layers you can adjust.",
+          "Ask for a seat with a bit more space.",
+          "Move through corridors at the edge or just after the rush.",
+          "Keep a soft layer in your bag for when the fabric starts to bother you.",
+          "Skip surprise hugs or being piled on after a crowded stretch.",
+          "Change out of damp PE kit as soon as you can.",
+        ],
+        seeking: [
+          "Use an approved fidget in long sits.",
+          "Between classes: carry your bag, push a door, or wall-press for ten seconds.",
+          "Choose a seat where you can move your feet without kicking anyone.",
+          "Use practicals, art, and PE as real input — not only “extra”.",
+          "Press your palms together or on the desk when you need grounding mid-lesson.",
+          "Keep a textured object in your pocket for queues.",
+        ],
+        neutral: [
+          "Adjust layers through the day instead of sitting with irritation.",
+          "Have a backup hoodie or socks in your locker if you can.",
+          "If the chair or collar starts to bother you, change what you can.",
+          "Notice whether crowds or fabric is the problem — they need different fixes.",
+          "After PE, change quickly if damp kit will bug you all afternoon.",
+          "Comfort is a focus tool, not a luxury.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Leave a little early or late so corridors are less of a crush.",
+          "At break, walk the edge of the field if chaotic games unsettle you.",
+          "Take a moment to plant your feet before the lesson starts.",
+          "Prefer steady walking over sudden rushing between buildings.",
+          "After PE or a busy break, give yourself a minute before hard thinking.",
+          "You don’t have to sprint the timetable — slower transitions often cost less energy.",
+        ],
+        seeking: [
+          "Use break and PE as real movement, not leftover time.",
+          "Wall presses, stairs, or a quick walk between lessons where allowed.",
+          "Take a movement break before homework, not after focus is already gone.",
+          "Stand to pack up — don’t save all the fidgeting for the lesson.",
+          "If you can’t sit still, that’s a cue to move at the next chance — not a character flaw.",
+          "Long still doubles are easier if you move properly in the gap before them.",
+        ],
+        neutral: [
+          "Match break to how you feel: calmer walking or more active play.",
+          "Build short movement into homework time too.",
+          "Sitting still is easier in some lessons — plan extra movement around the hard ones.",
+          "Stretch your legs on the way to the next class.",
+          "After a still double period, don’t go straight into more sitting if you can help it.",
+          "Keep two or three under-two-minute moves ready (stairs, wall press, walk).",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Sit away from windows, doors, and busy walkways if glare or movement distracts you.",
+          "Soften your desk: close extra tabs, put stuff in your bag.",
+          "Use a quieter visual corner of the library or classroom for tests.",
+          "Dim your screen; avoid sitting under the harshest light if you can.",
+          "After a visually busy corridor, look at one still thing before you start writing.",
+          "A folder or book as a visual shield can hide the busiest part of the room.",
+        ],
+        seeking: [
+          "Colour-code notes, books, or your timetable so your bag is easier to scan.",
+          "Look out a window or down the corridor after heavy board or screen work.",
+          "Sit where you can see what’s going on if a blank wall makes you sleepy.",
+          "Use highlighters and visual checklists for homework lists.",
+          "A short walk with something to look at (field, art wall) between still lessons.",
+          "Posters, colour, and a view help more than a totally plain desk.",
+        ],
+        neutral: [
+          "Simplify your desk for the hardest subject; allow more colour for easier ones.",
+          "Notice whether clutter is waking you up or wearing you out today.",
+          "Change seats if glare or a busy display is the problem that period.",
+          "After screens, look far away for twenty seconds.",
+          "Keep one calmer folder and one brighter one so you can match the task.",
+          "You can turn visual volume up or down — you don’t need one setting all day.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Eat packed lunch outside or in a less-smelly spot if the hall is too much.",
+          "Keep a familiar, milder snack for overloaded days.",
+          "Step outside for air after labs, art, or the dining hall.",
+          "Go easy on strong deodorant or perfume on days you’re already full.",
+          "Sit near a window or door in smelly classrooms if you can.",
+          "A plain water bottle beats a strong drink when your system is already busy.",
+        ],
+        seeking: [
+          "Stronger flavours at break (citrus, mint, crunchy snack) can wake you up.",
+          "Chew gum if the school allows it during still work.",
+          "A flavoured drink or punchy lunch can help a flat afternoon.",
+          "Labs and cooking lessons may feel easier than scent-free rooms.",
+          "Keep mints or a bottle with a bit of flavour for the afternoon dip.",
+          "If the day feels dead, add taste or smell on purpose — don’t wait to get restless.",
+        ],
+        neutral: [
+          "Match snack to the day: milder when overloaded, more flavour when flat.",
+          "Notice early “I need to leave this room” cues and get air.",
+          "Keep both a plain snack and a punchy one in your bag.",
+          "After a strong-smelling lesson, reset before the next one.",
+          "Hydrate — thirst can feel like restlessness.",
+          "You can change intensity at break even if you can’t change the classroom.",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Do one thing at a time: pack, then walk, then listen — not all at once.",
+          "Protect a short quiet pocket at break if the morning was stacked.",
+          "Group noisy stuff (assembly, PE, lunch) in your head so you can recover after.",
+          "Don’t stack homework the second the bell goes — reset first.",
+          "Ask for a calmer spot if the day is piling up.",
+          "You don’t have to fill every minute with people and noise.",
+        ],
+        seeking: [
+          "Change room, posture, or task so the day doesn’t stay flat.",
+          "Use the afternoon dip for movement or a lively task, not only scrolling.",
+          "A chatty break after a silent double can help more than more sitting.",
+          "Variety beats a long inactive sit — even a different table helps.",
+          "If you’re restless, that’s often understimulation — add input on purpose.",
+          "Stack helpful input into still stretches: stretch, water, a walk, then sit.",
+        ],
+        neutral: [
+          "Mid-day check: quieter next, or more energy to get going?",
+          "Keep both a settle plan and an activate plan in your bag (headphones vs ball).",
+          "Different lessons need different volume — that’s normal.",
+          "After school, check in before homework: recover, or move first?",
+          "Don’t copy a friend’s routine if your day asked something else.",
+          "You can mix it: one still block, then one moving block.",
+        ],
+      },
+    },
+    teenHome: {
+      auditory: {
+        sensitive: [
+          "Headphones or a closed door for the first stretch after school.",
+          "One sound source at a time at dinner and homework.",
+          "Ask the house for a quiet signal when TV, talking, and phones stack.",
+          "White noise or a fan in your room if the rest of the house is loud.",
+          "Don’t start homework in the loudest room.",
+          "After a noisy school day, quiet is recovery — not you being antisocial.",
+        ],
+        seeking: [
+          "Playlist or podcast on purpose while packing, chores, or getting ready.",
+          "Headphones when others need quiet; speaker when it’s just you.",
+          "Silence after school can feel empty — add sound before you only scroll.",
+          "Homework with background audio if it helps you start.",
+          "A “home arriving” song can switch your brain out of school mode.",
+          "If the house feels dead, a low soundtrack is more useful than picking a fight.",
+        ],
+        neutral: [
+          "At the door: do you need silence, or a bit of sound?",
+          "Keep headphones and a playlist equally easy to grab.",
+          "Noisy evening? Step into your room first.",
+          "Match homework sound to the subject — quiet for hard, audio for routine.",
+          "Tell people which mode you’re in so they aren’t guessing.",
+          "You can change the volume of home after you see how school left you.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Change out of uniform the second you get home.",
+          "Soft hoodie, socks, and bedding you actually like.",
+          "Ask for space before hugs after a crowded day.",
+          "Use tools for messy kitchen jobs if sticky hands are too much.",
+          "Keep pets from jumping on you until you’ve reset.",
+          "Your rest seat should feel good — scratchy throws are optional, not required.",
+        ],
+        seeking: [
+          "Warm shower, heavy duvet, or a fidget on the sofa.",
+          "Hands-on stuff: cooking, drawing, a controller, stretching.",
+          "Weighted blanket or tight hoodie for evening sit-down.",
+          "Keep a fidget in your room during homework.",
+          "If you’re snacking or picking fights, try touch-input first.",
+          "Set up one “hands busy” spot so you’re not only grabbing a phone.",
+        ],
+        neutral: [
+          "Comfort kit and wake-up kit (soft layer vs cool cloth).",
+          "Change clothes if they start to bug you.",
+          "Say whether you want to be left alone or piled on.",
+          "After-school texture: uniform off, then decide hoodie vs light T-shirt.",
+          "Have both a snug throw and a light sheet for the same chair.",
+          "Preferred textures belong in the rooms you actually use.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Slow down between bag-drop and the next demand.",
+          "Stretch or a slow walk before homework or screens.",
+          "Don’t go from school rush straight into more rushing at home.",
+          "Plant yourself in one spot to decompress.",
+          "After sport, choose calm movement rather than more chaos.",
+          "Give yourself extra minutes for the transition: shoes off, sit, then people.",
+        ],
+        seeking: [
+          "Move before homework — walk, stairs, kick a ball, dance in your room.",
+          "Active chores: bins, dog, vacuum.",
+          "Don’t make “sit at the desk” the first thing after school.",
+          "Keep a mat, ball, or band where you can see it.",
+          "Restlessness isn’t laziness. Move, then sit.",
+          "If the evening feels flat, ten minutes outside before screens.",
+        ],
+        neutral: [
+          "Two-minute options ready: stairs, stretch, walk to the shop.",
+          "Desk-heavy day → walk first. Sport day → slower stretch.",
+          "Fidgeting means move, not push through.",
+          "Shoes by the door and a mat in your room — both count.",
+          "Match the evening: settling stretches, or something more active first.",
+          "You can mix still homework with moving breaks on purpose.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Lamps, not harsh overheads, in your room at night.",
+          "Clear one surface for homework.",
+          "Dim screens well before bed.",
+          "Face away from the TV or hallway when you need to recover.",
+          "Curtain or folder off visual clutter you can’t tidy every night.",
+          "Close extra tabs so your homework screen isn’t another busy corridor.",
+        ],
+        seeking: [
+          "Colour, posters, plants — plain walls can feel dead.",
+          "A visual timetable or sticky notes for homework.",
+          "Look outside after screens.",
+          "A short walk with something to see if you’ve been indoors all day.",
+          "Colour-code folders so starting is easier.",
+          "Keep a view, artwork, or window in the place you sit.",
+        ],
+        neutral: [
+          "One calmer corner, one livelier bit of your room if you can.",
+          "Dim lights as you wind down; brighten them for tasks.",
+          "Clear the desk for hard work; allow more mess for creative stuff.",
+          "Basket for tomorrow’s clutter so tonight can go quieter.",
+          "Notice whether clutter is waking you up or wearing you out tonight.",
+          "You can change the look of the room without a full tidy — one surface is enough.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Open a window while supper is on.",
+          "Milder familiar food on overloaded nights.",
+          "Keep strong products away from your pillow.",
+          "Eat away from the kitchen if smells linger.",
+          "Milder soap or deodorant on heavy days.",
+          "Take bins out before wind-down if the smell is going to sit in the house.",
+        ],
+        seeking: [
+          "Flavour at supper: sauce, spice, crunch, citrus.",
+          "Tea, mint, or a scented shower when the evening is flat.",
+          "Help cook if smells wake you up.",
+          "Don’t only snack — add flavour on purpose.",
+          "Leftovers plus one strong extra (chilli, lemon, pickle).",
+          "Open spices or cut fruit when you need a quick lift without a full cook.",
+        ],
+        neutral: [
+          "Mild plate vs flavour plate in the fridge.",
+          "Ventilate after cooking even on good days.",
+          "Match supper to the day: milder when full, punchier when flat.",
+          "Early “this smell is too much” → leave the kitchen.",
+          "Keep both low-scent and pleasant-scent options easy to reach.",
+          "Check in at dinner: comfort-bland, or wake the senses up?",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Bag down, clothes change, water, sit — before homework or family chat.",
+          "One thing at a time in the evening.",
+          "A quiet pocket after school is not you being antisocial.",
+          "Don’t stack screens, homework, and noise.",
+          "You don’t have to be “on” the second you walk in.",
+          "Make the first half hour a set reset so recovery happens automatically.",
+        ],
+        seeking: [
+          "Music while you move, outdoor light after indoor school.",
+          "Change rooms so the evening isn’t one long sit.",
+          "Do something active with people before a long talk.",
+          "Keep a short menu on your phone: walk, playlist, shower, tidy-with-music.",
+          "If school was too still, add a layer tonight: lights up, window open, moving chore.",
+          "Screens after movement usually work better than screens instead of movement.",
+        ],
+        neutral: [
+          "Door check-in: recover, or activate?",
+          "Headphones vs walking shoes by the entrance.",
+          "Flex: quiet night or outing — both can be right.",
+          "Mid-evening, re-check: less input now, or a second wind?",
+          "Tell your people the mode so they aren’t guessing.",
+          "Copying yesterday’s plan only works if today asked the same thing.",
         ],
       },
     },
@@ -4269,6 +4976,480 @@ const SENSE_SUPPORT_TIPS = {
         ],
       },
     },
+    home: {
+      auditory: {
+        sensitive: [
+          "Skep ’n stiller hoekie tuis — selfs tien minute agter ’n toe deur wanneer jy instap.",
+          "Kom ooreen oor ’n huishoudelike teken vir stiltetyd wanneer geraas ophoop (TV, praat, toestelle).",
+          "Hou net een klankbron aan tydens etes en afwind.",
+          "Gebruik geraasverminderende oorfone of bestendige wit geraas in die kamer waar jy herstel.",
+          "Groepeer lawaaierige take (stofsuier, blender, skottelgoedwasser), volg dan met ’n stil rukkie.",
+          "Versag die kamer waar jy rus met matte, gordyne of ’n deur wat kan toegaan sodat klank nie bons nie.",
+        ],
+        seeking: [
+          "Gebruik musiek of ’n podsending doelbewus terwyl jy kook, opruim of afwind.",
+          "Hou ’n luidspreker vir gedeelde klank en oorfone vir wanneer ander stilte nodig het.",
+          "Koppel stil aandtake (admin, wasgoedvou) aan agtergrondklank sodat begin makliker is.",
+          "As die huis te leeg voel, voeg ’n lae, bestendige klankbaan by eerder as net versnaperinge of blaai.",
+          "Gebruik ’n gunsteling-speellys as ’n “tuiskoms”-teken ná ’n stil of binnenshuise dag.",
+          "Los ’n radio, ketel of oop venster in die kamer waar jy die aand deurbring sodat die spasie nie doodstil is nie.",
+        ],
+        neutral: [
+          "By die deur, merk: het jy stilte nodig, of ’n bietjie klank om te bedaar?",
+          "Hou oorfone en ’n gunsteling-speellys ewe maklik bereikbaar.",
+          "Pas klank by die aand — stiller vir herstel, meer oudio vir take of kook.",
+          "Draai mededingende bronne af voor ’n gesprek of ete.",
+          "Op moeg dae, behandel huishoudelike geraas as ’n teken om eers in een stiller kamer in te gaan.",
+          "Hou een kamer wat heeltemal stil kan wees, en een wat agtergrondklank kan hou.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Hou sagte, voorkeurklere by die deur gereed sodat jy dadelik uit dagklere kan kom.",
+          "Kies beddegoed, handdoeke en bankgooi wat jy kan verdra wanneer jy al moeg is.",
+          "Gebruik gereedskap eerder as kaal hande vir morsige kombuistake (borsels, handskoene, tang).",
+          "Sê vir die mense saam met wie jy woon wanneer jy eers ruimte nodig het, en wanneer ’n omhelsing help.",
+          "Maak jou rusplek fisies gemaklik — geen krapperige stowwe, geen stywe middellyf nie.",
+          "Verminder onverwagte aanraking in die eerste halfuur tuis (troeteldiere wat opspring, mense wat teen jou leun) tot jy herstel het.",
+        ],
+        seeking: [
+          "Bou grondende aanraking in tuisroetines in: ’n warm stort, ’n swaar duvet, of ’n skootkussing in die aand.",
+          "Gebruik hands-on take wanneer jy rusteloos voel — bak, tuinmaak, opwas, vou of herstelwerk.",
+          "Hou ’n fidget, stresbal of tekstuurobjek in die kamer waar jy saans sit.",
+          "As dit welkom is, gebruik ferm omhelsings of ’n verswaarde kombers eerder as net stil sit.",
+          "Warm hande om ’n beker, ’n warmwaterbottel of ’n koringkussing as ’n bedaarteken.",
+          "Stel een “hande besig”-stasie tuis op (handwerk, deeg, plante) sodat jy nie net na ’n skerm gryp nie.",
+        ],
+        neutral: [
+          "Laat klere en sitplek verander volgens hoe moeg of opgewonde jy is.",
+          "Hou ’n klein gemakstel (sagte laag, bekende stof) en ’n klein opwekstel (koel lap, tekstuurobjek).",
+          "Verander houding of neem ’n kort pouse sodra klere of die bank begin pla.",
+          "Hou beide ’n stywe opsie (verswaarde gooi) en ’n ligte opsie (koel laken) gereed vir dieselfde stoel.",
+          "Merk of jy in die eerste halfuur tuis aangeraak of alleen gelaat wil word, en sê dit.",
+          "Hou voorkeurteksture in die kamers wat jy werklik gebruik — nie net in ’n kas nie.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Maak stadiger tussen kamers en take; gejaag deur ’n besige kombuis kos dikwels meer as die taak self.",
+          "Ná uitstappies, neem ’n kort bedaarpouse voor die aandroetine begin.",
+          "Gebruik kalm beweging voor slaap — strek, wieg, of ’n stadige stap om die blok.",
+          "Sit met rugsteun vir admin of skerms; vermy om op die rand van meubels te hang.",
+          "Gee jouself ekstra minute vir oorgange (tas neer, skoene af, sit) voordat iemand jou nodig het.",
+          "Maak nou gange oop as gestamp word of omrommel jou ontstel.",
+        ],
+        seeking: [
+          "Bou beweging in die huislewe in: kook terwyl jy staan en skuif, stofsuig, tuinmaak, of gaan aandstap.",
+          "Beweeg voor huiswerk, admin of ’n lang sittende aand — nie eers nadat jy al rusteloos is nie.",
+          "Hou ’n joga-mat, weerstandsband of springtou in sig sodat beweging geen opstelling nodig het nie.",
+          "Gebruik stap-telefoonoproepe, of staan by ’n kombuistoonbank vir sommige take.",
+          "As die aand plat voel, gaan tien minute uit beweeg voor skerms.",
+          "Behandel op-en-af loop en fidget as ’n teken om houding of kamer te verander, nie as ’n mislukking om stil te sit nie.",
+        ],
+        neutral: [
+          "Hou twee of drie tuisbewegingsopsies gereed wat onder drie minute neem (trappe, strek, ketelstap).",
+          "Pas by die aand: bedaarstrekoefeninge, of eers iets meer aktiefs.",
+          "Behandel fidget as ’n teken om te beweeg, nie om stilte deur te druk nie.",
+          "Ná ’n lessenaar-swaar dag, staan of stap voordat jy op die bank inval.",
+          "Ná ’n fisiese dag, kies stadiger, gesteunde beweging eerder as nog gejaag.",
+          "Hou stapskoene by die deur en ’n mat vir binnenshuise strek ewe byderhand.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Skakel oor na lampe en warmer lig soos die aand vorder; vermy harde oorhoofse ligte in rusplekke.",
+          "Hou ten minste een rushoek skoon van rommel, pos en wasgoed.",
+          "Dim skerms en besige agtergronde lank voor slaaptyd.",
+          "Sit weg van die besigste siglyne (gang, TV, kombuischaos) wanneer jy moet herstel.",
+          "Maak ongebruikte oortjies toe en sit toestelle uit die hoofrusuitsig.",
+          "Gebruik gordyne of ’n skerm om visuele rommel weg te steek wat jy nie elke aand kan opruim nie.",
+        ],
+        seeking: [
+          "Voeg kleur, plante of wisselende visuele belangstelling by die kamers waarin jy leef.",
+          "Gebruik ’n visuele beplanner, witbord of familiekalender sodat huistake maklik sigbaar is.",
+          "Kyk vêr in die verte of stap uit ná swaar skermtyd.",
+          "Hou ’n uitsig, kunswerk of venster by die plek waar jy saans sit.",
+          "Kleurkodeer sleutels, laaie of aandroetines as kaal spasies dood voel.",
+          "Ná ’n visueel dowwe dag, neem ’n kort stap waar daar iets is om na te kyk (tuin, straat, lug).",
+        ],
+        neutral: [
+          "As spasie dit toelaat, hou een kalmer hoek en een meer visueel lewendige area.",
+          "Versag beligting soos energie daal; maak dit helderder as jy nog dinge moet doen.",
+          "Vereenvoudig die tafel of lessenaar vir moeilike denkwerk; laat meer visuele belangstelling toe vir kook of skeppende take.",
+          "Merk of rommel jou vanaand opwek of uitput, en pas een oppervlak aan.",
+          "Gebruik ’n lamp wat jy kan dim eerder as een vaste oorhoofse instelling.",
+          "Sit môre se visuele geraas (pos, wasgoed) in ’n mandjie sodat die rusplek stiller kan word.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Lug uit terwyl jy kook of skoonmaak; maak ’n venster oop of sit ’n afzuiger aan.",
+          "Kies sagter seep, kerse en skoonmaakprodukte vir aandroetines.",
+          "Hou ’n bekende, sagter maaltyd gereed vir aande wanneer reuke en smake te veel voel.",
+          "Berg sterk kosse verseël, en haal asblikke uit voor afwind.",
+          "Eet in ’n minder-geurige kamer as die kombuis ná kook nog swaar is.",
+          "Vra huisgenote om parfuum en sterk produkte weg van jou rusplek te hou.",
+        ],
+        seeking: [
+          "Kook of bak iets aromatiese wanneer die huis plat voel — kruie, sitrus, knoffel, speserye.",
+          "Voeg smaakbelangstelling by etes: ’n augurk, sous, knapperige topping, of sterker tee of koffie.",
+          "Gebruik ’n aangename reuk doelbewus tydens afwind (sitrus, tee, kruie) eerder as om vir verveling te wag.",
+          "Hou ’n gegeurde versnapering, mint of kougomopsie vir rustelose aande.",
+          "Maak speserye oop of sny vrugte wanneer jy ’n vinnige opheffing nodig het sonder ’n volle kook.",
+          "Koppel ’n flou oorskiet aan een sterk ekstra (rissie, suurlemoen, augurk) sodat aandete by jou toestand kan pas.",
+        ],
+        neutral: [
+          "Pas aandetes by jou toestand: sagter wanneer oorlaai, meer gegeur wanneer onderstimuleer.",
+          "Hou beide lae-reuk en aangename-reuk opsies maklik bereikbaar.",
+          "Merk vroeë tekens (wil die kombuis verlaat, afleiding) en verlaag of verhoog intensiteit.",
+          "Lug uit ná kook selfs op goeie dae sodat reuk nie later ophoop nie.",
+          "Hou ’n eenvoudige “sagte bord” en ’n “smaakbord”-opsie in die yskas.",
+          "Kontroleer by aandete: gaan vanaand oor troos-flou, of om die sinne wakker te maak?",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Beskerm ’n kort lae-eise toevlug nadat jy instap — voor kook, boodskappe of gesinsbehoeftes.",
+          "Tydens aandete en slaaptyd, doen een ding op ’n slag: een klankbron, sagter lig, een taak.",
+          "Los gapings tussen veeleisende blokke eerder as om take, skerms en gesprekke te stapel.",
+          "Groepeer lawaaierige of besige take, volg dan met stiller herstel.",
+          "Deel of sprei huishoudelike take sodat kook, geraas en mense-wat-jou-nodig-het nie alles gelyk val nie.",
+          "Maak die eerste uur tuis ’n vaste roetine (klere ruil, water drink, sit in jou hoek) sodat herstel outomaties is.",
+        ],
+        seeking: [
+          "Laag nuttige insette in stil aande — musiek terwyl jy beweeg, buite lig ná ’n dag binnenshuis.",
+          "Verander houding, kamer of taaktipe sodat die aand nie plat bly nie.",
+          "Gebruik ’n lewendige taak of bewegingspouse in die aand-dip eerder as net blaai.",
+          "Hou ’n kort spyskaart van “wek-op-tuis”-opsies op die yskas of foon (stap, speellys, stort, opruim-met-musiek).",
+          "Doen iets aktiefs saam met die mense saam met wie jy woon voordat jy ’n lang sittende gesprek verwag.",
+          "As die dag te stil was, voeg vanaand een ekstra laag by: ligte aan, venster oop, ’n bewegende taak, of kort uitgaan.",
+        ],
+        neutral: [
+          "By die deur, kontroleer: stiller herstel volgende, of meer energie om aan die gang te kom?",
+          "Hou beide ’n bedaarstel en ’n aktiveerstel by die ingang (oorfone vs. stapskoene).",
+          "Laat aandplanne buig — ’n stiller ete een aand, ’n lewendiger uitstappie die volgende.",
+          "Beskerm ’n kort oorgang voor groot huishoudelike eise wanneer die dag swaar was.",
+          "Middel-aand, kontroleer weer: het jy nou minder insette nodig, of ’n tweede wind van aktiwiteit?",
+          "Sê vir die mense saam met wie jy woon in watter modus jy is, sodat hulle nie hoef te raai nie.",
+        ],
+      },
+    },
+    teenSchool: {
+      auditory: {
+        sensitive: [
+          "Sit weg van die luidste plek as jy kan — deure, asblikke, geselserye.",
+          "Vra een opdrag op ’n slag wanneer die klas lawaaierig is.",
+          "Gebruik skool-toegelate oordoppe of stil oorfone in studie of toetse as dit ’n opsie is.",
+          "Neem ’n kort stil herstel ná gange, byeenkomste of die eetsaal.",
+          "Loop die kant van die gang eerder as die middel van die jaagtog.",
+          "Ná ’n luide les, gee jouself ’n minuut voor jy die volgende een begin.",
+        ],
+        seeking: [
+          "Gebruik stil agtergrondklank vir huiswerk en solo-studie as dit toegelaat word.",
+          "Neem ’n kort klank-en-beweging-pouse tussen stil lesse.",
+          "Spaar neurie of tik vir pouse — nie midde-in die les nie.",
+          "Sit waar ’n bietjie klasgons jou help om wakker te bly.",
+          "As stil studie dood voel, vra om in ’n besiger toegelate spasie te werk.",
+          "Koppel hersiening tuis aan ’n speellys; by die skool, gebruik ’n wettige fidget plus ’n strek.",
+        ],
+        neutral: [
+          "Merk watter lesse stilgereedskap nodig het en watter reg is soos hulle is.",
+          "Hou oorfone in jou tas vir die lawaaierige dae.",
+          "Ná ’n luide periode, neem dertig sekondes voor die volgende een begin.",
+          "Een klankbron op ’n slag wanneer jy die onderwyser probeer hoor.",
+          "Pas pouse by die oggend: ’n stiller hoek, of musiek saam met vriende.",
+          "Jy het nie dieselfde plan elke periode nodig nie — lawaaierige dae en kalm dae verskil.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Maak reg wat jy kan in uniform: naatlose sokkies, etikette uit, lae wat jy kan aanpas.",
+          "Vra vir ’n sitplek met ’n bietjie meer spasie.",
+          "Beweeg deur gange aan die kant of net ná die jaagtog.",
+          "Hou ’n sagte laag in jou tas vir wanneer die stof begin pla.",
+          "Slaan verrassingsomhelsings of opeenhoping oor ná ’n vol rukkie.",
+          "Kom so gou moontlik uit nat LO-kit.",
+        ],
+        seeking: [
+          "Gebruik ’n goedgekeurde fidget in lang sits.",
+          "Tussen klasse: dra jou tas, stoot ’n deur, of muur-druk vir tien sekondes.",
+          "Kies ’n sitplek waar jy jou voete kan beweeg sonder om iemand te skop.",
+          "Gebruik prakties, kuns en LO as regte insette — nie net “ekstra” nie.",
+          "Druk jou palm teen mekaar of op die lessenaar wanneer jy midde-in die les moet anker.",
+          "Hou ’n tekstuurobjek in jou sak vir rye.",
+        ],
+        neutral: [
+          "Pas lae deur die dag aan eerder as om met irritasie te sit.",
+          "Hou ’n ekstra trui of sokkies in jou locker as jy kan.",
+          "As die stoel of kraag begin pla, verander wat jy kan.",
+          "Merk of skares of stof die probleem is — hulle het verskillende oplossings.",
+          "Ná LO, ruil vinnig as nat kit jou die hele middag gaan pla.",
+          "Gemak is ’n fokushulpmiddel, nie ’n luukse nie.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Gaan ’n bietjie vroeg of laat sodat gange minder vol is.",
+          "By pouse, loop die kant van die veld as chaotiese speletjies jou ontstel.",
+          "Neem ’n oomblik om jou voete te plant voor die les begin.",
+          "Verkies bestendige stap bo skielike gejaag tussen geboue.",
+          "Ná LO of ’n besige pouse, gee jouself ’n minuut voor moeilike denkwerk.",
+          "Jy hoef nie die rooster te hardloop nie — stadiger oorgange kos dikwels minder energie.",
+        ],
+        seeking: [
+          "Gebruik pouse en LO as regte beweging, nie oorblywende tyd nie.",
+          "Muurdrukke, trappe of ’n vinnige stap tussen lesse waar dit toegelaat word.",
+          "Neem ’n bewegingspouse voor huiswerk, nie eers nadat fokus al weg is nie.",
+          "Staan om op te pak — moenie al die fidget vir die les spaar nie.",
+          "As jy nie stil kan sit nie, is dit ’n teken om by die volgende kans te beweeg — nie ’n karakterfout nie.",
+          "Lang stil dubbelperiodes is makliker as jy in die gaping daarvoor behoorlik beweeg.",
+        ],
+        neutral: [
+          "Pas pouse by hoe jy voel: kalmer stap of meer aktiewe spel.",
+          "Bou ook kort beweging in huistyd in.",
+          "Stil sit is in sommige lesse makliker — beplan ekstra beweging om die moeilikes.",
+          "Strek jou bene op pad na die volgende klas.",
+          "Ná ’n stil dubbelperiode, moenie dadelik weer gaan sit as jy kan help nie.",
+          "Hou twee of drie skuwe gereed wat onder twee minute neem (trappe, muurdruk, stap).",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Sit weg van vensters, deure en besige gange as skitter of beweging jou aflei.",
+          "Versag jou lessenaar: maak ekstra oortjies toe, sit goed in jou tas.",
+          "Gebruik ’n stiller visuele hoek van die biblioteek of klaskamer vir toetse.",
+          "Dim jou skerm; vermy die felste lig as jy kan.",
+          "Ná ’n visueel besige gang, kyk na een stil ding voor jy begin skryf.",
+          "’n Lêer of boek as visuele skild kan die besigste deel van die kamer wegsteek.",
+        ],
+        seeking: [
+          "Kleurkodeer notas, boeke of jou rooster sodat jou tas makliker is om te skandeer.",
+          "Kyk uit ’n venster of af in die gang ná swaar bord- of skermwerk.",
+          "Sit waar jy kan sien wat aangaan as ’n kaal muur jou slaperig maak.",
+          "Gebruik merkers en visuele kontrolelyste vir huiswerklyste.",
+          "’n Kort stap met iets om na te kyk (veld, kunsmure) tussen stil lesse.",
+          "Plakkate, kleur en ’n uitsig help meer as ’n heeltemal kaal lessenaar.",
+        ],
+        neutral: [
+          "Vereenvoudig jou lessenaar vir die moeilikste vak; laat meer kleur toe vir maklikeres.",
+          "Merk of rommel jou vandag opwek of uitput.",
+          "Verander sitplek as skitter of ’n besige uitstalling dié periode die probleem is.",
+          "Ná skerms, kyk twintig sekondes vêr weg.",
+          "Hou een kalmer lêer en een helderder een sodat jy die taak kan pas.",
+          "Jy kan visuele volume op of af draai — jy het nie een instelling die hele dag nodig nie.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Eet pakkos buite of in ’n minder-geurige plek as die saal te veel is.",
+          "Hou ’n bekende, sagter versnapering vir oorlaaide dae.",
+          "Stap uit vir lug ná laboratoriums, kuns of die eetsaal.",
+          "Gaan sag op sterk deodorant of parfuum op dae wat jy al vol is.",
+          "Sit naby ’n venster of deur in geurige klaskamers as jy kan.",
+          "’n Gewone waterbottel is beter as ’n sterk drankie wanneer jou stelsel al besig is.",
+        ],
+        seeking: [
+          "Sterker smake by pouse (sitrus, mint, knapperige happie) kan jou opwek.",
+          "Kou gom as die skool dit toelaat tydens stil werk.",
+          "’n Gegeurde drankie of pittige middagete kan ’n flou middag help.",
+          "Laboratoriums en kooklesse voel dalk makliker as reukvrye kamers.",
+          "Hou mints of ’n bottel met ’n bietjie geur vir die middag-dip.",
+          "As die dag dood voel, voeg smaak of reuk doelbewus by — moenie wag om rusteloos te raak nie.",
+        ],
+        neutral: [
+          "Pas versnapering by die dag: sagter wanneer oorlaai, meer geur wanneer flou.",
+          "Merk vroeë “ek moet dié kamer verlaat”-tekens en kry lug.",
+          "Hou beide ’n gewone happie en ’n pittige een in jou tas.",
+          "Ná ’n sterk-geurige les, herstel voor die volgende een.",
+          "Drink water — dors kan soos rusteloosheid voel.",
+          "Jy kan intensiteit by pouse verander selfs as jy nie die klaskamer kan verander nie.",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Doen een ding op ’n slag: pak, dan loop, dan luister — nie alles gelyk nie.",
+          "Beskerm ’n kort stil hoekie by pouse as die oggend gestapel was.",
+          "Groepeer lawaaierige dinge (byeenkoms, LO, middagete) in jou kop sodat jy daarna kan herstel.",
+          "Moenie huiswerk stapel die oomblik wat die skoolbel lui nie — herstel eers.",
+          "Vra vir ’n kalmer plek as die dag ophoop.",
+          "Jy hoef nie elke minuut met mense en geraas te vul nie.",
+        ],
+        seeking: [
+          "Verander kamer, houding of taak sodat die dag nie plat bly nie.",
+          "Gebruik die middag-dip vir beweging of ’n lewendige taak, nie net blaai nie.",
+          "’n Geselserige pouse ná ’n stil dubbel kan meer help as nog sit.",
+          "Afwisseling slaan ’n lang onaktiewe sit — selfs ’n ander tafel help.",
+          "As jy rusteloos is, is dit dikwels onderstimulasie — voeg insette doelbewus by.",
+          "Stapel nuttige insette in stil stukkies: strek, water, ’n stap, dan sit.",
+        ],
+        neutral: [
+          "Middel-dag kontrole: stiller volgende, of meer energie om aan die gang te kom?",
+          "Hou beide ’n bedaarplan en ’n aktiveerplan in jou tas (oorfone vs. bal).",
+          "Verskillende lesse het verskillende volume nodig — dit is normaal.",
+          "Ná skool, kontroleer voor huiswerk: herstel, of eers beweeg?",
+          "Moenie ’n vriend se roetine naboots as jou dag iets anders gevra het nie.",
+          "Jy kan meng: een stil blok, dan een bewegende blok.",
+        ],
+      },
+    },
+    teenHome: {
+      auditory: {
+        sensitive: [
+          "Oorfone of ’n toe deur vir die eerste stuk ná skool.",
+          "Een klankbron op ’n slag by aandete en huiswerk.",
+          "Vra die huis vir ’n stilte-teken wanneer TV, praat en fone ophoop.",
+          "Wit geraas of ’n waaier in jou kamer as die res van die huis hard is.",
+          "Moenie huiswerk in die luidste kamer begin nie.",
+          "Ná ’n lawaaierige skooldag is stilte herstel — nie jy wat asosiaal is nie.",
+        ],
+        seeking: [
+          "Speellys of podsending doelbewus terwyl jy pak, take doen of klaarmaak.",
+          "Oorfone wanneer ander stilte nodig het; luidspreker wanneer dit net jy is.",
+          "Stilte ná skool kan leeg voel — voeg klank by voor jy net blaai.",
+          "Huiswerk met agtergrondklank as dit jou help begin.",
+          "’n “Tuiskoms”-liedjie kan jou brein uit skoolmodus kry.",
+          "As die huis dood voel, is ’n lae klankbaan nuttiger as om ’n stryery te begin.",
+        ],
+        neutral: [
+          "By die deur: het jy stilte nodig, of ’n bietjie klank?",
+          "Hou oorfone en ’n speellys ewe maklik om te gryp.",
+          "Lawaai-aand? Stap eers in jou kamer in.",
+          "Pas huiswerkklank by die vak — stil vir moeilik, oudio vir roetine.",
+          "Sê vir mense in watter modus jy is sodat hulle nie raai nie.",
+          "Jy kan die volume van die huis verander nadat jy sien hoe skool jou gelaat het.",
+        ],
+      },
+      tactile: {
+        sensitive: [
+          "Kom die oomblik wat jy tuiskom uit uniform.",
+          "Sagte trui, sokkies en beddegoed waarvan jy regtig hou.",
+          "Vra vir spasie voor omhelsings ná ’n vol dag.",
+          "Gebruik gereedskap vir morsige kombuistake as taai hande te veel is.",
+          "Hou troeteldiere van jou af tot jy herstel het.",
+          "Jou rusplek moet goed voel — krapperige gooie is opsioneel, nie verpligtend nie.",
+        ],
+        seeking: [
+          "Warm stort, swaar duvet of ’n fidget op die bank.",
+          "Hands-on goed: kook, teken, ’n kontroleerder, strek.",
+          "Verswaarde kombers of stywe trui vir aand-sit.",
+          "Hou ’n fidget in jou kamer tydens huiswerk.",
+          "As jy knabbel of stryery soek, probeer eers aanrakingsinsette.",
+          "Stel een “hande besig”-plek op sodat jy nie net ’n foon gryp nie.",
+        ],
+        neutral: [
+          "Gemakstel en opwekstel (sagte laag vs. koel lap).",
+          "Ruil klere as hulle begin pla.",
+          "Sê of jy alleen gelaat of opeengepak wil word.",
+          "Ná-skool tekstuur: uniform af, besluit dan trui vs. ligte T-hemp.",
+          "Hou beide ’n stywe gooi en ’n ligte laken vir dieselfde stoel.",
+          "Voorkeurteksture hoort in die kamers wat jy werklik gebruik.",
+        ],
+      },
+      movement: {
+        sensitive: [
+          "Maak stadiger tussen tas-neersit en die volgende eis.",
+          "Strek of ’n stadige stap voor huiswerk of skerms.",
+          "Moenie van skooljaag reguit in nog gejaag by die huis ingaan nie.",
+          "Plant jouself op een plek om te ontlaai.",
+          "Ná sport, kies kalm beweging eerder as nog chaos.",
+          "Gee jouself ekstra minute vir die oorgang: skoene af, sit, dan mense.",
+        ],
+        seeking: [
+          "Beweeg voor huiswerk — stap, trappe, skop ’n bal, dans in jou kamer.",
+          "Aktiewe take: asblikke, hond, stofsuier.",
+          "Moenie “sit by die lessenaar” die eerste ding ná skool maak nie.",
+          "Hou ’n mat, bal of band waar jy dit kan sien.",
+          "Rusteloosheid is nie luiheid nie. Beweeg, sit dan.",
+          "As die aand plat voel, tien minute buite voor skerms.",
+        ],
+        neutral: [
+          "Twee-minuut-opsies gereed: trappe, strek, stap na die winkel.",
+          "Lessenaar-swaar dag → eers stap. Sportdag → stadiger strek.",
+          "Fidget beteken beweeg, nie deurdruk nie.",
+          "Skoene by die deur en ’n mat in jou kamer — albei tel.",
+          "Pas by die aand: bedaarstrekoefeninge, of eers iets meer aktiefs.",
+          "Jy kan stil huiswerk met bewegingspouses doelbewus meng.",
+        ],
+      },
+      visual: {
+        sensitive: [
+          "Lampe, nie harde oorhoofse ligte nie, in jou kamer in die aand.",
+          "Maak een oppervlak skoon vir huiswerk.",
+          "Dim skerms lank voor slaaptyd.",
+          "Sit weg van die TV of gang wanneer jy moet herstel.",
+          "Gordyn of lêer visuele rommel weg wat jy nie elke aand kan opruim nie.",
+          "Maak ekstra oortjies toe sodat jou huiswerkskerm nie nóg ’n besige gang is nie.",
+        ],
+        seeking: [
+          "Kleur, plakkate, plante — kaal mure kan dood voel.",
+          "’n Visuele rooster of plakbriefies vir huiswerk.",
+          "Kyk uit ná skerms.",
+          "’n Kort stap met iets om te sien as jy die hele dag binnenshuis was.",
+          "Kleurkodeer lêers sodat begin makliker is.",
+          "Hou ’n uitsig, kunswerk of venster by die plek waar jy sit.",
+        ],
+        neutral: [
+          "Een kalmer hoek, een lewendiger stuk van jou kamer as jy kan.",
+          "Dim ligte soos jy afwind; maak hulle helderder vir take.",
+          "Maak die lessenaar skoon vir harde werk; laat meer rommel toe vir skeppende goed.",
+          "Mandjie vir môre se rommel sodat vanaand stiller kan word.",
+          "Merk of rommel jou vanaand opwek of uitput.",
+          "Jy kan die kamer se voorkoms verander sonder ’n volle opruim — een oppervlak is genoeg.",
+        ],
+      },
+      smellTaste: {
+        sensitive: [
+          "Maak ’n venster oop terwyl aandete aan is.",
+          "Sagter bekende kos op oorlaaide aande.",
+          "Hou sterk produkte weg van jou kussing.",
+          "Eet weg van die kombuis as reuke bly hang.",
+          "Sagter seep of deodorant op swaar dae.",
+          "Haal asblikke uit voor afwind as die reuk in die huis gaan sit.",
+        ],
+        seeking: [
+          "Geur by aandete: sous, spesery, knap, sitrus.",
+          "Tee, mint of ’n geurige stort wanneer die aand plat is.",
+          "Help kook as reuke jou opwek.",
+          "Moenie net knabbel nie — voeg geur doelbewus by.",
+          "Oorskiet plus een sterk ekstra (rissie, suurlemoen, augurk).",
+          "Maak speserye oop of sny vrugte wanneer jy ’n vinnige opheffing nodig het sonder ’n volle kook.",
+        ],
+        neutral: [
+          "Sagte bord vs. geurbord in die yskas.",
+          "Lug uit ná kook selfs op goeie dae.",
+          "Pas aandete by die dag: sagter wanneer vol, pittiger wanneer flou.",
+          "Vroeë “dié reuk is te veel” → verlaat die kombuis.",
+          "Hou beide lae-reuk en aangename-reuk opsies maklik bereikbaar.",
+          "Kontroleer by aandete: troos-flou, of die sinne wakker maak?",
+        ],
+      },
+      everyday: {
+        sensitive: [
+          "Tas neer, klere ruil, water, sit — voor huiswerk of gesinsgesprek.",
+          "Een ding op ’n slag in die aand.",
+          "’n Stil hoekie ná skool is nie jy wat asosiaal is nie.",
+          "Moenie skerms, huiswerk en geraas stapel nie.",
+          "Jy hoef nie “aan” te wees die oomblik wat jy instap nie.",
+          "Maak die eerste halfuur ’n vaste herstel sodat dit outomaties gebeur.",
+        ],
+        seeking: [
+          "Musiek terwyl jy beweeg, buite lig ná binnenshuise skool.",
+          "Verander kamers sodat die aand nie een lang sit is nie.",
+          "Doen iets aktiefs saam met mense voor ’n lang gesprek.",
+          "Hou ’n kort spyskaart op jou foon: stap, speellys, stort, opruim-met-musiek.",
+          "As skool te stil was, voeg vanaand ’n laag by: ligte aan, venster oop, bewegende taak.",
+          "Skerms ná beweging werk gewoonlik beter as skerms in plaas van beweging.",
+        ],
+        neutral: [
+          "Deur-kontrole: herstel, of aktiveer?",
+          "Oorfone vs. stapskoene by die ingang.",
+          "Buig: stil aand of uitstappie — albei kan reg wees.",
+          "Middel-aand, kontroleer weer: nou minder insette, of ’n tweede wind?",
+          "Sê vir jou mense die modus sodat hulle nie raai nie.",
+          "Gister se plan naboots werk net as vandag dieselfde ding gevra het.",
+        ],
+      },
+    },
     parent: {
       auditory: {
         sensitive: [
@@ -4354,18 +5535,33 @@ const SENSE_SUPPORT_TIPS = {
   },
 };
 
-function getSenseSupportTips(domainId, profile, { language = "en", respondent = "adult" } = {}) {
+function getSenseSupportTipList(domainId, profile, perspectiveKey, language = "en") {
   const pack = SENSE_SUPPORT_TIPS[language] || SENSE_SUPPORT_TIPS.en;
-  const perspective = respondent === "parent" ? pack.parent : pack.self;
-  const fallbackPerspective =
-    respondent === "parent"
-      ? SENSE_SUPPORT_TIPS.en.parent
-      : SENSE_SUPPORT_TIPS.en.self;
+  const fallbackPack = SENSE_SUPPORT_TIPS.en;
+  const perspective = pack[perspectiveKey] || fallbackPack[perspectiveKey];
+  const fallbackPerspective = fallbackPack[perspectiveKey];
   const domain = perspective?.[domainId] || fallbackPerspective?.[domainId];
   if (!domain) return [];
   const key = profile === "sensitive" || profile === "seeking" ? profile : "neutral";
   const tips = domain[key] || domain.neutral || [];
   return Array.isArray(tips) ? tips.filter(Boolean) : [];
+}
+
+function getSenseSupportTips(
+  domainId,
+  profile,
+  { language = "en", respondent = "adult", lifeContext = null, setting = null } = {}
+) {
+  let perspectiveKey = "self";
+  if (respondent === "parent") {
+    perspectiveKey = "parent";
+  } else if (respondent === "teen") {
+    const place = setting || (lifeContext === "home" ? "home" : "school");
+    perspectiveKey = place === "home" ? "teenHome" : "teenSchool";
+  } else if (lifeContext === "home") {
+    perspectiveKey = "home";
+  }
+  return getSenseSupportTipList(domainId, profile, perspectiveKey, language);
 }
 
 /**

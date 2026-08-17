@@ -1994,7 +1994,6 @@ function buildResultsReport() {
     ...(isCouplePathway() && state.coupleWork?.employment
       ? ["", "— Work & home life —", formatCoupleWorkSummary(normalizeCoupleWork(state.coupleWork))]
       : []),
-    `Questions asked: ${metrics.scored}`,
     `Sensitive / avoiding: ${metrics.sensitive}`,
     `Sensory neutral: ${metrics.neutral ?? 0}`,
     `Sensory seeking: ${metrics.seeking}`,
@@ -3540,6 +3539,20 @@ function getSettingReportCopy() {
     labelReason: copy.workReportLabelReason,
     notProvided: copy.workReportNotProvided,
     sectionScores: copy.workReportSectionScores,
+    scaleIntro: copy.workReportScaleIntro,
+    scaleLow: copy.workReportScaleLow,
+    scaleMid: copy.workReportScaleMid,
+    scaleHigh: copy.workReportScaleHigh,
+    scaleLowHint: copy.workReportScaleLowHint,
+    scaleMidHint: copy.workReportScaleMidHint,
+    scaleHighHint: copy.workReportScaleHighHint,
+    scaleStatusLow: copy.workReportScaleStatusLow,
+    scaleStatusMid: copy.workReportScaleStatusMid,
+    scaleStatusHigh: copy.workReportScaleStatusHigh,
+    presentationLabel: copy.workReportPresentationLabel,
+    phasePrepare: copy.workReportPhasePrepare,
+    phaseDuring: copy.workReportPhaseDuring,
+    phaseRecover: copy.workReportPhaseRecover,
     sectionVisual: null,
     visualAsk: null,
     visualHint: null,
@@ -7218,7 +7231,7 @@ function renderSensoryTrailOverview(pageEntry) {
     <section class="profile-section trail-profile trail-profile--page"${reportPageAttrs(pageEntry)} aria-labelledby="trail-overview-title">
       <h3 id="trail-overview-title" class="visually-hidden">${escapeHtml(title)}</h3>
       ${renderTrailProfilePageFigure({
-        src: "assets/sensory-trail-profile.png?v=20260815b",
+        src: "assets/sensory-trail-profile.png?v=20260817",
         alt: copy.teenCrewSummaryAria,
         width: 682,
         height: 1024,
@@ -7506,6 +7519,14 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
   const rows = getScoreRows(scores);
   const kicker = isParent ? copy.briefScoresKickerParent : copy.briefScoresKicker;
   const intro = isParent ? copy.briefScoresIntroParent : copy.briefScoresIntro;
+  const scoresVisual = canOfferWorkReport()
+    ? renderWorkScoreScaleChart(
+        rows,
+        scoreOverall(scores, state.language, state.respondent || "adult"),
+        getSettingReportCopy(),
+        copy
+      )
+    : renderAdultSenseGlance(rows, copy, null);
 
   return `
     <section class="profile-section profile-section--brief-scores"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
@@ -7521,26 +7542,214 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
         height: 682,
       })}
       <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
-      ${renderOverallScoreCard(metrics, copy)}
-      ${renderAdultSenseGlance(rows, copy, null)}
+      ${canOfferWorkReport() ? "" : renderOverallScoreCard(metrics, copy)}
+      ${scoresVisual}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
 }
 
+function teenSupportModeLabel(profile, copy) {
+  if (profile === "sensitive") return copy.senseSupportModeLow || "Turn it down";
+  if (profile === "seeking") return copy.senseSupportModeHigh || "Turn it up";
+  return copy.senseSupportModeMid || "Mix it";
+}
+
+function teenSupportModeKey(profile) {
+  if (profile === "sensitive") return "low";
+  if (profile === "seeking") return "high";
+  return "mid";
+}
+
+function renderTeenSchoolMoveCards(rows, copy) {
+  const cards = rows
+    .map((row, index) => {
+      const tips = getSenseSupportTips(row.id, row.profile, {
+        language: state.language,
+        respondent: "teen",
+        setting: "school",
+      });
+      if (!tips.length) return "";
+      const mode = teenSupportModeKey(row.profile);
+      const moves = tips
+        .map(
+          (tip, tipIndex) => `
+          <li>
+            <span class="teen-move__n" aria-hidden="true">${tipIndex + 1}</span>
+            <span>${escapeHtml(tip)}</span>
+          </li>`
+        )
+        .join("");
+      return `
+      <article
+        class="teen-move teen-move--${escapeHtml(row.profile)}"
+        data-domain="${escapeHtml(row.id)}"
+        data-profile="${escapeHtml(row.profile)}"
+        style="--domain-color:${row.color}; --move-delay:${index * 50}ms"
+      >
+        <p class="teen-move__stamp" aria-hidden="true">${String(index + 1).padStart(2, "0")}</p>
+        <header class="teen-move__head">
+          <span class="teen-move__icon" aria-hidden="true">${row.icon}</span>
+          <div>
+            <h4 class="teen-move__title">${escapeHtml(row.shortTitle)}</h4>
+            <p class="teen-move__mode teen-move__mode--${mode}">${escapeHtml(teenSupportModeLabel(row.profile, copy))}</p>
+          </div>
+        </header>
+        <p class="teen-move__label">${escapeHtml(copy.senseSupportMoveLabel || "Moves")}</p>
+        <ol class="teen-move__list">${moves}</ol>
+      </article>`;
+    })
+    .filter(Boolean)
+    .join("");
+  return cards ? `<div class="teen-moves__grid">${cards}</div>` : "";
+}
+
+function renderTeenHomeSupportCards(rows, copy) {
+  const cards = rows
+    .map((row, index) => {
+      const tips = getSenseSupportTips(row.id, row.profile, {
+        language: state.language,
+        respondent: "teen",
+        setting: "home",
+      });
+      if (!tips.length) return "";
+      const tipItems = tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("");
+      const lean = senseInterpretLeanLabel(row.profile, copy);
+      return `
+        <article
+          class="sense-support__card sense-support__card--${escapeHtml(row.profile)}"
+          data-domain="${escapeHtml(row.id)}"
+          data-profile="${escapeHtml(row.profile)}"
+          style="--domain-color:${row.color}; --support-delay:${index * 45}ms"
+        >
+          <header class="sense-support__header">
+            <span class="sense-support__icon" aria-hidden="true">${row.icon}</span>
+            <div class="sense-support__titles">
+              <h4 class="sense-support__name">${escapeHtml(row.shortTitle)}</h4>
+              <p class="sense-support__lean">
+                <span class="sense-support__lean-label">${escapeHtml(copy.senseSupportLeanLabel)}</span>
+                <span class="threshold-pill threshold-pill--${row.thresholdKey}">${escapeHtml(row.thresholdLabel)}</span>
+                <span class="sense-support__lean-text">${escapeHtml(lean)}</span>
+              </p>
+            </div>
+          </header>
+          <div class="sense-support__body">
+            <p class="sense-support__try">${escapeHtml(copy.senseSupportHowLabel)}</p>
+            <ul class="sense-support__tips">${tipItems}</ul>
+          </div>
+        </article>`;
+    })
+    .filter(Boolean)
+    .join("");
+  return cards ? `<div class="sense-support__grid">${cards}</div>` : "";
+}
+
+function renderTeenSenseSupportGuide(scores, pageEntry) {
+  const copy = currentUi();
+  const rows = getScoreRows(scores);
+  const schoolCards = renderTeenSchoolMoveCards(rows, copy);
+  const homeCards = renderTeenHomeSupportCards(rows, copy);
+  if (!schoolCards && !homeCards) return "";
+
+  return `
+    <section class="profile-section profile-section--sense-support profile-section--teen-support"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-learning-trail.png",
+        objectPosition: "center 40%",
+        kicker: copy.senseSupportKicker,
+        titleId: "sense-support-title",
+        title: copy.senseSupportTitle,
+        lead: copy.senseSupportIntroTeen || copy.senseSupportIntro,
+        variant: "forest",
+        width: 1024,
+        height: 768,
+      })}
+      ${
+        schoolCards
+          ? `
+      <div class="teen-moves">
+        <header class="teen-moves__intro">
+          <p class="teen-moves__kicker">${escapeHtml(copy.senseSupportSchoolKicker || "At school")}</p>
+          <h4 class="teen-moves__heading">${escapeHtml(copy.senseSupportSchoolTitle || "Your school moves")}</h4>
+          <p class="teen-moves__lead">${escapeHtml(copy.senseSupportSchoolLead || "")}</p>
+        </header>
+        ${schoolCards}
+      </div>`
+          : ""
+      }
+      ${
+        homeCards
+          ? `
+      <div class="teen-home-support">
+        <header class="teen-home-support__intro">
+          <p class="profile-kicker">${escapeHtml(copy.senseSupportHomeChapterKicker || "At home")}</p>
+          <h4 class="teen-home-support__heading">${escapeHtml(copy.senseSupportHomeChapterTitle || "Your home setup")}</h4>
+          <p class="teen-home-support__lead">${escapeHtml(copy.senseSupportHomeChapterLead || "")}</p>
+        </header>
+        ${homeCards}
+      </div>`
+          : ""
+      }
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>`;
+}
+
 function renderSenseSupportGuide(scores, pageEntry) {
   const copy = currentUi();
   const isParent = state.respondent === "parent";
+  const isTeen = state.respondent === "teen";
   const rows = getScoreRows(scores);
   const title = isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle;
-  const intro = isParent ? copy.senseSupportIntroParent : copy.senseSupportIntro;
+  const intro = isParent
+    ? copy.senseSupportIntroParent
+    : isTeen
+      ? copy.senseSupportIntroTeen || copy.senseSupportIntro
+      : canOfferWorkReport()
+        ? copy.senseSupportIntroWork || copy.senseSupportIntro
+        : state.lifeContext === "home"
+          ? copy.senseSupportIntroHome || copy.senseSupportIntro
+          : copy.senseSupportIntro;
+
+  if (canOfferWorkReport()) {
+    const reportCopy = getSettingReportCopy();
+    const guidance = getWorkReportGuidance(scores, state.language);
+    const blocks = renderWorkSupportArticles(guidance.recommendations, reportCopy, {
+      showPresentation: true,
+      showStrategies: true,
+    });
+    if (!blocks) return "";
+    return `
+    <section class="profile-section profile-section--sense-support"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-forest-trail.png",
+        objectPosition: "center 40%",
+        kicker: copy.senseSupportKicker,
+        titleId: "sense-support-title",
+        title,
+        lead: intro,
+        variant: "forest",
+        width: 682,
+        height: 1024,
+      })}
+      <div class="work-support-list">${blocks}</div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
+  }
+
+  if (isTeen) {
+    return renderTeenSenseSupportGuide(scores, pageEntry);
+  }
 
   const cards = rows
     .map((row, index) => {
       const tips = getSenseSupportTips(row.id, row.profile, {
         language: state.language,
         respondent: state.respondent || "adult",
+        lifeContext: state.lifeContext,
       });
       if (!tips.length) return "";
       const tipItems = tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("");
@@ -8554,6 +8763,153 @@ function renderScoreTable(scores, plan) {
   `;
 }
 
+function workScaleBand(profile) {
+  if (profile === "sensitive") return "low";
+  if (profile === "seeking") return "high";
+  return "medium";
+}
+
+function renderWorkSupportPhaseList(label, items) {
+  if (!items || !items.length) return "";
+  return `
+    <div class="work-support__phase">
+      <p class="work-support__phase-label">${escapeHtml(label)}</p>
+      <ol class="work-support__list">
+        ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ol>
+    </div>`;
+}
+
+function renderWorkSupportArticles(groups, reportCopy, { showPresentation = true, showStrategies = true } = {}) {
+  return (groups || [])
+    .map((group) => {
+      const band = workScaleBand(group.profile);
+      const bandLabel =
+        band === "low"
+          ? reportCopy.scaleLow || "Low"
+          : band === "high"
+            ? reportCopy.scaleHigh || "High"
+            : reportCopy.scaleMid || "Medium";
+      const presentation =
+        showPresentation && group.text
+          ? `
+        <p class="work-support__kicker">${escapeHtml(reportCopy.presentationLabel || "")}</p>
+        <p class="work-support__presentation">${escapeHtml(group.text)}</p>`
+          : "";
+      const strategies = showStrategies
+        ? `
+        <div class="work-support__phases">
+          ${renderWorkSupportPhaseList(reportCopy.phasePrepare || "Before the workday", group.prepare)}
+          ${renderWorkSupportPhaseList(reportCopy.phaseDuring || "During the workday", group.during)}
+          ${renderWorkSupportPhaseList(reportCopy.phaseRecover || "After work", group.recover)}
+        </div>`
+        : "";
+      if (!presentation && !strategies) return "";
+      return `
+        <article class="work-support" data-band="${band}">
+          <header class="work-support__header">
+            <h6 class="work-support__title">${escapeHtml(group.title)}</h6>
+            <span class="work-support__band work-support__band--${band}">${escapeHtml(bandLabel)}</span>
+          </header>
+          ${presentation}
+          ${strategies}
+        </article>`;
+    })
+    .join("");
+}
+
+function renderWorkReportSupportBlocks(guidance, sections, reportCopy) {
+  const showPresentation = Boolean(sections.challenges);
+  const showStrategies = Boolean(sections.recommendations);
+  if (!showPresentation && !showStrategies) return "";
+
+  const blocks = renderWorkSupportArticles(guidance.recommendations, reportCopy, {
+    showPresentation,
+    showStrategies,
+  });
+
+  const heading = showStrategies ? reportCopy.sectionRecs : reportCopy.sectionChallenges;
+  return `
+            <section class="work-report-doc__support">
+              <h5>${escapeHtml(heading)}</h5>
+              <div class="work-support-list">${blocks}</div>
+            </section>`;
+}
+
+function renderWorkScoreScaleChart(rows, overall, reportCopy, uiCopy) {
+  const labels = getProfileLabels(state.language, state.respondent || "adult");
+  const overallMeta = labels[overall.profile] || labels.neutral;
+  const lowLabel = reportCopy.scaleLow || "Low";
+  const midLabel = reportCopy.scaleMid || "Medium";
+  const highLabel = reportCopy.scaleHigh || "High";
+  const statusForBand = (band) => {
+    if (band === "low") return reportCopy.scaleStatusLow || "Low threshold";
+    if (band === "high") return reportCopy.scaleStatusHigh || "High threshold";
+    return reportCopy.scaleStatusMid || "Medium threshold";
+  };
+
+  const chartRows = [
+    ...rows.map((row) => ({
+      id: row.id,
+      title: row.shortTitle,
+      profile: row.profile,
+      color: row.color,
+      band: workScaleBand(row.profile),
+      status: statusForBand(workScaleBand(row.profile)),
+    })),
+    {
+      id: "overall",
+      title: uiCopy.overallScoreLabel,
+      profile: overall.profile,
+      color: overallMeta.color,
+      band: workScaleBand(overall.profile),
+      status: statusForBand(workScaleBand(overall.profile)),
+      overall: true,
+    },
+  ];
+
+  const items = chartRows
+    .map((row) => {
+      return `
+      <li class="work-score-scale__row${row.overall ? " work-score-scale__row--overall" : ""}" data-band="${escapeHtml(row.band)}" data-profile="${escapeHtml(row.profile)}">
+        <div class="work-score-scale__label">
+          <strong>${escapeHtml(row.title)}</strong>
+        </div>
+        <div class="work-score-scale__track" role="img" aria-label="${escapeHtml(row.title)}: ${escapeHtml(row.status)}">
+          <span class="work-score-scale__segments" aria-hidden="true">
+            <span class="work-score-scale__seg work-score-scale__seg--low${row.band === "low" ? " is-active" : ""}"></span>
+            <span class="work-score-scale__seg work-score-scale__seg--medium${row.band === "medium" ? " is-active" : ""}"></span>
+            <span class="work-score-scale__seg work-score-scale__seg--high${row.band === "high" ? " is-active" : ""}"></span>
+          </span>
+        </div>
+        <span class="work-score-scale__status">${escapeHtml(row.status)}</span>
+      </li>`;
+    })
+    .join("");
+
+  return `
+    <div class="work-score-scale">
+      ${reportCopy.scaleIntro ? `<p class="work-score-scale__intro">${escapeHtml(reportCopy.scaleIntro)}</p>` : ""}
+      <ul class="work-score-scale__legend">
+        <li class="work-score-scale__legend-item work-score-scale__legend-item--low">
+          <span class="work-score-scale__swatch" aria-hidden="true"></span>
+          <span><strong>${escapeHtml(lowLabel)}</strong>${reportCopy.scaleLowHint ? ` — ${escapeHtml(reportCopy.scaleLowHint)}` : ""}</span>
+        </li>
+        <li class="work-score-scale__legend-item work-score-scale__legend-item--medium">
+          <span class="work-score-scale__swatch" aria-hidden="true"></span>
+          <span><strong>${escapeHtml(midLabel)}</strong>${reportCopy.scaleMidHint ? ` — ${escapeHtml(reportCopy.scaleMidHint)}` : ""}</span>
+        </li>
+        <li class="work-score-scale__legend-item work-score-scale__legend-item--high">
+          <span class="work-score-scale__swatch" aria-hidden="true"></span>
+          <span><strong>${escapeHtml(highLabel)}</strong>${reportCopy.scaleHighHint ? ` — ${escapeHtml(reportCopy.scaleHighHint)}` : ""}</span>
+        </li>
+      </ul>
+      <div class="work-score-scale__chart">
+        <ul class="work-score-scale__rows">${items}</ul>
+      </div>
+    </div>`;
+}
+
 function renderWorkReport(scores) {
   if (!canOfferSettingReport()) return "";
 
@@ -8577,25 +8933,22 @@ function renderWorkReport(scores) {
     const overall = scoreOverall(scores, state.language, state.respondent || "adult");
     const overallThreshold = getThresholdMeta(overall.profile, state.language);
 
-    const scoreRows =
-      rows
-        .map(
-          (row) => `
+    const scoreRows = forWork
+      ? ""
+      : rows
+          .map(
+            (row) => `
       <tr>
         <td><strong>${escapeHtml(row.shortTitle)}</strong></td>
         <td>${escapeHtml(row.thresholdFull)}</td>
       </tr>`
-        )
-        .join("") +
-      `
+          )
+          .join("") +
+        `
       <tr class="work-report-doc__table-total">
         <td><strong>${escapeHtml(uiCopy.overallScoreLabel)}</strong></td>
         <td>
           <strong>${escapeHtml(overallThreshold.full)}</strong>
-          (${overall.scored} ${escapeHtml(uiCopy.overallItemsScored).toLowerCase()}:
-          ${overall.sensitive} ${escapeHtml(uiCopy.overallSensitiveTotal).toLowerCase()} /
-          ${overall.neutral ?? 0} ${escapeHtml(uiCopy.overallNeutralTotal).toLowerCase()} /
-          ${overall.seeking} ${escapeHtml(uiCopy.overallSeekingTotal).toLowerCase()})
         </td>
       </tr>`;
 
@@ -8604,57 +8957,16 @@ function renderWorkReport(scores) {
 
     if (forWork) {
       const guidance = getWorkReportGuidance(scores, state.language);
-      const challengeItems = guidance.challenges
-        .map(
-          (item) => `
-        <li>
-          <strong>${escapeHtml(item.title)} (${escapeHtml(item.thresholdFull)}):</strong>
-          ${escapeHtml(item.text)}
-        </li>`
-        )
-        .join("");
-
-      const recGroups = guidance.recommendations
-        .map(
-          (group) => `
-        <li class="work-report-doc__rec-group">
-          <strong>${escapeHtml(group.title)} (${escapeHtml(group.thresholdFull || group.thresholdLabel)})</strong>
-          <ul>
-            ${group.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-          </ul>
-        </li>`
-        )
-        .join("");
-
-      const generalItems = guidance.general
+      recsSection = renderWorkReportSupportBlocks(guidance, sections, reportCopy);
+      const generalItems = (guidance.general || [])
         .map((item) => `<li>${escapeHtml(item)}</li>`)
         .join("");
 
-      if (sections.challenges) {
-        challengesSection = `
+      if (sections.generalRecs && generalItems) {
+        recsSection += `
             <section>
-              <h5>${escapeHtml(reportCopy.sectionChallenges)}</h5>
-              <ul class="work-report-doc__challenges">${challengeItems}</ul>
-            </section>`;
-      }
-
-      if (sections.recommendations || (sections.generalRecs && generalItems)) {
-        recsSection = `
-            <section>
-              ${
-                sections.recommendations
-                  ? `
-              <h5>${escapeHtml(reportCopy.sectionRecs)}</h5>
-              <ul class="work-report-doc__recs work-report-doc__recs--grouped">${recGroups}</ul>`
-                  : ""
-              }
-              ${
-                sections.generalRecs && generalItems
-                  ? `
               <p class="work-report-doc__subhead">${escapeHtml(reportCopy.sectionGeneralRecs)}</p>
-              <ul class="work-report-doc__recs">${generalItems}</ul>`
-                  : ""
-              }
+              <ul class="work-report-doc__recs">${generalItems}</ul>
             </section>`;
       }
     } else if (sections.recommendations) {
@@ -8792,7 +9104,9 @@ function renderWorkReport(scores) {
               }
               ${
                 sections.scores
-                  ? `
+                  ? forWork
+                    ? renderWorkScoreScaleChart(rows, overall, reportCopy, uiCopy)
+                    : `
               <table class="work-report-doc__table">
                 <thead>
                   <tr>
