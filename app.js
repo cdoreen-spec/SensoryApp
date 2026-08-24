@@ -6482,24 +6482,6 @@ function renderCoupleMergeIntro(copy) {
         <div class="couple-merge-intro__body">
           ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
         </div>
-        <figure class="couple-merge-intro__aside" aria-hidden="true">
-          <img
-            src="assets/outeniqua-pathways.png"
-            alt=""
-            class="couple-merge-intro__aside-image"
-            width="682"
-            height="256"
-            loading="lazy"
-            decoding="async"
-          />
-          <img
-            src="mountain-divider.svg"
-            alt=""
-            class="couple-merge-intro__aside-rule"
-            width="600"
-            height="44"
-          />
-        </figure>
       </div>
     </section>
   `;
