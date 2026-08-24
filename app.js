@@ -6478,35 +6478,28 @@ function renderCoupleMergeIntro(copy) {
           }
         </div>
       </header>
-      <div class="couple-merge-intro__nature" aria-hidden="true">
-        <img
-          src="assets/heading-home-trail.png"
-          alt=""
-          class="couple-merge-intro__nature-accent couple-merge-intro__nature-accent--left"
-          width="682"
-          height="256"
-          loading="lazy"
-          decoding="async"
-        />
-        <img
-          src="mountain-divider.svg"
-          alt=""
-          class="couple-merge-intro__nature-rule"
-          width="600"
-          height="44"
-        />
-        <img
-          src="assets/outeniqua-pathways.png"
-          alt=""
-          class="couple-merge-intro__nature-accent couple-merge-intro__nature-accent--right"
-          width="682"
-          height="256"
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
-      <div class="couple-merge-intro__body">
-        ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+      <div class="couple-merge-intro__content">
+        <div class="couple-merge-intro__body">
+          ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+        </div>
+        <figure class="couple-merge-intro__aside" aria-hidden="true">
+          <img
+            src="assets/outeniqua-pathways.png"
+            alt=""
+            class="couple-merge-intro__aside-image"
+            width="682"
+            height="256"
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            src="mountain-divider.svg"
+            alt=""
+            class="couple-merge-intro__aside-rule"
+            width="600"
+            height="44"
+          />
+        </figure>
       </div>
     </section>
   `;
