@@ -56,19 +56,28 @@ const QUESTIONNAIRE_UI = {
     coupleBothReady: "Both questionnaires are complete.",
     coupleViewMerge: "View combined couple profile",
     coupleWaitingOther: "Waiting for the other partner to finish.",
+    couplePrint: "Download / print combined report",
+    coupleCombinedTitle: "Submit your combined couple report",
+    coupleCombinedLead:
+      "You are the last partner to finish. Submit and combine both questionnaires so Soulful Sensory OT receives your shared report.",
+    coupleCombinedSubmit: "Submit and combine my results with my partner",
+    coupleCombinedSending: "Sending your combined couple report to the therapist…",
+    coupleCombinedSent: "Your combined couple report was sent successfully.",
+    coupleCombinedError:
+      "We couldn’t send your combined couple report automatically. Please message Cayley on WhatsApp to let her know you’ve finished, and try Send again.",
     coupleNextStepsTitle: "What happens next",
     coupleNextStepsLead:
-      "You’ve finished your part. Your partner still needs to complete their own questionnaire before you can view the combined couple profile.",
+      "You’ve finished your part. Your partner still needs to complete their own questionnaire. When they finish, they can submit and combine both results for your OT.",
     coupleNextStep1:
       "Copy your partner’s link and send it to them (WhatsApp, email, or text). They can open it later on their own phone or computer.",
     coupleNextStep2:
       "Also copy your completion code and keep it somewhere safe — or send it to them. If they finish on another device, this code lets their results join the same couple session.",
     coupleNextStep3:
-      "When they have finished, ask them to copy their completion code and send it back to you.",
+      "When they have finished, ask them to copy their completion code and send it back to you — or have them submit and combine from their results screen.",
     coupleNextStep4:
-      "Return to the couple hub, paste their code under “Add a partner’s results from another device”, then open the combined couple profile.",
+      "Return to the couple hub, paste their code under “Add a partner’s results from another device” if needed, then open the combined couple profile and submit the shared report.",
     coupleNextStepsSameDevice:
-      "If your partner will use this same device: go back to the couple hub and start their questionnaire when they are ready.",
+      "If your partner will use this same device: go back to the couple hub and start their questionnaire when they are ready. After they finish, they can submit and combine both results.",
     coupleCopyPartnerLink: "Copy partner’s link",
     couplePartnerLinkCopied: "Partner’s link copied",
     coupleBackToHub: "Back to couple hub",
@@ -127,6 +136,40 @@ const QUESTIONNAIRE_UI = {
     coupleCompareWeek: "During the week",
     coupleCompareWeekend: "Over the weekend",
     coupleCompareTogether: "Together",
+    coupleMergeIntroTitle: "Understanding sensory needs together",
+    coupleMergeIntroLead:
+      "A gentle guide to why your differences matter — and how awareness can strengthen your relationship.",
+    coupleMergeIntroP1:
+      "Every person experiences the world through their senses differently — and in a relationship, those differences matter. What feels calming to one partner can feel draining to another; what one person needs more of, the other may need less of. Neither is wrong. Both are real.",
+    coupleMergeIntroP2:
+      "Similar sensory needs can feel easy and natural together. Different needs are not a flaw in your relationship — they can become a strength when you understand them. One partner’s steadiness can ground the other; one partner’s energy can invite joy and movement. Complementing and contrasting sensory styles can balance a home, a routine and a shared life.",
+    coupleMergeIntroP3:
+      "It begins with awareness: noticing your own sensory patterns — how light, noise, touch, movement, taste and downtime affect your mood, energy and patience. Then extending that same curiosity to your partner: what fills their cup, what empties it, and what they need after a long day.",
+    coupleMergeIntroP4:
+      "When sensory needs go unnoticed or unmet, the impact is rarely only physical. It shows up in irritability, withdrawal, tension or conflict that seems to be about something else — but is often rooted in overload or under-stimulation. Many couples already support each other in small ways without realising that is exactly what they are doing.",
+    coupleMergeIntroP5:
+      "This report is a starting point for conversation, not a verdict. With empathy, clear communication and small practical adjustments, you can support each other more intentionally — and grow as a couple who understands not only what you share, but how you differ.",
+    coupleSenseQuoteLabel: "Why this sense matters for couples",
+    coupleSenseQuoteVisual:
+      "The spaces we share become the backdrop to our relationship — what we see around us shapes how safe, calm or overwhelmed we feel at home.",
+    coupleSenseWhyVisual:
+      "Visual input is often underestimated in couples. Clutter, lighting or a busy environment can fill one partner’s sensory bucket while the other barely notices. Naming what you each need from shared spaces is one of the quickest ways to reduce friction at home.",
+    coupleSenseQuoteMovement:
+      "Movement is not just exercise — for many people it is how the nervous system resets, focuses and finds calm.",
+    coupleSenseWhyMovement:
+      "Partners often differ in how much movement, intensity or thrill they need. One may crave activity to decompress while the other needs stillness. Understanding this helps you plan weekends, holidays and daily routines without one person feeling dragged along or held back.",
+    coupleSenseQuoteTaste:
+      "Sharing food is one of the oldest languages of care — taste and smell carry memory, comfort and connection.",
+    coupleSenseWhyTaste:
+      "Meal preferences can be deeply sensory, not merely picky. Spice, texture or strong smells can overwhelm a sensitive system, while a seeking partner may want variety and intensity. Cooking and eating together works best when you talk about what feels ‘enough’ versus ‘too much’.",
+    coupleSenseQuoteTouch:
+      "Touch can speak louder than words — and the absence of the right touch at the right time can leave a partner feeling unseen.",
+    coupleSenseWhyTouch:
+      "Personal space, affection and physical closeness are core sensory experiences in a relationship. One partner may need more touch to feel connected; another may need more distance to feel regulated. Neither is rejection — it is nervous-system wiring.",
+    coupleSenseQuoteRegulate:
+      "Rest is not laziness — it is the body’s way of refilling the capacity to connect, listen and show up for each other.",
+    coupleSenseWhyRegulate:
+      "How you each recharge after work, on weekends and during stress is often where couples collide quietly. One may need solitude; the other may need people, movement or noise. Protecting each other’s recovery — even when it looks different — is one of the most loving things you can do.",
     coupleClosingQuote:
       "You don’t have to experience the world in the same way to experience it well together. When couples understand each other’s sensory needs, communicate openly and meet each other halfway, their differences can become a strength rather than a source of conflict.",
     coupleWorkTag: "Work & home life",
@@ -269,6 +312,10 @@ const QUESTIONNAIRE_UI = {
     idealSaturdayRequired: "Please share a little about that best Saturday before continuing.",
     idealSaturdayResultsTitle: "Best Saturday",
     idealSaturdayResultsIntro: "A free-text snapshot of what an ideal day looks like — useful sensory clues beyond the yes/no scores.",
+    teenTrailOverviewQuote:
+      "Your senses are how you meet the world — and how you learn what helps you feel like yourself again.",
+    teenTrailOverviewIntro:
+      "Your sensory systems are not just about sound, touch, or movement — they are part of how you manage emotions too. When you feel overwhelmed, anxious, or stressed, your body is often telling you what it needs more of, or less of. Knowing your sensory pattern helps you find ways to switch off, refill your bucket, get back to the things you love, and figure out what matters to you and what makes you tick.",
     contextTag: "Your setting",
     chooseContext: "Where should we focus?",
     chooseContextAdultDesc: "Choose whether these results should lean more toward work, or toward family and home life. Your summary, sense-by-sense readings and sensory diet ideas will all be written for the setting you choose.",
@@ -309,6 +356,7 @@ const QUESTIONNAIRE_UI = {
     overallItemsScored: "Questions asked",
     overallBalanceLabel: "Overall balance",
     overallSystemsLabel: "How the senses split",
+    teenScoreBoardKicker: "Overall reading",
     teenOverallAxisSensitive: "Picks up sensory input quickly",
     teenOverallAxisSeeking: "Needs more sensory input",
     teenSenseAxis: {
@@ -947,19 +995,28 @@ const QUESTIONNAIRE_UI = {
     coupleBothReady: "Albei vraelyste is klaar.",
     coupleViewMerge: "Sien gekombineerde paartjie-profiel",
     coupleWaitingOther: "Wag dat die ander vennoot klaarmaak.",
+    couplePrint: "Aflaai / druk gekombineerde verslag",
+    coupleCombinedTitle: "Dien julle gekombineerde paartjie-verslag in",
+    coupleCombinedLead:
+      "Jy is die laaste vennoot wat klaargemaak het. Dien in en kombineer albei vraelyste sodat Soulful Sensory OT julle gedeelde verslag ontvang.",
+    coupleCombinedSubmit: "Dien in en kombineer my resultate met my vennoot",
+    coupleCombinedSending: "Julle gekombineerde paartjie-verslag word aan die terapeut gestuur…",
+    coupleCombinedSent: "Julle gekombineerde paartjie-verslag is suksesvol gestuur.",
+    coupleCombinedError:
+      "Ons kon nie julle gekombineerde paartjie-verslag outomaties stuur nie. Stuur asseblief vir Cayley ’n WhatsApp om te sê julle is klaar, en probeer Weer stuur.",
     coupleNextStepsTitle: "Wat gebeur nou",
     coupleNextStepsLead:
-      "Jy het jou deel klaargemaak. Jou vennoot moet nog hul eie vraelys voltooi voordat julle die gekombineerde paartjie-profiel kan sien.",
+      "Jy het jou deel klaargemaak. Jou vennoot moet nog hul eie vraelys voltooi. Wanneer hulle klaarmaak, kan hulle albei resultate indien en kombineer vir julle OT.",
     coupleNextStep1:
       "Kopieer jou vennoot se skakel en stuur dit vir hulle (WhatsApp, e-pos of boodskap). Hulle kan dit later op hul eie foon of rekenaar oopmaak.",
     coupleNextStep2:
       "Kopieer ook jou voltooiingskode en hou dit veilig — of stuur dit vir hulle. As hulle op ’n ander toestel klaarmaak, laat hierdie kode hul resultate by dieselfde paartjie-sessie aansluit.",
     coupleNextStep3:
-      "Wanneer hulle klaar is, vra hulle om hul voltooiingskode te kopieer en terug te stuur.",
+      "Wanneer hulle klaar is, vra hulle om hul voltooiingskode te kopieer en terug te stuur — of laat hulle vanaf hul resultate-skerm indien en kombineer.",
     coupleNextStep4:
-      "Gaan terug na die paartjie-spilpunt, plak hul kode onder “Voeg ’n vennoot se resultate van ’n ander toestel by”, en open dan die gekombineerde paartjie-profiel.",
+      "Gaan terug na die paartjie-spilpunt, plak hul kode onder “Voeg ’n vennoot se resultate van ’n ander toestel by” indien nodig, open die gekombineerde paartjie-profiel, en dien die gedeelde verslag in.",
     coupleNextStepsSameDevice:
-      "As jou vennoot hierdie selfde toestel gaan gebruik: gaan terug na die paartjie-spilpunt en begin hul vraelys wanneer hulle gereed is.",
+      "As jou vennoot hierdie selfde toestel gaan gebruik: gaan terug na die paartjie-spilpunt en begin hul vraelys wanneer hulle gereed is. Nadat hulle klaarmaak, kan hulle albei resultate indien en kombineer.",
     coupleCopyPartnerLink: "Kopieer vennoot se skakel",
     couplePartnerLinkCopied: "Vennoot se skakel is gekopieer",
     coupleBackToHub: "Terug na paartjie-spilpunt",
@@ -1018,6 +1075,40 @@ const QUESTIONNAIRE_UI = {
     coupleCompareWeek: "Gedurende die week",
     coupleCompareWeekend: "Oor die naweek",
     coupleCompareTogether: "Saam",
+    coupleMergeIntroTitle: "Sensoriese behoeftes saam verstaan",
+    coupleMergeIntroLead:
+      "’n Sagte gids oor waarom julle verskille saak maak — en hoe bewustheid julle verhouding kan versterk.",
+    coupleMergeIntroP1:
+      "Elke persoon ervaar die wêreld deur hul sintuie anders — en in ’n verhouding maak daardie verskille saak. Wat vir een vennoot kalmerend voel, kan vir die ander uitputtend wees; wat die een meer nodig het, het die ander dalk minder nodig. Geen van die twee is verkeerd nie. Beide is eg.",
+    coupleMergeIntroP2:
+      "Soortgelyke sensoriese behoeftes kan natuurlik en maklik saam voel. Verskillende behoeftes is nie ’n gebrek in julle verhouding nie — hulle kan ’n sterkte word wanneer julle dit verstaan. Een vennoot se stadigheid kan die ander grond; een vennoot se energie kan vreugde en beweging nooi. Sensoriese style wat mekaar aanvul of kontrasteer, kan ’n huis, ’n roetine en ’n gedeelde lewe balanseer.",
+    coupleMergeIntroP3:
+      "Dit begin met bewustheid: let op jou eie sensoriese patrone — hoe lig, geraas, aanraking, beweging, smaak en stilte-tyd jou gemoed, energie en geduld beïnvloed. Brei dieselfde nuuskierigheid dan uit na jou vennoot: wat vul hul emmer, wat maak dit leeg, en wat het hulle nodig ná ’n lang dag.",
+    coupleMergeIntroP4:
+      "Wanneer sensoriese behoeftes onopgemerk of onvervul bly, is die impak selde net fisies. Dit wys as prikkelbaarheid, terugtrekking, spanning of konflik wat oor iets anders lyk — maar dikwels in oorlaai of onder-stimulasie gewortel is. Baie paartjies ondersteun mekaar reeds op klein maniere sonder om te besef dat dit presies is wat hulle doen.",
+    coupleMergeIntroP5:
+      "Hierdie verslag is ’n beginpunt vir gesprek, nie ’n oordeel nie. Met empatie, duidelike kommunikasie en klein praktiese aanpassings kan julle mekaar meer doelbewus ondersteun — en groei as ’n paartjie wat nie net verstaan wat julle deel nie, maar ook hoe julle verskil.",
+    coupleSenseQuoteLabel: "Waarom hierdie sintuig vir paartjies saak maak",
+    coupleSenseQuoteVisual:
+      "Die spasies wat ons deel word die agtergrond van ons verhouding — wat ons om ons sien, vorm hoe veilig, kalm of oorweldig ons tuis voel.",
+    coupleSenseWhyVisual:
+      "Visuele inset word in paartjies dikwels onderskat. Rommel, beligting of ’n besige omgewing kan een vennoot se sensoriese emmer vul terwyl die ander skaars opmerk. Om te noem wat julle elk van gedeelde spasies nodig het, is een van die vinnigste maniere om wrywing tuis te verminder.",
+    coupleSenseQuoteMovement:
+      "Beweging is nie net oefening nie — vir baie mense is dit hoe die senuweestelsel herstel, fokus en kalmte vind.",
+    coupleSenseWhyMovement:
+      "Vennote verskil dikwels in hoeveel beweging, intensiteit of spanning hulle nodig het. Een mag aktiwiteit verkies om te herlaai terwyl die ander stilte nodig het. Om dit te verstaan help julle om naweke, vakansies en daaglikse roetines te beplan sonder dat een persoon meegesleep of teruggehou voel.",
+    coupleSenseQuoteTaste:
+      "Kos deel is een van die oudste tale van sorg — smaak en reuk dra herinnering, gemak en verbinding.",
+    coupleSenseWhyTaste:
+      "Maalvoorkeure kan diep sensories wees, nie net kieskeurig nie. Pittigheid, tekstuur of sterk reuke kan ’n sensitiewe stelsel oorweldig, terwyl ’n soekende vennoot dalk variasie en intensiteit wil hê. Saam kook en eet werk die beste wanneer julle bespreek wat ‘genoeg’ versus ‘te veel’ voel.",
+    coupleSenseQuoteTouch:
+      "Aanraking kan harder praat as woorde — en die afwesigheid van die regte aanraking op die regte tyd kan ’n vennoot onsigbaar laat voel.",
+    coupleSenseWhyTouch:
+      "Persoonlike ruimte, toegeneentheid en fisieke nabyheid is kern-sensoriese ervarings in ’n verhouding. Een vennoot het dalk meer aanraking nodig om verbinding te voel; ’n ander het dalk meer afstand nodig om gereguleerd te voel. Geen van die twee is verwerping nie — dit is senuweestelsel-bedrading.",
+    coupleSenseQuoteRegulate:
+      "Rus is nie luiheid nie — dit is die liggaam se manier om weer kapasiteit te kry om te verbind, te luister en vir mekaar daar te wees.",
+    coupleSenseWhyRegulate:
+      "Hoe julle elk herlaai ná werk, oor naweke en in tye van stres is dikwels waar paartjies stil bots. Een het dalk alleen-tyd nodig; die ander het dalk mense, beweging of geraas nodig. Om mekaar se herstel te beskerm — selfs wanneer dit anders lyk — is een van die liefdevolste dinge wat julle kan doen.",
     coupleClosingQuote:
       "Julle hoef nie die wêreld op dieselfde manier te ervaar om dit goed saam te ervaar nie. Wanneer paartjies mekaar se sensoriese behoeftes verstaan, openlik kommunikeer en mekaar halfpad tegemoet kom, kan hulle verskille ’n sterkte word eerder as ’n bron van konflik.",
     coupleWorkTag: "Werk & huislike lewe",
@@ -1160,6 +1251,10 @@ const QUESTIONNAIRE_UI = {
     idealSaturdayRequired: "Deel asseblief ’n bietjie oor daardie beste Saterdag voordat jy voortgaan.",
     idealSaturdayResultsTitle: "Beste Saterdag",
     idealSaturdayResultsIntro: "’n Vryteks-oomblik van hoe ’n ideale dag lyk — nuttige sensoriese leidrade buite die ja/nee-tellings.",
+    teenTrailOverviewQuote:
+      "Jou sintuie is hoe jy die wêreld ontmoet — en hoe jy leer wat help om weer jouself te voel.",
+    teenTrailOverviewIntro:
+      "Jou sensoriese stelsels gaan nie net oor klank, aanraking of beweging nie — hulle maak deel uit van hoe jy emosies bestuur. Wanneer jy oorweldig, angstig of gestres voel, sê jou liggaam dikwels wat dit meer of minder nodig het. Om jou sensoriese patroon te ken, help jou maniere vind om af te skakel, jou emmer weer te vul, terug te beweeg na wat jy liefhet, en uit te figure wat vir jou belangrik is en wat jou laat lewe.",
     contextTag: "Jou omgewing",
     chooseContext: "Waarop moet ons fokus?",
     chooseContextAdultDesc: "Kies of hierdie resultate meer na werk, of na familie- en huislike lewe moet neig. Jou opsomming, sintuig-vir-sintuig lesings en sensoriese dieet-idees sal alles vir die omgewing wat jy kies, geskryf word.",
@@ -1200,6 +1295,7 @@ const QUESTIONNAIRE_UI = {
     overallItemsScored: "Vrae gevra",
     overallBalanceLabel: "Algehele balans",
     overallSystemsLabel: "Hoe die sintuie verdeel",
+    teenScoreBoardKicker: "Algehele lesing",
     teenOverallAxisSensitive: "Vat sensoriese insette vinnig op",
     teenOverallAxisSeeking: "Benodig meer sensoriese insette",
     teenSenseAxis: {

@@ -338,6 +338,13 @@ function createCoupleSession(partial = {}) {
     version: COUPLE_SESSIONS_VERSION,
     createdAt: partial.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    combinedSubmission: {
+      status: null,
+      submittedAt: null,
+      submittedBy: null,
+      error: null,
+      errorCode: null,
+    },
     partners: {
       a: emptyCouplePartnerSlot(partial.partnerAName || partial.aName || ""),
       b: emptyCouplePartnerSlot(partial.partnerBName || partial.bName || ""),
@@ -390,6 +397,8 @@ function ensureCoupleSession(id = state.coupleId) {
   if (!session) {
     session = createCoupleSession({ id: id || undefined });
     saveCoupleSession(session);
+  } else {
+    ensureCoupleCombinedSubmissionShape(session);
   }
   state.coupleId = session.id;
   return session;
@@ -1162,7 +1171,7 @@ function normalizeRespondentLifeContext(respondent, lifeContext) {
  * Deterministic sample yes/no answers so admins can preview the full report
  * without filling the questionnaire while building the app.
  */
-function buildSampleAnswers(respondent = "adult") {
+function buildSampleAnswers(respondent = "adult", biasOverrides = null) {
   const domains = getSensoryDomains("en", respondent);
   /** Bias each sense so the printed profile shows a mix of patterns. */
   const biasByDomain = {
@@ -1172,6 +1181,7 @@ function buildSampleAnswers(respondent = "adult") {
     visual: "sensitive",
     smellTaste: "seeking",
     everyday: "sensitive",
+    ...(biasOverrides && typeof biasOverrides === "object" ? biasOverrides : {}),
   };
 
   return Object.fromEntries(
@@ -1307,7 +1317,9 @@ function buildSampleAssessmentRecord(options = {}) {
 /** Open a full sample results report (no email, not saved to the patient register). */
 function openSampleReportPreview(options = {}) {
   if (!isSampleReportPreviewEnabled()) return false;
-  if (!canAccessTherapistDashboard()) return false;
+  if (options.coupleMerge || options.respondent === "couple-merge") {
+    return openSampleCoupleMergePreview();
+  }
   const record = buildSampleAssessmentRecord(options);
   applyAssessmentRecord(record);
   // Ensure work/school letter section is ready for print checks.
@@ -1319,8 +1331,123 @@ function openSampleReportPreview(options = {}) {
   return true;
 }
 
+function buildSampleCouplePartnerSlot(partner, profile) {
+  const answers = buildSampleAnswers("couple", profile.biasOverrides);
+  const scores = scoreAllDomains(answers, getSensoryDomains("en", "couple"), "en", "couple");
+  const metrics = getProfileMetrics(scores);
+  const name = profile.name;
+  const partnerName = profile.partnerName;
+  return {
+    ...emptyCouplePartnerSlot(name),
+    label: name,
+    status: "complete",
+    assessmentId: `sample-couple-${partner}`,
+    completedAt: new Date().toISOString(),
+    demographics: {
+      name,
+      age: profile.age,
+      email: profile.email,
+      occupation: profile.occupation || "",
+      parentName: "",
+      partnerName,
+    },
+    answers,
+    idealSaturday: "",
+    language: "en",
+    summary: {
+      overallLabel: profileLabelPlain(metrics?.meta) || "",
+      lean: metrics?.lean || "",
+      balance: typeof metrics?.balance === "number" ? metrics.balance : null,
+      leanHeadline: metrics?.leanHeadline || "",
+      domainProfiles: getScoreRows(scores).map((row) => ({
+        id: row.id,
+        title: row.title,
+        short: row.profileShort || row.thresholdLabel || "",
+      })),
+    },
+    coupleWork: normalizeCoupleWork(profile.coupleWork),
+  };
+}
+
+/** Build a throwaway couple session with both partners complete (for merge layout edits). */
+function buildSampleCoupleMergeSession() {
+  const nameA = "Taylor Ndlovu";
+  const nameB = "Jordan Ndlovu";
+  const session = createCoupleSession({
+    id: "sample-couple-merge",
+    partnerAName: nameA,
+    partnerBName: nameB,
+  });
+  session.partners.a = buildSampleCouplePartnerSlot("a", {
+    name: nameA,
+    partnerName: nameB,
+    age: "34",
+    email: "taylor.sample@example.com",
+    occupation: "Project coordinator",
+    biasOverrides: {
+      auditory: "sensitive",
+      tactile: "sensitive",
+      movement: "seeking",
+      visual: "sensitive",
+      smellTaste: "mixed",
+      everyday: "sensitive",
+    },
+    coupleWork: {
+      employment: "works",
+      workLocation: "office",
+      workWith: "people",
+      workingHours: "08:00–16:30",
+      endOfDay: ["sitRelax", "alone"],
+      rechargeAfterWork: ["relaxHome"],
+      rechargingSaturday: "A slow coffee, a quiet walk, then cooking together without rushing.",
+      isParent: "yes",
+    },
+  });
+  session.partners.b = buildSampleCouplePartnerSlot("b", {
+    name: nameB,
+    partnerName: nameA,
+    age: "36",
+    email: "jordan.sample@example.com",
+    occupation: "Teacher",
+    biasOverrides: {
+      auditory: "seeking",
+      tactile: "seeking",
+      movement: "sensitive",
+      visual: "seeking",
+      smellTaste: "seeking",
+      everyday: "mixed",
+    },
+    coupleWork: {
+      employment: "works",
+      workLocation: "both",
+      workWith: "screensAndPeople",
+      workingHours: "07:30–15:00",
+      endOfDay: ["getOut", "withPeople"],
+      rechargeAfterWork: ["activeOutdoors", "othersOutside"],
+      rechargingSaturday: "Gym, then friends outdoors, loud music and a late dinner.",
+      isParent: "yes",
+    },
+  });
+  return session;
+}
+
+/** Open the combined couple profile with sample partners (not saved to the patient register). */
+function openSampleCoupleMergePreview() {
+  if (!isSampleReportPreviewEnabled()) return false;
+  // Couple merge preview is local layout/copy work — allow without clinician unlock
+  // while sample reports are enabled, so edits do not require signing in first.
+  const session = buildSampleCoupleMergeSession();
+  saveCoupleSession(session);
+  state.sampleReportPreview = true;
+  state.archiveReadOnly = true;
+  state.viewingArchivedId = null;
+  state.coupleHubNotice = null;
+  openCoupleHub({ coupleId: session.id, showMerge: true });
+  return true;
+}
+
 function renderSampleReportPreviewControls() {
-  if (!isSampleReportPreviewEnabled() || !canAccessTherapistDashboard()) return "";
+  if (!isSampleReportPreviewEnabled()) return "";
   return `
     <div class="sample-preview-controls" role="group" aria-label="Sample report preview">
       <p class="sample-preview-controls__label">Skip questionnaire · sample report</p>
@@ -1329,7 +1456,8 @@ function renderSampleReportPreviewControls() {
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="adult" data-sample-context="home">Adult · home</button>
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="teen" data-sample-context="homeSchool">Teen · home &amp; school</button>
         <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="parent">Parent / child</button>
-        <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="couple">Couple</button>
+        <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="couple">Couple · one partner</button>
+        <button type="button" class="btn btn-secondary btn--compact" data-action="preview-sample-report" data-sample-respondent="couple-merge">Couple · combined</button>
       </div>
     </div>
   `;
@@ -1495,7 +1623,10 @@ function inviteBannerText(copy = currentUi()) {
 
 function shouldEmailResultsToClinician() {
   if (state.archiveReadOnly) return false;
+  if (state.sampleReportPreview) return false;
   if (DELIVERY_PROVIDER === "none") return false;
+  // Couple pathway emails once via the combined-report submit (last partner).
+  if (state.respondent === "couple") return false;
   // Email the detailed sensory report for every finished adult / teen / parent screening
   // (invite link or public home path). Pain pathway is separate and not emailed here.
   return Boolean(state.respondent) && RESPONDENT_TYPES.includes(state.respondent);
@@ -1546,16 +1677,20 @@ function readInviteFromUrl() {
     state.view = "settings";
     return;
   }
-  if (params.get("preview") === "report" || params.get("sample") === "report") {
+  if (params.get("preview") === "report" || params.get("sample") === "report" || params.get("preview") === "couple-merge") {
     state.view = "dashboard";
     state.clinicianUnlocked = sessionStorage.getItem(CLINICIAN_SESSION_KEY) === "1";
     if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
       state.clinicianUnlocked = true;
     }
-    state._openSamplePreviewOnBoot = {
-      respondent: params.get("respondent") || params.get("pathway") || "adult",
-      lifeContext: params.get("context") || params.get("lifeContext") || null,
-    };
+    if (params.get("preview") === "couple-merge") {
+      state._openSamplePreviewOnBoot = { coupleMerge: true };
+    } else {
+      state._openSamplePreviewOnBoot = {
+        respondent: params.get("respondent") || params.get("pathway") || "adult",
+        lifeContext: params.get("context") || params.get("lifeContext") || null,
+      };
+    }
     return;
   }
   if (params.get("dashboard") === "1" || params.get("patients") === "1") {
@@ -2294,6 +2429,426 @@ function ensureResultsSubmitted({ force = false } = {}) {
     });
 }
 
+function ensureCoupleCombinedSubmissionShape(session) {
+  if (!session || typeof session !== "object") return session;
+  if (!session.combinedSubmission || typeof session.combinedSubmission !== "object") {
+    session.combinedSubmission = {
+      status: null,
+      submittedAt: null,
+      submittedBy: null,
+      error: null,
+      errorCode: null,
+    };
+  }
+  return session;
+}
+
+function canOfferCoupleCombinedSubmit(session = null) {
+  if (state.archiveReadOnly || state.sampleReportPreview) return false;
+  if (DELIVERY_PROVIDER === "none") return false;
+  const sess = session || (state.coupleId ? getCoupleSession(state.coupleId) : null);
+  return bothCouplePartnersComplete(sess);
+}
+
+function coupleCombinedSubmissionStatusMessage(copy = currentUi(), session = null) {
+  const sess = ensureCoupleCombinedSubmissionShape(
+    session || (state.coupleId ? getCoupleSession(state.coupleId) : null)
+  );
+  const status = sess?.combinedSubmission?.status;
+  if (status === "sent") return copy.coupleCombinedSent;
+  if (status === "error") {
+    if (sess.combinedSubmission.errorCode === "formsubmit-activation") {
+      return copy.thankYouActivation;
+    }
+    if (sess.combinedSubmission.errorCode === "file-protocol") {
+      return copy.thankYouFileProtocol;
+    }
+    if (sess.combinedSubmission.errorCode === "network-blocked") {
+      return copy.thankYouNetworkBlocked;
+    }
+    return copy.coupleCombinedError;
+  }
+  if (status === "pending") return copy.coupleCombinedSending;
+  return copy.coupleCombinedLead;
+}
+
+function buildCouplePartnerEmailBlock(partner, slot, copy) {
+  const name =
+    String(slot?.label || slot?.demographics?.name || "").trim() ||
+    (partner === "b" ? copy.couplePartnerB : copy.couplePartnerA);
+  const demo = slot?.demographics || {};
+  const summary = slot?.summary || {};
+  const domains = Array.isArray(summary.domainProfiles)
+    ? summary.domainProfiles
+        .map((d) => `  • ${d.title || d.id}: ${d.short || "—"}`)
+        .join("\n")
+    : "  (no domain summary)";
+  const workSummary = formatCoupleWorkSummary(normalizeCoupleWork(slot?.coupleWork), copy);
+  return [
+    `— ${name} (${partner === "b" ? "Partner 2" : "Partner 1"}) —`,
+    `Name: ${name}`,
+    demo.age ? `Age: ${demo.age}` : null,
+    demo.email ? `Email: ${demo.email}` : null,
+    demo.occupation ? `Occupation: ${demo.occupation}` : null,
+    demo.partnerName ? `Partner: ${demo.partnerName}` : null,
+    `Overall: ${summary.overallLabel || "—"}`,
+    summary.leanHeadline || null,
+    "Domains:",
+    domains,
+    workSummary ? ["", "Work & home life:", workSummary].join("\n") : null,
+  ]
+    .filter((line) => line !== null && line !== "")
+    .join("\n");
+}
+
+function buildCoupleCombinedResultsReport(session = null) {
+  const copy = currentUi();
+  const sess = ensureCoupleCombinedSubmissionShape(
+    session || ensureCoupleSession()
+  );
+  if (!bothCouplePartnersComplete(sess)) {
+    throw new Error("Both partners must complete before submitting the combined report.");
+  }
+
+  const nameA = couplePartnerLabel("a", sess);
+  const nameB = couplePartnerLabel("b", sess);
+  const language = state.language === "af" ? "Afrikaans" : "English";
+  const comparison =
+    typeof buildCoupleComparisonReport === "function"
+      ? buildCoupleComparisonReport(sess, state.language)
+      : null;
+  const workComparison =
+    typeof buildCoupleWorkComparison === "function"
+      ? buildCoupleWorkComparison(sess, state.language)
+      : null;
+  const conflictSummary =
+    typeof buildCoupleConflictAreas === "function"
+      ? buildCoupleConflictAreas(sess, state.language)
+      : null;
+  const thriveSummary =
+    typeof buildCoupleThriveSummary === "function"
+      ? buildCoupleThriveSummary(sess, state.language)
+      : null;
+  const parentingComparison =
+    typeof buildCoupleParentingComparison === "function"
+      ? buildCoupleParentingComparison(sess, state.language)
+      : null;
+
+  const sectionLines = [];
+  if (comparison?.sections?.length) {
+    sectionLines.push("", `— ${copy.coupleCompareTitle} —`, copy.coupleCompareIntro || "");
+    comparison.sections.forEach((section) => {
+      const title = copy[section.titleKey] || section.titleKey;
+      sectionLines.push("", title);
+      (section.partnerLines || []).forEach((line) => {
+        if (line?.text) sectionLines.push(`  ${line.text}`);
+      });
+      (section.together || []).filter(Boolean).forEach((text) => {
+        sectionLines.push(`  Together: ${text}`);
+      });
+    });
+  }
+
+  if (workComparison) {
+    sectionLines.push(
+      "",
+      `— ${copy[workComparison.titleKey] || copy.coupleWorkResultsTitle} —`,
+      copy[workComparison.introKey] || ""
+    );
+    (workComparison.partners || []).forEach((card) => {
+      sectionLines.push("", card.name);
+      (card.rows || []).forEach((row) => {
+        sectionLines.push(`  ${row.label}: ${row.value}`);
+      });
+      if (card.note) sectionLines.push(`  ${card.note}`);
+    });
+    (workComparison.together || []).filter(Boolean).forEach((text) => {
+      sectionLines.push(`  Together: ${text}`);
+    });
+  }
+
+  if (conflictSummary) {
+    sectionLines.push(
+      "",
+      `— ${copy[conflictSummary.titleKey] || copy.coupleCompareConflictTitle} —`,
+      copy[conflictSummary.introKey] || copy.coupleCompareConflictIntro || ""
+    );
+    if ((conflictSummary.areas || []).length) {
+      conflictSummary.areas.forEach((area) => {
+        sectionLines.push("", area.title, area.text);
+        (area.tips || []).filter(Boolean).forEach((tip) => {
+          sectionLines.push(`  • ${tip}`);
+        });
+      });
+    } else if (conflictSummary.emptyNote) {
+      sectionLines.push(conflictSummary.emptyNote);
+    }
+  }
+
+  if (thriveSummary) {
+    sectionLines.push(
+      "",
+      `— ${copy[thriveSummary.titleKey] || copy.coupleCompareThriveTitle} —`,
+      copy[thriveSummary.introKey] || ""
+    );
+    (thriveSummary.partners || []).forEach((card) => {
+      sectionLines.push("", card.name);
+      (card.needs || []).forEach((need) => sectionLines.push(`  • ${need}`));
+    });
+  }
+
+  if (parentingComparison) {
+    sectionLines.push(
+      "",
+      `— ${copy[parentingComparison.titleKey] || copy.coupleCompareParentingTitle} —`,
+      copy[parentingComparison.introKey] || ""
+    );
+    (parentingComparison.partnerLines || []).forEach((line) => {
+      if (line?.text) sectionLines.push(`  ${line.text}`);
+    });
+    (parentingComparison.together || []).filter(Boolean).forEach((text) => {
+      sectionLines.push(`  Together: ${text}`);
+    });
+  }
+
+  const lines = [
+    "Soulful Sensory OT — Combined couple sensory report",
+    `Submitted: ${new Date().toLocaleString()}`,
+    `Submitted by: ${assessmentCompleterName()}${
+      state.couplePartner === "a" || state.couplePartner === "b"
+        ? ` (${state.couplePartner === "b" ? "Partner 2" : "Partner 1"})`
+        : ""
+    }`,
+    `Couple session: ${sess.id}`,
+    `Partners: ${nameA} & ${nameB}`,
+    `Language: ${language}`,
+    `Source: Couple pathway (combined submit)`,
+    "",
+    buildCouplePartnerEmailBlock("a", sess.partners.a, copy),
+    "",
+    buildCouplePartnerEmailBlock("b", sess.partners.b, copy),
+    ...sectionLines,
+    "",
+    "— Closing —",
+    copy.coupleClosingQuote || "",
+  ].filter((line) => line !== null);
+
+  return {
+    subject: `${nameA} & ${nameB} — Combined couple sensory report`,
+    text: lines.join("\n"),
+    metrics: { profile: "Combined couple profile" },
+    nameA,
+    nameB,
+  };
+}
+
+async function sendCoupleCombinedEmail(report) {
+  assertEmailDeliveryContext();
+
+  const demo = state.demographics || {};
+  const payloadBase = {
+    subject: report.subject,
+    name: `${report.nameA} & ${report.nameB}`,
+    email: demo.email || getClinicianEmail(),
+    respondent: "couple-combined",
+    lifeContext: "",
+    language: state.language,
+    overallProfile: report.metrics.profile,
+    patientResultsAccess: "combined couple report",
+    coupleId: state.coupleId || "",
+    submittedBy: state.couplePartner || "",
+    message: report.text,
+  };
+
+  if (DELIVERY_PROVIDER === "web3forms") {
+    if (!WEB3FORMS_KEY) {
+      throw new Error("Web3Forms access key is not configured in config.js");
+    }
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        ...payloadBase,
+        from_name: "Soulful Sensory Screening",
+        to: getClinicianEmail(),
+      }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+      throw new Error((data && data.message) || "Web3Forms could not send the email");
+    }
+    return { provider: "web3forms" };
+  }
+
+  if (DELIVERY_PROVIDER === "formsubmit") {
+    const formSubmitPayload = {
+      _subject: report.subject,
+      _template: "table",
+      _captcha: "false",
+      _honey: "",
+      _url: typeof window !== "undefined" ? window.location.href.split("#")[0] : "",
+      name: payloadBase.name,
+      email: payloadBase.email,
+      respondent: payloadBase.respondent,
+      lifeContext: payloadBase.lifeContext,
+      language: payloadBase.language,
+      overallProfile: payloadBase.overallProfile,
+      patientResultsAccess: payloadBase.patientResultsAccess,
+      coupleId: payloadBase.coupleId,
+      submittedBy: payloadBase.submittedBy,
+      message: payloadBase.message,
+    };
+
+    try {
+      return await postFormSubmitJson(formSubmitPayload);
+    } catch (jsonErr) {
+      if (jsonErr?.code === "formsubmit-activation") throw jsonErr;
+      console.warn("FormSubmit JSON send failed, trying FormData…", jsonErr);
+      try {
+        return await postFormSubmitFormData(formSubmitPayload);
+      } catch (formDataErr) {
+        if (formDataErr?.code === "formsubmit-activation") throw formDataErr;
+        console.warn("FormSubmit FormData send failed, trying hidden form…", formDataErr);
+        return await postFormSubmitViaHiddenForm(formSubmitPayload);
+      }
+    }
+  }
+
+  throw new Error("Email delivery is disabled in config.js");
+}
+
+function updateCoupleCombinedSubmissionUi() {
+  const session = state.coupleId ? getCoupleSession(state.coupleId) : null;
+  if (!session) return;
+  ensureCoupleCombinedSubmissionShape(session);
+  const copy = currentUi();
+  const status = app.querySelector("[data-couple-combined-status]");
+  if (status) {
+    const kind = session.combinedSubmission.status || "ready";
+    status.className = `submission-status submission-status--${kind === "ready" ? "pending" : kind}`;
+    status.textContent = coupleCombinedSubmissionStatusMessage(copy, session);
+  }
+  const detail = app.querySelector("[data-couple-combined-error]");
+  if (detail) {
+    const show = session.combinedSubmission.status === "error" && session.combinedSubmission.error;
+    detail.hidden = !show;
+    detail.textContent = show ? session.combinedSubmission.error : "";
+  }
+  const submitBtn = app.querySelector("[data-action='couple-submit-combined']");
+  if (submitBtn) {
+    const busy = session.combinedSubmission.status === "pending";
+    const done = session.combinedSubmission.status === "sent";
+    submitBtn.hidden = done;
+    submitBtn.disabled = busy;
+  }
+  const retryBtn = app.querySelector("[data-action='couple-retry-combined']");
+  if (retryBtn) {
+    retryBtn.hidden = session.combinedSubmission.status !== "error";
+  }
+}
+
+function ensureCoupleCombinedSubmitted({ force = false } = {}) {
+  if (!canOfferCoupleCombinedSubmit()) return;
+  const session = ensureCoupleCombinedSubmissionShape(ensureCoupleSession());
+  const sub = session.combinedSubmission;
+  if (!force && sub.status === "sent") return;
+  if (!force && sub.status === "pending") return;
+
+  sub.status = "pending";
+  sub.error = null;
+  sub.errorCode = null;
+  sub.submittedBy = state.couplePartner || sub.submittedBy || null;
+  saveCoupleSession(session);
+  updateCoupleCombinedSubmissionUi();
+
+  let report;
+  try {
+    report = buildCoupleCombinedResultsReport(session);
+  } catch (err) {
+    console.error("Could not build combined couple email:", err);
+    const classified = classifyDeliveryError(err, "Could not build report");
+    sub.status = "error";
+    sub.error = classified.message;
+    sub.errorCode = classified.code;
+    saveCoupleSession(session);
+    updateCoupleCombinedSubmissionUi();
+    return;
+  }
+
+  sendCoupleCombinedEmail(report)
+    .then(() => {
+      const latest = ensureCoupleCombinedSubmissionShape(getCoupleSession(session.id) || session);
+      latest.combinedSubmission.status = "sent";
+      latest.combinedSubmission.submittedAt = new Date().toISOString();
+      latest.combinedSubmission.submittedBy = state.couplePartner || latest.combinedSubmission.submittedBy;
+      latest.combinedSubmission.error = null;
+      latest.combinedSubmission.errorCode = null;
+      saveCoupleSession(latest);
+      updateCoupleCombinedSubmissionUi();
+    })
+    .catch((err) => {
+      console.error("Combined couple email failed:", err);
+      const classified = classifyDeliveryError(err, "Send failed");
+      const latest = ensureCoupleCombinedSubmissionShape(getCoupleSession(session.id) || session);
+      latest.combinedSubmission.status = "error";
+      latest.combinedSubmission.error = classified.message;
+      latest.combinedSubmission.errorCode = classified.code;
+      saveCoupleSession(latest);
+      updateCoupleCombinedSubmissionUi();
+    });
+}
+
+function renderCoupleCombinedSubmitPanel(session = null) {
+  if (!canOfferCoupleCombinedSubmit(session)) return "";
+  const sess = ensureCoupleCombinedSubmissionShape(
+    session || ensureCoupleSession()
+  );
+  const copy = currentUi();
+  const status = sess.combinedSubmission.status;
+  const statusKind = status || "ready";
+  const showRetry = status === "error";
+  const showSubmit = status !== "sent";
+  const busy = status === "pending";
+  const errorDetail =
+    status === "error" && sess.combinedSubmission.error
+      ? `<p class="submission-status__detail" data-couple-combined-error role="alert">${escapeHtml(
+          sess.combinedSubmission.error
+        )}</p>`
+      : `<p class="submission-status__detail" data-couple-combined-error hidden></p>`;
+
+  return `
+    <section class="couple-combined-submit no-print" aria-labelledby="couple-combined-title">
+      <h3 id="couple-combined-title" class="couple-combined-submit__title">${escapeHtml(
+        copy.coupleCombinedTitle
+      )}</h3>
+      <p class="couple-combined-submit__lead">${escapeHtml(copy.coupleCombinedLead)}</p>
+      <p class="submission-status submission-status--${escapeHtml(
+        statusKind === "ready" ? "pending" : statusKind
+      )}" data-couple-combined-status role="status">${escapeHtml(
+        coupleCombinedSubmissionStatusMessage(copy, sess)
+      )}</p>
+      ${errorDetail}
+      <div class="couple-combined-submit__actions">
+        ${
+          showSubmit
+            ? `<button type="button" class="btn btn-primary" data-action="couple-submit-combined" ${
+                busy ? "disabled" : ""
+              }>${escapeHtml(copy.coupleCombinedSubmit)}</button>`
+            : ""
+        }
+        ${
+          showRetry
+            ? `<button type="button" class="btn btn-secondary" data-action="couple-retry-combined">${escapeHtml(
+                copy.thankYouRetry
+              )}</button>`
+            : ""
+        }
+      </div>
+    </section>
+  `;
+}
+
 function renderClinicianGate() {
   return `
     <div class="clinician">
@@ -2622,7 +3177,7 @@ function renderDashboard() {
       </section>
 
       ${
-        isSampleReportPreviewEnabled() && canAccessTherapistDashboard()
+        isSampleReportPreviewEnabled()
           ? `<section class="dashboard__sample-strip" aria-label="Sample report preview">
               ${renderSampleReportPreviewControls()}
             </section>`
@@ -4141,6 +4696,14 @@ function renderHome() {
       </section>
 
       ${accountSection}
+
+      ${
+        !invite && isSampleReportPreviewEnabled()
+          ? `<section class="home-section home-sample-preview" aria-label="Sample report preview">
+              ${renderSampleReportPreviewControls()}
+            </section>`
+          : ""
+      }
 
       <section class="home-section home-ot" aria-labelledby="ot-heading">
         <p class="home-section__eyebrow">About the practice</p>
@@ -5662,7 +6225,13 @@ function renderCoupleHub() {
         bothDone
           ? `<div class="couple-hub__merge">
               <p class="couple-hub__ready">${escapeHtml(copy.coupleBothReady)}</p>
-              <button type="button" class="btn btn-primary" data-action="couple-view-merge">${escapeHtml(copy.coupleViewMerge)}</button>
+              ${renderCoupleCombinedSubmitPanel(session)}
+              <button type="button" class="btn ${
+                session.combinedSubmission?.status === "sent" ? "btn-primary" : "btn-secondary"
+              }" data-action="couple-view-merge">${escapeHtml(copy.coupleViewMerge)}</button>
+              <button type="button" class="btn btn-secondary" data-action="print-couple-report">${escapeHtml(
+                copy.couplePrint || copy.print
+              )}</button>
             </div>`
           : `<p class="couple-hub__waiting">${escapeHtml(copy.coupleWaitingOther)}</p>`
       }
@@ -5751,10 +6320,10 @@ function renderCoupleCompareBody(partnerLines, together, copy, nameA = "", nameB
 }
 
 /** Educational panel: work sensory load and the sensory bucket (adult + couples). */
-function renderWorkBucketExplain(copy = currentUi()) {
-  if (!copy?.coupleWorkBucketTitle) return "";
-  return `
-    <article class="couple-work-bucket work-bucket-explain">
+function renderWorkBucketExplainParts(copy = currentUi()) {
+  if (!copy?.coupleWorkBucketTitle) return { first: "", second: "" };
+  const first = `
+    <div class="couple-work-bucket couple-work-bucket--first work-bucket-explain">
       <header class="couple-work-bucket__header">
         <h4 class="couple-work-bucket__title">${escapeHtml(copy.coupleWorkBucketTitle)}</h4>
         <p class="couple-work-bucket__lead">${escapeHtml(copy.coupleWorkBucketLead)}</p>
@@ -5768,6 +6337,9 @@ function renderWorkBucketExplain(copy = currentUi()) {
         ${escapeHtml(copy.coupleWorkBucketBridgeBefore)}
         <strong>${escapeHtml(copy.coupleWorkBucketBridgeEmphasis)}</strong>.
       </p>
+    </div>`;
+  const second = `
+    <div class="couple-work-bucket couple-work-bucket--second work-bucket-explain">
       <div class="couple-work-bucket__contrast">
         <article class="couple-work-bucket__card couple-work-bucket__card--under">
           <p class="couple-work-bucket__card-label">${escapeHtml(copy.coupleWorkBucketUnderLabel)}</p>
@@ -5792,7 +6364,30 @@ function renderWorkBucketExplain(copy = currentUi()) {
         <strong>${escapeHtml(copy.coupleWorkBucketCloseEmphasis)}</strong>.
         ${escapeHtml(copy.coupleWorkBucketCloseAfter)}
       </p>
-    </article>`;
+    </div>`;
+  return { first, second };
+}
+
+function renderWorkBucketExplain(copy = currentUi()) {
+  const parts = renderWorkBucketExplainParts(copy);
+  if (!parts.first && !parts.second) return "";
+  return `<div class="couple-work-bucket-group work-bucket-explain">${parts.first}${parts.second}</div>`;
+}
+
+/** Print-only mountain scene to fill the lower half of the work continuation page. */
+function renderCoupleWorkPrintScene() {
+  return `
+    <div class="couple-work-print-scene print-only" aria-hidden="true">
+      ${printMountainRule("work")}
+      <div class="couple-work-print-scene__sky"></div>
+      <div class="couple-work-print-scene__ridge couple-work-print-scene__ridge--far"></div>
+      <div class="couple-work-print-scene__ridge couple-work-print-scene__ridge--mid"></div>
+      <div class="couple-work-print-scene__ridge couple-work-print-scene__ridge--near"></div>
+      <svg class="couple-work-print-scene__line" viewBox="0 0 600 44" fill="none" focusable="false">
+        <path d="M8 34h92l35-14 28 8 61-19 39 18 35-12 42 20h92l38-13 31 9 28-17 43 20h50" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+        <path d="M126 34l37-19 24 11 37-17 39 18M404 34l28-20 28 15 21-12 28 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>`;
 }
 
 function couplePartnerCrewProfile(slot, copy = currentUi()) {
@@ -5824,6 +6419,128 @@ function couplePartnerCrewProfile(slot, copy = currentUi()) {
   const labels = getProfileLabels(state.language, "couple");
   const meta = labels[lean] || labels.neutral;
   return { lean, balance, crewId, character, color: meta.color, metrics };
+}
+
+const COUPLE_SENSE_QUOTE_KEYS = {
+  visual: { quote: "coupleSenseQuoteVisual", why: "coupleSenseWhyVisual" },
+  movement: { quote: "coupleSenseQuoteMovement", why: "coupleSenseWhyMovement" },
+  taste: { quote: "coupleSenseQuoteTaste", why: "coupleSenseWhyTaste" },
+  touch: { quote: "coupleSenseQuoteTouch", why: "coupleSenseWhyTouch" },
+  regulate: { quote: "coupleSenseQuoteRegulate", why: "coupleSenseWhyRegulate" },
+};
+
+function renderCoupleSenseQuote(sectionId, copy) {
+  const keys = COUPLE_SENSE_QUOTE_KEYS[sectionId];
+  if (!keys) return "";
+  const quote = copy[keys.quote];
+  const why = copy[keys.why];
+  if (!quote && !why) return "";
+  return `
+    <aside class="couple-sense-quote" aria-label="${escapeHtml(copy.coupleSenseQuoteLabel || "Sensory insight")}">
+      ${quote ? `<blockquote class="couple-sense-quote__text"><p>${escapeHtml(quote)}</p></blockquote>` : ""}
+      ${why ? `<p class="couple-sense-quote__why"><span class="couple-sense-quote__why-label">${escapeHtml(copy.coupleSenseQuoteLabel || "Why this sense matters for couples")}</span> ${escapeHtml(why)}</p>` : ""}
+    </aside>
+  `;
+}
+
+function renderCoupleMergeIntro(copy) {
+  const paragraphs = [
+    copy.coupleMergeIntroP1,
+    copy.coupleMergeIntroP2,
+    copy.coupleMergeIntroP3,
+    copy.coupleMergeIntroP4,
+    copy.coupleMergeIntroP5,
+  ].filter(Boolean);
+  return `
+    <section class="couple-merge-intro" aria-labelledby="couple-merge-intro-title">
+      <header class="couple-merge-intro__banner">
+        <figure class="couple-merge-intro__banner-media" aria-hidden="true">
+          <img
+            src="assets/couple-intro-trail.png"
+            alt=""
+            class="couple-merge-intro__banner-image"
+            width="1200"
+            height="800"
+            loading="eager"
+            decoding="async"
+          />
+        </figure>
+        <div class="couple-merge-intro__banner-veil" aria-hidden="true"></div>
+        <div class="couple-merge-intro__banner-content">
+          <p class="couple-merge-intro__kicker">${escapeHtml(copy.coupleHubTag)}</p>
+          <h2 id="couple-merge-intro-title" class="couple-merge-intro__title">${escapeHtml(
+            copy.coupleMergeIntroTitle
+          )}</h2>
+          ${
+            copy.coupleMergeIntroLead
+              ? `<p class="couple-merge-intro__lead">${escapeHtml(copy.coupleMergeIntroLead)}</p>`
+              : ""
+          }
+        </div>
+      </header>
+      <div class="couple-merge-intro__nature" aria-hidden="true">
+        <img
+          src="assets/heading-home-trail.png"
+          alt=""
+          class="couple-merge-intro__nature-accent couple-merge-intro__nature-accent--left"
+          width="682"
+          height="256"
+          loading="lazy"
+          decoding="async"
+        />
+        <img
+          src="mountain-divider.svg"
+          alt=""
+          class="couple-merge-intro__nature-rule"
+          width="600"
+          height="44"
+        />
+        <img
+          src="assets/outeniqua-pathways.png"
+          alt=""
+          class="couple-merge-intro__nature-accent couple-merge-intro__nature-accent--right"
+          width="682"
+          height="256"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div class="couple-merge-intro__body">
+        ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderCoupleWorkMergeSummaries(sess, copy) {
+  const cards = COUPLE_PARTNERS.map((partner) => {
+    const slot = sess.partners[partner];
+    const workSummary = formatCoupleWorkSummary(normalizeCoupleWork(slot.coupleWork), copy);
+    if (!workSummary) return "";
+    const name = couplePartnerLabel(partner, sess);
+    return `
+      <article class="couple-work-merge-card couple-partner--${partner}">
+        <h4 class="couple-work-merge__name">
+          <span class="couple-partner-dot" aria-hidden="true"></span>
+          <span class="couple-partner-name">${escapeHtml(name)}</span>
+        </h4>
+        ${workSummary
+          .split("\n")
+          .map((line) => `<p class="couple-work-merge__line">${escapeHtml(line)}</p>`)
+          .join("")}
+      </article>
+    `;
+  }).join("");
+  if (!cards.trim()) return "";
+  return `
+    <section class="couple-work-merge-print">
+      <h3 class="couple-compare__title">${escapeHtml(copy.coupleWorkResultsTitle)}</h3>
+      <p class="couple-compare__intro">${escapeHtml(
+        copy.coupleCompareWorkIntro || copy.coupleWorkDesc || ""
+      )}</p>
+      <div class="couple-work-merge-grid">${cards}</div>
+    </section>
+  `;
 }
 
 function renderCoupleMerge(session = null) {
@@ -5875,7 +6592,7 @@ function renderCoupleMerge(session = null) {
         <p class="couple-merge-card__overall">${escapeHtml(slot.summary?.overallLabel || "—")}</p>
         <p class="couple-merge-card__lean">${escapeHtml(slot.summary?.leanHeadline || "")}</p>
         <ul class="couple-merge-card__domains">${domains}</ul>
-        <button type="button" class="btn btn-secondary btn--compact" data-action="couple-start" data-partner="${partner}">
+        <button type="button" class="btn btn-secondary btn--compact no-print" data-action="couple-start" data-partner="${partner}">
           ${escapeHtml(copy.coupleViewResults)}
         </button>
       </article>
@@ -6068,6 +6785,7 @@ function renderCoupleMerge(session = null) {
               <article class="couple-compare__card couple-compare__card--${escapeHtml(section.id || "general")}">
                 ${visualVisuals}
                 <h4 class="couple-compare__card-title">${escapeHtml(title)}</h4>
+                ${renderCoupleSenseQuote(section.id, copy)}
                 ${tasteVisuals}
                 ${movementVisuals}
                 ${touchVisuals}
@@ -6086,52 +6804,60 @@ function renderCoupleMerge(session = null) {
       </section>`
     : "";
 
+  const workBucketParts = renderWorkBucketExplainParts(copy);
   const workCompareHtml = workComparison
     ? `
       <section class="couple-compare couple-compare--work">
-        <h3 class="couple-compare__title">${escapeHtml(copy[workComparison.titleKey] || copy.coupleWorkResultsTitle)}</h3>
-        <p class="couple-compare__intro">${escapeHtml(copy[workComparison.introKey] || "")}</p>
-        <div class="couple-work-visuals" aria-hidden="true">
-          <figure class="couple-work-visuals__shot couple-work-visuals__shot--desk">
-            <img
-              src="assets/couple-work-desk.png"
-              alt=""
-              class="couple-work-visuals__image"
-              width="1024"
-              height="682"
-              loading="eager"
-              decoding="async"
-            />
-          </figure>
-          <figure class="couple-work-visuals__shot couple-work-visuals__shot--people">
-            <img
-              src="assets/couple-work-people.png"
-              alt=""
-              class="couple-work-visuals__image"
-              width="1024"
-              height="682"
-              loading="eager"
-              decoding="async"
-            />
-          </figure>
+        <div class="couple-work-print-page couple-work-print-page--head">
+          <h3 class="couple-compare__title">${escapeHtml(copy[workComparison.titleKey] || copy.coupleWorkResultsTitle)}</h3>
+          <p class="couple-compare__intro">${escapeHtml(copy[workComparison.introKey] || "")}</p>
+          <div class="couple-work-visuals" aria-hidden="true">
+            <figure class="couple-work-visuals__shot couple-work-visuals__shot--desk">
+              <img
+                src="assets/couple-work-desk.png"
+                alt=""
+                class="couple-work-visuals__image"
+                width="1024"
+                height="682"
+                loading="eager"
+                decoding="async"
+              />
+            </figure>
+            <figure class="couple-work-visuals__shot couple-work-visuals__shot--people">
+              <img
+                src="assets/couple-work-people.png"
+                alt=""
+                class="couple-work-visuals__image"
+                width="1024"
+                height="682"
+                loading="eager"
+                decoding="async"
+              />
+            </figure>
+          </div>
+          ${workBucketParts.first}
         </div>
-        ${renderWorkBucketExplain(copy)}
-        <div class="couple-work-setup-grid">
-          ${(workComparison.partners || [])
-            .map((card) => {
-              const rows = (card.rows || [])
-                .map(
-                  (row) => `
+        <div class="couple-work-print-page couple-work-print-page--continued">
+          ${workBucketParts.second}
+          ${renderCoupleWorkPrintScene()}
+        </div>
+        <div class="couple-work-print-page couple-work-print-page--partners">
+          <div class="couple-work-setup-grid">
+            ${(workComparison.partners || [])
+              .map((card) => {
+                const rows = (card.rows || [])
+                  .map(
+                    (row) => `
                   <div class="couple-work-setup__row">
                     <span class="couple-work-setup__label">${escapeHtml(row.label)}</span>
                     <span class="couple-work-setup__value">${escapeHtml(row.value)}</span>
                   </div>`
-                )
-                .join("");
-              const note = card.note
-                ? `<p class="couple-work-setup__note">${escapeHtml(card.note)}</p>`
-                : "";
-              return `
+                  )
+                  .join("");
+                const note = card.note
+                  ? `<p class="couple-work-setup__note">${escapeHtml(card.note)}</p>`
+                  : "";
+                return `
                 <article class="couple-work-setup-card couple-partner--${card.partner}">
                   <h4 class="couple-work-setup__name">
                     <span class="couple-partner-dot" aria-hidden="true"></span>
@@ -6140,22 +6866,23 @@ function renderCoupleMerge(session = null) {
                   <div class="couple-work-setup__rows">${rows}</div>
                   ${note}
                 </article>`;
-            })
-            .join("")}
+              })
+              .join("")}
+          </div>
+          ${
+            (workComparison.together || []).length
+              ? `<div class="couple-work-partners-together">
+                  ${renderCoupleCompareBody(
+                    [],
+                    workComparison.together,
+                    copy,
+                    workComparison.nameA || nameA,
+                    workComparison.nameB || nameB
+                  )}
+                </div>`
+              : ""
+          }
         </div>
-        ${
-          (workComparison.together || []).length
-            ? `<article class="couple-compare__card couple-compare__card--work">
-                ${renderCoupleCompareBody(
-                  [],
-                  workComparison.together,
-                  copy,
-                  workComparison.nameA || nameA,
-                  workComparison.nameB || nameB
-                )}
-              </article>`
-            : ""
-        }
       </section>`
     : "";
 
@@ -6281,40 +7008,30 @@ function renderCoupleMerge(session = null) {
 
   return renderShell(
     `
-      ${renderInterpretSectionBanner({
-        image: "assets/couple-report-banner.png",
-        objectPosition: "center 72%",
-        kicker: copy.coupleHubTag,
-        titleId: "couple-merge-title",
-        title: copy.coupleMergeTitle,
-        lead: copy.coupleMergeDesc,
-        variant: "couple",
-        titleTag: "h2",
-        width: 1024,
-        height: 682,
-      })}
-      ${colorKey}
-      <div class="couple-merge-grid">${cards}</div>
+      ${renderSampleReportBanner()}
+      <section class="couple-merge-cover" aria-labelledby="couple-merge-title">
+        ${renderInterpretSectionBanner({
+          image: "assets/couple-report-banner.png",
+          objectPosition: "center 72%",
+          kicker: copy.coupleHubTag,
+          titleId: "couple-merge-title",
+          title: copy.coupleMergeTitle,
+          lead: copy.coupleMergeDesc,
+          variant: "couple",
+          titleTag: "h2",
+          width: 1024,
+          height: 682,
+        })}
+        ${colorKey}
+        <div class="couple-merge-grid">${cards}</div>
+      </section>
+      ${renderCoupleMergeIntro(copy)}
       ${compareHtml}
       ${workCompareHtml}
       ${conflictCompareHtml}
       ${thriveCompareHtml}
       ${parentingCompareHtml}
-      ${COUPLE_PARTNERS.map((partner) => {
-        const slot = sess.partners[partner];
-        const workSummary = formatCoupleWorkSummary(normalizeCoupleWork(slot.coupleWork), copy);
-        if (!workSummary) return "";
-        const name = couplePartnerLabel(partner, sess);
-        return `
-          <section class="couple-compare__card couple-work-merge couple-partner--${partner}">
-            <h4 class="couple-compare__card-title">${escapeHtml(copy.coupleWorkResultsTitle)} · <span class="couple-partner-name">${escapeHtml(name)}</span></h4>
-            ${workSummary
-              .split("\n")
-              .map((line) => `<p class="couple-compare__line">${escapeHtml(line)}</p>`)
-              .join("")}
-          </section>
-        `;
-      }).join("")}
+      ${renderCoupleWorkMergeSummaries(sess, copy)}
       <figure class="couple-closing-quote">
         <span class="couple-closing-quote__mark" aria-hidden="true">“</span>
         <blockquote class="couple-closing-quote__text">
@@ -6322,8 +7039,12 @@ function renderCoupleMerge(session = null) {
         </blockquote>
         <span class="couple-closing-quote__rule" aria-hidden="true"></span>
       </figure>
-      <div class="actions">
+      ${renderCoupleCombinedSubmitPanel(sess)}
+      <div class="actions no-print">
         <button type="button" class="btn btn-secondary" data-action="couple-back-hub">${escapeHtml(copy.coupleMergeBack)}</button>
+        <button type="button" class="btn btn-primary" data-action="print-couple-report">${escapeHtml(
+          copy.couplePrint || copy.print
+        )}</button>
       </div>
     `,
     renderProgress(),
@@ -6361,6 +7082,7 @@ function renderCoupleResultsBanner() {
       <p><strong>${escapeHtml(copy.coupleYourTurn)} ${escapeHtml(couplePartnerLabel(state.couplePartner, session))}.</strong>
       ${bothDone || otherDone ? escapeHtml(copy.coupleBothReady) : escapeHtml(copy.coupleWaitingOther)}</p>
       ${nextSteps}
+      ${bothDone ? renderCoupleCombinedSubmitPanel(session) : ""}
       <div class="couple-results-banner__actions">
         <button type="button" class="btn btn-secondary btn--compact" data-action="couple-back-hub">${escapeHtml(copy.coupleBackToHub)}</button>
         ${
@@ -6375,7 +7097,10 @@ function renderCoupleResultsBanner() {
         }
         ${
           bothDone
-            ? `<button type="button" class="btn btn-primary btn--compact" data-action="couple-view-merge">${escapeHtml(copy.coupleViewMerge)}</button>`
+            ? `<button type="button" class="btn btn-secondary btn--compact" data-action="couple-view-merge">${escapeHtml(copy.coupleViewMerge)}</button>
+               <button type="button" class="btn btn-primary btn--compact" data-action="print-couple-report">${escapeHtml(
+                 copy.couplePrint || copy.print
+               )}</button>`
             : ""
         }
       </div>
@@ -6750,12 +7475,13 @@ function renderIdealSaturdayResults(pageEntry) {
   const text = (state.idealSaturday || "").trim();
   if (!text) return "";
   const copy = currentUi();
+  const isTeen = state.respondent === "teen";
   return `
-    <section class="profile-section ideal-saturday-results"${reportPageAttrs(pageEntry)} aria-labelledby="ideal-saturday-results-title">
+    <section class="profile-section ideal-saturday-results${isTeen ? " ideal-saturday-results--teen" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="ideal-saturday-results-title">
       <p class="profile-kicker">${escapeHtml(copy.idealSaturdayTag)}</p>
       <h3 id="ideal-saturday-results-title">${escapeHtml(copy.idealSaturdayResultsTitle)}</h3>
       ${printMountainRule("section")}
-      <p class="profile-section__summary">${escapeHtml(copy.idealSaturdayResultsIntro)}</p>
+      <p class="profile-section__summary ideal-saturday-results__intro">${escapeHtml(copy.idealSaturdayResultsIntro)}</p>
       <blockquote class="ideal-saturday-results__quote">
         <p>${escapeHtml(text)}</p>
       </blockquote>
@@ -6763,6 +7489,23 @@ function renderIdealSaturdayResults(pageEntry) {
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
   `;
+}
+
+function renderTeenIdealSaturdayPrintBlock() {
+  if (state.respondent !== "teen") return "";
+  const text = (state.idealSaturday || "").trim();
+  if (!text) return "";
+  const copy = currentUi();
+
+  return `
+    <aside class="trail-interpret__ideal-saturday print-only" aria-labelledby="ideal-saturday-print-title">
+      <p class="trail-interpret__ideal-kicker">${escapeHtml(copy.idealSaturdayTag)}</p>
+      <h4 id="ideal-saturday-print-title" class="trail-interpret__ideal-title">${escapeHtml(copy.idealSaturdayResultsTitle)}</h4>
+      <p class="trail-interpret__ideal-intro">${escapeHtml(copy.idealSaturdayResultsIntro)}</p>
+      <blockquote class="trail-interpret__ideal-quote">
+        <p>${escapeHtml(text)}</p>
+      </blockquote>
+    </aside>`;
 }
 
 const DOMAIN_COLORS = {
@@ -6899,7 +7642,7 @@ function renderBalanceBar(
     </div>`;
 }
 
-function renderAdultSenseGlance(rows, copy, pageEntry) {
+function renderSenseGlanceGrid(rows, copy, pageEntry) {
   const cards = rows
     .map(
       (row, index) => `
@@ -6921,6 +7664,100 @@ function renderAdultSenseGlance(rows, copy, pageEntry) {
     <div class="sense-glance"${reportPageAttrs(pageEntry)}>
       <p class="sense-glance__label">${escapeHtml(copy.scoreGlanceTitle)}</p>
       <ul class="sense-glance__grid">${cards}</ul>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+    </div>`;
+}
+
+function renderAdultSenseGlance(rows, copy, pageEntry) {
+  return renderSenseGlanceGrid(rows, copy, pageEntry);
+}
+
+function renderTeenScoreGauge(balance, color, label) {
+  const clamped = Math.max(0, Math.min(100, Number(balance) || 50));
+  const radius = 54;
+  const circumference = Math.PI * radius;
+  const dash = (clamped / 100) * circumference;
+  const angle = Math.PI * (1 - clamped / 100);
+  const markerX = 70 + radius * Math.cos(angle);
+  const markerY = 70 - radius * Math.sin(angle);
+
+  return `
+    <div class="teen-score__gauge" role="img" aria-label="${escapeHtml(label)}: ${Math.round(clamped)}%">
+      <svg class="teen-score__gauge-svg" viewBox="0 0 140 88" focusable="false" aria-hidden="true">
+        <path
+          d="M16 70 A54 54 0 0 1 124 70"
+          fill="none"
+          stroke="rgba(36, 75, 56, 0.12)"
+          stroke-width="10"
+          stroke-linecap="round"
+        />
+        <path
+          class="teen-score__gauge-arc"
+          d="M16 70 A54 54 0 0 1 124 70"
+          fill="none"
+          stroke="${escapeHtml(color)}"
+          stroke-width="10"
+          stroke-linecap="round"
+          stroke-dasharray="${dash.toFixed(2)} ${circumference.toFixed(2)}"
+        />
+        <circle cx="${markerX.toFixed(1)}" cy="${markerY.toFixed(1)}" r="6.5" fill="${escapeHtml(color)}" />
+        <circle cx="${markerX.toFixed(1)}" cy="${markerY.toFixed(1)}" r="2.8" fill="#fff" />
+      </svg>
+      <div class="teen-score__gauge-readout">
+        <strong>${Math.round(clamped)}</strong>
+        <span>${escapeHtml(label)}</span>
+      </div>
+    </div>`;
+}
+
+function renderTeenOverallScoreCard(metrics, copy) {
+  const labels = getProfileLabels(state.language, state.respondent || "adult");
+  const threshold = getThresholdMeta(metrics.lean, state.language);
+  const meta = labels[metrics.lean] || labels.neutral;
+
+  return `
+    <div class="teen-score" data-profile="${metrics.lean}" style="--tag-color:${meta.color}">
+      <header class="teen-score__header">
+        <p class="teen-score__kicker">${escapeHtml(copy.teenScoreBoardKicker || copy.overallScoreLabel)}</p>
+        <p class="teen-score__note">${escapeHtml(copy.overallScoreNote)}</p>
+      </header>
+
+      <div class="teen-score__hero teen-score__hero--verdict-only">
+        <div class="teen-score__verdict">
+          <p class="teen-score__label">${escapeHtml(copy.overallScoreLabel)}</p>
+          <strong class="teen-score__profile">${escapeHtml(meta.label || meta.short)}</strong>
+          <span class="threshold-pill threshold-pill--${threshold.key}">${escapeHtml(threshold.label)}</span>
+          ${renderTeenScoreGauge(
+            metrics.balance,
+            meta.color,
+            copy.overallBalanceLabel
+          )}
+          <div class="teen-score__axis" aria-hidden="true">
+            <span>${escapeHtml(copy.teenOverallAxisSensitive || copy.scoreLeanSensitive)}</span>
+            <span>${escapeHtml(copy.teenOverallAxisSeeking || copy.scoreLeanSeeking)}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function getSchoolVisualReportCopy() {
+  const copy = currentUi();
+  return {
+    sectionVisual: copy.schoolReportSectionVisual,
+    visualLegendSensitive: copy.schoolReportVisualLegendSensitive,
+    visualLegendNeutral: copy.schoolReportVisualLegendNeutral,
+    visualLegendSeeking: copy.schoolReportVisualLegendSeeking,
+    visualAxisLeft: copy.schoolReportVisualAxisLeft,
+    visualAxisRight: copy.schoolReportVisualAxisRight,
+  };
+}
+
+function renderTeenSenseBalanceBars(rows, copy, pageEntry) {
+  return `
+    <div class="teen-sense-balance"${reportPageAttrs(pageEntry)}>
+      <p class="teen-sense-balance__label">${escapeHtml(copy.scoreGlanceTitle)}</p>
+      ${renderSchoolReportVisual(rows, getSchoolVisualReportCopy(), "balance")}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
     </div>`;
 }
@@ -7067,7 +7904,7 @@ function renderProfileTag(label, profile, { large = false } = {}) {
   `;
 }
 
-function renderOverallScoreCard(metrics, copy) {
+function renderClassicOverallScoreCard(metrics, copy) {
   const labels = getProfileLabels(state.language, state.respondent || "adult");
   const threshold = getThresholdMeta(metrics.lean, state.language);
   const meta = labels[metrics.lean] || labels.neutral;
@@ -7136,6 +7973,14 @@ function renderOverallScoreCard(metrics, copy) {
       </div>
     </div>
   `;
+}
+
+function renderOverallScoreCard(metrics, copy) {
+  if (state.respondent === "teen") {
+    return renderTeenOverallScoreCard(metrics, copy);
+  }
+
+  return renderClassicOverallScoreCard(metrics, copy);
 }
 
 function renderOverallSummary(metrics, pageEntry) {
@@ -7223,13 +8068,32 @@ function renderSensoryTrailOverview(pageEntry) {
   if (!shouldShowTrailProfile()) return "";
   const copy = currentUi();
   const isParent = state.respondent === "parent";
+  const isTeen = state.respondent === "teen";
   const title = isParent
     ? copy.teenCrewOverviewTitleParent || copy.teenCrewOverviewTitle
     : copy.teenCrewOverviewTitle;
+  const overviewQuote = copy.teenTrailOverviewQuote || "";
+  const overviewIntro = copy.teenTrailOverviewIntro || "";
 
   return `
-    <section class="profile-section trail-profile trail-profile--page"${reportPageAttrs(pageEntry)} aria-labelledby="trail-overview-title">
-      <h3 id="trail-overview-title" class="visually-hidden">${escapeHtml(title)}</h3>
+    <section class="profile-section trail-profile trail-profile--page${isTeen ? " trail-profile--overview-teen" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="trail-overview-title">
+      ${
+        isTeen && (overviewQuote || overviewIntro)
+          ? `
+      <div class="trail-profile__overview-copy">
+        <h3 id="trail-overview-title" class="trail-profile__overview-title">${escapeHtml(title)}</h3>
+        ${
+          overviewQuote
+            ? `
+        <blockquote class="trail-profile__overview-quote">
+          <p>${escapeHtml(overviewQuote)}</p>
+        </blockquote>`
+            : ""
+        }
+        ${overviewIntro ? `<p class="trail-profile__overview-intro">${escapeHtml(overviewIntro)}</p>` : ""}
+      </div>`
+          : `<h3 id="trail-overview-title" class="visually-hidden">${escapeHtml(title)}</h3>`
+      }
       ${renderTrailProfilePageFigure({
         src: "assets/sensory-trail-profile.png?v=20260817",
         alt: copy.teenCrewSummaryAria,
@@ -7516,6 +8380,7 @@ function renderTeenCrewSummary(metrics, pageEntry) {
 function renderBriefScoreSummary(scores, metrics, pageEntry) {
   const copy = currentUi();
   const isParent = state.respondent === "parent";
+  const isTeen = state.respondent === "teen";
   const rows = getScoreRows(scores);
   const kicker = isParent ? copy.briefScoresKickerParent : copy.briefScoresKicker;
   const intro = isParent ? copy.briefScoresIntroParent : copy.briefScoresIntro;
@@ -7526,7 +8391,9 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
         getSettingReportCopy(),
         copy
       )
-    : renderAdultSenseGlance(rows, copy, null);
+    : isTeen
+      ? renderTeenSenseBalanceBars(rows, copy, null)
+      : renderAdultSenseGlance(rows, copy, null);
 
   return `
     <section class="profile-section profile-section--brief-scores"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
@@ -7654,30 +8521,32 @@ function renderTeenSenseSupportGuide(scores, pageEntry) {
 
   return `
     <section class="profile-section profile-section--sense-support profile-section--teen-support"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
-      ${renderInterpretSectionBanner({
-        image: "assets/heading-learning-trail.png",
-        objectPosition: "center 40%",
-        kicker: copy.senseSupportKicker,
-        titleId: "sense-support-title",
-        title: copy.senseSupportTitle,
-        lead: copy.senseSupportIntroTeen || copy.senseSupportIntro,
-        variant: "forest",
-        width: 1024,
-        height: 768,
-      })}
-      ${
-        schoolCards
-          ? `
-      <div class="teen-moves">
-        <header class="teen-moves__intro">
-          <p class="teen-moves__kicker">${escapeHtml(copy.senseSupportSchoolKicker || "At school")}</p>
-          <h4 class="teen-moves__heading">${escapeHtml(copy.senseSupportSchoolTitle || "Your school moves")}</h4>
-          <p class="teen-moves__lead">${escapeHtml(copy.senseSupportSchoolLead || "")}</p>
-        </header>
-        ${schoolCards}
-      </div>`
-          : ""
-      }
+      <div class="teen-support-sheet">
+        ${renderInterpretSectionBanner({
+          image: "assets/heading-learning-trail.png",
+          objectPosition: "center 40%",
+          kicker: copy.senseSupportKicker,
+          titleId: "sense-support-title",
+          title: copy.senseSupportTitle,
+          lead: copy.senseSupportIntroTeen || copy.senseSupportIntro,
+          variant: "forest",
+          width: 1024,
+          height: 768,
+        })}
+        ${
+          schoolCards
+            ? `
+        <div class="teen-moves">
+          <header class="teen-moves__intro">
+            <p class="teen-moves__kicker">${escapeHtml(copy.senseSupportSchoolKicker || "At school")}</p>
+            <h4 class="teen-moves__heading">${escapeHtml(copy.senseSupportSchoolTitle || "Your school moves")}</h4>
+            <p class="teen-moves__lead">${escapeHtml(copy.senseSupportSchoolLead || "")}</p>
+          </header>
+          ${schoolCards}
+        </div>`
+            : ""
+        }
+      </div>
       ${
         homeCards
           ? `
@@ -7839,6 +8708,57 @@ function getTrailSettingBanner(settingKey) {
   return banners[settingKey] || banners.home;
 }
 
+function renderTeenTrailSupportVisuals(settingKey) {
+  if (state.respondent !== "teen") return "";
+
+  if (settingKey === "school") {
+    return `
+    <div class="trail-interpret__visuals trail-interpret__visuals--school" aria-hidden="true">
+      <figure class="trail-interpret__visual trail-interpret__visual--supplies">
+        <img
+          src="assets/teen-school-learning-supplies.png"
+          alt=""
+          class="trail-interpret__visual-image"
+          width="1024"
+          height="575"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+      <figure class="trail-interpret__visual trail-interpret__visual--student">
+        <img
+          src="assets/teen-school-learning-student.png"
+          alt=""
+          class="trail-interpret__visual-image"
+          width="1024"
+          height="678"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+    </div>`;
+  }
+
+  if (settingKey === "home") {
+    return `
+    <div class="trail-interpret__visuals trail-interpret__visuals--home" aria-hidden="true">
+      <figure class="trail-interpret__visual trail-interpret__visual--home">
+        <img
+          src="assets/teen-home-support.png"
+          alt=""
+          class="trail-interpret__visual-image"
+          width="1024"
+          height="682"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+    </div>`;
+  }
+
+  return "";
+}
+
 function renderTrailSettingInterpretations(metrics, pagePlan) {
   const keys = getTrailSettingKeys(state.respondent, state.lifeContext);
   if (!keys.length) return "";
@@ -7878,10 +8798,12 @@ function renderTrailSettingInterpretations(metrics, pagePlan) {
             <article class="trail-interpret__block trail-interpret__block--support">
               <h4 class="trail-interpret__label">${escapeHtml(guide.supportLabel)}</h4>
               <ul class="trail-interpret__list">${supportItems}</ul>
+              ${renderTeenTrailSupportVisuals(settingKey)}
             </article>`
                 : ""
             }
           </div>
+          ${settingKey === "home" ? renderTeenIdealSaturdayPrintBlock() : ""}
           ${reportPageNumberHtml(currentUi(), pageEntry?.page)}
           <div class="print-page-motif print-only" aria-hidden="true"></div>
         </section>`;
@@ -8065,7 +8987,7 @@ function buildReportPagePlan(copy, scores, metrics) {
   add("report-brief-scores", copy.briefScoresTitle);
   add("report-sense-support", isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle);
 
-  if ((state.idealSaturday || "").trim() && !isCouplePathway()) {
+  if ((state.idealSaturday || "").trim() && !isCouplePathway() && state.respondent !== "teen") {
     add("report-ideal-saturday", copy.idealSaturdayResultsTitle);
   }
 
@@ -8147,6 +9069,30 @@ function printSensoryResultsPacket() {
   document.body.classList.add("print-sensory-results");
   const cleanup = () => {
     document.body.classList.remove("print-sensory-results");
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+
+  const runPrint = () => {
+    window.print();
+    window.setTimeout(cleanup, 2000);
+  };
+
+  waitForReportPrintImages(document)
+    .catch(() => undefined)
+    .then(
+      () =>
+        new Promise((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(resolve));
+        })
+    )
+    .then(runPrint);
+}
+
+function printCoupleCombinedReport() {
+  document.body.classList.add("print-sensory-results", "print-couple-merge");
+  const cleanup = () => {
+    document.body.classList.remove("print-sensory-results", "print-couple-merge");
     window.removeEventListener("afterprint", cleanup);
   };
   window.addEventListener("afterprint", cleanup);
@@ -10578,6 +11524,24 @@ function bindEvents() {
       return;
     }
 
+    if (action === "print-couple-report") {
+      if (!bothCouplePartnersComplete()) return;
+      if (!state.coupleShowMerge) {
+        openCoupleHub({ showMerge: true });
+        render({ scrollToTop: true });
+        queueMicrotask(() => printCoupleCombinedReport());
+        return;
+      }
+      printCoupleCombinedReport();
+      return;
+    }
+
+    if (action === "couple-submit-combined" || action === "couple-retry-combined") {
+      if (!canOfferCoupleCombinedSubmit()) return;
+      ensureCoupleCombinedSubmitted({ force: action === "couple-retry-combined" });
+      return;
+    }
+
     if (action === "couple-back-hub") {
       openCoupleHub();
       render({ scrollToTop: true });
@@ -10586,17 +11550,12 @@ function bindEvents() {
 
     if (action === "preview-sample-report") {
       if (!isSampleReportPreviewEnabled()) return;
-      if (!canAccessTherapistDashboard()) {
-        state.view = "dashboard";
-        render({ scrollToTop: true });
-        return;
-      }
       const opened = openSampleReportPreview({
         respondent: btn.dataset.sampleRespondent || "adult",
         lifeContext: btn.dataset.sampleContext || null,
       });
       if (!opened) {
-        state.dashboardNotice = "Sign in as admin or therapist to preview the sample report.";
+        state.dashboardNotice = "Sample report preview is not available.";
         state.view = "dashboard";
       }
       render({ scrollToTop: true });
@@ -11330,11 +12289,13 @@ async function bootApp() {
   }
 
   // Dev shortcut: ?preview=report opens a full sample report (admin/therapist only).
+  // ?preview=couple-merge opens the combined couple profile with sample partners.
   const sampleBoot = state._openSamplePreviewOnBoot;
   delete state._openSamplePreviewOnBoot;
   if (sampleBoot && isSampleReportPreviewEnabled()) {
-    if (canAccessTherapistDashboard()) {
-      openSampleReportPreview(sampleBoot);
+    const wantsCoupleMerge = Boolean(sampleBoot.coupleMerge || sampleBoot.respondent === "couple-merge");
+    if (wantsCoupleMerge) {
+      openSampleCoupleMergePreview();
       if (window.history?.replaceState) {
         const clean = new URL(window.location.href);
         ["preview", "sample", "respondent", "pathway", "context", "lifeContext"].forEach((key) =>
@@ -11343,14 +12304,14 @@ async function bootApp() {
         window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
       }
     } else {
-      try {
-        sessionStorage.setItem("ssot-sample-preview", JSON.stringify(sampleBoot));
-      } catch {
-        /* ignore quota */
+      openSampleReportPreview(sampleBoot);
+      if (window.history?.replaceState) {
+        const clean = new URL(window.location.href);
+        ["preview", "sample", "respondent", "pathway", "context", "lifeContext"].forEach((key) =>
+          clean.searchParams.delete(key)
+        );
+        window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
       }
-      state.authNotice =
-        "Sign in as admin or therapist to open the sample report preview (or unlock the clinician dashboard).";
-      state.view = "login";
     }
   }
 
