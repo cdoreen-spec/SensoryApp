@@ -537,6 +537,12 @@ const QUESTIONNAIRE_UI = {
     teenCrewTitleParent: "Your child’s Sensory Trail Character",
     teenCrewOverviewTitle: "Your Sensory Trail Profile",
     teenCrewOverviewTitleParent: "Your child’s Sensory Trail Profile",
+    teenCrewOverviewLead:
+      "We all experience the world differently. Your results show which trail style most reflects you.",
+    teenCrewOverviewLeadParent:
+      "We all experience the world differently. Your child’s results show which trail style most reflects them.",
+    teenCrewOverviewMoreTitle: "Sensory Adaptor & Sensory Explorer",
+    teenCrewOverviewMoreTitleParent: "Sensory Adaptor & Sensory Explorer",
     teenCrewMatchTitle: "Your matched trail",
     teenCrewMatchTitleParent: "Your child’s matched trail",
     teenCrewMatchLead:
@@ -550,7 +556,7 @@ const QUESTIONNAIRE_UI = {
     teenCrewIntroParent:
       "We all experience the world differently. Here are the three trail styles — then which one your child’s answers matched most closely.",
     teenCrewSummaryAria:
-      "Infographic of the three sensory trail profiles: Sensory Observer, Sensory Adaptor, and Sensory Explorer",
+      "The three sensory trail profiles: Sensory Observer, Sensory Adaptor, and Sensory Explorer",
     teenCrewYouAre: "You are",
     teenCrewYouAreParent: "Your child is",
     teenCrewBadge: "That’s you",
@@ -565,9 +571,36 @@ const QUESTIONNAIRE_UI = {
     teenCrewWhyBody:
       "The Sensory Explorer (higher sensory threshold) has the courage and energy to go first — checking the route ahead and seeing if it’s safe to climb. The Sensory Observer (lower sensory threshold) picks up the animals, the weather shift, new smells, how the trail snacks taste, and any holes or loose stones before the crew steps into them — and may need steadier breaks along the way. The Sensory Adaptor (medium / mixed threshold) reads the group and fits where they are needed — surging forward, slowing down, or holding the middle of the rope so the whole crew stays together.",
     teenCrewFooter:
-      "There is no right or wrong profile. Your trail is unique — this is a descriptive map, not a diagnosis.",
+      "There is no right or wrong profile. Your trail is unique, and understanding it is the first step to thriving on your journey.",
     teenCrewFooterParent:
-      "There is no right or wrong profile. Your child’s trail is unique — this is a descriptive map, not a diagnosis.",
+      "There is no right or wrong profile. Your child’s trail is unique, and understanding it is the first step to thriving on their journey.",
+    teenCrewObserverMotto: "I notice the trail.",
+    teenCrewAdaptorMotto: "I find my way.",
+    teenCrewExplorerMotto: "I explore the trail.",
+    teenCrewObserverOverviewTraits: [
+      "Keenly aware of sights, sounds, textures, smells, and subtle changes around you.",
+      "Easily affected by busy, noisy, or chaotic environments.",
+      "Need time to recharge and process.",
+      "Thoughtful, reflective, and observant.",
+      "Often pick up on others' emotions and needs.",
+      "Thrive in calm, predictable routines and peaceful spaces.",
+    ],
+    teenCrewAdaptorOverviewTraits: [
+      "Flexible and able to adjust to different environments.",
+      "Manageable awareness of sensory input.",
+      "Can enjoy both busy and quiet settings.",
+      "Use strategies to stay regulated and focused.",
+      "Seek balance, routine, and choices that support you.",
+      "Often act as a bridge between different needs.",
+    ],
+    teenCrewExplorerOverviewTraits: [
+      "Naturally drawn to movement, excitement, and novelty.",
+      "Need more stimulation to feel satisfied.",
+      "Enjoy challenges, variety, and fast-paced environments.",
+      "May get restless or bored in calm, quiet settings.",
+      "Thrive with exploration, risk-taking, and adventure.",
+      "Bring energy, enthusiasm, and spontaneity.",
+    ],
     briefScoresKicker: "Your sensory scores",
     briefScoresKickerParent: "Your child’s sensory scores",
     briefScoresTitle: "Results at a glance",
@@ -1476,6 +1509,12 @@ const QUESTIONNAIRE_UI = {
     teenCrewTitleParent: "Jou kind se Sensoriese Roetekarakter",
     teenCrewOverviewTitle: "Jou Sensoriese Roeteprofiel",
     teenCrewOverviewTitleParent: "Jou kind se Sensoriese Roeteprofiel",
+    teenCrewOverviewLead:
+      "Ons ervaar almal die wêreld verskillend. Jou resultate wys watter roetestyl die meeste by jou pas.",
+    teenCrewOverviewLeadParent:
+      "Ons ervaar almal die wêreld verskillend. Jou kind se resultate wys watter roetestyl die meeste by hulle pas.",
+    teenCrewOverviewMoreTitle: "Sensoriese Aanpasser & Sensoriese Verkenner",
+    teenCrewOverviewMoreTitleParent: "Sensoriese Aanpasser & Sensoriese Verkenner",
     teenCrewMatchTitle: "Jou ooreenstemmende roete",
     teenCrewMatchTitleParent: "Jou kind se ooreenstemmende roete",
     teenCrewMatchLead:
@@ -1489,7 +1528,7 @@ const QUESTIONNAIRE_UI = {
     teenCrewIntroParent:
       "Ons ervaar almal die wêreld verskillend. Hier is die drie roetestyle — en dan watter een jou kind se antwoorde die naaste gepas het.",
     teenCrewSummaryAria:
-      "Infografika van die drie sensoriese roeteprofiele: Sensoriese Waarnemer, Sensoriese Aanpasser, en Sensoriese Verkenner",
+      "Die drie sensoriese roeteprofiele: Sensoriese Waarnemer, Sensoriese Aanpasser, en Sensoriese Verkenner",
     teenCrewYouAre: "Jy is",
     teenCrewYouAreParent: "Jou kind is",
     teenCrewBadge: "Dis jy",
@@ -1504,9 +1543,36 @@ const QUESTIONNAIRE_UI = {
     teenCrewWhyBody:
       "Die Sensoriese Verkenner (hoër sensoriese drempel) het die moed en energie om eerste te gaan — om die roete vooruit te toets en te sien of dit veilig is om te klim. Die Sensoriese Waarnemer (laer sensoriese drempel) merk die diere, die weerverskuiwing, nuwe reuke, hoe die roetesnacks smaak, en enige gate of los klippe op voordat die span daarin stap — en mag meer gereelde pouses langs die pad nodig hê. Die Sensoriese Aanpasser (medium / gemengde drempel) lees die groep en pas in waar hulle nodig is — vorentoe, stadiger, of in die middel van die tou sodat die hele span saam bly.",
     teenCrewFooter:
-      "Daar is geen regte of verkeerde profiel nie. Jou roete is uniek — dit is ’n beskrywende kaart, nie ’n diagnose nie.",
+      "Daar is geen regte of verkeerde profiel nie. Jou roete is uniek, en om dit te verstaan is die eerste tree om op jou reis te floreer.",
     teenCrewFooterParent:
-      "Daar is geen regte of verkeerde profiel nie. Jou kind se roete is uniek — dit is ’n beskrywende kaart, nie ’n diagnose nie.",
+      "Daar is geen regte of verkeerde profiel nie. Jou kind se roete is uniek, en om dit te verstaan is die eerste tree om op hul reis te floreer.",
+    teenCrewObserverMotto: "Ek merk die roete op.",
+    teenCrewAdaptorMotto: "Ek vind my pad.",
+    teenCrewExplorerMotto: "Ek verken die roete.",
+    teenCrewObserverOverviewTraits: [
+      "Skerp bewus van gesigte, klanke, teksture, reuke en subtiele veranderinge om jou.",
+      "Maklik geraak deur besige, lawaaierige of chaotiese omgewings.",
+      "Het tyd nodig om te herlaai en te verwerk.",
+      "Deurdag, reflektief en waarnemend.",
+      "Merk dikwels ander se emosies en behoeftes op.",
+      "Floreer in kalm, voorspelbare roetines en vreedsame ruimtes.",
+    ],
+    teenCrewAdaptorOverviewTraits: [
+      "Buigsaam en in staat om by verskillende omgewings aan te pas.",
+      "Hanteerbare bewustheid van sensoriese insette.",
+      "Kan beide besige en stil omgewings geniet.",
+      "Gebruik strategieë om gereguleerd en gefokus te bly.",
+      "Soek balans, roetine en keuses wat jou ondersteun.",
+      "Tree dikwels op as ’n brug tussen verskillende behoeftes.",
+    ],
+    teenCrewExplorerOverviewTraits: [
+      "Natuurlik aangetrokke tot beweging, opwinding en nuutheid.",
+      "Het meer stimulasie nodig om tevrede te voel.",
+      "Geniet uitdagings, afwisseling en vinnige omgewings.",
+      "Kan rusteloos of verveeld raak in kalm, stil omgewings.",
+      "Floreer met verkenning, risiko-neem en avontuur.",
+      "Bring energie, entoesiasme en spontaniteit.",
+    ],
     briefScoresKicker: "Jou sensoriese tellings",
     briefScoresKickerParent: "Jou kind se sensoriese tellings",
     briefScoresTitle: "Resultate in ’n oogopslag",

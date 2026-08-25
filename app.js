@@ -8064,44 +8064,177 @@ function renderTrailProfilePageFigure({ src, alt, width, height, className = "" 
     </figure>`;
 }
 
-function renderSensoryTrailOverview(pageEntry) {
+function trailGuideLeafIcon() {
+  return `<svg class="trail-guide__leaf" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8.2 1.2c-2.4 1.8-4.8 4.8-4.9 8.2-.1 2.4 1.3 4.4 3.6 5.1.3-1.7.8-3.3 1.6-4.7.7 1.5 1.1 3.1 1.3 4.8 2.5-.6 4.1-2.8 4-5.3-.2-3.4-2.7-6.4-5.6-8.1Z"/></svg>`;
+}
+
+function trailGuideMottoLeaf() {
+  return `<svg class="trail-guide__motto-leaf" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M12 20c0-6 4-10 8-12-1 5-4 9-8 12Z"/><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M12 20c0-5.5-3.5-9.5-8-11.5 1.2 4.8 3.8 8.5 8 11.5Z"/><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" d="M12 20V8"/></svg>`;
+}
+
+function trailGuideTypeIcon(id) {
+  if (id === "observer") {
+    return `<svg class="trail-guide__type-svg" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><circle cx="20" cy="20" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M20 8v3.2M20 28.8V32M8 20h3.2M28.8 20H32M11.5 11.5l2.3 2.3M26.2 26.2l2.3 2.3M11.5 28.5l2.3-2.3M26.2 13.8l2.3-2.3"/></svg>`;
+  }
+  if (id === "explorer") {
+    return `<svg class="trail-guide__type-svg" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><circle cx="20" cy="20" r="11" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="20" cy="20" r="2.2" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M20 9v4M20 27v4M9 20h4M27 20h4"/><path fill="currentColor" d="M20 12.5 22.2 18 20 16.6 17.8 18Z"/></svg>`;
+  }
+  return `<svg class="trail-guide__type-svg" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 28c2-6 4-10 8-14 3 3 5 7 6 12"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M14 18c3-1 6 0 8 2M18 24c2.5-1.5 5-.5 7 1"/></svg>`;
+}
+
+function trailGuideFooterArt() {
+  return {
+    sprig: `<svg class="trail-guide__footer-sprig" viewBox="0 0 48 56" aria-hidden="true" focusable="false"><path fill="currentColor" d="M24 52c0-10 6-18 14-24-2 9-7 16-14 24Z" opacity=".9"/><path fill="currentColor" d="M24 52c0-9-5-17-12-23 1.8 8.5 6 16 12 23Z" opacity=".75"/><path fill="currentColor" d="M24 40c0-8 3.5-14 8-19-1 7-3.5 13-8 19Z" opacity=".85"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M24 52V16"/></svg>`,
+    peaks: `<svg class="trail-guide__footer-peaks" viewBox="0 0 88 48" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 44 30 16l8 14 6-10 16 24H18Z" opacity=".35"/><path fill="currentColor" d="M8 44 22 20l7 12 5-8 14 20H8Z" opacity=".55"/><path fill="currentColor" d="M34 44 42 28l5 8 4-6 11 14H34Z"/><path fill="currentColor" d="M48 44c0-8 3-14 7-18-1 6-3 12-7 18Z"/><path fill="currentColor" d="M56 44c0-10 4-16 9-21-1.2 7-3.5 14-9 21Z"/><path fill="currentColor" d="M64 44c0-7 2.5-12 6-16-.8 5-2.2 11-6 16Z"/></svg>`,
+  };
+}
+
+function trailGuideCharacterPhoto(id, motto) {
+  const assets = {
+    observer: {
+      src: "assets/sensory-character-observer.png?v=20260825a",
+      alt: "Sensory Observer on the trail",
+      width: 1024,
+      height: 768,
+    },
+    adaptor: {
+      src: "assets/sensory-character-adaptor.png?v=20260825a",
+      alt: "Sensory Adaptor on the trail",
+      width: 1024,
+      height: 768,
+    },
+    explorer: {
+      src: "assets/sensory-character-explorer.png?v=20260825a",
+      alt: "Sensory Explorer on the trail",
+      width: 1536,
+      height: 1024,
+    },
+  };
+  const asset = assets[id] || assets.adaptor;
+  return `
+    <figure class="trail-guide__photo trail-guide__photo--${escapeHtml(id)}">
+      <img
+        class="trail-guide__photo-img"
+        src="${asset.src}"
+        alt="${escapeHtml(asset.alt)}"
+        width="${asset.width}"
+        height="${asset.height}"
+        loading="eager"
+        decoding="async"
+      />
+      <figcaption class="trail-guide__motto" aria-hidden="true">
+        <span class="trail-guide__motto-text">${escapeHtml(motto)}</span>
+        ${trailGuideMottoLeaf()}
+      </figcaption>
+    </figure>`;
+}
+
+function renderTrailGuideCard(member, copy) {
+  const mottoKey = {
+    observer: "teenCrewObserverMotto",
+    adaptor: "teenCrewAdaptorMotto",
+    explorer: "teenCrewExplorerMotto",
+  }[member.id];
+  const motto = copy[mottoKey] || "";
+  const traits = Array.isArray(member.overviewTraits) ? member.overviewTraits : [];
+  const traitItems = traits
+    .map((trait) => `<li>${trailGuideLeafIcon()}<span>${escapeHtml(trait)}</span></li>`)
+    .join("");
+
+  return `
+    <article class="trail-guide__card trail-guide__card--${escapeHtml(member.id)}">
+      <div class="trail-guide__copy">
+        <header class="trail-guide__heading">
+          <span class="trail-guide__type-icon" aria-hidden="true">${trailGuideTypeIcon(member.id)}</span>
+          <div class="trail-guide__heading-text">
+            <h4 class="trail-guide__name">${escapeHtml(member.name)}</h4>
+            <p class="trail-guide__tag">${escapeHtml(member.tag)}</p>
+          </div>
+        </header>
+        <p class="trail-guide__summary">${escapeHtml(member.summary)}</p>
+        <div class="trail-guide__rule" aria-hidden="true"></div>
+        <ul class="trail-guide__traits">
+          ${traitItems}
+        </ul>
+      </div>
+      ${trailGuideCharacterPhoto(member.id, motto)}
+    </article>`;
+}
+
+function getTrailGuideRoster(copy) {
+  const roster = getTeenCrewRoster(copy);
+  const overviewTraits = {
+    observer: copy.teenCrewObserverOverviewTraits || copy.teenCrewObserverTraits || [],
+    adaptor: copy.teenCrewAdaptorOverviewTraits || copy.teenCrewAdaptorTraits || [],
+    explorer: copy.teenCrewExplorerOverviewTraits || copy.teenCrewExplorerTraits || [],
+  };
+  return roster.map((member) => ({
+    ...member,
+    // Overview cards describe archetypes in second person (matches the trail guide design).
+    summary:
+      member.id === "observer"
+        ? copy.teenCrewObserverSummary
+        : member.id === "adaptor"
+          ? copy.teenCrewAdaptorSummary
+          : copy.teenCrewExplorerSummary,
+    overviewTraits: overviewTraits[member.id] || [],
+  }));
+}
+
+function renderSensoryTrailOverview(observerPage, crewPage) {
   if (!shouldShowTrailProfile()) return "";
   const copy = currentUi();
   const isParent = state.respondent === "parent";
-  const isTeen = state.respondent === "teen";
   const title = isParent
     ? copy.teenCrewOverviewTitleParent || copy.teenCrewOverviewTitle
     : copy.teenCrewOverviewTitle;
-  const overviewQuote = copy.teenTrailOverviewQuote || "";
-  const overviewIntro = copy.teenTrailOverviewIntro || "";
+  const lead = isParent
+    ? copy.teenCrewOverviewLeadParent || copy.teenCrewOverviewLead
+    : copy.teenCrewOverviewLead;
+  const moreTitle = isParent
+    ? copy.teenCrewOverviewMoreTitleParent || copy.teenCrewOverviewMoreTitle
+    : copy.teenCrewOverviewMoreTitle;
+  const footer = isParent ? copy.teenCrewFooterParent : copy.teenCrewFooter;
+  const roster = getTrailGuideRoster(copy);
+  const observer = roster.find((member) => member.id === "observer") || roster[0];
+  const adaptor = roster.find((member) => member.id === "adaptor") || roster[1];
+  const explorer = roster.find((member) => member.id === "explorer") || roster[2];
+  const footerArt = trailGuideFooterArt();
 
   return `
-    <section class="profile-section trail-profile trail-profile--page${isTeen ? " trail-profile--overview-teen" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="trail-overview-title">
-      ${
-        isTeen && (overviewQuote || overviewIntro)
-          ? `
-      <div class="trail-profile__overview-copy">
-        <h3 id="trail-overview-title" class="trail-profile__overview-title">${escapeHtml(title)}</h3>
-        ${
-          overviewQuote
-            ? `
-        <blockquote class="trail-profile__overview-quote">
-          <p>${escapeHtml(overviewQuote)}</p>
-        </blockquote>`
-            : ""
-        }
-        ${overviewIntro ? `<p class="trail-profile__overview-intro">${escapeHtml(overviewIntro)}</p>` : ""}
-      </div>`
-          : `<h3 id="trail-overview-title" class="visually-hidden">${escapeHtml(title)}</h3>`
-      }
-      ${renderTrailProfilePageFigure({
-        src: "assets/sensory-trail-profile.png?v=20260817",
-        alt: copy.teenCrewSummaryAria,
-        width: 682,
-        height: 1024,
-        className: "trail-profile__figure--overview",
-      })}
-      ${reportPageNumberHtml(copy, pageEntry?.page)}
+    <section class="profile-section trail-profile trail-guide trail-guide--observer-page"${reportPageAttrs(observerPage)} aria-labelledby="trail-overview-title">
+      <header class="trail-guide__hero">
+        <div class="trail-guide__hero-copy">
+          <h3 id="trail-overview-title" class="trail-guide__title">${escapeHtml(title)}</h3>
+          <p class="trail-guide__lead">${escapeHtml(lead || "")}</p>
+        </div>
+        <div class="trail-guide__hero-media" aria-hidden="true">
+          <img
+            class="trail-guide__hero-img"
+            src="assets/outeniqua-trail-hero.png?v=20260825a"
+            alt=""
+            width="1536"
+            height="1024"
+            loading="eager"
+            decoding="async"
+          />
+        </div>
+      </header>
+      ${renderTrailGuideCard(observer, copy)}
+      ${reportPageNumberHtml(copy, observerPage?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+
+    <section class="profile-section trail-profile trail-guide trail-guide--crew-page"${reportPageAttrs(crewPage)} aria-labelledby="trail-overview-more-title">
+      <h3 id="trail-overview-more-title" class="visually-hidden">${escapeHtml(moreTitle || title)}</h3>
+      ${renderTrailGuideCard(adaptor, copy)}
+      ${renderTrailGuideCard(explorer, copy)}
+      <footer class="trail-guide__footer">
+        <span class="trail-guide__footer-icon" aria-hidden="true">${footerArt.sprig}</span>
+        <p class="trail-guide__footer-text">${escapeHtml(footer)}</p>
+        <span class="trail-guide__footer-icon trail-guide__footer-icon--peaks" aria-hidden="true">${footerArt.peaks}</span>
+      </footer>
+      ${reportPageNumberHtml(copy, crewPage?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>`;
 }
@@ -8971,6 +9104,13 @@ function buildReportPagePlan(copy, scores, metrics) {
       ? copy.teenCrewOverviewTitleParent || copy.teenCrewOverviewTitle
       : copy.teenCrewOverviewTitle;
     add("report-trail-overview", overviewTitle || "Your Sensory Trail Profile");
+    const overviewMoreTitle = isParent
+      ? copy.teenCrewOverviewMoreTitleParent || copy.teenCrewOverviewMoreTitle
+      : copy.teenCrewOverviewMoreTitle;
+    add(
+      "report-trail-overview-more",
+      overviewMoreTitle || "Sensory Adaptor & Sensory Explorer"
+    );
     const youId = getTeenCrewId(metrics.lean);
     const roster = getTeenCrewRoster(copy);
     const you = roster.find((member) => member.id === youId);
@@ -10514,7 +10654,10 @@ function renderResults() {
       </div>
 
       ${renderSharingPermissionsSummary()}
-      ${renderSensoryTrailOverview(reportPageById(pagePlan, "report-trail-overview"))}
+      ${renderSensoryTrailOverview(
+        reportPageById(pagePlan, "report-trail-overview"),
+        reportPageById(pagePlan, "report-trail-overview-more")
+      )}
       ${renderMatchedTrailReveal(metrics, reportPageById(pagePlan, "report-trail-match"))}
       ${renderMatchedTrailDescription(metrics, reportPageById(pagePlan, "report-trail-description"))}
       ${renderBriefScoreSummary(scores, metrics, reportPageById(pagePlan, "report-brief-scores"))}
