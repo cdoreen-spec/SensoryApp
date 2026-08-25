@@ -1627,9 +1627,29 @@ function shouldEmailResultsToClinician() {
   if (DELIVERY_PROVIDER === "none") return false;
   // Couple pathway emails once via the combined-report submit (last partner).
   if (state.respondent === "couple") return false;
-  // Email the detailed sensory report for every finished adult / teen / parent screening
-  // (invite link or public home path). Pain pathway is separate and not emailed here.
-  return Boolean(state.respondent) && RESPONDENT_TYPES.includes(state.respondent);
+  // Email every finished screening to the clinician inbox:
+  // parent, adult (work), adult (home), and teen (home & school combined).
+  // Pain pathway is separate and not emailed here.
+  return (
+    state.respondent === "parent" ||
+    state.respondent === "adult" ||
+    state.respondent === "teen"
+  );
+}
+
+/** Short label for inbox subjects: Parent / Adult · Work / Adult · Home / Teen · Home & school */
+function screeningTypeLabelForEmail() {
+  if (state.respondent === "parent") return "Parent";
+  if (state.respondent === "teen") return "Teen · Home & school";
+  if (state.respondent === "adult") {
+    if (state.lifeContext === "work") return "Adult · Work";
+    if (state.lifeContext === "home") return "Adult · Home";
+    return "Adult";
+  }
+  if (state.respondent === "couple") {
+    return `Couple · ${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}`;
+  }
+  return "Sensory screening";
 }
 
 /** Name of the person who completed the screening (parent name for parent pathway). */
@@ -2023,10 +2043,14 @@ function buildResultsReport() {
     state.respondent === "parent"
       ? "Parent (about child)"
       : state.respondent === "teen"
-        ? "Teen"
+        ? "Teenager (home & school)"
         : state.respondent === "couple"
           ? `Couple · ${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}`
-          : "Adult";
+          : state.lifeContext === "work"
+            ? "Adult (work)"
+            : state.lifeContext === "home"
+              ? "Adult (home)"
+              : "Adult";
 
   const detailRows = getScoreRows(scores);
   const domainDetailLines = detailRows
@@ -2138,12 +2162,13 @@ function buildResultsReport() {
   ].filter((line) => line !== null);
 
   const profileBit = profileLabelPlain(metrics.meta);
+  const typeLabel = screeningTypeLabelForEmail();
   const subject =
     state.respondent === "parent" && demo.name
-      ? `${completerName} — Sensory screening (about ${demo.name})${profileBit ? ` — ${profileBit}` : ""}`
+      ? `${completerName} — ${typeLabel} (about ${demo.name})${profileBit ? ` — ${profileBit}` : ""}`
       : state.respondent === "couple"
-        ? `${completerName} — Couple screening (${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}${state.coupleId ? ` · ${state.coupleId}` : ""})${profileBit ? ` — ${profileBit}` : ""}`
-      : `${completerName} — Sensory screening${profileBit ? ` — ${profileBit}` : ""}`;
+        ? `${completerName} — ${typeLabel}${state.coupleId ? ` · ${state.coupleId}` : ""}${profileBit ? ` — ${profileBit}` : ""}`
+        : `${completerName} — ${typeLabel}${profileBit ? ` — ${profileBit}` : ""}`;
 
   return {
     scores,

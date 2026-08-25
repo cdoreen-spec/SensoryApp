@@ -4,8 +4,13 @@
  * Change CLINICIAN_PIN before sharing the clinician link with anyone.
  * Email delivery uses FormSubmit (https://formsubmit.co) — the first
  * real submission sends a confirmation email to CLINICIAN_EMAIL; click
- * Confirm once, then every completed adult / teen / parent screening
- * emails the detailed report (subject includes the completer’s name).
+ * Confirm once, then every completed screening emails the detailed report
+ * to soulfulsensoryot@gmail.com:
+ *   • Parent
+ *   • Adult · Work
+ *   • Adult · Home
+ *   • Teenager · Home & school (one combined questionnaire)
+ * Subject lines include the completer’s name and questionnaire type.
  * AJAX delivery disables FormSubmit reCAPTCHA (_captcha: false) so the
  * browser gets a JSON response instead of an HTML captcha page.
  */
@@ -15,6 +20,7 @@ const APP_CONFIG = {
   clinicianPin: "soulfulot",
   /**
    * FormSubmit AJAX endpoint. Uses clinicianEmail above.
+   * Keep as "formsubmit" so finished questionnaires email the clinician.
    * Or set a Web3Forms access key and switch deliveryProvider to "web3forms".
    */
   deliveryProvider: "formsubmit", // "formsubmit" | "web3forms" | "none"
