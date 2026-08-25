@@ -4965,18 +4965,22 @@ body.is-pain-screen .site-footer {
   height: 100%;
   min-height: 14rem;
   object-fit: cover;
+  transform: scale(1.18);
 }
 
 .trail-guide__photo--observer .trail-guide__photo-img {
-  object-position: 72% 42%;
+  object-position: 78% 40%;
+  transform-origin: 78% 40%;
 }
 
 .trail-guide__photo--adaptor .trail-guide__photo-img {
-  object-position: 68% 40%;
+  object-position: 76% 38%;
+  transform-origin: 76% 38%;
 }
 
 .trail-guide__photo--explorer .trail-guide__photo-img {
-  object-position: 55% 35%;
+  object-position: 62% 32%;
+  transform-origin: 62% 32%;
 }
 
 .trail-guide__motto {
@@ -11590,6 +11594,223 @@ body.is-pain-screen .site-footer {
     page-break-after: always;
     margin: 0;
     padding: 0;
+  }
+
+  body.print-sensory-results .trail-guide {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 0;
+    max-height: 273mm;
+    margin: 0;
+    padding: 5mm 4mm 8mm;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: #f7f9f4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .trail-guide--observer-page {
+    display: flex;
+    flex-direction: column;
+    gap: 4mm;
+  }
+
+  body.print-sensory-results .trail-guide--crew-page {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5mm;
+    justify-content: space-between;
+  }
+
+  body.print-sensory-results .trail-guide__hero {
+    flex: 0 0 auto;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+    gap: 4mm;
+    min-height: 42mm;
+    max-height: 48mm;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  body.print-sensory-results .trail-guide__hero-copy {
+    padding: 2mm 1mm 0 0;
+  }
+
+  body.print-sensory-results .trail-guide__title {
+    margin: 0 0 2mm;
+    font-size: 18pt;
+    line-height: 1.1;
+    color: #244b38;
+  }
+
+  body.print-sensory-results .trail-guide__lead {
+    max-width: none;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    color: #3d4a40;
+  }
+
+  body.print-sensory-results .trail-guide__hero-media {
+    min-height: 42mm;
+    max-height: 48mm;
+    border-radius: 3mm;
+  }
+
+  body.print-sensory-results .trail-guide__hero-img {
+    min-height: 42mm;
+    max-height: 48mm;
+  }
+
+  body.print-sensory-results .trail-guide__hero-media::before {
+    background: linear-gradient(90deg, #f7f9f4 0%, rgba(247, 249, 244, 0.7) 26%, rgba(247, 249, 244, 0) 60%);
+  }
+
+  body.print-sensory-results .trail-guide__card {
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    gap: 4mm;
+    margin: 0;
+    padding: 4mm;
+    border-radius: 4mm;
+    background: #ffffff;
+    border: 0.4pt solid rgba(61, 90, 71, 0.14);
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .trail-guide--crew-page .trail-guide__card {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  body.print-sensory-results .trail-guide__heading {
+    gap: 3mm;
+    margin: 0 0 2mm;
+  }
+
+  body.print-sensory-results .trail-guide__type-icon {
+    width: 9mm;
+    height: 9mm;
+    background: #244b38;
+    box-shadow: none;
+  }
+
+  body.print-sensory-results .trail-guide__type-svg {
+    width: 4.8mm;
+    height: 4.8mm;
+  }
+
+  body.print-sensory-results .trail-guide__name {
+    margin: 0 0 0.8mm;
+    font-size: 14pt;
+    line-height: 1.12;
+    color: #244b38;
+  }
+
+  body.print-sensory-results .trail-guide__tag {
+    font-size: 7pt;
+    letter-spacing: 0.14em;
+    color: #6f8f6a;
+  }
+
+  body.print-sensory-results .trail-guide__summary {
+    margin: 0 0 2.2mm;
+    font-size: 9pt;
+    line-height: 1.35;
+    color: #3d4a40;
+  }
+
+  body.print-sensory-results .trail-guide__rule {
+    margin: 0 0 2.4mm;
+  }
+
+  body.print-sensory-results .trail-guide__traits {
+    gap: 1.4mm;
+  }
+
+  body.print-sensory-results .trail-guide__traits li {
+    grid-template-columns: 3mm 1fr;
+    gap: 2mm;
+    font-size: 8.6pt;
+    line-height: 1.32;
+    color: #1c2a22;
+  }
+
+  body.print-sensory-results .trail-guide__leaf {
+    width: 3mm;
+    height: 3mm;
+    margin-top: 0.6mm;
+    color: #365b46;
+  }
+
+  body.print-sensory-results .trail-guide__photo {
+    min-height: 0;
+    border-radius: 3mm;
+  }
+
+  body.print-sensory-results .trail-guide--observer-page .trail-guide__photo,
+  body.print-sensory-results .trail-guide--observer-page .trail-guide__photo-img {
+    min-height: 118mm;
+    height: 118mm;
+  }
+
+  body.print-sensory-results .trail-guide--crew-page .trail-guide__photo,
+  body.print-sensory-results .trail-guide--crew-page .trail-guide__photo-img {
+    min-height: 72mm;
+    height: 72mm;
+  }
+
+  body.print-sensory-results .trail-guide__motto {
+    top: 3mm;
+    right: 3mm;
+    width: 22mm;
+    height: 22mm;
+    padding: 2mm;
+    background: rgba(36, 75, 56, 0.9);
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .trail-guide__motto-text {
+    font-size: 6.5pt;
+    line-height: 1.15;
+  }
+
+  body.print-sensory-results .trail-guide__motto-leaf {
+    width: 3.5mm;
+    height: 3.5mm;
+  }
+
+  body.print-sensory-results .trail-guide__footer {
+    flex: 0 0 auto;
+    gap: 3mm;
+    margin-top: 1mm;
+    padding: 2mm 1mm 0;
+  }
+
+  body.print-sensory-results .trail-guide__footer-sprig {
+    width: 8mm;
+    height: 10mm;
+  }
+
+  body.print-sensory-results .trail-guide__footer-peaks {
+    width: 16mm;
+    height: 9mm;
+  }
+
+  body.print-sensory-results .trail-guide__footer-text {
+    padding: 0 3mm;
+    font-size: 9pt;
+    line-height: 1.35;
+    color: #244b38;
   }
 
   body.print-sensory-results .trail-profile--overview-teen {
