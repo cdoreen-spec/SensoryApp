@@ -1465,6 +1465,12 @@ body.is-home .site-footer {
   transform: translateX(3px);
 }
 
+.trail-row--sensory:hover,
+.trail-row--sensory:focus-visible {
+  background: linear-gradient(90deg, #1a3d2e 0%, #244b38 42%, #2f5a44 100%);
+  box-shadow: inset 0 0 0 1px rgba(26, 61, 46, 0.9);
+}
+
 .trail-row--pain:hover,
 .trail-row--pain:focus-visible {
   background: linear-gradient(90deg, rgba(232, 222, 210, 0.95) 0%, rgba(245, 236, 226, 0.5) 100%);
@@ -1476,9 +1482,30 @@ body.is-home .site-footer {
   width: 6px;
 }
 
+.trail-row--sensory:hover::before,
+.trail-row--sensory:focus-visible::before {
+  width: 8px;
+  background: #0f2419;
+}
+
 .trail-row:hover .trail-row__name,
 .trail-row:focus-visible .trail-row__name {
   color: var(--sage-dark);
+}
+
+.trail-row--sensory:hover .trail-row__name,
+.trail-row--sensory:focus-visible .trail-row__name {
+  color: #f5f9f6;
+}
+
+.trail-row--sensory:hover .trail-row__meta,
+.trail-row--sensory:focus-visible .trail-row__meta {
+  color: rgba(245, 249, 246, 0.82);
+}
+
+.trail-row--sensory:hover .trail-row__desc,
+.trail-row--sensory:focus-visible .trail-row__desc {
+  color: rgba(245, 249, 246, 0.92);
 }
 
 .trail-row--pain:hover .trail-row__name,
@@ -1487,7 +1514,7 @@ body.is-home .site-footer {
 }
 
 .trail-row--sensory:active {
-  background: linear-gradient(90deg, rgba(36, 75, 56, 0.45) 0%, rgba(54, 91, 70, 0.32) 50%, rgba(210, 223, 209, 0.6) 100%);
+  background: linear-gradient(90deg, #122a1f 0%, #1a3d2e 50%, #244b38 100%);
 }
 
 .trail-row__text {
@@ -1495,6 +1522,21 @@ body.is-home .site-footer {
   flex-direction: column;
   gap: 0.3rem;
   min-width: 0;
+}
+
+.trail-row__cue {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  color: var(--forest);
+}
+
+.trail-row--sensory:hover .trail-row__cue,
+.trail-row--sensory:focus-visible .trail-row__cue {
+  color: #f5f9f6;
 }
 
 .trail-row__top {
@@ -1546,6 +1588,11 @@ body.is-home .site-footer {
 .trail-row:focus-visible .trail-row__arrow {
   transform: translateX(4px);
   color: var(--forest);
+}
+
+.trail-row--sensory:hover .trail-row__arrow,
+.trail-row--sensory:focus-visible .trail-row__arrow {
+  color: #f5f9f6;
 }
 
 .trail-row--pain:hover .trail-row__arrow,
@@ -3290,7 +3337,7 @@ body.is-pain-screen .site-footer {
     flex-direction: column;
     gap: 1rem;
     min-width: 0;
-    margin-top: 1.15rem;
+    margin-top: 5.5rem;
     padding: 0.55rem 1rem 0;
   }
 

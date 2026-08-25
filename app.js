@@ -4605,6 +4605,7 @@ function renderHome() {
           <div class="trail-map" role="list" aria-label="Screening pathways">
             <button type="button" class="trail-row trail-row--sensory" data-action="start-sensory" role="listitem">
               <span class="trail-row__text">
+                <span class="trail-row__cue">Click here</span>
                 <span class="trail-row__top">
                   <span class="trail-row__name">Sensory questionnaire</span>
                   <span class="trail-row__meta">${hasSensoryDraft() ? "Saved progress" : "10–15 min"}</span>
