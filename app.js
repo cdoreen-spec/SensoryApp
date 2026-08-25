@@ -7452,8 +7452,9 @@ function renderIdealSaturdayResults(pageEntry) {
   if (!text) return "";
   const copy = currentUi();
   const isTeen = state.respondent === "teen";
+  const isParent = state.respondent === "parent";
   return `
-    <section class="profile-section ideal-saturday-results${isTeen ? " ideal-saturday-results--teen" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="ideal-saturday-results-title">
+    <section class="profile-section ideal-saturday-results${isTeen ? " ideal-saturday-results--teen" : ""}${isParent ? " ideal-saturday-results--parent" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="ideal-saturday-results-title">
       <p class="profile-kicker">${escapeHtml(copy.idealSaturdayTag)}</p>
       <h3 id="ideal-saturday-results-title">${escapeHtml(copy.idealSaturdayResultsTitle)}</h3>
       ${printMountainRule("section")}
@@ -7468,7 +7469,7 @@ function renderIdealSaturdayResults(pageEntry) {
 }
 
 function renderTeenIdealSaturdayPrintBlock() {
-  if (state.respondent !== "teen") return "";
+  if (state.respondent !== "teen" && state.respondent !== "parent") return "";
   const text = (state.idealSaturday || "").trim();
   if (!text) return "";
   const copy = currentUi();
@@ -8127,17 +8128,23 @@ function renderMatchedTrailReveal(metrics, pageEntry) {
     : copy.teenCrewMatchLead || copy.teenCrewIntro;
 
   return `
-    <section class="profile-section trail-profile trail-profile--reveal"${reportPageAttrs(pageEntry)} aria-labelledby="trail-match-title" data-crew-you="${youId}">
+    <section class="profile-section trail-profile trail-profile--reveal${
+      state.respondent === "parent" ? " parent-report-section" : ""
+    }"${reportPageAttrs(pageEntry)} aria-labelledby="trail-match-title" data-crew-you="${youId}">
       <header class="trail-profile__header trail-profile__header--reveal">
         <p class="profile-kicker">${escapeHtml(copy.teenCrewKicker)}</p>
-        <h3 id="trail-match-title">${escapeHtml(detailTitle)}</h3>
-        ${printMountainRule("section")}
+        <h3 id="trail-match-title" class="${
+          state.respondent === "parent" ? "couple-compare__title parent-section-title" : ""
+        }">${escapeHtml(detailTitle)}</h3>
+        ${state.respondent === "parent" ? "" : printMountainRule("section")}
         <p class="profile-section__summary">${escapeHtml(lead)}</p>
       </header>
 
       ${renderOverallScoreCard(metrics, copy)}
 
-      <article class="teen-crew__detail teen-crew__match teen-crew__match--${youId} teen-crew__match--concise teen-crew__match--reveal">
+      <article class="teen-crew__detail teen-crew__match teen-crew__match--${youId} teen-crew__match--concise teen-crew__match--reveal${
+        state.respondent === "parent" ? " parent-match-card" : ""
+      }">
         <header class="teen-crew__match-heading">
           <p class="teen-crew__you-label">${escapeHtml(youAre)}</p>
           <h4 class="teen-crew__hero-name">${escapeHtml(you.name)}</h4>
@@ -8372,17 +8379,17 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
       : renderAdultSenseGlance(rows, copy, null);
 
   return `
-    <section class="profile-section profile-section--brief-scores"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
+    <section class="profile-section profile-section--brief-scores${isParent ? " parent-report-section" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
       ${renderInterpretSectionBanner({
-        image: "assets/heading-viewpoint-forest.png",
-        objectPosition: "center 45%",
+        image: isParent ? "assets/heading-viewpoint-sunrise.png?v=20260815c" : "assets/heading-viewpoint-forest.png",
+        objectPosition: isParent ? "center 48%" : "center 45%",
         kicker: "",
         titleId: "brief-scores-title",
         title: kicker,
         lead: intro,
-        variant: "viewpoint",
+        variant: isParent ? "couple" : "viewpoint",
         width: 1024,
-        height: 682,
+        height: isParent ? 639 : 682,
       })}
       <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
       ${canOfferWorkReport() ? "" : renderOverallScoreCard(metrics, copy)}
@@ -8629,16 +8636,16 @@ function renderSenseSupportGuide(scores, pageEntry) {
   if (!cards) return "";
 
   return `
-    <section class="profile-section profile-section--sense-support"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
+    <section class="profile-section profile-section--sense-support${isParent ? " parent-report-section" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
       ${renderInterpretSectionBanner({
-        image: "assets/heading-forest-trail.png",
-        objectPosition: "center 40%",
+        image: isParent ? "assets/heading-home-trail.png" : "assets/heading-forest-trail.png",
+        objectPosition: isParent ? "center 42%" : "center 40%",
         kicker: copy.senseSupportKicker,
         titleId: "sense-support-title",
         title,
         lead: intro,
-        variant: "forest",
-        width: 682,
+        variant: isParent ? "couple" : "forest",
+        width: isParent ? 683 : 682,
         height: 1024,
       })}
       <div class="sense-support__grid">
@@ -8668,8 +8675,8 @@ function getTrailSettingBanner(settingKey) {
     },
     homeParent: {
       image: "assets/heading-home-trail.png",
-      objectPosition: "center 48%",
-      variant: "forest",
+      objectPosition: "center 42%",
+      variant: "couple",
       width: 683,
       height: 1024,
     },
@@ -8685,6 +8692,9 @@ function getTrailSettingBanner(settingKey) {
 }
 
 function renderTeenTrailSupportVisuals(settingKey) {
+  if (state.respondent === "parent" && settingKey === "homeParent") {
+    return renderParentHomeVisuals();
+  }
   if (state.respondent !== "teen") return "";
 
   if (settingKey === "school") {
@@ -8779,7 +8789,11 @@ function renderTrailSettingInterpretations(metrics, pagePlan) {
                 : ""
             }
           </div>
-          ${settingKey === "home" ? renderTeenIdealSaturdayPrintBlock() : ""}
+          ${
+            settingKey === "home" || settingKey === "homeParent"
+              ? renderTeenIdealSaturdayPrintBlock()
+              : ""
+          }
           ${reportPageNumberHtml(currentUi(), pageEntry?.page)}
           <div class="print-page-motif print-only" aria-hidden="true"></div>
         </section>`;
@@ -9042,9 +9056,11 @@ function waitForReportPrintImages(root = document) {
 }
 
 function printSensoryResultsPacket() {
+  const isParent = state.respondent === "parent";
   document.body.classList.add("print-sensory-results");
+  if (isParent) document.body.classList.add("print-parent-report");
   const cleanup = () => {
-    document.body.classList.remove("print-sensory-results");
+    document.body.classList.remove("print-sensory-results", "print-parent-report");
     window.removeEventListener("afterprint", cleanup);
   };
   window.addEventListener("afterprint", cleanup);
@@ -10402,6 +10418,127 @@ function renderResultsSummary() {
   );
 }
 
+function renderParentReportCover(copy, submissionNote = "") {
+  const childName = (state.demographics.name || "").trim();
+  const context = lifeContextLabel();
+  return `
+    <section class="parent-report-cover" aria-labelledby="profile-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/couple-intro-trail.png",
+        objectPosition: "center 42%",
+        kicker: copy.viewpoint,
+        titleId: "profile-title",
+        title: copy.profileTitleParent || copy.profileTitle,
+        lead: copy.profileIntroParent || copy.profileIntro,
+        variant: "couple",
+        titleTag: "h2",
+        width: 1200,
+        height: 800,
+      })}
+      <div class="parent-report-cover__meta">
+        ${
+          childName
+            ? `<p class="parent-report-cover__name">${escapeHtml(childName)}</p>`
+            : ""
+        }
+        ${
+          context
+            ? `<p class="parent-report-cover__context">
+                <span class="context-chip">${escapeHtml(copy.focusedOn)} · ${escapeHtml(context)}</span>
+              </p>`
+            : ""
+        }
+        ${submissionNote}
+      </div>
+    </section>
+  `;
+}
+
+function renderParentReportIntro(copy) {
+  const paragraphs = [
+    copy.parentReportIntroP1,
+    copy.parentReportIntroP2,
+    copy.parentReportIntroP3,
+  ].filter(Boolean);
+  if (!paragraphs.length && !copy.parentReportIntroTitle) return "";
+
+  return `
+    <section class="couple-merge-intro parent-report-intro" aria-labelledby="parent-report-intro-title">
+      <header class="couple-merge-intro__banner">
+        <figure class="couple-merge-intro__banner-media" aria-hidden="true">
+          <img
+            src="assets/home-life-family.png"
+            alt=""
+            class="couple-merge-intro__banner-image"
+            width="1024"
+            height="682"
+            loading="eager"
+            decoding="async"
+          />
+        </figure>
+        <div class="couple-merge-intro__banner-veil" aria-hidden="true"></div>
+        <div class="couple-merge-intro__banner-content">
+          <p class="couple-merge-intro__kicker">${escapeHtml(copy.viewpoint || "")}</p>
+          <h2 id="parent-report-intro-title" class="couple-merge-intro__title">${escapeHtml(
+            copy.parentReportIntroTitle || copy.profileTitleParent
+          )}</h2>
+          ${
+            copy.parentReportIntroLead
+              ? `<p class="couple-merge-intro__lead">${escapeHtml(copy.parentReportIntroLead)}</p>`
+              : ""
+          }
+        </div>
+      </header>
+      <div class="couple-merge-intro__content">
+        <div class="couple-merge-intro__body">
+          ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderParentHomeVisuals() {
+  return `
+    <div class="parent-home-visuals couple-visual-visuals" aria-hidden="true">
+      <figure class="couple-visual-visuals__shot">
+        <img
+          src="assets/home-life-family.png"
+          alt=""
+          class="couple-visual-visuals__image"
+          width="1024"
+          height="682"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+      <figure class="couple-visual-visuals__shot">
+        <img
+          src="assets/teen-home-support.png"
+          alt=""
+          class="couple-visual-visuals__image"
+          width="1024"
+          height="682"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+    </div>`;
+}
+
+function renderParentClosingQuote(copy) {
+  const quote = copy.parentClosingQuote || copy.coupleClosingQuote;
+  if (!quote) return "";
+  return `
+    <figure class="couple-closing-quote parent-closing-quote">
+      <span class="couple-closing-quote__mark" aria-hidden="true">“</span>
+      <blockquote class="couple-closing-quote__text">
+        <p>${escapeHtml(quote)}</p>
+      </blockquote>
+      <span class="couple-closing-quote__rule" aria-hidden="true"></span>
+    </figure>`;
+}
+
 function renderResults() {
   clearSensoryDraft();
   if (!state.completedAt) {
@@ -10420,6 +10557,7 @@ function renderResults() {
   const framing = getContextFraming(state.lifeContext, state.language);
   const fromDashboard = Boolean(state.archiveReadOnly) && canAccessTherapistDashboard();
   const pagePlan = buildReportPagePlan(copy, scores, metrics);
+  const isParent = state.respondent === "parent";
 
   if (shouldEmailResultsToClinician()) {
     queueMicrotask(() => ensureResultsSubmitted());
@@ -10434,36 +10572,18 @@ function renderResults() {
         ? `<p class="submission-status submission-status--pending" data-submission-status role="status">${escapeHtml(copy.thankYouSending)}</p>`
         : "";
 
-  return renderShell(
-    `
-      <div class="results-atmosphere" aria-hidden="true">
-        <img src="assets/protea-left.png" alt="" class="results-atmosphere__protea results-atmosphere__protea--left" />
-        <img src="assets/protea-right.png" alt="" class="results-atmosphere__protea results-atmosphere__protea--right" />
-        <img src="assets/protea-right.png" alt="" class="results-atmosphere__protea results-atmosphere__protea--mid" />
-      </div>
-
-      ${
-        fromDashboard
-          ? `<div class="results-dashboard-bar no-print">
-              <button type="button" class="btn btn-secondary" data-action="back-dashboard">← Back to dashboard</button>
-              <button type="button" class="btn btn-secondary" data-action="switch-report-basic">Preview short report</button>
-              <button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
-            </div>`
-          : ""
-      }
-
-      ${renderCoupleResultsBanner()}
-
-      ${renderSampleReportBanner()}
-
+  const introBlock = isParent
+    ? `${renderParentReportCover(copy, submissionNote)}
+      ${renderSharingPermissionsSummary()}
+      ${renderParentReportIntro(copy)}`
+    : `
       <div class="results-intro results-intro--concise" aria-labelledby="profile-title">
         ${renderInterpretSectionBanner({
           image: "assets/heading-viewpoint-sunrise.png?v=20260815c",
           objectPosition: "center 48%",
           kicker: copy.viewpoint,
           titleId: "profile-title",
-          title:
-            state.respondent === "parent" ? copy.profileTitleParent : copy.profileTitle,
+          title: copy.profileTitle,
           variant: "viewpoint",
           titleTag: "h2",
           width: 1024,
@@ -10489,7 +10609,36 @@ function renderResults() {
         ${submissionNote}
       </div>
 
-      ${renderSharingPermissionsSummary()}
+      ${renderSharingPermissionsSummary()}`;
+
+  return renderShell(
+    `
+      ${
+        isParent
+          ? ""
+          : `<div class="results-atmosphere" aria-hidden="true">
+        <img src="assets/protea-left.png" alt="" class="results-atmosphere__protea results-atmosphere__protea--left" />
+        <img src="assets/protea-right.png" alt="" class="results-atmosphere__protea results-atmosphere__protea--right" />
+        <img src="assets/protea-right.png" alt="" class="results-atmosphere__protea results-atmosphere__protea--mid" />
+      </div>`
+      }
+
+      ${
+        fromDashboard
+          ? `<div class="results-dashboard-bar no-print">
+              <button type="button" class="btn btn-secondary" data-action="back-dashboard">← Back to dashboard</button>
+              <button type="button" class="btn btn-secondary" data-action="switch-report-basic">Preview short report</button>
+              <button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
+            </div>`
+          : ""
+      }
+
+      ${renderCoupleResultsBanner()}
+
+      ${renderSampleReportBanner()}
+
+      <div class="${isParent ? "parent-report" : ""}">
+      ${introBlock}
       ${renderSensoryTrailOverview(reportPageById(pagePlan, "report-trail-overview"))}
       ${renderMatchedTrailReveal(metrics, reportPageById(pagePlan, "report-trail-match"))}
       ${renderMatchedTrailDescription(metrics, reportPageById(pagePlan, "report-trail-description"))}
@@ -10498,6 +10647,8 @@ function renderResults() {
       ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}
       ${renderCoupleWorkResults()}
       ${renderTrailSettingInterpretations(metrics, pagePlan)}
+      ${isParent ? renderParentClosingQuote(copy) : ""}
+      </div>
 
       <div class="results-contact">
         <h3>${escapeHtml(copy.contactTitle)}</h3>

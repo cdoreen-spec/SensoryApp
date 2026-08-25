@@ -11368,7 +11368,8 @@ body.is-pain-screen .site-footer {
     object-fit: contain;
   }
 
-  body.print-sensory-results .ideal-saturday-results--teen {
+  body.print-sensory-results .ideal-saturday-results--teen,
+  body.print-sensory-results .ideal-saturday-results--parent {
     display: none !important;
   }
 
@@ -16777,6 +16778,139 @@ body.is-dashboard .site-footer {
   box-shadow: 0 0 0 3px rgba(255, 246, 230, 0.22);
 }
 
+/* —— Parent report (couples-inspired fonts, photo mastheads, layout) —— */
+.parent-report {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.parent-report-cover {
+  margin: 0 0 0.35rem;
+  padding: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--sage, #8aab90) 28%, #d5ddd6);
+  box-shadow: 0 12px 32px rgba(61, 90, 71, 0.07);
+}
+
+.parent-report-cover .interpret-section-banner {
+  margin: 0;
+  border-radius: 0;
+  min-height: min(46vh, 21rem);
+  box-shadow: none;
+}
+
+.parent-report-cover__meta {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem 1.25rem 1.15rem;
+  background: linear-gradient(180deg, #fafcf9 0%, #fff 100%);
+}
+
+.parent-report-cover__name {
+  margin: 0;
+  font-family: var(--font-display, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+  font-weight: 650;
+  color: var(--forest, #244b38);
+  letter-spacing: -0.01em;
+}
+
+.parent-report-cover__context {
+  margin: 0;
+}
+
+.parent-report .sharing-summary {
+  margin: 0;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--sage, #8aab90) 30%, #d5ddd6);
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(61, 90, 71, 0.05);
+}
+
+.parent-report-intro {
+  margin: 0;
+}
+
+.parent-report .parent-section-title {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.parent-report .parent-section-title::after {
+  margin-left: auto;
+  margin-right: auto;
+  background: linear-gradient(90deg, var(--sage-dark), var(--sage-mid), var(--leaf, #88a487));
+}
+
+.parent-match-card {
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--sage, #8aab90) 28%, #d5ddd6);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--sage-pale, #eef4ef) 70%, white) 0%, #fff 48%);
+  box-shadow: 0 10px 28px rgba(61, 90, 71, 0.07);
+  overflow: hidden;
+  padding: 1.1rem 1.15rem 1.25rem;
+}
+
+.parent-match-card .teen-crew__match-portrait--hero {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(36, 75, 56, 0.12);
+}
+
+.parent-report-section > .interpret-section-banner {
+  border-radius: 18px;
+  min-height: min(36vh, 16.5rem);
+}
+
+.parent-report .profile-section--trail-interpret > .interpret-section-banner {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  place-items: start stretch;
+  min-height: min(38vh, 17rem);
+}
+
+.parent-report .profile-section--trail-interpret .interpret-section-banner__content {
+  max-width: 32rem;
+}
+
+.parent-home-visuals {
+  margin-top: 0.85rem;
+}
+
+.parent-report .sense-support__card {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--domain-color, var(--sage-mid)) 22%, var(--border, #d5ddd6));
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--domain-color, var(--sage-mid)) 12%, white) 0%,
+      #fff 44%
+    );
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--domain-color, var(--sage-mid)) 10%, transparent);
+}
+
+.parent-closing-quote {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  max-width: none;
+}
+
+@media (max-width: 720px) {
+  .parent-report-cover .interpret-section-banner {
+    min-height: 12.5rem;
+  }
+
+  .parent-report-section > .interpret-section-banner {
+    min-height: 11rem;
+  }
+}
+
 @media (max-width: 720px) {
   .couple-closing-quote {
     margin: 2rem auto 1.5rem;
@@ -17624,5 +17758,115 @@ body.is-dashboard .site-footer {
     max-height: 12rem;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  /* —— Parent report print packing (couples-style mastheads) —— */
+  body.print-parent-report .parent-report-cover {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    min-height: 0;
+    max-height: 273mm;
+  }
+
+  body.print-parent-report .parent-report-cover .interpret-section-banner {
+    min-height: 110mm;
+    max-height: 120mm;
+    margin: 0;
+    border-radius: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-parent-report .parent-report-cover__meta {
+    padding: 4mm 5mm;
+  }
+
+  body.print-parent-report .parent-report-cover__name {
+    font-size: 14pt;
+  }
+
+  body.print-parent-report .parent-report-intro,
+  body.print-parent-report .couple-merge-intro.parent-report-intro {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    max-height: 273mm;
+  }
+
+  body.print-parent-report .parent-report-intro .couple-merge-intro__banner {
+    min-height: 58mm;
+    max-height: 64mm;
+  }
+
+  body.print-parent-report .parent-report-intro .couple-merge-intro__banner-image {
+    min-height: 58mm;
+    max-height: 64mm;
+  }
+
+  body.print-parent-report .parent-report-intro .couple-merge-intro__content {
+    padding: 5mm 8mm 6mm;
+  }
+
+  body.print-parent-report .parent-report-intro .couple-merge-intro__body p {
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  body.print-parent-report .parent-report-section > .interpret-section-banner {
+    min-height: 42mm;
+    max-height: 48mm;
+    border-radius: 4mm;
+    margin-bottom: 3mm;
+  }
+
+  body.print-parent-report .profile-section--trail-interpret > .interpret-section-banner {
+    width: 100%;
+    max-width: none;
+    min-height: 42mm;
+    max-height: 48mm;
+    place-items: start stretch;
+  }
+
+  body.print-parent-report .parent-home-visuals {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-top: 3mm;
+  }
+
+  body.print-parent-report .parent-home-visuals .couple-visual-visuals__image {
+    min-height: 38mm;
+    max-height: 48mm;
+  }
+
+  body.print-parent-report .parent-match-card {
+    box-shadow: none;
+    padding: 3mm;
+  }
+
+  body.print-parent-report .parent-closing-quote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 4mm auto 2mm;
+    max-width: 160mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-parent-report .parent-report .sharing-summary {
+    break-after: avoid;
+    page-break-after: avoid;
+    margin: 0 0 3mm;
   }
 }

@@ -344,6 +344,18 @@ const QUESTIONNAIRE_UI = {
     profileTitle: "Your sensory trail profile",
     profileTitleParent: "Your child’s sensory trail profile",
     profileIntro: "A clear reading of the sensory patterns highlighted in this screening. These results are descriptive and are not a diagnosis.",
+    profileIntroParent:
+      "A clear reading of the sensory patterns highlighted in this screening — written for you as the parent. These results are descriptive and are not a diagnosis.",
+    parentReportIntroTitle: "Reading your child’s trail",
+    parentReportIntroLead: "Every child experiences the world in their own way.",
+    parentReportIntroP1:
+      "This report maps how your child tends to notice, seek, and recover from sensory input at home and through the day.",
+    parentReportIntroP2:
+      "Use it as a shared language with your family and care team — a guide for what helps, what overwhelms, and where small changes can make everyday life easier.",
+    parentReportIntroP3:
+      "There is no right or wrong trail. Understanding your child’s pattern is the first step toward supporting them with more ease.",
+    parentClosingQuote:
+      "When we understand a child’s sensory trail, we can walk beside them with more patience, flexibility, and care.",
     overallPattern: "Overall pattern",
     sensitiveSignals: "sensitive signals",
     seekingSignals: "seeking signals",
@@ -1283,6 +1295,18 @@ const QUESTIONNAIRE_UI = {
     profileTitle: "Jou sensoriese roete-profiel",
     profileTitleParent: "Jou kind se sensoriese roete-profiel",
     profileIntro: "’n Duidelike lesing van die sensoriese patrone wat in hierdie sifting uitgelig is. Hierdie resultate is beskrywend en is nie ’n diagnose nie.",
+    profileIntroParent:
+      "’n Duidelike lesing van die sensoriese patrone wat in hierdie sifting uitgelig is — geskryf vir jou as die ouer. Hierdie resultate is beskrywend en is nie ’n diagnose nie.",
+    parentReportIntroTitle: "Jou kind se roete lees",
+    parentReportIntroLead: "Elke kind ervaar die wêreld op hul eie manier.",
+    parentReportIntroP1:
+      "Hierdie verslag kaart hoe jou kind geneig is om sensoriese insette by die huis en deur die dag op te merk, te soek en daarvan te herstel.",
+    parentReportIntroP2:
+      "Gebruik dit as ’n gedeelde taal met jou gesin en sorgspan — ’n gids vir wat help, wat oorweldig, en waar klein veranderinge die alledaagse lewe makliker kan maak.",
+    parentReportIntroP3:
+      "Daar is geen regte of verkeerde roete nie. Om jou kind se patroon te verstaan is die eerste tree om hulle met meer gemak te ondersteun.",
+    parentClosingQuote:
+      "Wanneer ons ’n kind se sensoriese roete verstaan, kan ons met meer geduld, buigsaamheid en sorg langs hulle stap.",
     overallPattern: "Algehele patroon",
     sensitiveSignals: "sensitiewe seine",
     seekingSignals: "soekende seine",
