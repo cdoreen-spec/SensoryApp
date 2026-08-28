@@ -7925,10 +7925,13 @@ function renderClassicOverallScoreCard(metrics, copy) {
         </div>
       </div>
 
+      ${canOfferWorkReport()
+        ? ""
+        : `
       <p class="overall-score__total">
         <span class="overall-score__total-value">${metrics.scored}</span>
         <span class="overall-score__total-label">${escapeHtml(copy.overallItemsScored)}</span>
-      </p>
+      </p>`}
 
       <ul class="overall-score__stats" aria-label="${escapeHtml(copy.overallScoreLabel)}">${stats}</ul>
 
@@ -9018,6 +9021,7 @@ function waitForReportPrintImages(root = document) {
         ".teen-crew img",
         ".results-section-bridge img",
         ".profile-section img",
+        ".work-profile-cover img",
         ".report-conclusion img",
         ".print-brand img",
       ].join(", ")
@@ -9718,6 +9722,15 @@ function renderWorkSupportPhaseList(label, items) {
     </div>`;
 }
 
+const WORK_SUPPORT_IMAGES = {
+  auditory: "assets/support-auditory.png",
+  tactile: "assets/support-tactile.png",
+  movement: "assets/support-movement.png",
+  visual: "assets/support-visual.png",
+  smellTaste: "assets/support-smell-taste.png",
+  everyday: "assets/support-everyday.png",
+};
+
 function renderWorkSupportArticles(groups, reportCopy, { showPresentation = true, showStrategies = true } = {}) {
   return (groups || [])
     .map((group) => {
@@ -9745,12 +9758,22 @@ function renderWorkSupportArticles(groups, reportCopy, { showPresentation = true
       if (!presentation && !strategies) return "";
       return `
         <article class="work-support" data-band="${band}">
-          <header class="work-support__header">
-            <h6 class="work-support__title">${escapeHtml(group.title)}</h6>
-            <span class="work-support__band work-support__band--${band}">${escapeHtml(bandLabel)}</span>
-          </header>
-          ${presentation}
-          ${strategies}
+          <div class="work-support__media">
+            <img
+              src="${escapeHtml(WORK_SUPPORT_IMAGES[group.id] || WORK_SUPPORT_IMAGES.everyday)}"
+              alt="${escapeHtml(group.title)} sensory support"
+              loading="eager"
+              decoding="async"
+            />
+          </div>
+          <div class="work-support__content">
+            <header class="work-support__header">
+              <h6 class="work-support__title">${escapeHtml(group.title)}</h6>
+              <span class="work-support__band work-support__band--${band}">${escapeHtml(bandLabel)}</span>
+            </header>
+            ${presentation}
+            ${strategies}
+          </div>
         </article>`;
     })
     .join("");
@@ -10539,6 +10562,30 @@ function renderParentClosingQuote(copy) {
     </figure>`;
 }
 
+function renderWorkProfileCover(copy) {
+  const name = (state.demographics.name || "").trim();
+  return `
+    <section class="work-profile-cover" aria-labelledby="profile-title">
+      <div class="work-profile-cover__media">
+        <img
+          src="assets/front-page-sensory-trail.png"
+          alt=""
+          class="work-profile-cover__image"
+          width="682"
+          height="1024"
+          loading="eager"
+          decoding="async"
+        />
+      </div>
+      <div class="work-profile-cover__content">
+        <p class="work-profile-cover__kicker">${escapeHtml(copy.viewpoint || "Viewpoint")}</p>
+        <h2 id="profile-title" class="work-profile-cover__title">Sensory trail profile</h2>
+        ${name ? `<p class="work-profile-cover__name">${escapeHtml(name)}</p>` : ""}
+        <p class="work-profile-cover__regarding">Regarding: work</p>
+      </div>
+    </section>`;
+}
+
 function renderResults() {
   clearSensoryDraft();
   if (!state.completedAt) {
@@ -10558,6 +10605,7 @@ function renderResults() {
   const fromDashboard = Boolean(state.archiveReadOnly) && canAccessTherapistDashboard();
   const pagePlan = buildReportPagePlan(copy, scores, metrics);
   const isParent = state.respondent === "parent";
+  const isWorkProfile = state.respondent === "adult" && state.lifeContext === "work";
 
   if (shouldEmailResultsToClinician()) {
     queueMicrotask(() => ensureResultsSubmitted());
@@ -10576,6 +10624,14 @@ function renderResults() {
     ? `${renderParentReportCover(copy, submissionNote)}
       ${renderSharingPermissionsSummary()}
       ${renderParentReportIntro(copy)}`
+    : isWorkProfile
+      ? `
+      <div class="results-intro results-intro--concise results-intro--work" aria-labelledby="profile-title">
+        ${renderWorkProfileCover(copy)}
+        ${submissionNote}
+      </div>
+
+      ${renderSharingPermissionsSummary()}`
     : `
       <div class="results-intro results-intro--concise" aria-labelledby="profile-title">
         ${renderInterpretSectionBanner({
