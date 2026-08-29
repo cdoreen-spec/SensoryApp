@@ -7925,14 +7925,6 @@ function renderClassicOverallScoreCard(metrics, copy) {
         </div>
       </div>
 
-      ${canOfferWorkReport()
-        ? ""
-        : `
-      <p class="overall-score__total">
-        <span class="overall-score__total-value">${metrics.scored}</span>
-        <span class="overall-score__total-label">${escapeHtml(copy.overallItemsScored)}</span>
-      </p>`}
-
       <ul class="overall-score__stats" aria-label="${escapeHtml(copy.overallScoreLabel)}">${stats}</ul>
 
       <div class="overall-score__bar">
@@ -8551,6 +8543,56 @@ function renderTeenSenseSupportGuide(scores, pageEntry) {
     </section>`;
 }
 
+const SENSE_SUPPORT_IMAGES = {
+  auditory: [{ src: "assets/sense-auditory.png", alt: "Listening with headphones" }],
+  tactile: [{ src: "assets/sense-tactile.png?v=20260829c", alt: "Holding and feeling flowing sand" }],
+  movement: [{ src: "assets/sense-movement.png", alt: "Running outdoors" }],
+  visual: [{ src: "assets/sense-visual.png", alt: "Seeing clearly through glasses" }],
+  smellTaste: [{ src: "assets/sense-taste.png", alt: "Tasting a lemon" }],
+  everyday: [{ src: "assets/sense-everyday.png", alt: "A calm everyday setting" }],
+};
+
+const SUPPORT_IMAGE_ADJUSTMENT_KEY = "sensory-support-image-adjustments-v1";
+const POSITIONED_SUPPORT_IMAGES = new Set(["auditory", "tactile"]);
+
+function getSupportImageAdjustment(domain) {
+  const fallback = { scale: 1, x: 0, y: 0 };
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(SUPPORT_IMAGE_ADJUSTMENT_KEY) || "{}");
+    const saved = stored?.[domain];
+    if (!saved) return fallback;
+    return {
+      scale: Math.min(2, Math.max(0.75, Number.isFinite(Number(saved.scale)) ? Number(saved.scale) : 1)),
+      x: Math.min(220, Math.max(-220, Number.isFinite(Number(saved.x)) ? Number(saved.x) : 0)),
+      y: Math.min(220, Math.max(-220, Number.isFinite(Number(saved.y)) ? Number(saved.y) : 0)),
+    };
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function renderSenseSupportVisual(row, index) {
+  const images = SENSE_SUPPORT_IMAGES[row.id] || [];
+  if (!images.length) return "";
+  const adjustment = POSITIONED_SUPPORT_IMAGES.has(row.id) ? getSupportImageAdjustment(row.id) : null;
+
+  return `
+    <figure
+      class="sense-support__visual${images.length > 1 ? " sense-support__visual--duo" : ""}"
+      aria-label="${escapeHtml(row.shortTitle)}"
+      ${adjustment ? `style="--support-image-scale:${adjustment.scale}; --support-image-x:${adjustment.x}px; --support-image-y:${adjustment.y}px"` : ""}
+    >
+      ${images
+        .map(
+          (image) => `
+        <img src="${image.src}" alt="${escapeHtml(image.alt)}" />`
+        )
+        .join("")}
+      <span class="sense-support__visual-mark" aria-hidden="true">${String(index + 1).padStart(2, "0")}</span>
+    </figure>
+    `;
+}
+
 function renderSenseSupportGuide(scores, pageEntry) {
   const copy = currentUi();
   const isParent = state.respondent === "parent";
@@ -8616,6 +8658,7 @@ function renderSenseSupportGuide(scores, pageEntry) {
           data-profile="${escapeHtml(row.profile)}"
           style="--domain-color:${row.color}; --support-delay:${index * 45}ms"
         >
+          ${renderSenseSupportVisual(row, index)}
           <header class="sense-support__header">
             <span class="sense-support__icon" aria-hidden="true">${row.icon}</span>
             <div class="sense-support__titles">

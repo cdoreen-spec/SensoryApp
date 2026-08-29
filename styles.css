@@ -5235,13 +5235,124 @@ body.is-pain-screen .site-footer {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  padding: 1rem 1.05rem 1.05rem 1.2rem;
+  padding: 0.85rem 1.05rem 1.05rem 1.2rem;
   border-radius: 16px;
-  background: rgba(255, 252, 245, 0.92);
+  background: rgba(232, 242, 232, 0.96);
   border: 1px solid rgba(90, 120, 90, 0.14);
   overflow: hidden;
   animation: sense-support-in 0.45s ease both;
   animation-delay: var(--support-delay, 0ms);
+}
+
+.sense-support__visual {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+  height: clamp(8rem, 18vw, 10rem);
+  margin: -0.85rem -1.05rem 0.15rem -1.2rem;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--sage-light);
+  isolation: isolate;
+}
+
+.sense-support__visual--duo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sense-support__visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 56%, rgba(22, 48, 34, 0.28) 100%);
+}
+
+.sense-support__visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  object-fit: cover;
+  filter: saturate(0.92) contrast(0.98);
+  transition: transform 0.45s ease, filter 0.45s ease;
+}
+
+.sense-support__visual-mark {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.7rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(36, 75, 56, 0.56);
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.sense-support__card:hover .sense-support__visual img {
+  filter: saturate(1.04) contrast(1.02);
+  transform: scale(1.035);
+}
+
+.sense-support__card[data-domain="auditory"] .sense-support__visual img,
+.sense-support__card[data-domain="tactile"] .sense-support__visual img {
+  transform: translate3d(var(--support-image-x, 0px), var(--support-image-y, 0px), 0)
+    scale(var(--support-image-scale, 1));
+}
+
+.sense-support__card[data-domain="auditory"] .sense-support__visual,
+.sense-support__card[data-domain="tactile"] .sense-support__visual {
+  height: clamp(9.5rem, 21vw, 11.5rem);
+  background: linear-gradient(135deg, #dce9df, #eff5ef);
+}
+
+.sense-support__card[data-domain="auditory"] .sense-support__visual img,
+.sense-support__card[data-domain="tactile"] .sense-support__visual img {
+  object-fit: contain;
+  padding: 0.55rem 1.25rem;
+}
+
+.sense-support__card[data-domain="auditory"] .sense-support__visual img {
+  object-position: center 45%;
+}
+
+.sense-support__card[data-domain="tactile"] .sense-support__visual img {
+  object-position: center 58%;
+}
+
+.sense-support__card[data-domain="tactile"] .sense-support__visual img {
+  object-fit: cover;
+  padding: 0;
+  object-position: center 58%;
+}
+
+.sense-support__card[data-domain="movement"] .sense-support__visual img {
+  object-position: center 46%;
+}
+
+.sense-support__card[data-domain="visual"] .sense-support__visual img {
+  object-position: center 48%;
+}
+
+.sense-support__card[data-domain="smellTaste"] .sense-support__visual img:first-child {
+  object-position: center 52%;
+}
+
+.sense-support__card[data-domain="smellTaste"] .sense-support__visual img:last-of-type {
+  object-position: center 43%;
+}
+
+.sense-support__card[data-domain="everyday"] .sense-support__visual img {
+  object-position: center 54%;
 }
 
 .sense-support__card::before {
@@ -5320,6 +5431,12 @@ body.is-pain-screen .site-footer {
 .sense-support__lean-text {
   font-size: 0.84rem;
   color: var(--ink);
+}
+
+.sense-support__lean .threshold-pill {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.42);
 }
 
 .sense-support__body {
