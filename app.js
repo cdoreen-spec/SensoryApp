@@ -7453,6 +7453,43 @@ function renderIdealSaturdayResults(pageEntry) {
   const copy = currentUi();
   const isTeen = state.respondent === "teen";
   const isParent = state.respondent === "parent";
+  const isHomeAdult = state.respondent === "adult" && state.lifeContext === "home";
+  const closeQuote = copy.idealSaturdayHomeClose || "";
+
+  if (isHomeAdult) {
+    return `
+    <section class="profile-section ideal-saturday-results ideal-saturday-results--home"${reportPageAttrs(pageEntry)} aria-labelledby="ideal-saturday-results-title">
+      <div class="ideal-saturday-results__copy">
+        <p class="profile-kicker">${escapeHtml(copy.idealSaturdayTag)}</p>
+        <h3 id="ideal-saturday-results-title">${escapeHtml(copy.idealSaturdayResultsTitle)}</h3>
+        <p class="profile-section__summary ideal-saturday-results__intro">${escapeHtml(copy.idealSaturdayResultsIntro)}</p>
+        <blockquote class="ideal-saturday-results__quote">
+          <p>${escapeHtml(text)}</p>
+        </blockquote>
+      </div>
+      <figure class="ideal-saturday-results__close">
+        <img
+          src="assets/home-closing-trail.jpg"
+          alt=""
+          class="ideal-saturday-results__close-image"
+          width="612"
+          height="352"
+          loading="eager"
+          decoding="async"
+        />
+        ${
+          closeQuote
+            ? `<figcaption class="ideal-saturday-results__close-quote">
+          <span class="ideal-saturday-results__close-mark" aria-hidden="true">“</span>
+          <p>${escapeHtml(closeQuote)}</p>
+        </figcaption>`
+            : ""
+        }
+      </figure>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+    </section>`;
+  }
+
   return `
     <section class="profile-section ideal-saturday-results${isTeen ? " ideal-saturday-results--teen" : ""}${isParent ? " ideal-saturday-results--parent" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="ideal-saturday-results-title">
       <p class="profile-kicker">${escapeHtml(copy.idealSaturdayTag)}</p>
@@ -8355,10 +8392,35 @@ function renderTeenCrewSummary(metrics, pageEntry) {
   `;
 }
 
+function renderBriefScoresHomeRest(copy) {
+  if (state.respondent !== "adult" || state.lifeContext !== "home") return "";
+  const quote = copy.briefScoresHomeQuote;
+  if (!quote) return "";
+  return `
+    <aside class="brief-scores__home-rest">
+      <figure class="brief-scores__home-figure">
+        <img
+          src="assets/home-scores-trail.jpg"
+          alt=""
+          class="brief-scores__home-image"
+          width="1024"
+          height="639"
+          loading="eager"
+          decoding="async"
+        />
+      </figure>
+      <blockquote class="brief-scores__home-quote">
+        <span class="brief-scores__home-mark" aria-hidden="true">“</span>
+        <p>${escapeHtml(quote)}</p>
+      </blockquote>
+    </aside>`;
+}
+
 function renderBriefScoreSummary(scores, metrics, pageEntry) {
   const copy = currentUi();
   const isParent = state.respondent === "parent";
   const isTeen = state.respondent === "teen";
+  const isHomeAdult = state.respondent === "adult" && state.lifeContext === "home";
   const rows = getScoreRows(scores);
   const kicker = isParent ? copy.briefScoresKickerParent : copy.briefScoresKicker;
   const intro = isParent ? copy.briefScoresIntroParent : copy.briefScoresIntro;
@@ -8374,18 +8436,27 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
       : renderAdultSenseGlance(rows, copy, null);
 
   return `
-    <section class="profile-section profile-section--brief-scores${isParent ? " parent-report-section" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
-      ${renderInterpretSectionBanner({
-        image: isParent ? "assets/heading-viewpoint-sunrise.png?v=20260815c" : "assets/heading-viewpoint-forest.png",
-        objectPosition: isParent ? "center 48%" : "center 45%",
-        kicker: "",
-        titleId: "brief-scores-title",
-        title: kicker,
-        lead: intro,
-        variant: isParent ? "couple" : "viewpoint",
-        width: 1024,
-        height: isParent ? 639 : 682,
-      })}
+    <section class="profile-section profile-section--brief-scores${
+      isParent ? " parent-report-section" : ""
+    }${isHomeAdult ? " profile-section--brief-scores-home" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
+      ${
+        isHomeAdult
+          ? `<h3 id="brief-scores-title" class="visually-hidden">${escapeHtml(kicker)}</h3>`
+          : renderInterpretSectionBanner({
+              image: isParent
+                ? "assets/heading-viewpoint-sunrise.png?v=20260815c"
+                : "assets/heading-viewpoint-forest.png",
+              objectPosition: isParent ? "center 48%" : "center 45%",
+              kicker: "",
+              titleId: "brief-scores-title",
+              title: kicker,
+              lead: intro,
+              variant: isParent ? "couple" : "viewpoint",
+              width: 1024,
+              height: isParent ? 639 : 682,
+            })
+      }
+      ${renderBriefScoresHomeRest(copy)}
       <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
       ${canOfferWorkReport() ? "" : renderOverallScoreCard(metrics, copy)}
       ${scoresVisual}
@@ -9065,6 +9136,7 @@ function waitForReportPrintImages(root = document) {
         ".results-section-bridge img",
         ".profile-section img",
         ".work-profile-cover img",
+        ".home-profile-cover img",
         ".report-conclusion img",
         ".print-brand img",
       ].join(", ")
@@ -10629,6 +10701,47 @@ function renderWorkProfileCover(copy) {
     </section>`;
 }
 
+function renderHomeProfileCover(copy) {
+  const name = (state.demographics.name || "").trim();
+  const dateLabel = formatQuestionnaireDate(state.completedAt, state.language);
+  const context = copy.contextHome || "Home";
+  return `
+    <section class="home-profile-cover" aria-labelledby="profile-title">
+      <div class="home-profile-cover__hero">
+        <img
+          src="assets/home-cover-trail.jpg"
+          alt=""
+          class="home-profile-cover__hero-image"
+          width="682"
+          height="1024"
+          loading="eager"
+          decoding="async"
+        />
+        <div class="home-profile-cover__hero-veil" aria-hidden="true"></div>
+        <div class="home-profile-cover__brand">
+          <img src="assets/logo.png" alt="" class="home-profile-cover__logo" width="72" height="72" />
+          <div class="home-profile-cover__brand-text">
+            <p class="home-profile-cover__studio">Soulful Sensory OT</p>
+            <p class="home-profile-cover__tag">${escapeHtml(
+              copy.interpretCoverBrandTag || "Occupational Therapy Services"
+            )}</p>
+          </div>
+        </div>
+      </div>
+      <div class="home-profile-cover__board">
+        <div class="home-profile-cover__copy">
+          <p class="home-profile-cover__kicker">${escapeHtml(copy.viewpoint || "Viewpoint")}</p>
+          <h2 id="profile-title" class="home-profile-cover__title">${escapeHtml(
+            copy.profileTitle || "Sensory trail profile"
+          )}</h2>
+          ${name ? `<p class="home-profile-cover__name">${escapeHtml(name)}</p>` : ""}
+          <p class="home-profile-cover__regarding">Regarding: ${escapeHtml(context)}</p>
+          ${dateLabel ? `<p class="home-profile-cover__date">${escapeHtml(dateLabel)}</p>` : ""}
+        </div>
+      </div>
+    </section>`;
+}
+
 function renderResults() {
   clearSensoryDraft();
   if (!state.completedAt) {
@@ -10649,6 +10762,7 @@ function renderResults() {
   const pagePlan = buildReportPagePlan(copy, scores, metrics);
   const isParent = state.respondent === "parent";
   const isWorkProfile = state.respondent === "adult" && state.lifeContext === "work";
+  const isHomeProfile = state.respondent === "adult" && state.lifeContext === "home";
 
   if (shouldEmailResultsToClinician()) {
     queueMicrotask(() => ensureResultsSubmitted());
@@ -10671,6 +10785,14 @@ function renderResults() {
       ? `
       <div class="results-intro results-intro--concise results-intro--work" aria-labelledby="profile-title">
         ${renderWorkProfileCover(copy)}
+        ${submissionNote}
+      </div>
+
+      ${renderSharingPermissionsSummary()}`
+    : isHomeProfile
+      ? `
+      <div class="results-intro results-intro--concise results-intro--home" aria-labelledby="profile-title">
+        ${renderHomeProfileCover(copy)}
         ${submissionNote}
       </div>
 

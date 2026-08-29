@@ -312,6 +312,8 @@ const QUESTIONNAIRE_UI = {
     idealSaturdayRequired: "Please share a little about that best Saturday before continuing.",
     idealSaturdayResultsTitle: "Best Saturday",
     idealSaturdayResultsIntro: "A free-text snapshot of what an ideal day looks like — useful sensory clues beyond the yes/no scores.",
+    idealSaturdayHomeClose:
+      "By understanding your sensory needs, you can create a home and family environment that supports regulation, healthy relationships, and everyday wellbeing.",
     teenTrailOverviewQuote:
       "Your senses are how you meet the world — and how you learn what helps you feel like yourself again.",
     teenTrailOverviewIntro:
@@ -586,6 +588,8 @@ const QUESTIONNAIRE_UI = {
       "A quick view of the overall pattern and how each sense leaned. This is descriptive, not a diagnosis.",
     briefScoresIntroParent:
       "A quick view of the overall pattern and how each sense leaned. This is descriptive, not a diagnosis.",
+    briefScoresHomeQuote:
+      "Home is where your nervous system spends much of its time recovering. Understanding your sensory preferences allows you to intentionally create spaces and routines that promote calm, comfort, and emotional wellbeing.",
     trailInterpretSectionLabel: "Interpretation",
     senseSupportKicker: "Support by sense",
     senseSupportTitle: "How to support each sensory system",
@@ -1262,6 +1266,8 @@ const QUESTIONNAIRE_UI = {
     idealSaturdayRequired: "Deel asseblief ’n bietjie oor daardie beste Saterdag voordat jy voortgaan.",
     idealSaturdayResultsTitle: "Beste Saterdag",
     idealSaturdayResultsIntro: "’n Vryteks-oomblik van hoe ’n ideale dag lyk — nuttige sensoriese leidrade buite die ja/nee-tellings.",
+    idealSaturdayHomeClose:
+      "Deur jou sensoriese behoeftes te verstaan, kan jy ’n huis- en gesinsomgewing skep wat regulering, gesonde verhoudings en alledaagse welstand ondersteun.",
     teenTrailOverviewQuote:
       "Jou sintuie is hoe jy die wêreld ontmoet — en hoe jy leer wat help om weer jouself te voel.",
     teenTrailOverviewIntro:
@@ -1536,6 +1542,8 @@ const QUESTIONNAIRE_UI = {
       "’n Vinnige blik op die algehele patroon en hoe elke sintuig geneig het. Dit is beskrywend, nie ’n diagnose nie.",
     briefScoresIntroParent:
       "’n Vinnige blik op die algehele patroon en hoe elke sintuig geneig het. Dit is beskrywend, nie ’n diagnose nie.",
+    briefScoresHomeQuote:
+      "Die huis is waar jou senuweestelsel die meeste van sy tyd herstel. As jy jou sensoriese voorkeure verstaan, kan jy doelbewus ruimtes en roetines skep wat kalmte, gemak en emosionele welstand bevorder.",
     trailInterpretSectionLabel: "Interpretasie",
     senseSupportKicker: "Ondersteuning per sintuig",
     senseSupportTitle: "Hoe om elke sensoriese stelsel te ondersteun",
