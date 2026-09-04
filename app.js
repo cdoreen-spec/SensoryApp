@@ -8435,25 +8435,52 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
       ? renderTeenSenseBalanceBars(rows, copy, null)
       : renderAdultSenseGlance(rows, copy, null);
 
+  if (isParent) {
+    return `
+    <section class="profile-section profile-section--brief-scores parent-report-section parent-scores-sheet"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
+      <div class="parent-scores-sheet__hero">
+        <img
+          src="assets/parent-scores-path.jpg"
+          alt=""
+          class="parent-scores-sheet__hero-image"
+          width="1600"
+          height="1067"
+          loading="eager"
+          decoding="async"
+        />
+        <div class="parent-scores-sheet__hero-veil" aria-hidden="true"></div>
+        <div class="parent-scores-sheet__hero-copy">
+          <p class="parent-scores-sheet__kicker">${escapeHtml(copy.viewpoint || "")}</p>
+          <h3 id="brief-scores-title" class="parent-scores-sheet__title">${escapeHtml(kicker)}</h3>
+          <p class="parent-scores-sheet__lead">${escapeHtml(intro)}</p>
+        </div>
+      </div>
+      <div class="parent-scores-sheet__body">
+        <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
+        ${renderOverallScoreCard(metrics, copy)}
+        ${scoresVisual}
+      </div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+    </section>`;
+  }
+
   return `
     <section class="profile-section profile-section--brief-scores${
-      isParent ? " parent-report-section" : ""
-    }${isHomeAdult ? " profile-section--brief-scores-home" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
+      isHomeAdult ? " profile-section--brief-scores-home" : ""
+    }"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
       ${
         isHomeAdult
           ? `<h3 id="brief-scores-title" class="visually-hidden">${escapeHtml(kicker)}</h3>`
           : renderInterpretSectionBanner({
-              image: isParent
-                ? "assets/heading-viewpoint-sunrise.png?v=20260815c"
-                : "assets/heading-viewpoint-forest.png",
-              objectPosition: isParent ? "center 48%" : "center 45%",
+              image: "assets/heading-viewpoint-forest.png",
+              objectPosition: "center 45%",
               kicker: "",
               titleId: "brief-scores-title",
               title: kicker,
               lead: intro,
-              variant: isParent ? "couple" : "viewpoint",
+              variant: "viewpoint",
               width: 1024,
-              height: isParent ? 639 : 682,
+              height: 682,
             })
       }
       ${renderBriefScoresHomeRest(copy)}
@@ -8752,17 +8779,43 @@ function renderSenseSupportGuide(scores, pageEntry) {
 
   if (!cards) return "";
 
+  if (isParent) {
+    return `
+    <section class="profile-section profile-section--sense-support parent-report-section parent-support-sheet"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
+      <figure class="parent-support-sheet__photo">
+        <img
+          src="assets/parent-support-forest.jpg"
+          alt=""
+          class="parent-support-sheet__image"
+          width="1067"
+          height="1600"
+          loading="eager"
+          decoding="async"
+        />
+      </figure>
+      <div class="parent-support-sheet__content">
+        <header class="parent-support-sheet__intro">
+          <p class="parent-support-sheet__kicker">${escapeHtml(copy.senseSupportKicker || "")}</p>
+          <h3 id="sense-support-title" class="parent-support-sheet__title">${escapeHtml(title)}</h3>
+          <p class="parent-support-sheet__lead">${escapeHtml(intro)}</p>
+        </header>
+        <div class="sense-support__grid">${cards}</div>
+      </div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+    </section>`;
+  }
+
   return `
-    <section class="profile-section profile-section--sense-support${isParent ? " parent-report-section" : ""}"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
+    <section class="profile-section profile-section--sense-support"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
       ${renderInterpretSectionBanner({
-        image: isParent ? "assets/heading-home-trail.png" : "assets/heading-forest-trail.png",
-        objectPosition: isParent ? "center 42%" : "center 40%",
+        image: "assets/heading-forest-trail.png",
+        objectPosition: "center 40%",
         kicker: copy.senseSupportKicker,
         titleId: "sense-support-title",
         title,
         lead: intro,
-        variant: isParent ? "couple" : "forest",
-        width: isParent ? 683 : 682,
+        variant: "forest",
+        width: 682,
         height: 1024,
       })}
       <div class="sense-support__grid">
@@ -10558,79 +10611,101 @@ function renderResultsSummary() {
 
 function renderParentReportCover(copy, submissionNote = "") {
   const childName = (state.demographics.name || "").trim();
-  const context = lifeContextLabel();
-  return `
-    <section class="parent-report-cover" aria-labelledby="profile-title">
-      ${renderInterpretSectionBanner({
-        image: "assets/couple-intro-trail.png",
-        objectPosition: "center 42%",
-        kicker: copy.viewpoint,
-        titleId: "profile-title",
-        title: copy.profileTitleParent || copy.profileTitle,
-        lead: copy.profileIntroParent || copy.profileIntro,
-        variant: "couple",
-        titleTag: "h2",
-        width: 1200,
-        height: 800,
-      })}
-      <div class="parent-report-cover__meta">
-        ${
-          childName
-            ? `<p class="parent-report-cover__name">${escapeHtml(childName)}</p>`
-            : ""
-        }
-        ${
-          context
-            ? `<p class="parent-report-cover__context">
-                <span class="context-chip">${escapeHtml(copy.focusedOn)} · ${escapeHtml(context)}</span>
-              </p>`
-            : ""
-        }
-        ${submissionNote}
-      </div>
-    </section>
-  `;
-}
-
-function renderParentReportIntro(copy) {
+  const parentName = (state.demographics.parentName || "").trim();
+  const dateLabel = formatQuestionnaireDate(state.completedAt, state.language);
   const paragraphs = [
     copy.parentReportIntroP1,
     copy.parentReportIntroP2,
     copy.parentReportIntroP3,
   ].filter(Boolean);
-  if (!paragraphs.length && !copy.parentReportIntroTitle) return "";
+  const regarding = copy.parentReportRegarding || "Parent / child";
 
   return `
-    <section class="couple-merge-intro parent-report-intro" aria-labelledby="parent-report-intro-title">
-      <header class="couple-merge-intro__banner">
-        <figure class="couple-merge-intro__banner-media" aria-hidden="true">
-          <img
-            src="assets/home-life-family.png"
-            alt=""
-            class="couple-merge-intro__banner-image"
-            width="1024"
-            height="682"
-            loading="eager"
-            decoding="async"
-          />
-        </figure>
-        <div class="couple-merge-intro__banner-veil" aria-hidden="true"></div>
-        <div class="couple-merge-intro__banner-content">
-          <p class="couple-merge-intro__kicker">${escapeHtml(copy.viewpoint || "")}</p>
-          <h2 id="parent-report-intro-title" class="couple-merge-intro__title">${escapeHtml(
-            copy.parentReportIntroTitle || copy.profileTitleParent
+    <section class="parent-report-cover" aria-labelledby="profile-title">
+      <div class="parent-report-cover__hero">
+        <img
+          src="assets/couple-intro-trail.png"
+          alt=""
+          class="parent-report-cover__hero-image"
+          width="1200"
+          height="800"
+          loading="eager"
+          decoding="async"
+        />
+        <div class="parent-report-cover__hero-veil" aria-hidden="true"></div>
+        <div class="parent-report-cover__brand">
+          <img src="assets/logo.png" alt="" class="parent-report-cover__logo" width="72" height="72" />
+          <div class="parent-report-cover__brand-text">
+            <p class="parent-report-cover__studio">Soulful Sensory OT</p>
+            <p class="parent-report-cover__tag">${escapeHtml(
+              copy.interpretCoverBrandTag || "Occupational Therapy Services"
+            )}</p>
+          </div>
+        </div>
+        <div class="parent-report-cover__hero-copy">
+          <p class="parent-report-cover__kicker">${escapeHtml(copy.viewpoint || "")}</p>
+          <h2 id="profile-title" class="parent-report-cover__title">${escapeHtml(
+            copy.parentReportIntroTitle || copy.profileTitleParent || copy.profileTitle
           )}</h2>
           ${
             copy.parentReportIntroLead
-              ? `<p class="couple-merge-intro__lead">${escapeHtml(copy.parentReportIntroLead)}</p>`
+              ? `<p class="parent-report-cover__lead">${escapeHtml(copy.parentReportIntroLead)}</p>`
               : ""
           }
         </div>
-      </header>
-      <div class="couple-merge-intro__content">
-        <div class="couple-merge-intro__body">
-          ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+      </div>
+      <div class="parent-report-cover__sheet">
+        <div class="parent-report-cover__identity">
+          <div class="parent-report-cover__who">
+            ${
+              childName
+                ? `<p class="parent-report-cover__label">${escapeHtml(
+                    copy.interpretCoverPreparedFor || "Prepared for"
+                  )}</p>
+              <p class="parent-report-cover__name">${escapeHtml(childName)}</p>`
+                : ""
+            }
+            ${
+              parentName
+                ? `<p class="parent-report-cover__parent"><span>${escapeHtml(
+                    copy.interpretCoverParentLabel || "Parent / guardian"
+                  )}</span> ${escapeHtml(parentName)}</p>`
+                : ""
+            }
+          </div>
+          <div class="parent-report-cover__facts">
+            <p class="parent-report-cover__regarding">${escapeHtml(regarding)}</p>
+            ${dateLabel ? `<p class="parent-report-cover__date">${escapeHtml(dateLabel)}</p>` : ""}
+            ${
+              copy.profileTitleParent
+                ? `<p class="parent-report-cover__profile">${escapeHtml(copy.profileTitleParent)}</p>`
+                : ""
+            }
+          </div>
         </div>
+        <div class="parent-report-cover__reading">
+          <figure class="parent-report-cover__portrait">
+            <img
+              src="assets/home-life-family.png"
+              alt=""
+              class="parent-report-cover__portrait-image"
+              width="1024"
+              height="682"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
+          <div class="parent-report-cover__body">
+            ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+            ${
+              copy.descriptiveMap
+                ? `<p class="parent-report-cover__disclaimer">${escapeHtml(copy.descriptiveMap)}</p>`
+                : ""
+            }
+          </div>
+        </div>
+        ${renderSharingPermissionsSummary()}
+        ${submissionNote}
       </div>
     </section>
   `;
@@ -10778,9 +10853,7 @@ function renderResults() {
         : "";
 
   const introBlock = isParent
-    ? `${renderParentReportCover(copy, submissionNote)}
-      ${renderSharingPermissionsSummary()}
-      ${renderParentReportIntro(copy)}`
+    ? renderParentReportCover(copy, submissionNote)
     : isWorkProfile
       ? `
       <div class="results-intro results-intro--concise results-intro--work" aria-labelledby="profile-title">

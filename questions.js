@@ -349,6 +349,7 @@ const QUESTIONNAIRE_UI = {
     profileIntroParent:
       "A clear reading of the sensory patterns highlighted in this screening — written for you as the parent. These results are descriptive and are not a diagnosis.",
     parentReportIntroTitle: "Reading your child’s trail",
+    parentReportRegarding: "Parent / child",
     parentReportIntroLead: "Every child experiences the world in their own way.",
     parentReportIntroP1:
       "This report maps how your child tends to notice, seek, and recover from sensory input at home and through the day.",
@@ -1303,6 +1304,7 @@ const QUESTIONNAIRE_UI = {
     profileIntroParent:
       "’n Duidelike lesing van die sensoriese patrone wat in hierdie sifting uitgelig is — geskryf vir jou as die ouer. Hierdie resultate is beskrywend en is nie ’n diagnose nie.",
     parentReportIntroTitle: "Jou kind se roete lees",
+    parentReportRegarding: "Ouer / kind",
     parentReportIntroLead: "Elke kind ervaar die wêreld op hul eie manier.",
     parentReportIntroP1:
       "Hierdie verslag kaart hoe jou kind geneig is om sensoriese insette by die huis en deur die dag op te merk, te soek en daarvan te herstel.",
