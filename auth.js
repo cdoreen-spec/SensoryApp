@@ -104,15 +104,67 @@ function publicUser(user) {
   return {
     id: user.id,
     name: user.name,
+    firstName: user.firstName || "",
+    surname: user.surname || "",
     email: user.email,
     role: user.role,
     status: user.status,
     phone: user.phone || "",
+    age: user.age || "",
     notes: user.notes || "",
+    questionnaireType: user.questionnaireType || "",
+    lifeContext: user.lifeContext || "",
+    reasonForReferral: user.reasonForReferral || "",
+    expiresAt: user.expiresAt || null,
+    inviteToken: user.inviteToken || "",
+    createdByUserId: user.createdByUserId || null,
+    assessmentId: user.assessmentId || null,
+    reportVisibility: user.reportVisibility || "",
+    temporaryPassword: user.temporaryPassword || "",
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt || null,
     updatedAt: user.updatedAt || null,
   };
+}
+
+function createInviteToken() {
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function createTemporaryPassword() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes = new Uint8Array(8);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  const body = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+  return `Trail-${body}`;
+}
+
+function addDaysFromNow(days) {
+  const date = new Date();
+  date.setTime(date.getTime() + Number(days) * 24 * 60 * 60 * 1000);
+  return date.toISOString();
+}
+
+function findUserByInviteToken(token) {
+  const raw = String(token || "").trim();
+  if (!raw) return null;
+  return getUsers().find((u) => u.inviteToken && u.inviteToken === raw) || null;
+}
+
+function isPatientAssignmentExpired(user) {
+  if (!user?.expiresAt) return false;
+  const expires = Date.parse(user.expiresAt);
+  return Number.isFinite(expires) && expires < Date.now();
 }
 
 async function ensureAdminSeed() {
@@ -318,8 +370,166 @@ async function loginUser({ email, password }) {
   }
 
   user.lastLoginAt = new Date().toISOString();
+  if (user.temporaryPassword) user.temporaryPassword = "";
   saveUsers(users);
   setSession(user.id);
+  return { ok: true, user: publicUser(user) };
+}
+
+function resolveQuestionnaireAssignment(type, lifeContext = "") {
+  const raw = String(type || "").trim();
+  const context = String(lifeContext || "").trim();
+  const assignments = {
+    "adult-home": { questionnaireType: "adult", lifeContext: "home" },
+    "adult-work": { questionnaireType: "adult", lifeContext: "work" },
+    "teen-home": { questionnaireType: "teen", lifeContext: "home" },
+    "teen-school": { questionnaireType: "teen", lifeContext: "school" },
+    parent: { questionnaireType: "parent", lifeContext: "" },
+    couple: { questionnaireType: "couple", lifeContext: "" },
+    adult: {
+      questionnaireType: "adult",
+      lifeContext: context === "work" || context === "home" ? context : "",
+    },
+    teen: {
+      questionnaireType: "teen",
+      lifeContext: context === "school" || context === "home" ? context : "",
+    },
+  };
+  return assignments[raw] || null;
+}
+
+/**
+ * Therapist/admin creates a patient account and assigns a questionnaire.
+ * Does not sign in as the patient. All questionnaire types expire after `expiryDays`.
+ */
+async function createPatientAccount({
+  firstName,
+  surname,
+  email,
+  phone,
+  age,
+  questionnaireType,
+  lifeContext = "",
+  reasonForReferral,
+  createdByUserId = null,
+  reportVisibility = "",
+  expiryDays = 14,
+  assessmentId = null,
+}) {
+  await ensureAdminSeed();
+  const actor = getCurrentUser();
+  if (
+    !actor ||
+    actor.status !== AUTH_STATUS.active ||
+    (actor.role !== AUTH_ROLES.admin && actor.role !== AUTH_ROLES.therapist)
+  ) {
+    return { ok: false, error: "Sign in as a therapist to create a patient account." };
+  }
+
+  const trimmedFirst = String(firstName || "").trim();
+  const trimmedSurname = String(surname || "").trim();
+  const fullName = [trimmedFirst, trimmedSurname].filter(Boolean).join(" ");
+  const normalizedEmail = normalizeEmail(email);
+  const trimmedPhone = String(phone || "").trim();
+  const trimmedAge = String(age || "").trim();
+  const trimmedReason = String(reasonForReferral || "").trim();
+  const type = String(questionnaireType || "").trim();
+  const resolved = resolveQuestionnaireAssignment(type, lifeContext);
+  if (!resolved) {
+    return { ok: false, error: "Please choose a questionnaire type." };
+  }
+
+  if (!trimmedFirst) return { ok: false, error: "Please enter the patient’s name." };
+  if (!trimmedSurname) return { ok: false, error: "Please enter the patient’s surname." };
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { ok: false, error: "Please enter a valid email address." };
+  }
+  if (!trimmedPhone) return { ok: false, error: "Please enter a contact number." };
+  const ageNumber = Number(trimmedAge);
+  if (!trimmedAge || !Number.isFinite(ageNumber) || ageNumber < 0 || ageNumber > 120) {
+    return { ok: false, error: "Please enter a valid age." };
+  }
+  if (!trimmedReason) return { ok: false, error: "Please enter the reason for referral." };
+  if (findUserByEmail(normalizedEmail)) {
+    return { ok: false, error: "An account with this email already exists." };
+  }
+
+  const password = createTemporaryPassword();
+  const salt = createSalt();
+  const passwordHash = await hashPassword(password, salt);
+  const days = Math.max(1, Number(expiryDays) || 14);
+  const now = new Date().toISOString();
+
+  const user = {
+    id: createId(),
+    name: fullName,
+    firstName: trimmedFirst,
+    surname: trimmedSurname,
+    email: normalizedEmail,
+    role: AUTH_ROLES.patient,
+    status: AUTH_STATUS.active,
+    phone: trimmedPhone,
+    age: String(Math.round(ageNumber)),
+    notes: "",
+    questionnaireType: resolved.questionnaireType,
+    lifeContext: resolved.lifeContext,
+    reasonForReferral: trimmedReason,
+    expiresAt: addDaysFromNow(days),
+    inviteToken: createInviteToken(),
+    createdByUserId: createdByUserId || actor.id,
+    assessmentId: assessmentId || null,
+    reportVisibility: String(reportVisibility || "").trim(),
+    temporaryPassword: password,
+    salt,
+    passwordHash,
+    createdAt: now,
+    lastLoginAt: null,
+    updatedAt: now,
+  };
+
+  const users = getUsers();
+  users.push(user);
+  saveUsers(users);
+
+  return {
+    ok: true,
+    user: publicUser(user),
+    password,
+    expiryDays: days,
+  };
+}
+
+async function resetPatientPassword(userId) {
+  const actor = getCurrentUser();
+  if (
+    !actor ||
+    (actor.role !== AUTH_ROLES.admin && actor.role !== AUTH_ROLES.therapist)
+  ) {
+    return { ok: false, error: "Only a therapist can reset a patient password." };
+  }
+  const users = getUsers();
+  const user = users.find((entry) => entry.id === userId);
+  if (!user || user.role !== AUTH_ROLES.patient) {
+    return { ok: false, error: "Patient account not found." };
+  }
+  const password = createTemporaryPassword();
+  const salt = createSalt();
+  user.salt = salt;
+  user.passwordHash = await hashPassword(password, salt);
+  user.temporaryPassword = password;
+  if (!user.inviteToken) user.inviteToken = createInviteToken();
+  user.updatedAt = new Date().toISOString();
+  saveUsers(users);
+  return { ok: true, user: publicUser(user), password };
+}
+
+function setPatientAssessmentId(userId, assessmentId) {
+  const users = getUsers();
+  const user = users.find((entry) => entry.id === userId);
+  if (!user) return { ok: false, error: "User not found." };
+  user.assessmentId = assessmentId || null;
+  user.updatedAt = new Date().toISOString();
+  saveUsers(users);
   return { ok: true, user: publicUser(user) };
 }
 
@@ -490,8 +700,21 @@ function updateUserById(userId, patch) {
   }
 
   if (typeof patch.name === "string") target.name = patch.name.trim() || target.name;
+  if (typeof patch.firstName === "string") target.firstName = patch.firstName.trim();
+  if (typeof patch.surname === "string") target.surname = patch.surname.trim();
   if (typeof patch.phone === "string") target.phone = patch.phone.trim();
+  if (typeof patch.age === "string" || typeof patch.age === "number") {
+    target.age = String(patch.age).trim();
+  }
   if (typeof patch.notes === "string") target.notes = patch.notes.trim();
+  if (typeof patch.reasonForReferral === "string") {
+    target.reasonForReferral = patch.reasonForReferral.trim();
+  }
+  if (typeof patch.questionnaireType === "string") {
+    target.questionnaireType = patch.questionnaireType.trim();
+  }
+  if (typeof patch.lifeContext === "string") target.lifeContext = patch.lifeContext.trim();
+  if (typeof patch.assessmentId === "string") target.assessmentId = patch.assessmentId;
   if (patch.role) target.role = patch.role;
   if (patch.status) target.status = patch.status;
   target.updatedAt = new Date().toISOString();
@@ -566,6 +789,11 @@ const Auth = {
   hasRole,
   canAccessClinicianTools,
   registerUser,
+  createPatientAccount,
+  resetPatientPassword,
+  setPatientAssessmentId,
+  findUserByInviteToken,
+  isPatientAssignmentExpired,
   loginUser,
   logoutUser,
   requestPasswordReset,

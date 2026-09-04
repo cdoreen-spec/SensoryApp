@@ -31,7 +31,8 @@ const APP_CONFIG = {
   adminPassword: "SoulfulAdmin2026!",
   adminPhone: "068 901 4209",
   practiceName: "Soulful Sensory OT",
-  allowPatientSignup: true,
+  /** Patients are created by a therapist; public self-signup stays off. */
+  allowPatientSignup: false,
   allowTherapistSignup: true,
   /** Therapist signups stay pending until you approve them in Settings. */
   requireTherapistApproval: true,

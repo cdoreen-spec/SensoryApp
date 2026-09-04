@@ -69,8 +69,25 @@ const state = {
   sampleReportPreview: false,
   dashboardSearch: "",
   dashboardNotice: null,
-  dashboardTab: "register", // register | preferences
+  dashboardTab: "register", // register | preferences | create
   prefsNotice: null,
+  patientForm: {
+    firstName: "",
+    surname: "",
+    email: "",
+    phone: "",
+    age: "",
+    questionnaireType: "adult-home",
+    reasonForReferral: "",
+  },
+  patientFormError: null,
+  patientFormBusy: false,
+  createdPatient: null,
+  patientSendStatus: null, // null | sending | sent | error
+  patientSendError: null,
+  assignedRespondent: null,
+  assignedLifeContext: null,
+  pendingInviteToken: null,
   authMode: "login", // login | signup
   authError: null,
   authNotice: null,
@@ -263,40 +280,604 @@ function inviteNeedsAccount() {
 
 /** After login/signup during an invite session, continue into the screening. */
 function routeAfterAuth(user) {
-  if (isPatientInvite() && user?.role === "patient") {
-    continueInviteSession();
-    return;
-  }
   if (user?.role === "admin" || user?.role === "therapist") {
     initTherapistPrefs();
     state.view = "dashboard";
     state.dashboardTab = "register";
     state.clinicianUnlocked = true;
-  } else {
-    state.view = "account";
-  }
-
-  // Resume ?preview=report after signing in as admin/therapist.
-  if (
-    isSampleReportPreviewEnabled() &&
-    (user?.role === "admin" || user?.role === "therapist")
-  ) {
-    try {
-      const raw = sessionStorage.getItem("ssot-sample-preview");
-      if (raw) {
+    if (isSampleReportPreviewEnabled()) {
+      try {
+        const raw = sessionStorage.getItem("ssot-sample-preview");
+        if (raw) {
+          sessionStorage.removeItem("ssot-sample-preview");
+          const options = JSON.parse(raw);
+          openSampleReportPreview(options || {});
+        }
+      } catch {
         sessionStorage.removeItem("ssot-sample-preview");
-        const options = JSON.parse(raw);
-        openSampleReportPreview(options || {});
       }
-    } catch {
-      sessionStorage.removeItem("ssot-sample-preview");
     }
+    return;
   }
+  if (user?.role === "patient" && (isPatientInvite() || user.questionnaireType)) {
+    applyPatientAssignment(user);
+    if (isAssignedQuestionnaireExpired(user) && !patientHasCompletedAssignment(user)) {
+      state.view = "account";
+      state.authNotice =
+        "This questionnaire invitation has expired. Please contact your therapist for a new link.";
+      return;
+    }
+    continueInviteSession();
+    return;
+  }
+  state.view = "account";
 }
 
 function canAccessTherapistDashboard() {
   if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) return true;
   return Boolean(state.clinicianUnlocked);
+}
+
+function emptyPatientForm() {
+  return {
+    firstName: "",
+    surname: "",
+    email: "",
+    phone: "",
+    age: "",
+    questionnaireType: "adult-home",
+    reasonForReferral: "",
+  };
+}
+
+function resetPatientForm() {
+  state.patientForm = emptyPatientForm();
+  state.patientFormError = null;
+  state.patientFormBusy = false;
+}
+
+const QUESTIONNAIRE_ASSIGNMENTS = [
+  {
+    id: "adult-home",
+    respondent: "adult",
+    lifeContext: "home",
+    title: "Adult · home",
+    hint: "Adult self-report focused on home life. Expires after 14 days.",
+  },
+  {
+    id: "adult-work",
+    respondent: "adult",
+    lifeContext: "work",
+    title: "Adult · work",
+    hint: "Adult self-report focused on work. Expires after 14 days.",
+  },
+  {
+    id: "teen-home",
+    respondent: "teen",
+    lifeContext: "home",
+    title: "Teen · home",
+    hint: "Teen self-report focused on home. Expires after 14 days.",
+  },
+  {
+    id: "teen-school",
+    respondent: "teen",
+    lifeContext: "school",
+    title: "Teen · school",
+    hint: "Teen self-report focused on school. Expires after 14 days.",
+  },
+  {
+    id: "parent",
+    respondent: "parent",
+    lifeContext: "",
+    title: "Parent (child)",
+    hint: "Parent completes about their child. Expires after 14 days.",
+  },
+  {
+    id: "couple",
+    respondent: "couple",
+    lifeContext: "",
+    title: "Couple",
+    hint: "Two partners complete separately, then combine. Expires after 14 days.",
+  },
+];
+
+function parseQuestionnaireAssignment(type, lifeContext = "") {
+  const raw = String(type || "").trim();
+  const context = String(lifeContext || "").trim();
+  const byId = QUESTIONNAIRE_ASSIGNMENTS.find((entry) => entry.id === raw);
+  if (byId) return byId;
+  if (raw === "adult") {
+    const match = QUESTIONNAIRE_ASSIGNMENTS.find(
+      (entry) => entry.respondent === "adult" && entry.lifeContext === (context === "work" ? "work" : "home")
+    );
+    return match || QUESTIONNAIRE_ASSIGNMENTS.find((entry) => entry.id === "adult-home");
+  }
+  if (raw === "teen") {
+    if (context === "home" || context === "school") {
+      return QUESTIONNAIRE_ASSIGNMENTS.find(
+        (entry) => entry.respondent === "teen" && entry.lifeContext === context
+      );
+    }
+    return {
+      id: "teen",
+      respondent: "teen",
+      lifeContext: "homeSchool",
+      title: "Teen",
+      hint: "",
+    };
+  }
+  return QUESTIONNAIRE_ASSIGNMENTS.find((entry) => entry.respondent === raw) || null;
+}
+
+function questionnaireTypeLabel(type, lifeContext = "") {
+  const assignment = parseQuestionnaireAssignment(type, lifeContext);
+  return assignment?.title || respondentLabel(type);
+}
+
+function hasLockedLifeContext() {
+  return Boolean(state.assignedLifeContext);
+}
+
+function assignedPatientFullName(user) {
+  if (!user) return "";
+  return (
+    [user.firstName, user.surname].filter(Boolean).join(" ").trim() ||
+    String(user.name || "").trim()
+  );
+}
+
+function lookupAssignedPatientByToken(token) {
+  if (!token || typeof Auth === "undefined" || !Auth.findUserByInviteToken) return null;
+  const raw = Auth.findUserByInviteToken(token);
+  return raw && Auth.publicUser ? Auth.publicUser(raw) : raw;
+}
+
+function currentAssignedPatient() {
+  const user = currentAuthUser();
+  if (user?.role === "patient" && user.questionnaireType) return user;
+  return lookupAssignedPatientByToken(state.pendingInviteToken);
+}
+
+function hasLockedRespondent() {
+  return Boolean(state.assignedRespondent && RESPONDENT_TYPES.includes(state.assignedRespondent));
+}
+
+function isAssignedQuestionnaireExpired(user = currentAssignedPatient()) {
+  if (!user) return false;
+  if (typeof Auth !== "undefined" && Auth.isPatientAssignmentExpired) {
+    return Auth.isPatientAssignmentExpired(user);
+  }
+  if (!user.expiresAt) return false;
+  const expires = Date.parse(user.expiresAt);
+  return Number.isFinite(expires) && expires < Date.now();
+}
+
+function patientHasCompletedAssignment(user) {
+  if (!user?.id) return false;
+  return readAssessments().some(
+    (item) => item.patientUserId === user.id && assessmentStatus(item) === "complete"
+  );
+}
+
+function applyPatientAssignment(user) {
+  if (!user || user.role === "admin" || user.role === "therapist") return false;
+  const assignment = parseQuestionnaireAssignment(user.questionnaireType, user.lifeContext);
+  const type = assignment?.respondent || (RESPONDENT_TYPES.includes(user.questionnaireType) ? user.questionnaireType : null);
+  if (!type && !user.inviteToken) return false;
+  state.inviteMode = true;
+  if (user.inviteToken) state.pendingInviteToken = user.inviteToken;
+  if (type) {
+    state.assignedRespondent = type;
+    state.respondent = type;
+  }
+  if (assignment?.lifeContext) {
+    state.assignedLifeContext = assignment.lifeContext;
+    state.lifeContext = assignment.lifeContext;
+  } else if (type === "parent" || type === "couple") {
+    state.assignedLifeContext = null;
+    state.lifeContext = null;
+  }
+  const fullName = assignedPatientFullName(user);
+  state.demographics = {
+    name: fullName || state.demographics?.name || "",
+    age: user.age || state.demographics?.age || "",
+    email: user.email || state.demographics?.email || "",
+    occupation: state.demographics?.occupation || "",
+    parentName: state.demographics?.parentName || "",
+    partnerName: state.demographics?.partnerName || "",
+  };
+  if (user.reportVisibility) {
+    const visibility = draftVisibilityFromStored(user.reportVisibility);
+    state.patientReportKind = visibility;
+    state.patientResultsAccess = visibilityToResultsAccess(visibility);
+  }
+  if (user.reasonForReferral) {
+    state.workReport = {
+      ...(state.workReport || {}),
+      name: state.workReport?.name || fullName,
+      reasonForReferral: user.reasonForReferral,
+    };
+  }
+  if (user.assessmentId) state.inProgressAssessmentId = user.assessmentId;
+  return true;
+}
+
+function createAssignedAssessment(user) {
+  if (!user) return null;
+  const fullName = assignedPatientFullName(user);
+  const { firstName, surname } = splitPersonName(fullName);
+  const visibility = draftVisibilityFromStored(
+    user.reportVisibility || readTherapistPrefs().reportVisibility
+  );
+  const assignment = parseQuestionnaireAssignment(user.questionnaireType, user.lifeContext);
+  const id = user.assessmentId || createAssessmentId();
+  const now = user.createdAt || new Date().toISOString();
+  const record = {
+    id,
+    version: ASSESSMENTS_VERSION,
+    status: "assigned",
+    completedAt: null,
+    savedAt: now,
+    startedAt: now,
+    expiresAt: user.expiresAt || addDaysIso(now, QUESTIONNAIRE_EXPIRY_DAYS),
+    expiryNotifiedAt: null,
+    respondent: assignment?.respondent || user.questionnaireType || null,
+    language: "en",
+    lifeContext: assignment?.lifeContext || null,
+    coupleId: null,
+    couplePartner: null,
+    demographics: {
+      name: fullName,
+      age: user.age || "",
+      email: user.email || "",
+      occupation: "",
+      parentName: "",
+      partnerName: "",
+      phone: user.phone || "",
+    },
+    reasonForReferral: user.reasonForReferral || "",
+    answers: emptyAnswers(),
+    idealSaturday: "",
+    coupleWork: emptyCoupleWork(),
+    sharingConsent: {},
+    contactPreference: null,
+    inviteMode: true,
+    patientResultsAccess: visibilityToResultsAccess(visibility),
+    patientUserId: user.id,
+    step: 1,
+    summary: {
+      patientName: fullName,
+      firstName: user.firstName || firstName,
+      surname: user.surname || surname,
+      parentName: "",
+      partnerName: "",
+      coupleId: null,
+      couplePartner: null,
+      completerName: fullName,
+      email: user.email || "",
+      age: user.age || "",
+      phone: user.phone || "",
+      reasonForReferral: user.reasonForReferral || "",
+      overallProfile: "",
+      overallLabel: "",
+      leanHeadline: "",
+      sensitive: 0,
+      seeking: 0,
+      neutral: 0,
+      scored: 0,
+      domainProfiles: [],
+      progressLabel: "Not started",
+    },
+    draft: null,
+  };
+  const items = readAssessments().filter((item) => item.id !== id);
+  items.unshift(record);
+  writeAssessments(items.slice(0, 200));
+  if (typeof Auth !== "undefined" && Auth.setPatientAssessmentId) {
+    Auth.setPatientAssessmentId(user.id, id);
+  }
+  return record;
+}
+
+function markAssignedAssessmentStarted(assessmentId) {
+  if (!assessmentId) return;
+  const items = readAssessments();
+  const item = items.find((entry) => entry.id === assessmentId);
+  if (!item || item.status === "complete") return;
+  if (item.status === "assigned") item.status = "incomplete";
+  item.savedAt = new Date().toISOString();
+  writeAssessments(items);
+}
+
+function buildAssignedPatientInviteUrl(user, access) {
+  const url = new URL(getClinicianBaseUrl());
+  url.searchParams.set("invite", "1");
+  if (user?.inviteToken) url.searchParams.set("patient", user.inviteToken);
+  const visibility = draftVisibilityFromStored(
+    access || user?.reportVisibility || readTherapistPrefs().reportVisibility
+  );
+  if (visibility === REPORT_VISIBILITY.full) {
+    url.searchParams.set("results", "full");
+  } else if (visibility === REPORT_VISIBILITY.short) {
+    url.searchParams.set("results", "short");
+  } else if (visibility === REPORT_VISIBILITY.summary) {
+    url.searchParams.set("results", "summary");
+  } else {
+    url.searchParams.set("results", "0");
+  }
+  return url.toString();
+}
+
+function patientCredentialsPayload(user, password, inviteUrl) {
+  const expires = user?.expiresAt
+    ? formatQuestionnaireDate(user.expiresAt, "en")
+    : `${QUESTIONNAIRE_EXPIRY_DAYS} days`;
+  return {
+    name: assignedPatientFullName(user),
+    email: user?.email || "",
+    password: password || user?.temporaryPassword || "",
+    inviteUrl: inviteUrl || (user ? buildAssignedPatientInviteUrl(user) : ""),
+    questionnaireType: questionnaireTypeLabel(user?.questionnaireType, user?.lifeContext),
+    expiresAt: expires,
+    phone: user?.phone || "",
+    age: user?.age || "",
+    reasonForReferral: user?.reasonForReferral || "",
+    userId: user?.id || "",
+  };
+}
+
+function patientCredentialsText(details) {
+  return [
+    `Patient: ${details.name}`,
+    `Email: ${details.email}`,
+    details.password ? `Password: ${details.password}` : null,
+    `Contact: ${details.phone}`,
+    `Questionnaire: ${details.questionnaireType}`,
+    `Expires: ${details.expiresAt}`,
+    details.inviteUrl ? `Link: ${details.inviteUrl}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function patientInviteMessage(details) {
+  const firstName = String(details.name || "there").trim().split(/\s+/)[0] || "there";
+  return [
+    `Hello ${firstName},`,
+    "",
+    "Your occupational therapist at Soulful Sensory OT has created an account for you to complete a sensory questionnaire.",
+    "",
+    `Questionnaire: ${details.questionnaireType || "Sensory screening"}`,
+    details.expiresAt ? `This invitation expires on ${details.expiresAt}.` : `This invitation expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.`,
+    "",
+    "Sign in with:",
+    `Email: ${details.email}`,
+    details.password ? `Password: ${details.password}` : "Use the password your therapist sent you.",
+    "",
+    "Open this link, sign in, then start the questionnaire:",
+    details.inviteUrl || "",
+    "",
+    "If the link does not work, go to the Soulful Sensory OT website and sign in with the email and password above.",
+    "",
+    "Soulful Sensory OT",
+  ]
+    .filter((line) => line !== undefined)
+    .join("\n");
+}
+
+function patientInviteEmailSubject(details) {
+  return "Your Soulful Sensory OT questionnaire";
+}
+
+function whatsappPhoneDigits(phone) {
+  let digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("0") && digits.length === 10) digits = `27${digits.slice(1)}`;
+  return digits;
+}
+
+function patientInviteWhatsAppUrl(details) {
+  const digits = whatsappPhoneDigits(details?.phone);
+  if (!digits) return "";
+  const firstName = String(details.name || "").trim().split(/\s+/)[0] || "there";
+  const lines = [
+    `Hi ${firstName}, your Soulful Sensory OT questionnaire is ready.`,
+    details.questionnaireType ? `Type: ${details.questionnaireType}.` : "",
+    details.expiresAt ? `It expires on ${details.expiresAt}.` : "",
+    `Sign in with ${details.email}${details.password ? ` / ${details.password}` : ""}.`,
+    details.inviteUrl || "",
+  ].filter(Boolean);
+  return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join(" "))}`;
+}
+
+function patientInviteMailtoUrl(details) {
+  const subject = encodeURIComponent(patientInviteEmailSubject(details));
+  const body = encodeURIComponent(patientInviteMessage(details));
+  return `mailto:${encodeURIComponent(details.email || "")}?subject=${subject}&body=${body}`;
+}
+
+async function sendPatientInviteEmail(details) {
+  assertEmailDeliveryContext();
+  const toEmail = String(details?.email || "").trim();
+  if (!toEmail) throw new Error("This patient does not have an email address.");
+  const displayName = String(details.name || "").trim() || "there";
+  const subject = patientInviteEmailSubject(details);
+  const message = patientInviteMessage(details);
+
+  if (DELIVERY_PROVIDER === "web3forms") {
+    if (!WEB3FORMS_KEY) {
+      throw new Error("Web3Forms access key is not configured in config.js");
+    }
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        subject,
+        name: displayName,
+        email: toEmail,
+        to: toEmail,
+        from_name: "Soulful Sensory OT",
+        message,
+      }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+      throw new Error((data && data.message) || "Web3Forms could not send the email");
+    }
+    return { provider: "web3forms" };
+  }
+
+  if (DELIVERY_PROVIDER === "formsubmit") {
+    const formSubmitPayload = {
+      _subject: subject,
+      _template: "box",
+      _captcha: "false",
+      _honey: "",
+      name: displayName,
+      email: toEmail,
+      message,
+    };
+    try {
+      return await postFormSubmitJson(formSubmitPayload, toEmail);
+    } catch (jsonErr) {
+      if (jsonErr?.code === "formsubmit-activation") throw jsonErr;
+      try {
+        return await postFormSubmitFormData(formSubmitPayload, toEmail);
+      } catch (formDataErr) {
+        if (formDataErr?.code === "formsubmit-activation") throw formDataErr;
+        return await postFormSubmitViaHiddenForm(formSubmitPayload, toEmail);
+      }
+    }
+  }
+
+  throw new Error("Email delivery is disabled in config.js");
+}
+
+function detailsFromAssessmentRecord(record) {
+  if (!record) return null;
+  const patient =
+    typeof Auth !== "undefined"
+      ? Auth.listUsers().find(
+          (u) =>
+            u.id === record.patientUserId ||
+            (u.email && u.email === (record.summary?.email || record.demographics?.email))
+        )
+      : null;
+  if (!patient) return null;
+  return patientCredentialsPayload(
+    patient,
+    patient.temporaryPassword,
+    buildAssignedPatientInviteUrl(patient)
+  );
+}
+
+async function deliverPatientInviteEmail(details, { noticePrefix = "" } = {}) {
+  if (!details?.email) {
+    state.patientSendStatus = "error";
+    state.patientSendError = "This patient does not have an email address.";
+    render();
+    return false;
+  }
+  state.patientSendStatus = "sending";
+  state.patientSendError = null;
+  render();
+  try {
+    await sendPatientInviteEmail(details);
+    state.patientSendStatus = "sent";
+    state.patientSendError = null;
+    state.dashboardNotice = `${noticePrefix}Email sent to ${details.email}.`.trim();
+    return true;
+  } catch (err) {
+    const classified = classifyDeliveryError(err, "Could not send the email");
+    state.patientSendStatus = "error";
+    if (classified.code === "formsubmit-activation") {
+      state.patientSendError =
+        "The first email to this address needs a one-time FormSubmit confirmation. Check that inbox (and Spam), click Confirm, then tap Send again.";
+    } else if (classified.code === "file-protocol") {
+      state.patientSendError = fileProtocolEmailMessage();
+    } else {
+      state.patientSendError = classified.message;
+    }
+    return false;
+  } finally {
+    render();
+  }
+}
+
+function resolvePatientInviteDetails(source) {
+  const assessmentId =
+    source?.dataset?.assessmentId || source?.getAttribute?.("data-assessment-id") || "";
+  if (assessmentId) {
+    return detailsFromAssessmentRecord(getAssessmentById(assessmentId));
+  }
+  return state.createdPatient;
+}
+
+async function handleSendPatientInviteEmail(details, { fromDashboard = false } = {}) {
+  if (!details) {
+    state.dashboardNotice = "This patient account is not on this device.";
+    render();
+    return;
+  }
+  if (!fromDashboard) {
+    state.createdPatient = details;
+    state.dashboardTab = "create";
+  }
+  const ok = await deliverPatientInviteEmail(details);
+  if (!ok) {
+    state.createdPatient = details;
+    state.dashboardTab = "create";
+    render({ scrollToTop: true });
+  }
+}
+
+function openCreatePatientView() {
+  if (typeof Auth === "undefined" || !Auth.canAccessClinicianTools()) {
+    state.authError = "Sign in as a therapist to create a patient account.";
+    state.view = "login";
+    resetAuthForm("therapist");
+    return;
+  }
+  state.view = "dashboard";
+  state.dashboardTab = "create";
+  state.dashboardNotice = null;
+  state.createdPatient = null;
+  state.patientFormError = null;
+  state.patientSendStatus = null;
+  state.patientSendError = null;
+  if (!state.patientForm) state.patientForm = emptyPatientForm();
+}
+
+function startAssignedQuestionnaire() {
+  const user = currentAssignedPatient();
+  if (!user) {
+    beginInviteAccountGate();
+    return false;
+  }
+  if (isAssignedQuestionnaireExpired(user) && !patientHasCompletedAssignment(user)) {
+    state.view = "account";
+    state.authNotice =
+      "This questionnaire invitation has expired. Please contact your therapist for a new link.";
+    return false;
+  }
+  applyPatientAssignment(user);
+  const existing = user.assessmentId
+    ? readAssessments().find((item) => item.id === user.assessmentId)
+    : readAssessments().find((item) => item.patientUserId === user.id);
+  if (existing && assessmentStatus(existing) === "incomplete" && existing.draft) {
+    applyIncompleteAssessmentRecord(existing);
+    return true;
+  }
+  resetSensoryQuestionnaireProgress();
+  applyPatientAssignment(user);
+  if (existing?.id) state.inProgressAssessmentId = existing.id;
+  markAssignedAssessmentStarted(state.inProgressAssessmentId);
+  state.view = "questionnaire";
+  state.step = 1;
+  state.showIntroModal = true;
+  return true;
 }
 
 function createAssessmentId() {
@@ -346,6 +927,7 @@ function writeAssessments(items) {
 
 function assessmentStatus(item) {
   if (!item) return "incomplete";
+  if (item.status === "assigned") return "assigned";
   if (item.status === "incomplete") return "incomplete";
   if (item.status === "complete") return "complete";
   return item.completedAt && item.summary ? "complete" : "incomplete";
@@ -1148,6 +1730,7 @@ function buildAssessmentRecord() {
       parentName: state.demographics?.parentName || "",
       partnerName: state.demographics?.partnerName || "",
     },
+    reasonForReferral: state.workReport?.reasonForReferral || "",
     answers: cloneAnswers(state.answers),
     idealSaturday: state.idealSaturday || "",
     coupleWork: normalizeCoupleWork(state.coupleWork),
@@ -1258,6 +1841,7 @@ function incompleteRecordFromDraft(draft, id, existing = null) {
       parentName: demo.parentName || "",
       partnerName: demo.partnerName || "",
     },
+    reasonForReferral: existing?.reasonForReferral || "",
     answers: cloneAnswers(draft.answers),
     idealSaturday: draft.idealSaturday || "",
     coupleWork: normalizeCoupleWork(draft.coupleWork),
@@ -1449,7 +2033,13 @@ function getDashboardQuestionnaireItems() {
   }));
   const all = collectCoupleIncompleteEntries(items).concat(items);
   all.sort((a, b) => {
-    const statusOrder = (a.status === "incomplete" ? 0 : 1) - (b.status === "incomplete" ? 0 : 1);
+    const rank = (item) => {
+      const status = assessmentStatus(item);
+      if (status === "assigned") return 0;
+      if (status === "incomplete") return 1;
+      return 2;
+    };
+    const statusOrder = rank(a) - rank(b);
     if (statusOrder !== 0) return statusOrder;
     const timeA = new Date(a.savedAt || a.completedAt || 0).getTime();
     const timeB = new Date(b.savedAt || b.completedAt || 0).getTime();
@@ -1632,8 +2222,16 @@ function canOfferSettingReportFor(respondent, lifeContext) {
 
 /** Teens always use a combined home + school setting. */
 function normalizeRespondentLifeContext(respondent, lifeContext) {
-  if (respondent === "teen") return "homeSchool";
   if (respondent === "parent" || respondent === "couple") return null;
+  if (respondent === "teen") {
+    if (lifeContext === "home" || lifeContext === "school" || lifeContext === "homeSchool") {
+      return lifeContext;
+    }
+    return "homeSchool";
+  }
+  if (respondent === "adult") {
+    return lifeContext === "work" || lifeContext === "home" ? lifeContext : null;
+  }
   return lifeContext || null;
 }
 
@@ -1951,10 +2549,19 @@ function renderSampleReportBanner() {
 function continueInviteSession() {
   state.error = null;
   state.authNotice = null;
+  const assigned = currentAssignedPatient();
+  if (assigned) applyPatientAssignment(assigned);
   const draft = readSensoryDraft();
   if (draft) {
     applySensoryDraft(draft);
     return;
+  }
+  if (assigned?.assessmentId) {
+    const existing = readAssessments().find((item) => item.id === assigned.assessmentId);
+    if (existing && assessmentStatus(existing) === "incomplete" && existing.draft) {
+      applyIncompleteAssessmentRecord(existing);
+      return;
+    }
   }
   state.sensoryArea = null;
   state.view = "home";
@@ -1973,9 +2580,12 @@ function handleLogout() {
   state.step = 0;
   state.settingsNotice = null;
   state.dashboardNotice = null;
+  state.assignedRespondent = null;
+  state.assignedLifeContext = null;
+  state.pendingInviteToken = isPatientInvite() ? state.pendingInviteToken : null;
   if (isPatientInvite()) {
     beginInviteAccountGate();
-    state.authNotice = "Create an account to continue your screening.";
+    state.authNotice = "Sign in with the account your therapist created to continue.";
   } else {
     state.view = "home";
     state.authNotice = "Signed out.";
@@ -1984,11 +2594,18 @@ function handleLogout() {
 
 function beginInviteAccountGate() {
   resetAuthForm("patient");
-  state.view = "signup";
-  state.authMode = "signup";
+  const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
+  if (assigned) {
+    state.authForm.email = assigned.email || "";
+    state.authForm.name = assignedPatientFullName(assigned);
+  }
+  state.view = "login";
+  state.authMode = "login";
   state.authError = null;
   if (!state.authNotice) {
-    state.authNotice = "Create an account & sign in to begin your sensory screening.";
+    state.authNotice = assigned
+      ? "Your therapist created an account for you. Sign in with the email and password they sent."
+      : "Sign in with the account your therapist created to begin your sensory screening.";
   }
 }
 
@@ -2253,6 +2870,14 @@ function clearInviteSession() {
   state.submissionError = null;
   state.submissionErrorCode = null;
   state.submissionAttempted = false;
+  const user = currentAuthUser();
+  if (user?.role === "patient" && user.questionnaireType) {
+    applyPatientAssignment(user);
+    return;
+  }
+  state.assignedRespondent = null;
+  state.assignedLifeContext = null;
+  state.pendingInviteToken = null;
 }
 
 function getClinicianBaseUrl() {
@@ -2344,11 +2969,15 @@ function readInviteFromUrl() {
 
   if (params.get("invite") === "1") {
     state.inviteMode = true;
+    const patientToken = String(params.get("patient") || "").trim();
+    if (patientToken) state.pendingInviteToken = patientToken;
     // Therapist must opt the patient into a report. Missing/unknown → no access.
     const rawResults = params.has("results") ? params.get("results") : "none";
     const visibility = draftVisibilityFromStored(rawResults);
     state.patientReportKind = visibility;
     state.patientResultsAccess = visibilityToResultsAccess(visibility);
+    const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
+    if (assigned) applyPatientAssignment(assigned);
     if (inviteNeedsAccount()) {
       beginInviteAccountGate();
     } else {
@@ -2511,7 +3140,9 @@ function applySensoryDraft(draft) {
   state.language = LANGUAGES.includes(draft.language) ? draft.language : "en";
   document.documentElement.lang = state.language;
   state.respondent = RESPONDENT_TYPES.includes(draft.respondent) ? draft.respondent : null;
-  state.lifeContext = normalizeRespondentLifeContext(state.respondent, draft.lifeContext || null);
+  state.lifeContext = hasLockedLifeContext()
+    ? state.assignedLifeContext
+    : normalizeRespondentLifeContext(state.respondent, draft.lifeContext || null);
   state.coupleId = draft.coupleId || null;
   state.couplePartner = COUPLE_PARTNERS.includes(draft.couplePartner) ? draft.couplePartner : null;
   // Teens no longer use the home/school choice step — skip it if a draft landed there.
@@ -2559,7 +3190,12 @@ function applySensoryDraft(draft) {
   state.showSensoryDiet = false;
   state.showWorkReport = false;
   state.workReportDeclined = false;
-  state.workReport = { name: "", jobTitle: "", reasonForReferral: "", additionalNotes: "" };
+  state.workReport = {
+    name: "",
+    jobTitle: "",
+    reasonForReferral: state.workReport?.reasonForReferral || "",
+    additionalNotes: "",
+  };
   state.schoolReportVisual = "balance";
   state.schoolReportNotesEnabled = false;
   resetSettingReportComposer();
@@ -2792,15 +3428,36 @@ function isFormSubmitActivationMessage(message) {
   return /activat/i.test(String(message || ""));
 }
 
+function isFileProtocol() {
+  return typeof window !== "undefined" && window.location.protocol === "file:";
+}
+
+function localHostedAppUrl() {
+  return "http://127.0.0.1:8080";
+}
+
+function fileProtocolEmailMessage() {
+  const url = localHostedAppUrl();
+  return `This page was opened as a saved file, so email cannot send. Open ${url} in your browser instead of double-clicking the HTML file.`;
+}
+
+function renderFileProtocolBanner() {
+  if (!isFileProtocol()) return "";
+  const url = localHostedAppUrl();
+  return `
+    <div class="error-banner file-protocol-banner" role="alert">
+      Email cannot send from a saved file. Open
+      <a href="${escapeHtml(url)}">${escapeHtml(url)}</a>
+      in your browser — do not double-click <code>index.html</code>.
+    </div>
+  `;
+}
+
 function assertEmailDeliveryContext() {
-  if (typeof window === "undefined") return;
-  if (window.location.protocol === "file:") {
-    const err = new Error(
-      "This page was opened as a file. Host it on a local or public web address (for example http://127.0.0.1:8777) so the report can be emailed."
-    );
-    err.code = "file-protocol";
-    throw err;
-  }
+  if (!isFileProtocol()) return;
+  const err = new Error(fileProtocolEmailMessage());
+  err.code = "file-protocol";
+  throw err;
 }
 
 function classifyDeliveryError(err, fallbackMessage) {
@@ -3002,7 +3659,7 @@ async function sendResultsEmail(report) {
 function canSendClinicianMail() {
   if (DELIVERY_PROVIDER === "none") return false;
   if (state.sampleReportPreview) return false;
-  if (typeof window !== "undefined" && window.location.protocol === "file:") return false;
+  if (isFileProtocol()) return false;
   return true;
 }
 
@@ -3842,77 +4499,39 @@ function renderClinicianGate() {
 }
 
 function renderClinicianShare() {
-  const visibility = draftVisibilityFromStored(
-    state.clinicianDraftVisibility || state.clinicianDraftResultsAccess
-  );
-  const inviteUrl = buildPatientInviteUrl(visibility);
+  if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
+    return `
+    <div class="clinician">
+      <section class="clinician__panel" aria-labelledby="clinician-heading">
+        <p class="clinician__eyebrow">Clinician tools</p>
+        <h1 id="clinician-heading" class="clinician__title">Create a patient account</h1>
+        <p class="clinician__lead">
+          Patients no longer create their own accounts. Add their name, questionnaire type, contact details and reason for referral, then send them the sign-in details. Every questionnaire expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
+        </p>
+        <div class="clinician__actions">
+          <button type="button" class="btn btn-primary" data-action="open-create-patient">Add patient</button>
+          <button type="button" class="btn btn-secondary" data-action="open-dashboard">Patient dashboard</button>
+          <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
+        </div>
+        ${renderSampleReportPreviewControls()}
+      </section>
+    </div>
+    `;
+  }
 
   return `
     <div class="clinician">
       <section class="clinician__panel" aria-labelledby="clinician-heading">
         <p class="clinician__eyebrow">Clinician tools</p>
-        <h1 id="clinician-heading" class="clinician__title">Patient invite links</h1>
+        <h1 id="clinician-heading" class="clinician__title">Therapist sign-in needed</h1>
         <p class="clinician__lead">
-          Choose what the patient can see after finishing. Every completed adult, teen, or parent screening still emails the detailed report to
-          <strong>${escapeHtml(getClinicianEmail())}</strong>, with the completer’s name in the subject, unless you turn that off in My Preferences.
+          To create a patient account, sign in as a therapist or admin. The clinician PIN still unlocks the patient register on this device.
         </p>
-
-        <fieldset class="clinician__toggle">
-          <legend>Patient access to their results</legend>
-          <label class="clinician__choice">
-            <input type="radio" name="invite-results" data-invite-results value="none"${visibility === REPORT_VISIBILITY.none ? " checked" : ""} />
-            <span>
-              <strong>No report access</strong>
-              <em>Thank-you screen only. You share feedback in a booked session.</em>
-            </span>
-          </label>
-          <label class="clinician__choice">
-            <input type="radio" name="invite-results" data-invite-results value="summary"${visibility === REPORT_VISIBILITY.summary ? " checked" : ""} />
-            <span>
-              <strong>Short summary</strong>
-              <em>A brief completion note that asks them to book a follow-up. You keep the detailed report.</em>
-            </span>
-          </label>
-          <label class="clinician__choice">
-            <input type="radio" name="invite-results" data-invite-results value="short"${visibility === REPORT_VISIBILITY.short ? " checked" : ""} />
-            <span>
-              <strong>Short report</strong>
-              <em>The short completion note plus overall pattern, domain glance, and trail character.</em>
-            </span>
-          </label>
-          <label class="clinician__choice">
-            <input type="radio" name="invite-results" data-invite-results value="full"${visibility === REPORT_VISIBILITY.full ? " checked" : ""} />
-            <span>
-              <strong>Full detailed report</strong>
-              <em>They see the complete sensory trail profile in the app. You still receive the email.</em>
-            </span>
-          </label>
-        </fieldset>
-
-        <label class="clinician__field">
-          <span>Invite link</span>
-          <textarea class="clinician__link" readonly rows="3" data-invite-link>${escapeHtml(inviteUrl)}</textarea>
-        </label>
-
         <div class="clinician__actions">
-          <button type="button" class="btn btn-primary" data-action="copy-invite">
-            ${state.clinicianCopyStatus === "copied" ? "Copied" : "Copy link"}
-          </button>
-          <a class="btn btn-secondary" href="${escapeHtml(inviteUrl)}" target="_blank" rel="noopener noreferrer">Open patient view</a>
+          <button type="button" class="btn btn-primary" data-action="open-login">Sign in as therapist</button>
           <button type="button" class="btn btn-secondary" data-action="open-dashboard">Patient dashboard</button>
           <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
         </div>
-
-        ${renderSampleReportPreviewControls()}
-
-        <ol class="clinician__steps">
-          <li>Choose their results access, then copy the link and send it by WhatsApp, SMS, or email.</li>
-          <li>The patient creates an account, reads the homepage, then starts the questionnaire from the bottom.</li>
-          <li>The full report arrives in your inbox when they finish. You also get a note if a report is downloaded, or if an incomplete questionnaire is about to expire.</li>
-        </ol>
-        <p class="clinician__hint">
-          First FormSubmit delivery: check <strong>${escapeHtml(getClinicianEmail())}</strong> for a one-time confirmation email and click Confirm.
-        </p>
       </section>
     </div>
   `;
@@ -3954,7 +4573,10 @@ function getDashboardStats(items) {
   return {
     total: items.length,
     complete: items.filter((i) => assessmentStatus(i) === "complete").length,
-    incomplete: items.filter((i) => assessmentStatus(i) === "incomplete").length,
+    incomplete: items.filter((i) => {
+      const status = assessmentStatus(i);
+      return status === "incomplete" || status === "assigned";
+    }).length,
     adults: items.filter((i) => i.respondent === "adult").length,
     teens: items.filter((i) => i.respondent === "teen").length,
     parents: items.filter((i) => i.respondent === "parent").length,
@@ -3984,11 +4606,14 @@ function filteredDashboardAssessments() {
       s.partnerName,
       s.completerName,
       s.email,
-      s.overallLabel,
+      s.phone,
+      s.reasonForReferral,
+      item.reasonForReferral,
+      item.lifeContext,
       item.lifeContext,
       respondentLabel(item.respondent),
       status,
-      status === "complete" ? "complete finished" : "incomplete in progress",
+      status === "complete" ? "complete finished" : status === "assigned" ? "assigned not started" : "incomplete in progress",
     ]
       .join(" ")
       .toLowerCase();
@@ -4014,17 +4639,22 @@ function renderDashboardAssessmentRow(item) {
   const name = dashboardPatientName(item);
   const status = assessmentStatus(item);
   const incomplete = status === "incomplete";
-  const dateLabel = formatQuestionnaireDate(item.savedAt || item.completedAt, "en");
-  const profile = incomplete
-    ? "In progress"
-    : summary.overallLabel || "—";
-  const progressLine = incomplete
-    ? summary.progressLabel || questionnaireProgressLabel(item.step)
-    : "";
+  const assigned = status === "assigned";
+  const dateLabel = formatQuestionnaireDate(item.savedAt || item.completedAt || item.startedAt, "en");
+  const profile = assigned
+    ? "Not started"
+    : incomplete
+      ? "In progress"
+      : summary.overallLabel || "—";
+  const progressLine = assigned
+    ? summary.reasonForReferral || item.reasonForReferral || "Waiting for the patient to sign in"
+    : incomplete
+      ? summary.progressLabel || questionnaireProgressLabel(item.step)
+      : "";
   const context = lifeContextDisplay(item.lifeContext);
   const email = summary.email || item.demographics?.email || "";
   const domains = Array.isArray(summary.domainProfiles) ? summary.domainProfiles : [];
-  const domainLine = incomplete
+  const domainLine = assigned || incomplete
     ? progressLine
     : domains
         .slice(0, 4)
@@ -4032,13 +4662,15 @@ function renderDashboardAssessmentRow(item) {
         .filter(Boolean)
         .join(" · ");
   const rowId = escapeHtml(item.id);
-  const expiryNote = incomplete ? questionnaireExpiryNote(item) : "";
+  const expiryNote = assigned || incomplete ? questionnaireExpiryNote(item) : "";
   const expirySoon =
-    incomplete && (questionnaireDaysUntilExpiry(item) ?? 99) <= QUESTIONNAIRE_EXPIRY_WARNING_DAYS;
+    (assigned || incomplete) &&
+    (questionnaireDaysUntilExpiry(item) ?? 99) <= QUESTIONNAIRE_EXPIRY_WARNING_DAYS;
   const preferredLength = readTherapistPrefs().reportLength;
+  const statusLabel = assigned ? "Not started" : incomplete ? "Incomplete" : "Complete";
 
   return `
-    <article class="dash-row${incomplete ? " dash-row--incomplete" : ""}" data-assessment-id="${rowId}">
+    <article class="dash-row${incomplete || assigned ? " dash-row--incomplete" : ""}" data-assessment-id="${rowId}">
       <div class="dash-row__patient">
         <span class="dash-row__avatar" aria-hidden="true">${escapeHtml(dashboardInitials(name))}</span>
         <div class="dash-row__identity">
@@ -4064,10 +4696,10 @@ function renderDashboardAssessmentRow(item) {
       </div>
       <div class="dash-row__status-col">
         <span class="dash-row__col-label">Status</span>
-        <span class="dash-row__status dash-row__status--${status}">${incomplete ? "Incomplete" : "Complete"}</span>
+        <span class="dash-row__status dash-row__status--${status}">${statusLabel}</span>
       </div>
       <div class="dash-row__date">
-        <span class="dash-row__col-label">${incomplete ? "Last saved" : "Assessed"}</span>
+        <span class="dash-row__col-label">${assigned ? "Created" : incomplete ? "Last saved" : "Assessed"}</span>
         <strong>${escapeHtml(dateLabel || "—")}</strong>
         ${
           expiryNote
@@ -4081,14 +4713,24 @@ function renderDashboardAssessmentRow(item) {
         ${context ? `<span class="dash-row__context">${escapeHtml(context)}</span>` : ""}
       </div>
       <div class="dash-row__pattern">
-        <span class="dash-row__col-label">${incomplete ? "Progress" : "Overall pattern"}</span>
+        <span class="dash-row__col-label">${assigned ? "Referral" : incomplete ? "Progress" : "Overall pattern"}</span>
         <strong class="dash-row__pattern-value">${escapeHtml(profile)}</strong>
-        ${domainLine ? `<p class="dash-row__domains">${domainLine}</p>` : ""}
+        ${domainLine ? `<p class="dash-row__domains">${escapeHtml(domainLine)}</p>` : ""}
       </div>
       <div class="dash-row__actions">
-        <span class="dash-row__col-label">${incomplete ? "Actions" : "Report"}</span>
+        <span class="dash-row__col-label">${assigned || incomplete ? "Actions" : "Report"}</span>
         ${
-          incomplete
+          assigned
+            ? `<button type="button" class="btn btn-primary btn--compact" data-action="send-patient-email" data-assessment-id="${rowId}">Email</button>
+        ${
+          whatsappPhoneDigits(summary.phone || item.demographics?.phone || "")
+            ? `<button type="button" class="dash-row__tool" data-action="send-patient-whatsapp" data-assessment-id="${rowId}">WhatsApp</button>`
+            : ""
+        }
+        <button type="button" class="dash-row__tool" data-action="copy-patient-invite" data-assessment-id="${rowId}">Copy link</button>
+        <button type="button" class="dash-row__tool" data-action="send-patient-email-again" data-assessment-id="${rowId}">Send again</button>
+        <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
+            : incomplete
             ? `<button type="button" class="btn btn-primary btn--compact" data-action="continue-assessment" data-assessment-id="${rowId}">Continue</button>
         <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
             : `<div class="dash-report-switch" role="group" aria-label="Open report">
@@ -4170,6 +4812,143 @@ function prefsCheck(key, checked, title, hint) {
   `;
 }
 
+function renderCreatedPatientSuccess(details) {
+  const sending = state.patientSendStatus === "sending";
+  const sent = state.patientSendStatus === "sent";
+  const failed = state.patientSendStatus === "error";
+  const whatsappUrl = patientInviteWhatsAppUrl(details);
+  const emailLabel = sending ? "Sending email…" : "Send email";
+  return `
+    <section class="dashboard__panel patient-create" aria-labelledby="patient-created-heading">
+      <h2 id="patient-created-heading" class="dashboard__panel-title">Patient account created</h2>
+      <p class="prefs-lead">
+        Email is the default way to send their sign-in link. You can also send it on WhatsApp. Their ${escapeHtml(details.questionnaireType || "questionnaire")} expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days (${escapeHtml(details.expiresAt || "")}).
+      </p>
+      ${
+        sending
+          ? `<p class="auth__notice dashboard__notice" role="status">Sending email to ${escapeHtml(details.email)}…</p>`
+          : sent
+            ? `<p class="auth__notice dashboard__notice" role="status">Email sent to ${escapeHtml(details.email)}.</p>`
+            : ""
+      }
+      ${
+        failed && state.patientSendError
+          ? `<p class="error-banner" role="alert">${escapeHtml(state.patientSendError)}</p>`
+          : ""
+      }
+      <dl class="patient-create__details">
+        <div><dt>Name</dt><dd>${escapeHtml(details.name)}</dd></div>
+        <div><dt>Email</dt><dd>${escapeHtml(details.email)}</dd></div>
+        <div><dt>Password</dt><dd><code>${escapeHtml(details.password || "Already used — create a new password if needed")}</code></dd></div>
+        <div><dt>Contact number</dt><dd>${escapeHtml(details.phone || "—")}</dd></div>
+        <div><dt>Age</dt><dd>${escapeHtml(details.age || "—")}</dd></div>
+        <div><dt>Questionnaire</dt><dd>${escapeHtml(details.questionnaireType || "—")}</dd></div>
+        <div><dt>Reason for referral</dt><dd>${escapeHtml(details.reasonForReferral || "—")}</dd></div>
+      </dl>
+      <div class="patient-send">
+        <div class="patient-send__main">
+          <button type="button" class="btn btn-primary" data-action="send-patient-email" ${sending ? "disabled" : ""} aria-busy="${sending ? "true" : "false"}">
+            ${emailLabel}
+          </button>
+          ${
+            whatsappUrl
+              ? `<a class="btn btn-secondary" data-action="send-patient-whatsapp" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`
+              : `<button type="button" class="btn btn-secondary" disabled title="Add a contact number to send on WhatsApp">WhatsApp</button>`
+          }
+        </div>
+        <div class="patient-send__side">
+          <button type="button" class="patient-send__backup" data-action="copy-created-patient-link">
+            ${state.clinicianCopyStatus === "copied" ? "Link copied" : "Copy link"}
+          </button>
+          <button type="button" class="patient-send__backup" data-action="send-patient-email-again" ${sending ? "disabled" : ""}>
+            Send again
+          </button>
+        </div>
+      </div>
+      <p class="prefs-hint">Copy link is a backup if email or WhatsApp does not go through. Send again if something went wrong.</p>
+      <div class="clinician__actions">
+        ${
+          details.userId
+            ? `<button type="button" class="btn btn-secondary" data-action="reset-patient-password" data-user-id="${escapeHtml(details.userId)}">New password</button>`
+            : ""
+        }
+        <button type="button" class="btn btn-secondary" data-action="create-another-patient">Add another patient</button>
+        <button type="button" class="btn btn-secondary" data-action="dashboard-tab" data-tab="register">Back to register</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderCreatePatientForm() {
+  const form = state.patientForm || emptyPatientForm();
+  const type = form.questionnaireType || "adult-home";
+  const assignment = parseQuestionnaireAssignment(type);
+  const isParent = assignment?.respondent === "parent";
+  return `
+    <section class="dashboard__panel patient-create" aria-labelledby="create-patient-heading">
+      <h2 id="create-patient-heading" class="dashboard__panel-title">Create a patient account</h2>
+      <p class="prefs-lead">
+        The therapist creates the patient’s account and chooses the questionnaire. Every questionnaire type expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
+      </p>
+      ${
+        state.patientFormError
+          ? `<p class="error-banner" role="alert">${escapeHtml(state.patientFormError)}</p>`
+          : ""
+      }
+      <form class="patient-create__form" data-patient-form>
+        <div class="patient-create__grid">
+          <label class="auth__field">
+            <span>${isParent ? "Child’s name" : "Name"}</span>
+            <input type="text" name="firstName" data-patient-field="firstName" autocomplete="given-name" required value="${escapeHtml(form.firstName)}" />
+          </label>
+          <label class="auth__field">
+            <span>${isParent ? "Child’s surname" : "Surname"}</span>
+            <input type="text" name="surname" data-patient-field="surname" autocomplete="family-name" required value="${escapeHtml(form.surname)}" />
+          </label>
+          <label class="auth__field">
+            <span>Email address</span>
+            <input type="email" name="email" data-patient-field="email" autocomplete="email" required value="${escapeHtml(form.email)}" />
+          </label>
+          <label class="auth__field">
+            <span>Contact number</span>
+            <input type="tel" name="phone" data-patient-field="phone" autocomplete="tel" required value="${escapeHtml(form.phone)}" />
+          </label>
+          <label class="auth__field">
+            <span>${isParent ? "Child’s age" : "Age"}</span>
+            <input type="number" name="age" data-patient-field="age" min="0" max="120" inputmode="numeric" required value="${escapeHtml(form.age)}" />
+          </label>
+        </div>
+
+        <fieldset class="prefs-section">
+          <legend>Questionnaire type</legend>
+          <p class="prefs-hint">The patient will complete this pathway. They cannot change it.</p>
+          ${QUESTIONNAIRE_ASSIGNMENTS.map((option) =>
+            prefsChoice(
+              "patient-questionnaire-type",
+              option.id,
+              type === option.id,
+              option.title,
+              option.hint
+            )
+          ).join("")}
+        </fieldset>
+
+        <label class="auth__field">
+          <span>Reason for referral</span>
+          <textarea name="reasonForReferral" data-patient-field="reasonForReferral" rows="4" required>${escapeHtml(form.reasonForReferral)}</textarea>
+        </label>
+        <p class="prefs-hint">All questionnaires expire 14 days after you create this account.</p>
+        <div class="clinician__actions">
+          <button type="submit" class="btn btn-primary" ${state.patientFormBusy ? "disabled" : ""}>
+            ${state.patientFormBusy ? "Creating…" : "Create patient account"}
+          </button>
+          <button type="button" class="btn btn-secondary" data-action="dashboard-tab" data-tab="register">Cancel</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
 function renderTherapistPreferences() {
   const prefs = readTherapistPrefs();
   const notes = prefs.notifications || {};
@@ -4224,11 +5003,22 @@ function renderDashboard() {
 
   maybeNotifyExpiringQuestionnaires();
   const prefsTab = state.dashboardTab === "preferences";
+  const createTab = state.dashboardTab === "create";
   const allItems = getDashboardQuestionnaireItems();
   const items = filteredDashboardAssessments();
   const stats = getDashboardStats(allItems);
   const user = currentAuthUser();
   const rows = items.map(renderDashboardAssessmentRow).join("");
+  const heading = createTab
+    ? "Add patient"
+    : prefsTab
+      ? "My Preferences"
+      : "Patient register";
+  const lead = createTab
+    ? "Create the patient’s account, choose their questionnaire, and send them the sign-in details. Every type expires after 14 days."
+    : prefsTab
+      ? "Set your default report length, what patients can see, and which emails you would like to receive."
+      : "Create a patient account to assign a questionnaire, then see which screenings are complete or still in progress.";
 
   return `
     <div class="dashboard">
@@ -4240,19 +5030,11 @@ function renderDashboard() {
         <div class="dashboard__masthead-inner">
           <div class="dashboard__masthead-copy">
             <p class="dashboard__eyebrow">Therapist</p>
-            <h1 id="dashboard-heading" class="dashboard__title">${
-              prefsTab ? "My Preferences" : "Patient register"
-            }</h1>
-            <p class="dashboard__lead">
-              ${
-                prefsTab
-                  ? "Set your default report length, what patients can see, and which emails you would like to receive."
-                  : "See which questionnaires are complete or still in progress, then open results or continue a screening."
-              }
-            </p>
+            <h1 id="dashboard-heading" class="dashboard__title">${heading}</h1>
+            <p class="dashboard__lead">${lead}</p>
           </div>
           <div class="dashboard__header-actions">
-            <button type="button" class="btn btn-primary" data-action="open-clinician">Create invite</button>
+            <button type="button" class="btn btn-primary" data-action="open-create-patient">Add patient</button>
             ${
               user?.role === "admin"
                 ? `<button type="button" class="btn btn-secondary" data-action="open-settings">Settings</button>`
@@ -4262,7 +5044,8 @@ function renderDashboard() {
           </div>
         </div>
         <div class="dashboard-tabs" role="tablist" aria-label="Therapist dashboard">
-          <button type="button" class="dashboard-tab ${prefsTab ? "" : "is-active"}" role="tab" aria-selected="${!prefsTab}" data-action="dashboard-tab" data-tab="register">Patient register</button>
+          <button type="button" class="dashboard-tab ${!prefsTab && !createTab ? "is-active" : ""}" role="tab" aria-selected="${!prefsTab && !createTab}" data-action="dashboard-tab" data-tab="register">Patient register</button>
+          <button type="button" class="dashboard-tab ${createTab ? "is-active" : ""}" role="tab" aria-selected="${createTab}" data-action="dashboard-tab" data-tab="create">Add patient</button>
           <button type="button" class="dashboard-tab ${prefsTab ? "is-active" : ""}" role="tab" aria-selected="${prefsTab}" data-action="dashboard-tab" data-tab="preferences">My Preferences</button>
         </div>
       </section>
@@ -4284,7 +5067,19 @@ function renderDashboard() {
       ${
         prefsTab
           ? renderTherapistPreferences()
-          : `
+          : createTab
+            ? typeof Auth !== "undefined" && Auth.canAccessClinicianTools()
+              ? state.createdPatient
+                ? renderCreatedPatientSuccess(state.createdPatient)
+                : renderCreatePatientForm()
+              : `<section class="dashboard__panel patient-create">
+                  <h2 class="dashboard__panel-title">Sign in to add a patient</h2>
+                  <p class="prefs-lead">Patient accounts can only be created by a signed-in therapist or admin.</p>
+                  <div class="clinician__actions">
+                    <button type="button" class="btn btn-primary" data-action="open-login">Sign in as therapist</button>
+                  </div>
+                </section>`
+            : `
       <div class="dashboard__stats" role="list">
         <div class="dashboard__stat" role="listitem">
           <span class="dashboard__stat-value">${stats.complete}</span>
@@ -4344,9 +5139,9 @@ function renderDashboard() {
             ? `<div class="dashboard__empty">
                 <img src="assets/logo.png" alt="" class="dashboard__empty-logo" width="72" height="72" />
                 <p class="dashboard__empty-title">No screenings yet</p>
-                <p>When a patient starts or finishes the questionnaire on this device, it appears here as complete or incomplete.</p>
+                <p>Create a patient account first. When they start or finish the questionnaire, it appears here as complete or incomplete.</p>
                 <div class="dashboard__empty-actions">
-                  <button type="button" class="btn btn-primary" data-action="open-clinician">Create a patient invite</button>
+                  <button type="button" class="btn btn-primary" data-action="open-create-patient">Add a patient</button>
                 </div>
                 ${
                   isSampleReportPreviewEnabled()
@@ -4421,7 +5216,7 @@ function renderHomeAccountLinks() {
         : user.role === "therapist"
           ? `<button type="button" class="btn btn-secondary" data-action="open-dashboard">Dashboard</button>
              <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
-             <button type="button" class="btn btn-secondary" data-action="open-clinician">Invite patient</button>`
+             <button type="button" class="btn btn-secondary" data-action="open-create-patient">Add patient</button>`
           : "";
     return `
       <p class="home-account-links__signed">Signed in as <strong>${escapeHtml(user.name)}</strong> · ${escapeHtml(Auth.roleLabel(user.role))}</p>
@@ -4434,10 +5229,14 @@ function renderHomeAccountLinks() {
   }
 
   return `
-    <p class="home-account-links__lead">Create an account &amp; sign in to save your place. Already have a password? Sign in below to access your profile.</p>
+    <p class="home-account-links__lead">Your therapist creates your account. Sign in with the email and password they sent you.</p>
     <div class="home-account-links__actions">
-      <button type="button" class="btn btn-primary" data-action="open-signup">Create account &amp; sign in</button>
-      <button type="button" class="btn btn-secondary" data-action="open-login">Sign in</button>
+      <button type="button" class="btn btn-primary" data-action="open-login">Sign in</button>
+      ${
+        getLiveSettings().allowPatientSignup !== false
+          ? `<button type="button" class="btn btn-secondary" data-action="open-signup">Create account &amp; sign in</button>`
+          : ""
+      }
       <button type="button" class="btn btn-secondary" data-action="open-dashboard">Therapist dashboard</button>
     </div>
   `;
@@ -4468,7 +5267,11 @@ function syncAccountChrome() {
   if (!user) {
     mount.innerHTML = `
       <button type="button" class="account-chrome__link" data-action="open-dashboard">Dashboard</button>
-      <button type="button" class="account-chrome__btn" data-action="open-signup">Create account</button>
+      ${
+        getLiveSettings().allowPatientSignup !== false
+          ? `<button type="button" class="account-chrome__btn" data-action="open-signup">Create account</button>`
+          : ""
+      }
       <button type="button" class="account-chrome__link" data-action="open-login">Sign in</button>
     `;
     return;
@@ -4483,7 +5286,7 @@ function syncAccountChrome() {
       ? `<button type="button" class="account-chrome__link" data-action="open-settings">Settings</button>
          <button type="button" class="account-chrome__link" data-action="open-preferences">Preferences</button>`
       : user.role === "therapist"
-        ? `<button type="button" class="account-chrome__link" data-action="open-clinician">Invites</button>
+        ? `<button type="button" class="account-chrome__link" data-action="open-create-patient">Add patient</button>
            <button type="button" class="account-chrome__link" data-action="open-preferences">Preferences</button>`
         : "";
 
@@ -4522,16 +5325,11 @@ function renderAuthShell({ eyebrow, title, lead, body, footer = "" }) {
 function renderLogin() {
   const form = state.authForm;
   const invite = isPatientInvite();
-  // Invite links only offer create-account; existing passwords use the home screen.
-  if (invite && getLiveSettings().allowPatientSignup !== false) {
-    beginInviteAccountGate();
-    return renderSignup();
-  }
   return renderAuthShell({
     eyebrow: invite ? "Patient invite" : "Account",
     title: "Sign in",
     lead: invite
-      ? "Please sign in with an existing account to continue your screening."
+      ? "Sign in with the email and password your therapist sent you."
       : "Already have a password? Sign in to access your profile.",
     body: `
       <form class="auth__form" data-auth-form="login">
@@ -4556,15 +5354,19 @@ function renderLogin() {
       </form>
     `,
     footer: invite
-      ? ""
+      ? `<p class="auth__switch">Your therapist creates your account. If you do not have a password yet, ask them to send your sign-in details.</p>`
       : `
       <p class="auth__switch">
         <button type="button" class="auth__text-btn" data-action="open-forgot">Forgot your password?</button>
       </p>
-      <p class="auth__switch">
-        New here?
-        <button type="button" class="auth__text-btn" data-action="open-signup">Create an account &amp; sign in</button>
-      </p>
+      ${
+        getLiveSettings().allowTherapistSignup !== false
+          ? `<p class="auth__switch">
+        Therapist or admin?
+        <button type="button" class="auth__text-btn" data-action="open-signup">Create a therapist account</button>
+      </p>`
+          : ""
+      }
     `,
   });
 }
@@ -4752,8 +5554,10 @@ function renderAccount() {
       : user.role === "therapist"
         ? `<button type="button" class="btn btn-primary" data-action="open-dashboard">Open patient dashboard</button>
            <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
-           <button type="button" class="btn btn-secondary" data-action="open-clinician">Create patient invite</button>`
-        : `<button type="button" class="btn btn-primary" data-action="start-sensory">Continue sensory pathway</button>`;
+           <button type="button" class="btn btn-secondary" data-action="open-create-patient">Add patient</button>`
+        : user.questionnaireType
+          ? `<button type="button" class="btn btn-primary" data-action="start-assigned-questionnaire">Start ${escapeHtml(questionnaireTypeLabel(user.questionnaireType, user.lifeContext))} questionnaire</button>`
+          : `<button type="button" class="btn btn-primary" data-action="start-sensory">Continue sensory pathway</button>`;
 
   return `
     <div class="auth">
@@ -4764,6 +5568,14 @@ function renderAccount() {
         <dl class="account-meta">
           <div><dt>Email</dt><dd>${escapeHtml(user.email)}</dd></div>
           <div><dt>Phone</dt><dd>${escapeHtml(user.phone || "—")}</dd></div>
+          ${
+            user.questionnaireType
+              ? `<div><dt>Questionnaire</dt><dd>${escapeHtml(questionnaireTypeLabel(user.questionnaireType, user.lifeContext))}</dd></div>
+          <div><dt>Age</dt><dd>${escapeHtml(user.age || "—")}</dd></div>
+          <div><dt>Expires</dt><dd>${escapeHtml(user.expiresAt ? Auth.formatAuthDate(user.expiresAt) : `After ${QUESTIONNAIRE_EXPIRY_DAYS} days`)}</dd></div>
+          <div><dt>Reason for referral</dt><dd>${escapeHtml(user.reasonForReferral || "—")}</dd></div>`
+              : ""
+          }
           <div><dt>Created</dt><dd>${escapeHtml(Auth.formatAuthDate(user.createdAt))}</dd></div>
           <div><dt>Last sign-in</dt><dd>${escapeHtml(Auth.formatAuthDate(user.lastLoginAt))}</dd></div>
         </dl>
@@ -4938,7 +5750,7 @@ function renderSettingsAppPanel() {
       </label>
       <label class="auth__check">
         <input type="checkbox" name="allowPatientSignup" ${settings.allowPatientSignup !== false ? "checked" : ""} />
-        <span>Allow patient account registration</span>
+        <span>Allow public patient self-signup (off by default — therapists create patient accounts)</span>
       </label>
       <label class="auth__check">
         <input type="checkbox" name="allowTherapistSignup" ${settings.allowTherapistSignup !== false ? "checked" : ""} />
@@ -5167,6 +5979,7 @@ function getJourneyPhaseIndex(stepIndex) {
 }
 
 function needsLifeContext(respondent = state.respondent) {
+  if (hasLockedLifeContext()) return false;
   return respondent === "adult";
 }
 
@@ -5657,6 +6470,12 @@ function moveStep(delta) {
   let next = state.step + delta;
   while (next > 0 && next < STEPS.length) {
     const type = STEPS[next]?.type;
+    if (type === "respondent" && hasLockedRespondent()) {
+      state.respondent = state.assignedRespondent;
+      if (hasLockedLifeContext()) state.lifeContext = state.assignedLifeContext;
+      next += delta;
+      continue;
+    }
     if (type === "coupleHub" && !needsCoupleHub()) {
       next += delta;
       continue;
@@ -12249,7 +13068,20 @@ function render({ scrollToTop = false } = {}) {
     const step = STEPS[state.step];
     switch (step.type) {
       case "respondent":
-        html = renderRespondent();
+        if (hasLockedRespondent()) {
+          state.respondent = state.assignedRespondent;
+          if (hasLockedLifeContext()) state.lifeContext = state.assignedLifeContext;
+          moveStep(1);
+          if (needsCoupleHub()) {
+            html = renderCoupleHub();
+          } else if (needsLifeContext()) {
+            html = renderContext();
+          } else {
+            html = renderConsent();
+          }
+        } else {
+          html = renderRespondent();
+        }
         break;
       case "coupleHub":
         if (!needsCoupleHub()) {
@@ -12329,7 +13161,7 @@ function render({ scrollToTop = false } = {}) {
 
   syncQuestionnaireChrome();
   syncAccountChrome();
-  app.innerHTML = html;
+  app.innerHTML = renderFileProtocolBanner() + html;
   if (state.showIntroModal) {
     const introCta = app.querySelector("[data-action='dismiss-intro']");
     if (introCta) introCta.focus();
@@ -12503,7 +13335,7 @@ function bindEvents() {
       if (!btn) return;
       const action = btn.getAttribute("data-action") || btn.dataset.action;
       if (action === "open-login") {
-        if (isPatientInvite() && getLiveSettings().allowPatientSignup !== false) {
+        if (isPatientInvite()) {
           beginInviteAccountGate();
           render({ scrollToTop: true });
           return;
@@ -12558,11 +13390,8 @@ function bindEvents() {
           state.clinicianUnlocked = true;
         }
         render({ scrollToTop: true });
-      } else if (action === "open-clinician") {
-        state.view = "clinician";
-        if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
-          state.clinicianUnlocked = true;
-        }
+      } else if (action === "open-clinician" || action === "open-create-patient") {
+        openCreatePatientView();
         render({ scrollToTop: true });
       } else if (action === "logout") {
         handleLogout();
@@ -12579,6 +13408,7 @@ function bindEvents() {
         if (window.history?.replaceState) {
           const clean = new URL(window.location.href);
           clean.searchParams.delete("invite");
+          clean.searchParams.delete("patient");
           clean.searchParams.delete("results");
           clean.searchParams.delete("dashboard");
           clean.searchParams.delete("patients");
@@ -12786,6 +13616,11 @@ function bindEvents() {
         render({ scrollToTop: true });
         return;
       }
+      if (currentAssignedPatient()) {
+        startAssignedQuestionnaire();
+        render({ scrollToTop: true });
+        return;
+      }
       state.view = "sensory";
       state.sensoryArea = null;
       state.error = null;
@@ -12793,9 +13628,20 @@ function bindEvents() {
       return;
     }
 
+    if (action === "start-assigned-questionnaire") {
+      startAssignedQuestionnaire();
+      render({ scrollToTop: true });
+      return;
+    }
+
     if (action === "start-questionnaire") {
       if (inviteNeedsAccount()) {
         beginInviteAccountGate();
+        render({ scrollToTop: true });
+        return;
+      }
+      if (currentAssignedPatient()) {
+        startAssignedQuestionnaire();
         render({ scrollToTop: true });
         return;
       }
@@ -12985,7 +13831,7 @@ function bindEvents() {
     }
 
     if (action === "open-login") {
-      if (isPatientInvite() && getLiveSettings().allowPatientSignup !== false) {
+      if (isPatientInvite()) {
         beginInviteAccountGate();
         render({ scrollToTop: true });
         return;
@@ -13041,13 +13887,8 @@ function bindEvents() {
       return;
     }
 
-    if (action === "open-clinician") {
-      state.view = "clinician";
-      state.clinicianPinError = null;
-      state.clinicianCopyStatus = null;
-      if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
-        state.clinicianUnlocked = true;
-      }
+    if (action === "open-clinician" || action === "open-create-patient") {
+      openCreatePatientView();
       render({ scrollToTop: true });
       return;
     }
@@ -13347,10 +14188,134 @@ function bindEvents() {
     }
 
     if (action === "dashboard-tab") {
-      state.dashboardTab = btn.dataset.tab === "preferences" ? "preferences" : "register";
+      const tab = btn.dataset.tab;
+      state.dashboardTab =
+        tab === "preferences" ? "preferences" : tab === "create" ? "create" : "register";
       state.prefsNotice = null;
       state.dashboardNotice = null;
+      if (tab === "create") {
+        state.patientFormError = null;
+      } else {
+        state.clinicianCopyStatus = null;
+      }
       render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "create-another-patient") {
+      resetPatientForm();
+      state.createdPatient = null;
+      state.dashboardTab = "create";
+      state.clinicianCopyStatus = null;
+      state.patientSendStatus = null;
+      state.patientSendError = null;
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "send-patient-email" || action === "send-patient-email-again") {
+      const details = resolvePatientInviteDetails(btn);
+      const fromDashboard = Boolean(btn.dataset.assessmentId) && state.dashboardTab === "register";
+      handleSendPatientInviteEmail(details, { fromDashboard });
+      return;
+    }
+
+    if (action === "send-patient-whatsapp") {
+      const details = resolvePatientInviteDetails(btn);
+      const url = details ? patientInviteWhatsAppUrl(details) : "";
+      if (!url) {
+        e.preventDefault();
+        state.dashboardNotice = "Add a contact number to send on WhatsApp.";
+        render();
+        return;
+      }
+      if (btn.tagName !== "A") {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
+
+    if (action === "copy-created-patient" || action === "copy-created-patient-link") {
+      const details = state.createdPatient;
+      if (!details) return;
+      const text =
+        action === "copy-created-patient-link"
+          ? details.inviteUrl
+          : patientCredentialsText(details);
+      const done = () => {
+        state.clinicianCopyStatus = "copied";
+        state.dashboardNotice = action === "copy-created-patient-link" ? "Invite link copied." : "Sign-in details copied.";
+        render();
+        setTimeout(() => {
+          if (state.clinicianCopyStatus === "copied") {
+            state.clinicianCopyStatus = null;
+            if (state.view === "dashboard") render();
+          }
+        }, 1800);
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => done());
+      } else {
+        done();
+      }
+      return;
+    }
+
+    if (action === "copy-patient-invite" || action === "view-patient-details") {
+      const assessmentId = btn.dataset.assessmentId;
+      const record = getAssessmentById(assessmentId);
+      if (!record) return;
+      const patient =
+        typeof Auth !== "undefined"
+          ? Auth.listUsers().find((u) => u.id === record.patientUserId || (u.email && u.email === (record.summary?.email || record.demographics?.email)))
+          : null;
+      if (!patient) {
+        state.dashboardNotice = "This patient account is not on this device.";
+        render();
+        return;
+      }
+      const details = patientCredentialsPayload(patient, patient.temporaryPassword, buildAssignedPatientInviteUrl(patient));
+      if (action === "copy-patient-invite") {
+        const text = details.inviteUrl;
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            state.dashboardNotice = "Invite link copied.";
+            render();
+          });
+        } else {
+          state.dashboardNotice = "Invite link ready on the Add patient tab.";
+          state.createdPatient = details;
+          state.dashboardTab = "create";
+          render({ scrollToTop: true });
+        }
+        return;
+      }
+      state.createdPatient = details;
+      state.dashboardTab = "create";
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "reset-patient-password") {
+      const userId = btn.dataset.userId;
+      if (!userId || typeof Auth === "undefined" || !Auth.resetPatientPassword) return;
+      Auth.resetPatientPassword(userId).then((result) => {
+        if (!result.ok) {
+          state.patientFormError = result.error;
+          render();
+          return;
+        }
+        state.createdPatient = patientCredentialsPayload(
+          result.user,
+          result.password,
+          buildAssignedPatientInviteUrl(result.user)
+        );
+        state.dashboardTab = "create";
+        state.patientSendStatus = null;
+        state.patientSendError = null;
+        state.dashboardNotice = "A new password is ready. Send email (default) or WhatsApp it to the patient.";
+        render({ scrollToTop: true });
+      });
       return;
     }
 
@@ -13638,6 +14603,14 @@ function bindEvents() {
       return;
     }
 
+    if (e.target.name === "patient-questionnaire-type") {
+      if (!state.patientForm) state.patientForm = emptyPatientForm();
+      state.patientForm.questionnaireType = e.target.value;
+      state.patientFormError = null;
+      render();
+      return;
+    }
+
     if (e.target.name === "pref-report-length") {
       writeTherapistPrefs({ reportLength: e.target.value });
       state.prefsNotice = "Default report length saved.";
@@ -13766,6 +14739,16 @@ function bindEvents() {
       return;
     }
 
+    if (e.target.matches("[data-patient-field]")) {
+      const key = e.target.dataset.patientField;
+      if (!state.patientForm) state.patientForm = emptyPatientForm();
+      if (key in state.patientForm) {
+        state.patientForm[key] = e.target.value;
+        state.patientFormError = null;
+      }
+      return;
+    }
+
     if (e.target.matches("[data-settings-search]")) {
       state.settingsSearch = e.target.value;
       clearTimeout(state._settingsSearchTimer);
@@ -13847,6 +14830,52 @@ function bindEvents() {
   });
 
   app.addEventListener("submit", async (e) => {
+    const patientForm = e.target.closest("[data-patient-form]");
+    if (patientForm) {
+      e.preventDefault();
+      if (typeof Auth === "undefined" || !Auth.createPatientAccount) return;
+      const formData = new FormData(patientForm);
+      state.patientForm = {
+        firstName: String(formData.get("firstName") || ""),
+        surname: String(formData.get("surname") || ""),
+        email: String(formData.get("email") || ""),
+        phone: String(formData.get("phone") || ""),
+        age: String(formData.get("age") || ""),
+        questionnaireType: String(formData.get("patient-questionnaire-type") || state.patientForm.questionnaireType || "adult-home"),
+        reasonForReferral: String(formData.get("reasonForReferral") || ""),
+      };
+      state.patientFormBusy = true;
+      state.patientFormError = null;
+      render();
+      const visibility = readTherapistPrefs().reportVisibility;
+      const result = await Auth.createPatientAccount({
+        ...state.patientForm,
+        createdByUserId: currentAuthUser()?.id || null,
+        reportVisibility: visibility,
+        expiryDays: QUESTIONNAIRE_EXPIRY_DAYS,
+      });
+      state.patientFormBusy = false;
+      if (!result.ok) {
+        state.patientFormError = result.error;
+        render({ scrollToTop: true });
+        return;
+      }
+      createAssignedAssessment(result.user);
+      state.createdPatient = patientCredentialsPayload(
+        result.user,
+        result.password,
+        buildAssignedPatientInviteUrl(result.user)
+      );
+      state.dashboardTab = "create";
+      state.patientSendStatus = null;
+      state.patientSendError = null;
+      state.dashboardNotice = `${assignedPatientFullName(result.user)} can now sign in. This questionnaire expires in ${QUESTIONNAIRE_EXPIRY_DAYS} days.`;
+      resetPatientForm();
+      render({ scrollToTop: true });
+      await deliverPatientInviteEmail(state.createdPatient);
+      return;
+    }
+
     const loginForm = e.target.closest('[data-auth-form="login"]');
     if (loginForm) {
       e.preventDefault();

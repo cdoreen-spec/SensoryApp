@@ -750,7 +750,7 @@ const QUESTIONNAIRE_UI = {
     thankYouActivation:
       "Your screening was received, but the therapist inbox still needs a one-time email confirmation from FormSubmit. Check soulfulsensoryot@gmail.com (and Spam), click Activate/Confirm, then tap Send again.",
     thankYouFileProtocol:
-      "This page was opened as a saved file, so email cannot send. Open it through a web address (for example a local server), complete again, or tap Send again from that address.",
+      "This page was opened as a saved file, so email cannot send. Open http://127.0.0.1:8080 in your browser instead of double-clicking the HTML file, then tap Send again.",
     thankYouNetworkBlocked:
       "The browser blocked the email request — often an ad blocker or privacy extension. Pause the blocker for this site (or try another browser), then tap Send again.",
     thankYouRetry: "Send again",
@@ -1705,7 +1705,7 @@ const QUESTIONNAIRE_UI = {
     thankYouActivation:
       "Jou sifting is ontvang, maar die terapeut se inkassie moet eers FormSubmit se eenmalige bevestiging-e-pos klik. Kyk in soulfulsensoryot@gmail.com (en Spam), klik Bevestig/Activate, en tik dan Weer stuur.",
     thankYouFileProtocol:
-      "Hierdie bladsy is as ’n gestoorde lêer oopgemaak, so e-pos kan nie stuur nie. Maak dit oop via ’n webadres (bv. ’n plaaslike bediener) en probeer Weer stuur.",
+      "Hierdie bladsy is as ’n gestoorde lêer oopgemaak, so e-pos kan nie stuur nie. Maak http://127.0.0.1:8080 in jou blaaier oop in plaas daarvan om die HTML-lêer te dubbelklik, en tik dan Weer stuur.",
     thankYouNetworkBlocked:
       "Die blaaier het die e-posversoek geblokkeer — dikwels ’n advertensieblokkering of privaatheiduitbreiding. Skakel dit tydelik af vir hierdie werf (of probeer ’n ander blaaier), en tik dan Weer stuur.",
     thankYouRetry: "Stuur weer",
