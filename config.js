@@ -44,4 +44,11 @@ const APP_CONFIG = {
   questionnaireExpiryDays: 14,
   questionnaireExpiryWarningDays: 3,
   devAllowSampleReport: true,
+
+  /**
+   * Admin overview totals recorded card payments when this is true.
+   * Leave false until an online payment provider is connected.
+   */
+  onlinePaymentsEnabled: false,
+  paymentCurrency: "ZAR",
 };

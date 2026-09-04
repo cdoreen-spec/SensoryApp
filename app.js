@@ -101,7 +101,7 @@ const state = {
     role: "patient",
   },
   resetToken: null,
-  settingsTab: "users", // users | settings
+  settingsTab: "overview", // overview | users | settings
   settingsFilter: "all", // all | patient | therapist | admin | pending
   settingsSearch: "",
   settingsNotice: null,
@@ -226,6 +226,10 @@ const SENSORY_DRAFT_KEY = "ssot-sensory-draft";
 const SENSORY_DRAFT_VERSION = 1;
 const ASSESSMENTS_KEY = "ssot-assessments-v1";
 const ASSESSMENTS_VERSION = 1;
+const ASSESSMENT_ARCHIVE_LIMIT = 200;
+const PAYMENTS_KEY = "ssot-payments-v1";
+const PAYMENTS_VERSION = 1;
+const LOCAL_STORAGE_BUDGET_BYTES = 5 * 1024 * 1024;
 const COUPLE_SESSIONS_KEY = "ssot-couple-sessions-v1";
 const COUPLE_SESSIONS_VERSION = 1;
 const COUPLE_PARTNERS = ["a", "b"];
@@ -282,8 +286,6 @@ function inviteNeedsAccount() {
 function routeAfterAuth(user) {
   if (user?.role === "admin" || user?.role === "therapist") {
     initTherapistPrefs();
-    state.view = "dashboard";
-    state.dashboardTab = "register";
     state.clinicianUnlocked = true;
     if (isSampleReportPreviewEnabled()) {
       try {
@@ -292,11 +294,19 @@ function routeAfterAuth(user) {
           sessionStorage.removeItem("ssot-sample-preview");
           const options = JSON.parse(raw);
           openSampleReportPreview(options || {});
+          return;
         }
       } catch {
         sessionStorage.removeItem("ssot-sample-preview");
       }
     }
+    if (user.role === "admin") {
+      state.view = "settings";
+      state.settingsTab = "overview";
+      return;
+    }
+    state.view = "dashboard";
+    state.dashboardTab = "register";
     return;
   }
   if (user?.role === "patient" && (isPatientInvite() || user.questionnaireType)) {
@@ -572,7 +582,7 @@ function createAssignedAssessment(user) {
   };
   const items = readAssessments().filter((item) => item.id !== id);
   items.unshift(record);
-  writeAssessments(items.slice(0, 200));
+  writeAssessments(items.slice(0, ASSESSMENT_ARCHIVE_LIMIT));
   if (typeof Auth !== "undefined" && Auth.setPatientAssessmentId) {
     Auth.setPatientAssessmentId(user.id, id);
   }
@@ -923,6 +933,227 @@ function writeAssessments(items) {
   } catch (_) {
     /* Private mode / full storage — ignore */
   }
+}
+
+function emptyPaymentsStore() {
+  const currency =
+    (typeof APP_CONFIG !== "undefined" && APP_CONFIG.paymentCurrency) || "ZAR";
+  return { version: PAYMENTS_VERSION, currency, items: [] };
+}
+
+function readPayments() {
+  try {
+    const raw = localStorage.getItem(PAYMENTS_KEY);
+    if (!raw) return emptyPaymentsStore();
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== PAYMENTS_VERSION || !Array.isArray(parsed.items)) {
+      return emptyPaymentsStore();
+    }
+    return {
+      version: PAYMENTS_VERSION,
+      currency: parsed.currency || emptyPaymentsStore().currency,
+      items: parsed.items,
+    };
+  } catch (_) {
+    return emptyPaymentsStore();
+  }
+}
+
+function writePayments(store) {
+  try {
+    localStorage.setItem(PAYMENTS_KEY, JSON.stringify(store));
+  } catch (_) {
+    /* Private mode / full storage — ignore */
+  }
+}
+
+/** Record a successful online payment so the admin overview can total revenue. */
+function recordPayment(entry) {
+  const store = readPayments();
+  const amount = Number(entry?.amount);
+  if (!Number.isFinite(amount) || amount < 0) return { ok: false, error: "Invalid amount." };
+  const item = {
+    id: entry?.id || createAssessmentId(),
+    amount,
+    currency: entry?.currency || store.currency,
+    status: entry?.status || "paid",
+    createdAt: entry?.createdAt || new Date().toISOString(),
+    description: String(entry?.description || "").trim(),
+    patientUserId: entry?.patientUserId || null,
+  };
+  store.items.unshift(item);
+  writePayments(store);
+  return { ok: true, item };
+}
+
+function isOnlinePaymentsEnabled() {
+  return typeof APP_CONFIG !== "undefined" && APP_CONFIG.onlinePaymentsEnabled === true;
+}
+
+function getRevenueTotals() {
+  const store = readPayments();
+  const paid = store.items.filter((item) => item.status === "paid" || item.status === "succeeded");
+  return {
+    enabled: isOnlinePaymentsEnabled() || paid.length > 0,
+    currency: store.currency,
+    count: paid.length,
+    amount: paid.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
+  };
+}
+
+function formatMoney(amount, currency = "ZAR") {
+  const value = Number(amount) || 0;
+  try {
+    return new Intl.NumberFormat("en-ZA", { style: "currency", currency }).format(value);
+  } catch (_) {
+    return `R${value.toFixed(2)}`;
+  }
+}
+
+function formatStorageBytes(bytes) {
+  const value = Math.max(0, Number(bytes) || 0);
+  if (value < 1024) return `${Math.round(value)} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  if (value < 1024 * 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function measureLocalStorageUsage() {
+  let bytes = 0;
+  let keys = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      const value = localStorage.getItem(key) || "";
+      bytes += (key.length + value.length) * 2;
+      keys += 1;
+    }
+  } catch (_) {
+    return { bytes: 0, keys: 0, readable: false };
+  }
+  return { bytes, keys, readable: true };
+}
+
+function canWriteLocalStorage() {
+  const probe = "ssot-health-probe";
+  try {
+    localStorage.setItem(probe, "1");
+    localStorage.removeItem(probe);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+let cachedStorageEstimate = null;
+let storageEstimateRequested = false;
+
+function requestStorageEstimate() {
+  if (storageEstimateRequested) return;
+  storageEstimateRequested = true;
+  if (!navigator.storage?.estimate) return;
+  navigator.storage.estimate()
+    .then((estimate) => {
+      cachedStorageEstimate = {
+        usage: Number(estimate?.usage) || 0,
+        quota: Number(estimate?.quota) || 0,
+      };
+      if (state.view === "settings" && state.settingsTab === "overview") render();
+    })
+    .catch(() => {
+      cachedStorageEstimate = null;
+    });
+}
+
+function getAdminOverviewStats() {
+  const userStats =
+    typeof Auth !== "undefined" && Auth.getUserStats
+      ? Auth.getUserStats()
+      : { patients: 0, therapists: 0, total: 0, pending: 0, active: 0 };
+  const items = readAssessments();
+  const complete = items.filter((item) => assessmentStatus(item) === "complete");
+  const assigned = items.filter((item) => assessmentStatus(item) === "assigned");
+  const incomplete = items.filter((item) => assessmentStatus(item) === "incomplete");
+  const open = [...assigned, ...incomplete];
+  const expired = open.filter((item) => {
+    const days = questionnaireDaysUntilExpiry(item);
+    return days != null && days < 0;
+  });
+  const active = open.filter((item) => {
+    const days = questionnaireDaysUntilExpiry(item);
+    return !(days != null && days < 0);
+  });
+  const reports = complete.filter((item) => item.reportGeneratedAt || item.summary || item.completedAt);
+  const completedDates = complete
+    .map((item) => item.completedAt)
+    .filter(Boolean)
+    .sort();
+  const lastCompleted = completedDates.length ? completedDates[completedDates.length - 1] : null;
+  const local = measureLocalStorageUsage();
+  const writable = canWriteLocalStorage();
+  const originQuota = cachedStorageEstimate?.quota || 0;
+  const originUsage = cachedStorageEstimate?.usage || 0;
+  const quota =
+    originQuota > 0 && originQuota <= 50 * 1024 * 1024 ? originQuota : LOCAL_STORAGE_BUDGET_BYTES;
+  const usage = local.readable ? local.bytes : originUsage;
+  const usageRatio = quota > 0 ? usage / quota : 0;
+  const archiveCount = items.length;
+  const archiveRatio = archiveCount / ASSESSMENT_ARCHIVE_LIMIT;
+  let health = "healthy";
+  let healthLabel = "Healthy";
+  let healthNote = "Accounts, assessments, and reports are storing on this browser as expected.";
+  if (!writable || !local.readable) {
+    health = "critical";
+    healthLabel = "Storage blocked";
+    healthNote = "This browser is blocking saved data. Check private browsing or storage permissions.";
+  } else if (archiveCount >= ASSESSMENT_ARCHIVE_LIMIT || usageRatio >= 0.95) {
+    health = "critical";
+    healthLabel = "Storage full";
+    healthNote =
+      archiveCount >= ASSESSMENT_ARCHIVE_LIMIT
+        ? `The assessment archive has reached its ${ASSESSMENT_ARCHIVE_LIMIT} record limit.`
+        : "Browser storage is nearly full. Older records may stop saving.";
+  } else if (archiveRatio >= 0.9 || usageRatio >= 0.8) {
+    health = "attention";
+    healthLabel = "Needs attention";
+    healthNote =
+      archiveRatio >= 0.9
+        ? "The assessment archive is close to its limit."
+        : "Browser storage is getting full.";
+  }
+  const delivery =
+    DELIVERY_PROVIDER === "none"
+      ? "Off"
+      : DELIVERY_PROVIDER === "web3forms"
+        ? "Web3Forms"
+        : "FormSubmit";
+  return {
+    totalPatients: userStats.patients,
+    therapists: userStats.therapists,
+    totalUsers: userStats.total,
+    activeAssessments: active.length,
+    assignedCount: assigned.length,
+    inProgressCount: incomplete.length,
+    expiredCount: expired.length,
+    completedQuestionnaires: complete.length,
+    reportsGenerated: reports.length,
+    revenue: getRevenueTotals(),
+    archiveCount,
+    archiveLimit: ASSESSMENT_ARCHIVE_LIMIT,
+    lastCompleted,
+    local,
+    writable,
+    usage,
+    quota,
+    usageRatio,
+    health,
+    healthLabel,
+    healthNote,
+    delivery,
+    clinicianEmail: getClinicianEmail(),
+    quotaIsEstimate: quota === LOCAL_STORAGE_BUDGET_BYTES,
+  };
 }
 
 function assessmentStatus(item) {
@@ -1716,6 +1947,7 @@ function buildAssessmentRecord() {
     version: ASSESSMENTS_VERSION,
     status: "complete",
     completedAt: state.completedAt || new Date().toISOString(),
+    reportGeneratedAt: state.completedAt || new Date().toISOString(),
     savedAt: new Date().toISOString(),
     respondent: state.respondent,
     language: state.language,
@@ -1756,7 +1988,7 @@ function ensureAssessmentArchived() {
   const record = buildAssessmentRecord();
   const items = readAssessments().filter((item) => item.id !== record.id);
   items.unshift(record);
-  writeAssessments(items.slice(0, 200));
+  writeAssessments(items.slice(0, ASSESSMENT_ARCHIVE_LIMIT));
   state.viewingArchivedId = record.id;
   state.inProgressAssessmentId = null;
   persistCurrentPartnerToCoupleSession(record.id);
@@ -1887,7 +2119,7 @@ function persistIncompleteAssessmentFromDraft(draft) {
   const record = incompleteRecordFromDraft(draft, id, existing);
   const next = items.filter((item) => item.id !== id);
   next.unshift(record);
-  writeAssessments(next.slice(0, 200));
+  writeAssessments(next.slice(0, ASSESSMENT_ARCHIVE_LIMIT));
   if (isNewIncomplete) notifyIncompleteQuestionnaire(record);
   return id;
 }
@@ -1964,7 +2196,7 @@ function mirrorOpenDraftsToAssessments() {
       }
     }
   });
-  if (changed) writeAssessments(items.slice(0, 200));
+  if (changed) writeAssessments(items.slice(0, ASSESSMENT_ARCHIVE_LIMIT));
 }
 
 function collectCoupleIncompleteEntries(existingItems) {
@@ -5037,7 +5269,7 @@ function renderDashboard() {
             <button type="button" class="btn btn-primary" data-action="open-create-patient">Add patient</button>
             ${
               user?.role === "admin"
-                ? `<button type="button" class="btn btn-secondary" data-action="open-settings">Settings</button>`
+                ? `<button type="button" class="btn btn-secondary" data-action="open-settings">Admin</button>`
                 : ""
             }
             <button type="button" class="btn btn-secondary" data-action="back-home">Home</button>
@@ -5210,9 +5442,9 @@ function renderHomeAccountLinks() {
   if (user) {
     const tools =
       user.role === "admin"
-        ? `<button type="button" class="btn btn-secondary" data-action="open-dashboard">Dashboard</button>
-           <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
-           <button type="button" class="btn btn-secondary" data-action="open-settings">Settings</button>`
+        ? `<button type="button" class="btn btn-secondary" data-action="open-settings">Admin</button>
+           <button type="button" class="btn btn-secondary" data-action="open-dashboard">Patients</button>
+           <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>`
         : user.role === "therapist"
           ? `<button type="button" class="btn btn-secondary" data-action="open-dashboard">Dashboard</button>
              <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
@@ -5278,12 +5510,14 @@ function syncAccountChrome() {
   }
 
   const isClinician = user.role === "admin" || user.role === "therapist";
-  const dashLink = isClinician
-    ? `<button type="button" class="account-chrome__link" data-action="open-dashboard">Dashboard</button>`
-    : `<button type="button" class="account-chrome__link" data-action="open-dashboard">Therapist</button>`;
+  const dashLink = user.role === "admin"
+    ? `<button type="button" class="account-chrome__link" data-action="open-dashboard">Patients</button>`
+    : isClinician
+      ? `<button type="button" class="account-chrome__link" data-action="open-dashboard">Dashboard</button>`
+      : `<button type="button" class="account-chrome__link" data-action="open-dashboard">Therapist</button>`;
   const settingsLink =
     user.role === "admin"
-      ? `<button type="button" class="account-chrome__link" data-action="open-settings">Settings</button>
+      ? `<button type="button" class="account-chrome__link" data-action="open-settings">Admin</button>
          <button type="button" class="account-chrome__link" data-action="open-preferences">Preferences</button>`
       : user.role === "therapist"
         ? `<button type="button" class="account-chrome__link" data-action="open-create-patient">Add patient</button>
@@ -5548,9 +5782,9 @@ function renderAccount() {
 
   const tools =
     user.role === "admin"
-      ? `<button type="button" class="btn btn-primary" data-action="open-dashboard">Open patient dashboard</button>
-         <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
-         <button type="button" class="btn btn-secondary" data-action="open-settings">Settings</button>`
+      ? `<button type="button" class="btn btn-primary" data-action="open-settings">Open admin overview</button>
+         <button type="button" class="btn btn-secondary" data-action="open-dashboard">Patient dashboard</button>
+         <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>`
       : user.role === "therapist"
         ? `<button type="button" class="btn btn-primary" data-action="open-dashboard">Open patient dashboard</button>
            <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
@@ -5768,6 +6002,123 @@ function renderSettingsAppPanel() {
   `;
 }
 
+function renderSettingsUserStats() {
+  const stats = Auth.getUserStats();
+  return `
+    <div class="settings-stats" role="list">
+      <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.total}</span><span class="settings-stat__label">Total users</span></div>
+      <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.patients}</span><span class="settings-stat__label">Patients</span></div>
+      <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.therapists}</span><span class="settings-stat__label">Therapists</span></div>
+      <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.pending}</span><span class="settings-stat__label">Pending</span></div>
+      <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.active}</span><span class="settings-stat__label">Active</span></div>
+    </div>
+  `;
+}
+
+function renderSettingsOverviewPanel() {
+  requestStorageEstimate();
+  const overview = getAdminOverviewStats();
+  const usagePercent = overview.quota
+    ? Math.min(100, Math.round(overview.usageRatio * 100))
+    : overview.archiveLimit
+      ? Math.min(100, Math.round((overview.archiveCount / overview.archiveLimit) * 100))
+      : 0;
+  const activeHint = [
+    overview.assignedCount ? `${overview.assignedCount} assigned` : "",
+    overview.inProgressCount ? `${overview.inProgressCount} in progress` : "",
+    overview.expiredCount ? `${overview.expiredCount} expired` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const lastCompletedLabel = overview.lastCompleted
+    ? formatQuestionnaireDate(overview.lastCompleted, "en")
+    : "None yet";
+  const revenueHint = overview.revenue.enabled
+    ? `${overview.revenue.count} paid ${overview.revenue.count === 1 ? "payment" : "payments"} recorded`
+    : "Online payments are not connected yet";
+  const storageUsedLabel = overview.quota
+    ? `${formatStorageBytes(overview.usage)} of ${overview.quotaIsEstimate ? "~" : ""}${formatStorageBytes(overview.quota)}`
+    : formatStorageBytes(overview.local.bytes);
+  const healthClass =
+    overview.health === "critical"
+      ? "settings-health--critical"
+      : overview.health === "attention"
+        ? "settings-health--attention"
+        : "settings-health--healthy";
+
+  return `
+    <div class="settings-overview">
+      <div class="settings-stats settings-stats--overview" role="list">
+        <div class="settings-stat" role="listitem">
+          <span class="settings-stat__value">${overview.totalPatients}</span>
+          <span class="settings-stat__label">Total patients</span>
+          <span class="settings-stat__hint">Patient accounts on this device</span>
+        </div>
+        <div class="settings-stat" role="listitem">
+          <span class="settings-stat__value">${overview.activeAssessments}</span>
+          <span class="settings-stat__label">Active assessments</span>
+          <span class="settings-stat__hint">${escapeHtml(activeHint || "Assigned or in progress")}</span>
+        </div>
+        <div class="settings-stat" role="listitem">
+          <span class="settings-stat__value">${overview.completedQuestionnaires}</span>
+          <span class="settings-stat__label">Completed questionnaires</span>
+          <span class="settings-stat__hint">Finished screenings archived here</span>
+        </div>
+        <div class="settings-stat" role="listitem">
+          <span class="settings-stat__value">${overview.reportsGenerated}</span>
+          <span class="settings-stat__label">Reports generated</span>
+          <span class="settings-stat__hint">Sensory trail reports from completed screenings</span>
+        </div>
+        <div class="settings-stat ${overview.revenue.enabled ? "" : "settings-stat--muted"}" role="listitem">
+          <span class="settings-stat__value">${escapeHtml(formatMoney(overview.revenue.amount, overview.revenue.currency))}</span>
+          <span class="settings-stat__label">Revenue</span>
+          <span class="settings-stat__hint">${escapeHtml(revenueHint)}</span>
+        </div>
+      </div>
+
+      <section class="settings-health ${healthClass}" aria-labelledby="admin-health-heading">
+        <div class="settings-health__header">
+          <div>
+            <h2 id="admin-health-heading" class="settings-health__title">System health and storage</h2>
+            <p class="settings-health__note">${escapeHtml(overview.healthNote)}</p>
+          </div>
+          <span class="settings-health__status">${escapeHtml(overview.healthLabel)}</span>
+        </div>
+        <div class="settings-storage-bar" role="progressbar" aria-label="Storage used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${usagePercent}">
+          <span class="settings-storage-bar__fill" style="width: ${usagePercent}%"></span>
+        </div>
+        <dl class="settings-health__grid">
+          <div>
+            <dt>Storage used</dt>
+            <dd>${escapeHtml(storageUsedLabel)}${overview.quota ? ` · ${usagePercent}%` : ""}</dd>
+          </div>
+          <div>
+            <dt>Assessments archived</dt>
+            <dd>${overview.archiveCount} / ${overview.archiveLimit}</dd>
+          </div>
+          <div>
+            <dt>Accounts</dt>
+            <dd>${overview.totalUsers} users · ${overview.therapists} therapists</dd>
+          </div>
+          <div>
+            <dt>Email delivery</dt>
+            <dd>${escapeHtml(overview.delivery)} · ${escapeHtml(overview.clinicianEmail)}</dd>
+          </div>
+          <div>
+            <dt>Last completed report</dt>
+            <dd>${escapeHtml(lastCompletedLabel)}</dd>
+          </div>
+          <div>
+            <dt>Browser store</dt>
+            <dd>${overview.writable ? `${overview.local.keys} saved items` : "Not writable"}</dd>
+          </div>
+        </dl>
+        <p class="settings-overview__footnote">Totals are recorded on this browser only. Revenue will total here if online payments are connected later.</p>
+      </section>
+    </div>
+  `;
+}
+
 function renderSettings() {
   const user = currentAuthUser();
   if (!user || user.role !== "admin") {
@@ -5776,14 +6127,23 @@ function renderSettings() {
     return renderLogin();
   }
 
-  const stats = Auth.getUserStats();
+  const tab = state.settingsTab === "users" || state.settingsTab === "settings" ? state.settingsTab : "overview";
+  const title =
+    tab === "users" ? "Users" : tab === "settings" ? "App settings" : "Practice overview";
+  const lead =
+    tab === "users"
+      ? "Approve therapists, edit roles, and manage accounts for Soulful Sensory OT."
+      : tab === "settings"
+        ? "Practice name, clinician email, and who can create accounts."
+        : "Live totals for patients, assessments, questionnaires, reports, revenue, and this browser’s storage.";
+
   return `
     <div class="settings">
       <header class="settings__header">
         <div>
           <p class="auth__eyebrow">Admin</p>
-          <h1 class="settings__title">Settings &amp; users</h1>
-          <p class="settings__lead">Manage accounts, approvals, and practice preferences for Soulful Sensory OT.</p>
+          <h1 class="settings__title">${title}</h1>
+          <p class="settings__lead">${lead}</p>
         </div>
         <div class="settings__header-actions">
           <button type="button" class="btn btn-secondary" data-action="open-dashboard">Patient dashboard</button>
@@ -5803,21 +6163,22 @@ function renderSettings() {
           : ""
       }
 
-      <div class="settings-stats" role="list">
-        <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.total}</span><span class="settings-stat__label">Total users</span></div>
-        <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.patients}</span><span class="settings-stat__label">Patients</span></div>
-        <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.therapists}</span><span class="settings-stat__label">Therapists</span></div>
-        <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.pending}</span><span class="settings-stat__label">Pending</span></div>
-        <div class="settings-stat" role="listitem"><span class="settings-stat__value">${stats.active}</span><span class="settings-stat__label">Active</span></div>
+      <div class="settings-tabs" role="tablist" aria-label="Admin sections">
+        <button type="button" class="settings-tab ${tab === "overview" ? "is-active" : ""}" role="tab" aria-selected="${tab === "overview"}" data-action="settings-tab" data-tab="overview">Overview</button>
+        <button type="button" class="settings-tab ${tab === "users" ? "is-active" : ""}" role="tab" aria-selected="${tab === "users"}" data-action="settings-tab" data-tab="users">Users</button>
+        <button type="button" class="settings-tab ${tab === "settings" ? "is-active" : ""}" role="tab" aria-selected="${tab === "settings"}" data-action="settings-tab" data-tab="settings">App settings</button>
       </div>
 
-      <div class="settings-tabs" role="tablist" aria-label="Settings sections">
-        <button type="button" class="settings-tab ${state.settingsTab === "users" ? "is-active" : ""}" role="tab" aria-selected="${state.settingsTab === "users"}" data-action="settings-tab" data-tab="users">Users</button>
-        <button type="button" class="settings-tab ${state.settingsTab === "settings" ? "is-active" : ""}" role="tab" aria-selected="${state.settingsTab === "settings"}" data-action="settings-tab" data-tab="settings">App settings</button>
-      </div>
+      ${tab === "users" ? renderSettingsUserStats() : ""}
 
-      <section class="settings__panel">
-        ${state.settingsTab === "settings" ? renderSettingsAppPanel() : renderSettingsUsersPanel()}
+      <section class="settings__panel ${tab === "overview" ? "settings__panel--overview" : ""}">
+        ${
+          tab === "settings"
+            ? renderSettingsAppPanel()
+            : tab === "users"
+              ? renderSettingsUsersPanel()
+              : renderSettingsOverviewPanel()
+        }
       </section>
     </div>
   `;
@@ -13366,6 +13727,7 @@ function bindEvents() {
           state.view = "login";
         } else {
           state.view = "settings";
+          state.settingsTab = "overview";
         }
         render({ scrollToTop: true });
       } else if (action === "open-dashboard") {
@@ -13880,6 +14242,7 @@ function bindEvents() {
         state.view = "login";
       } else {
         state.view = "settings";
+        state.settingsTab = "overview";
         state.settingsError = null;
         state.settingsNotice = null;
       }
@@ -14320,7 +14683,8 @@ function bindEvents() {
     }
 
     if (action === "settings-tab") {
-      state.settingsTab = btn.dataset.tab === "settings" ? "settings" : "users";
+      const tab = btn.dataset.tab;
+      state.settingsTab = tab === "settings" || tab === "users" || tab === "overview" ? tab : "overview";
       state.settingsNotice = null;
       state.settingsError = null;
       render();
