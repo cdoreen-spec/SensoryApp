@@ -4866,6 +4866,21 @@ function dashboardPatientName(item) {
   );
 }
 
+function renderDashboardRowActionSelect(rowId, options) {
+  const optionMarkup = options
+    .map((opt) => `<option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>`)
+    .join("");
+  return `
+    <label class="dash-row__menu">
+      <span class="visually-hidden">Choose an action</span>
+      <select class="dash-row__select" data-dash-row-action data-assessment-id="${rowId}">
+        <option value="">Choose…</option>
+        ${optionMarkup}
+      </select>
+    </label>
+  `;
+}
+
 function renderDashboardAssessmentRow(item) {
   const summary = item.summary || {};
   const name = dashboardPatientName(item);
@@ -4953,15 +4968,15 @@ function renderDashboardAssessmentRow(item) {
         <span class="dash-row__col-label">${assigned || incomplete ? "Actions" : "Report"}</span>
         ${
           assigned
-            ? `<button type="button" class="btn btn-primary btn--compact" data-action="send-patient-email" data-assessment-id="${rowId}">Email</button>
-        ${
-          whatsappPhoneDigits(summary.phone || item.demographics?.phone || "")
-            ? `<button type="button" class="dash-row__tool" data-action="send-patient-whatsapp" data-assessment-id="${rowId}">WhatsApp</button>`
-            : ""
-        }
-        <button type="button" class="dash-row__tool" data-action="copy-patient-invite" data-assessment-id="${rowId}">Copy link</button>
-        <button type="button" class="dash-row__tool" data-action="send-patient-email-again" data-assessment-id="${rowId}">Send again</button>
-        <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
+            ? renderDashboardRowActionSelect(rowId, [
+                { value: "send-patient-email", label: "Email" },
+                ...(whatsappPhoneDigits(summary.phone || item.demographics?.phone || "")
+                  ? [{ value: "send-patient-whatsapp", label: "WhatsApp" }]
+                  : []),
+                { value: "copy-patient-invite", label: "Copy link" },
+                { value: "send-patient-email-again", label: "Send again" },
+                { value: "delete-assessment", label: "Remove" },
+              ])
             : incomplete
             ? `<button type="button" class="btn btn-primary btn--compact" data-action="continue-assessment" data-assessment-id="${rowId}">Continue</button>
         <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
@@ -5393,6 +5408,7 @@ function renderDashboard() {
                     <span class="dash-row__date">Date</span>
                     <span class="dash-row__pathway">Pathway</span>
                     <span class="dash-row__pattern">Results</span>
+                    <span class="dash-row__actions">Actions</span>
                   </div>
                   ${rows}
                 </div>`
@@ -14885,6 +14901,23 @@ function bindEvents() {
   });
 
   app.addEventListener("change", (e) => {
+    if (e.target.matches("[data-dash-row-action]")) {
+      const select = e.target;
+      const action = select.value;
+      if (!action) return;
+      const assessmentId = select.dataset.assessmentId || "";
+      select.value = "";
+      const trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.hidden = true;
+      trigger.setAttribute("data-action", action);
+      if (assessmentId) trigger.setAttribute("data-assessment-id", assessmentId);
+      select.insertAdjacentElement("afterend", trigger);
+      trigger.click();
+      trigger.remove();
+      return;
+    }
+
     if (e.target.matches('[data-auth-field="role"]')) {
       state.authForm.role = e.target.value === "therapist" ? "therapist" : "patient";
       state.authError = null;

@@ -15574,7 +15574,8 @@ body.is-dashboard .site-footer {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.7rem;
-  margin-bottom: 1.25rem;
+  margin-top: 1.35rem;
+  margin-bottom: 2.85rem;
 }
 
 .dashboard__stat {
@@ -15596,7 +15597,7 @@ body.is-dashboard .site-footer {
 
 .dashboard__stat-label {
   display: block;
-  margin-top: 0.35rem;
+  margin-top: 0.8rem;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -15660,11 +15661,12 @@ body.is-dashboard .site-footer {
 .dashboard__list {
   display: grid;
   grid-template-columns:
-    minmax(0, 1.55fr)
-    minmax(7.25rem, 0.72fr)
-    minmax(8.5rem, 0.82fr)
-    minmax(7.25rem, 0.78fr)
-    minmax(0, 1.35fr);
+    minmax(0, 1.4fr)
+    minmax(7rem, 0.68fr)
+    minmax(8rem, 0.78fr)
+    minmax(6.75rem, 0.72fr)
+    minmax(0, 1.15fr)
+    minmax(10.5rem, 0.9fr);
   gap: 0;
 }
 
@@ -15702,7 +15704,8 @@ body.is-dashboard .site-footer {
 .dash-row--head .dash-row__status-col,
 .dash-row--head .dash-row__date,
 .dash-row--head .dash-row__pathway,
-.dash-row--head .dash-row__pattern {
+.dash-row--head .dash-row__pattern,
+.dash-row--head .dash-row__actions {
   display: block;
 }
 
@@ -15985,15 +15988,46 @@ body.is-dashboard .site-footer {
 }
 
 .dash-row__actions {
-  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  justify-content: flex-end;
+  gap: 0.4rem 0.5rem;
+  justify-content: flex-start;
   align-items: center;
-  margin-top: 0.15rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid rgba(54, 91, 70, 0.08);
+}
+
+.dash-row__menu {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.dash-row__select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 0.42rem 2rem 0.42rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(54, 91, 70, 0.18);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23365b46' d='M1.2 1.3 6 6.1l4.8-4.8 1.1 1.1L6 8.3.1 2.4z'/%3E%3C/svg%3E")
+      no-repeat right 0.75rem center / 0.7rem,
+    rgba(255, 255, 255, 0.9);
+  color: var(--forest);
+  cursor: pointer;
+}
+
+.dash-row__select:hover {
+  border-color: rgba(54, 91, 70, 0.32);
+}
+
+.dash-row__select:focus {
+  outline: 2px solid rgba(54, 91, 70, 0.28);
+  outline-offset: 1px;
 }
 
 .dash-report-switch {
@@ -16245,6 +16279,7 @@ body.is-dashboard .site-footer {
     flex-wrap: wrap;
     margin-top: 0.35rem;
     padding-top: 0.75rem;
+    border-top: 1px solid rgba(54, 91, 70, 0.08);
   }
 
   .dash-row__col-label {
@@ -16300,9 +16335,9 @@ body.is-dashboard .site-footer {
   z-index: 1;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.35rem;
   margin: 0;
-  padding: 0.1rem 1.5rem 0;
+  padding: 0.35rem 1.25rem 0;
   background: rgba(10, 24, 19, 0.28);
   border-top: 1px solid rgba(244, 248, 244, 0.12);
 }
@@ -16313,28 +16348,37 @@ body.is-dashboard .site-footer {
   font-size: 0.92rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  padding: 1.05rem 1.35rem 1rem;
+  padding: 0.95rem 1.3rem 0.85rem;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 12px 12px 0 0;
   background: transparent;
-  color: rgba(244, 248, 244, 0.72);
+  color: rgba(244, 248, 244, 0.68);
   cursor: pointer;
 }
 
 .dashboard-tab:hover {
   color: #fff;
+  background: rgba(250, 252, 248, 0.12);
 }
 
 .dashboard-tab.is-active {
-  color: #fff;
-  border-bottom-color: rgba(232, 214, 168, 0.95);
+  color: var(--forest);
+  background: #c4a45a;
+  border-bottom-color: #8f7438;
   font-weight: 600;
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+}
+
+.dashboard-tab.is-active:hover {
+  color: var(--forest);
+  background: #d0b36a;
 }
 
 .dashboard-tab:focus-visible {
-  outline: 2px solid rgba(232, 214, 168, 0.7);
-  outline-offset: -2px;
+  outline: 2px solid rgba(232, 214, 168, 0.85);
+  outline-offset: 2px;
 }
 
 .prefs-panel {
