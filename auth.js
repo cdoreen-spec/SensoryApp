@@ -130,8 +130,8 @@ async function ensureAdminSeed() {
       existing.status = AUTH_STATUS.active;
       changed = true;
     }
-    // Keep the seeded admin password in sync with config.js so you can always sign in.
-    if (existing.email === email && password) {
+    // Keep the seeded admin password in sync with config.js until they set their own.
+    if (existing.email === email && password && !existing.passwordCustomized) {
       const salt = createSalt();
       const passwordHash = await hashPassword(password, salt);
       existing.salt = salt;
@@ -323,6 +323,120 @@ async function loginUser({ email, password }) {
   return { ok: true, user: publicUser(user) };
 }
 
+const RESET_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+function createResetToken() {
+  const bytes = new Uint8Array(32);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashResetToken(token) {
+  return hashPassword(String(token || ""), "ssot-reset");
+}
+
+function canReceivePasswordReset(user) {
+  if (!user) return false;
+  if (user.status !== AUTH_STATUS.active) return false;
+  return user.role === AUTH_ROLES.therapist || user.role === AUTH_ROLES.admin;
+}
+
+/**
+ * Creates a one-time reset token for an active therapist/admin account.
+ * Always returns ok for a valid email so the UI does not reveal whether the account exists.
+ * The raw token is only included when a mailer should actually send the link.
+ */
+async function requestPasswordReset({ email }) {
+  await ensureAdminSeed();
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { ok: false, error: "Please enter a valid email address." };
+  }
+
+  const users = getUsers();
+  const user = users.find((entry) => entry.email === normalizedEmail);
+  if (!canReceivePasswordReset(user)) {
+    return { ok: true, sent: false };
+  }
+
+  const token = createResetToken();
+  user.resetTokenHash = await hashResetToken(token);
+  user.resetTokenExpiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();
+  user.updatedAt = new Date().toISOString();
+  saveUsers(users);
+
+  return {
+    ok: true,
+    sent: true,
+    token,
+    email: user.email,
+    name: user.name,
+    user: publicUser(user),
+  };
+}
+
+async function findUserByResetToken(token) {
+  const raw = String(token || "").trim();
+  if (!raw) return null;
+  const tokenHash = await hashResetToken(raw);
+  const users = getUsers();
+  const user = users.find((entry) => entry.resetTokenHash && entry.resetTokenHash === tokenHash);
+  if (!user) return null;
+  const expires = Date.parse(user.resetTokenExpiresAt || "");
+  if (!Number.isFinite(expires) || expires < Date.now()) {
+    return { expired: true, user };
+  }
+  return { expired: false, user };
+}
+
+async function peekPasswordReset(token) {
+  const match = await findUserByResetToken(token);
+  if (!match || match.expired) {
+    return {
+      ok: false,
+      error: match?.expired
+        ? "This reset link has expired. Please request a new one."
+        : "This reset link is invalid or has already been used.",
+    };
+  }
+  return { ok: true, user: publicUser(match.user) };
+}
+
+async function completePasswordReset({ token, password }) {
+  const trimmedPassword = String(password || "");
+  if (trimmedPassword.length < 8) {
+    return { ok: false, error: "Password must be at least 8 characters." };
+  }
+  const match = await findUserByResetToken(token);
+  if (!match || match.expired) {
+    return {
+      ok: false,
+      error: match?.expired
+        ? "This reset link has expired. Please request a new one."
+        : "This reset link is invalid or has already been used.",
+    };
+  }
+
+  const users = getUsers();
+  const user = users.find((entry) => entry.id === match.user.id);
+  if (!user) return { ok: false, error: "This reset link is invalid or has already been used." };
+
+  const salt = createSalt();
+  user.salt = salt;
+  user.passwordHash = await hashPassword(trimmedPassword, salt);
+  user.resetTokenHash = null;
+  user.resetTokenExpiresAt = null;
+  user.passwordCustomized = true;
+  user.updatedAt = new Date().toISOString();
+  saveUsers(users);
+  clearSession();
+  return { ok: true, user: publicUser(user) };
+}
+
 function logoutUser() {
   clearSession();
 }
@@ -454,6 +568,9 @@ const Auth = {
   registerUser,
   loginUser,
   logoutUser,
+  requestPasswordReset,
+  peekPasswordReset,
+  completePasswordReset,
   listUsers,
   getUserStats,
   updateUserById,

@@ -5,8 +5,8 @@
  * Email delivery uses FormSubmit (https://formsubmit.co) — the first
  * real submission sends a confirmation email to CLINICIAN_EMAIL; click
  * Confirm once, then every completed adult / teen / parent screening
- * emails the detailed report (subject includes the completer’s name).
- * AJAX delivery disables FormSubmit reCAPTCHA (_captcha: false) so the
+ * emails the detailed report. Download and expiry reminders use the same
+ * inbox. AJAX delivery disables FormSubmit reCAPTCHA (_captcha: false) so the
  * browser gets a JSON response instead of an HTML captcha page.
  */
 const APP_CONFIG = {
@@ -37,9 +37,10 @@ const APP_CONFIG = {
   requireTherapistApproval: true,
 
   /**
-   * While building the app: let admin/therapist open a full sample report
-   * without completing the questionnaire (dashboard button + ?preview=report).
-   * Set to false before sharing with patients.
+   * Incomplete questionnaires expire after this many days (from first save).
+   * A reminder is emailed to clinicianEmail when this many days remain.
    */
+  questionnaireExpiryDays: 14,
+  questionnaireExpiryWarningDays: 3,
   devAllowSampleReport: true,
 };

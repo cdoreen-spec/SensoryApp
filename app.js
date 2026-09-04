@@ -51,9 +51,17 @@ const state = {
   clinicianPinError: null,
   /** Clinician invite draft: none | basic | full — defaults to no patient access */
   clinicianDraftResultsAccess: "none",
+  /** Invite visibility: none | summary | short | full */
+  clinicianDraftVisibility: "none",
+  /** Invite/patient report kind: none | summary | short | full */
+  patientReportKind: null,
+  /** Dashboard reopen length: summary | short | full */
+  reportLengthMode: null,
   clinicianCopyStatus: null, // null | copied
   /** Therapist dashboard: viewing a saved assessment report (skip re-email). */
   viewingArchivedId: null,
+  /** Assessment id for the questionnaire currently in progress (incomplete until results). */
+  inProgressAssessmentId: null,
   archiveReadOnly: false,
   /** When reopening from the dashboard: "full" | "basic" (short patient report). */
   reportViewMode: null,
@@ -61,6 +69,8 @@ const state = {
   sampleReportPreview: false,
   dashboardSearch: "",
   dashboardNotice: null,
+  dashboardTab: "register", // register | preferences
+  prefsNotice: null,
   authMode: "login", // login | signup
   authError: null,
   authNotice: null,
@@ -73,6 +83,7 @@ const state = {
     phone: "",
     role: "patient",
   },
+  resetToken: null,
   settingsTab: "users", // users | settings
   settingsFilter: "all", // all | patient | therapist | admin | pending
   settingsSearch: "",
@@ -163,6 +174,7 @@ function isPainPathwayEnabled() {
 
 const CLINICIAN_SESSION_KEY = "ssot-clinician-unlocked";
 const CLINICIAN_PREF_KEY = "ssot-invite-show-results";
+const THERAPIST_PREFS_KEY = "ssot-therapist-prefs-v1";
 const SHORT_REPORT_PREF_KEY = "ssot-short-report-sections";
 /** Optional extras on the patient short report. Core copy always asks them to book a follow-up. */
 const DEFAULT_SHORT_REPORT_SECTIONS = {
@@ -200,11 +212,33 @@ const ASSESSMENTS_VERSION = 1;
 const COUPLE_SESSIONS_KEY = "ssot-couple-sessions-v1";
 const COUPLE_SESSIONS_VERSION = 1;
 const COUPLE_PARTNERS = ["a", "b"];
+const QUESTIONNAIRE_EXPIRY_DAYS = Math.max(
+  1,
+  Number((typeof APP_CONFIG !== "undefined" && APP_CONFIG.questionnaireExpiryDays) || 14)
+);
+const QUESTIONNAIRE_EXPIRY_WARNING_DAYS = Math.max(
+  0,
+  Number((typeof APP_CONFIG !== "undefined" && APP_CONFIG.questionnaireExpiryWarningDays) || 3)
+);
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** Patient on-screen results after an invite: none | basic | full */
 const RESULTS_ACCESS = {
   none: "none",
   basic: "basic",
+  full: "full",
+};
+
+const REPORT_LENGTH = {
+  summary: "summary",
+  short: "short",
+  full: "full",
+};
+
+const REPORT_VISIBILITY = {
+  none: "none",
+  summary: "summary",
+  short: "short",
   full: "full",
 };
 
@@ -233,11 +267,10 @@ function routeAfterAuth(user) {
     continueInviteSession();
     return;
   }
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "therapist") {
+    initTherapistPrefs();
     state.view = "dashboard";
-    state.clinicianUnlocked = true;
-  } else if (user?.role === "therapist") {
-    state.view = "dashboard";
+    state.dashboardTab = "register";
     state.clinicianUnlocked = true;
   } else {
     state.view = "account";
@@ -309,6 +342,52 @@ function writeAssessments(items) {
   } catch (_) {
     /* Private mode / full storage — ignore */
   }
+}
+
+function assessmentStatus(item) {
+  if (!item) return "incomplete";
+  if (item.status === "incomplete") return "incomplete";
+  if (item.status === "complete") return "complete";
+  return item.completedAt && item.summary ? "complete" : "incomplete";
+}
+
+function isIncompleteAssessment(item) {
+  return assessmentStatus(item) === "incomplete";
+}
+
+function addDaysIso(iso, days) {
+  const date = iso ? new Date(iso) : new Date();
+  if (Number.isNaN(date.getTime())) return null;
+  date.setTime(date.getTime() + days * MS_PER_DAY);
+  return date.toISOString();
+}
+
+function questionnaireStartedAt(item) {
+  return item?.startedAt || item?.savedAt || item?.completedAt || null;
+}
+
+function questionnaireExpiresAt(item) {
+  if (!item || assessmentStatus(item) === "complete") return null;
+  if (item.expiresAt) return item.expiresAt;
+  return addDaysIso(questionnaireStartedAt(item), QUESTIONNAIRE_EXPIRY_DAYS);
+}
+
+function questionnaireDaysUntilExpiry(item) {
+  const expires = questionnaireExpiresAt(item);
+  if (!expires) return null;
+  const end = new Date(expires).getTime();
+  if (Number.isNaN(end)) return null;
+  return Math.ceil((end - Date.now()) / MS_PER_DAY);
+}
+
+function questionnaireExpiryNote(item) {
+  const daysLeft = questionnaireDaysUntilExpiry(item);
+  if (daysLeft == null) return "";
+  if (daysLeft < 0) return "Expired";
+  if (daysLeft === 0) return "Expires today";
+  if (daysLeft === 1) return "Expires tomorrow";
+  if (daysLeft <= QUESTIONNAIRE_EXPIRY_WARNING_DAYS) return `Expires in ${daysLeft} days`;
+  return `Expires ${formatQuestionnaireDate(questionnaireExpiresAt(item), "en")}`;
 }
 
 function createCoupleId() {
@@ -576,29 +655,24 @@ function findStepIndex(type) {
 function startCouplePartnerQuestionnaire(partner) {
   if (!COUPLE_PARTNERS.includes(partner)) return;
   const session = ensureCoupleSession();
-  state.respondent = "couple";
-  state.couplePartner = partner;
-  state.coupleShowMerge = false;
-  state.lifeContext = null;
-  state.error = null;
-  state.coupleHubNotice = null;
-  state.view = "questionnaire";
-  state.showIntroModal = true;
-  state.archiveReadOnly = false;
-  state.viewingArchivedId = null;
-  state.sampleReportPreview = false;
-  state.completedAt = null;
-  state.showSensoryDiet = false;
-  state.showWorkReport = false;
-  state.workReportDeclined = false;
-  state.submissionStatus = null;
-  state.submissionError = null;
-  state.submissionErrorCode = null;
-  state.submissionAttempted = false;
-
   const slot = session.partners[partner];
+
   if (slot.status === "complete" && slot.answers) {
-    // Re-open completed partner results from the session payload.
+    state.respondent = "couple";
+    state.couplePartner = partner;
+    state.coupleShowMerge = false;
+    state.lifeContext = null;
+    state.error = null;
+    state.coupleHubNotice = null;
+    state.view = "questionnaire";
+    state.sampleReportPreview = false;
+    state.showWorkReport = false;
+    state.workReportDeclined = false;
+    state.submissionStatus = null;
+    state.submissionError = null;
+    state.submissionErrorCode = null;
+    state.submissionAttempted = false;
+    state.inProgressAssessmentId = null;
     state.demographics = {
       name: slot.demographics?.name || slot.label || "",
       age: slot.demographics?.age || "",
@@ -622,6 +696,48 @@ function startCouplePartnerQuestionnaire(partner) {
     state.showSensoryDiet = true;
     return;
   }
+
+  if (slot.status === "in_progress") {
+    const incomplete = readAssessments().find(
+      (item) =>
+        isIncompleteAssessment(item) &&
+        item.coupleId === session.id &&
+        item.couplePartner === partner
+    );
+    if (incomplete && applyIncompleteAssessmentRecord(incomplete)) {
+      markCouplePartnerInProgress(partner);
+      return;
+    }
+    state.respondent = "couple";
+    state.couplePartner = partner;
+    const draft = readSensoryDraft();
+    if (draft && (draft.coupleId || null) === session.id && draft.couplePartner === partner) {
+      applySensoryDraft(draft);
+      markCouplePartnerInProgress(partner);
+      return;
+    }
+  }
+
+  state.respondent = "couple";
+  state.couplePartner = partner;
+  state.coupleShowMerge = false;
+  state.lifeContext = null;
+  state.error = null;
+  state.coupleHubNotice = null;
+  state.view = "questionnaire";
+  state.showIntroModal = true;
+  state.archiveReadOnly = false;
+  state.viewingArchivedId = null;
+  state.inProgressAssessmentId = null;
+  state.sampleReportPreview = false;
+  state.completedAt = null;
+  state.showSensoryDiet = false;
+  state.showWorkReport = false;
+  state.workReportDeclined = false;
+  state.submissionStatus = null;
+  state.submissionError = null;
+  state.submissionErrorCode = null;
+  state.submissionAttempted = false;
 
   markCouplePartnerInProgress(partner);
   state.consent = getConsentItems(state.language, "couple").map(() => false);
@@ -1014,8 +1130,9 @@ function buildAssessmentRecord() {
   const metrics = getProfileMetrics(scores);
   const user = currentAuthUser();
   return {
-    id: state.viewingArchivedId || createAssessmentId(),
+    id: state.viewingArchivedId || state.inProgressAssessmentId || createAssessmentId(),
     version: ASSESSMENTS_VERSION,
+    status: "complete",
     completedAt: state.completedAt || new Date().toISOString(),
     savedAt: new Date().toISOString(),
     respondent: state.respondent,
@@ -1047,7 +1164,7 @@ function buildAssessmentRecord() {
 function ensureAssessmentArchived() {
   if (state.sampleReportPreview) return null;
   if (!state.respondent || !RESPONDENT_TYPES.includes(state.respondent)) return null;
-  if (state.viewingArchivedId) return state.viewingArchivedId;
+  if (state.archiveReadOnly && state.viewingArchivedId) return state.viewingArchivedId;
 
   if (!state.completedAt) {
     state.completedAt = new Date().toISOString();
@@ -1058,27 +1175,379 @@ function ensureAssessmentArchived() {
   items.unshift(record);
   writeAssessments(items.slice(0, 200));
   state.viewingArchivedId = record.id;
+  state.inProgressAssessmentId = null;
   persistCurrentPartnerToCoupleSession(record.id);
   return record.id;
+}
+
+function questionnaireProgressLabel(step) {
+  const questionnaireSteps = STEPS.length - 1;
+  const current = Math.min(Math.max(Number(step) || 1, 1), questionnaireSteps);
+  return `Step ${current} of ${questionnaireSteps}`;
+}
+
+function draftLooksStarted(draft) {
+  if (!draft) return false;
+  const name = String(draft.demographics?.name || "").trim();
+  const parentName = String(draft.demographics?.parentName || "").trim();
+  const stepType = STEPS[draft.step]?.type;
+  const reachedQuestions =
+    stepType === "domain" || stepType === "idealSaturday" || stepType === "coupleWork";
+  const answeredSomething = SENSORY_DOMAIN_IDS.some((id) =>
+    (draft.answers?.[id] || []).some((value) => typeof value === "boolean")
+  );
+  return Boolean(name || parentName || reachedQuestions || answeredSomething);
+}
+
+function shouldPersistIncompleteProgress() {
+  if (state.sampleReportPreview || state.archiveReadOnly) return false;
+  if (!isSensoryDraftEligible()) return false;
+  if (!state.respondent || !RESPONDENT_TYPES.includes(state.respondent)) return false;
+  return draftLooksStarted({
+    step: state.step,
+    demographics: state.demographics,
+    answers: state.answers,
+  });
+}
+
+function resolveInProgressAssessmentId() {
+  if (state.inProgressAssessmentId) return state.inProgressAssessmentId;
+  if (isCouplePathway() && state.coupleId && state.couplePartner) {
+    const existing = readAssessments().find(
+      (item) =>
+        isIncompleteAssessment(item) &&
+        item.coupleId === state.coupleId &&
+        item.couplePartner === state.couplePartner
+    );
+    if (existing) return existing.id;
+  }
+  return createAssessmentId();
+}
+
+function incompleteRecordFromDraft(draft, id, existing = null) {
+  const demo = draft.demographics || {};
+  const patientName = String(demo.name || "").trim();
+  const { firstName, surname } = splitPersonName(patientName);
+  const user = currentAuthUser();
+  const respondent = RESPONDENT_TYPES.includes(draft.respondent) ? draft.respondent : null;
+  const couplePartner = COUPLE_PARTNERS.includes(draft.couplePartner) ? draft.couplePartner : null;
+  return {
+    id,
+    version: ASSESSMENTS_VERSION,
+    status: "incomplete",
+    completedAt: null,
+    savedAt: draft.savedAt || new Date().toISOString(),
+    startedAt: existing?.startedAt || existing?.savedAt || draft.savedAt || new Date().toISOString(),
+    expiresAt:
+      existing?.expiresAt ||
+      addDaysIso(
+        existing?.startedAt || existing?.savedAt || draft.savedAt || new Date().toISOString(),
+        QUESTIONNAIRE_EXPIRY_DAYS
+      ),
+    expiryNotifiedAt: existing?.expiryNotifiedAt || null,
+    respondent,
+    language: LANGUAGES.includes(draft.language) ? draft.language : "en",
+    lifeContext: draft.lifeContext || null,
+    coupleId: draft.coupleId || null,
+    couplePartner,
+    demographics: {
+      name: demo.name || "",
+      age: demo.age || "",
+      email: demo.email || "",
+      occupation: demo.occupation || "",
+      parentName: demo.parentName || "",
+      partnerName: demo.partnerName || "",
+    },
+    answers: cloneAnswers(draft.answers),
+    idealSaturday: draft.idealSaturday || "",
+    coupleWork: normalizeCoupleWork(draft.coupleWork),
+    sharingConsent: { ...(draft.sharingConsent || {}) },
+    contactPreference: draft.contactPreference || null,
+    inviteMode: Boolean(draft.inviteMode),
+    patientResultsAccess: normalizeResultsAccess(draft.patientResultsAccess),
+    patientUserId: user?.role === "patient" ? user.id : existing?.patientUserId || null,
+    step: draft.step,
+    summary: {
+      patientName,
+      firstName,
+      surname,
+      parentName: String(demo.parentName || "").trim(),
+      partnerName: String(demo.partnerName || "").trim(),
+      coupleId: draft.coupleId || null,
+      couplePartner,
+      completerName: patientName || String(demo.parentName || "").trim(),
+      email: String(demo.email || "").trim(),
+      age: String(demo.age || "").trim(),
+      overallProfile: "",
+      overallLabel: "",
+      leanHeadline: "",
+      sensitive: 0,
+      seeking: 0,
+      neutral: 0,
+      scored: 0,
+      domainProfiles: [],
+      progressLabel: questionnaireProgressLabel(draft.step),
+    },
+    draft: { ...draft, assessmentId: id },
+  };
+}
+
+function persistIncompleteAssessmentFromDraft(draft) {
+  if (!draft || !draftLooksStarted(draft)) return null;
+  const id = resolveInProgressAssessmentId();
+  state.inProgressAssessmentId = id;
+  const items = readAssessments();
+  const existing = items.find((item) => item.id === id);
+  if (existing && assessmentStatus(existing) === "complete") return existing.id;
+  const isNewIncomplete = !existing;
+  const record = incompleteRecordFromDraft(draft, id, existing);
+  const next = items.filter((item) => item.id !== id);
+  next.unshift(record);
+  writeAssessments(next.slice(0, 200));
+  if (isNewIncomplete) notifyIncompleteQuestionnaire(record);
+  return id;
+}
+
+function parseStoredSensoryDraft(raw) {
+  try {
+    const draft = JSON.parse(raw);
+    if (!draft || draft.version !== SENSORY_DRAFT_VERSION) return null;
+    if (typeof draft.step !== "number" || draft.step < 1 || draft.step >= STEPS.length - 1) {
+      return null;
+    }
+    if (draft.respondent && !RESPONDENT_TYPES.includes(draft.respondent)) return null;
+    if (draft.language && !LANGUAGES.includes(draft.language)) return null;
+    return draft;
+  } catch (_) {
+    return null;
+  }
+}
+
+function listSensoryDraftEntries() {
+  const entries = [];
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith(SENSORY_DRAFT_KEY)) continue;
+      const draft = parseStoredSensoryDraft(localStorage.getItem(key));
+      if (draft) entries.push({ key, draft });
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return entries;
+}
+
+function mirrorOpenDraftsToAssessments() {
+  const items = readAssessments();
+  let changed = false;
+  listSensoryDraftEntries().forEach(({ key, draft }) => {
+    if (!draftLooksStarted(draft)) return;
+    const match =
+      (draft.assessmentId && items.find((item) => item.id === draft.assessmentId)) ||
+      items.find(
+        (item) =>
+          isIncompleteAssessment(item) &&
+          item.respondent === draft.respondent &&
+          (item.coupleId || null) === (draft.coupleId || null) &&
+          (item.couplePartner || null) === (draft.couplePartner || null) &&
+          String(item.demographics?.name || item.summary?.patientName || "").trim() ===
+            String(draft.demographics?.name || "").trim()
+      );
+    if (match && assessmentStatus(match) === "complete") return;
+    if (match) {
+      const draftTime = new Date(draft.savedAt || 0).getTime();
+      const matchTime = new Date(match.savedAt || 0).getTime();
+      if (!Number.isNaN(draftTime) && !Number.isNaN(matchTime) && draftTime <= matchTime) {
+        return;
+      }
+      const updated = incompleteRecordFromDraft(draft, match.id, match);
+      const index = items.findIndex((item) => item.id === match.id);
+      if (index >= 0) {
+        items[index] = updated;
+        changed = true;
+      }
+      return;
+    }
+    const id = draft.assessmentId || createAssessmentId();
+    items.unshift(incompleteRecordFromDraft(draft, id, null));
+    changed = true;
+    if (!draft.assessmentId) {
+      try {
+        localStorage.setItem(key, JSON.stringify({ ...draft, assessmentId: id }));
+      } catch (_) {
+        /* ignore */
+      }
+    }
+  });
+  if (changed) writeAssessments(items.slice(0, 200));
+}
+
+function collectCoupleIncompleteEntries(existingItems) {
+  const extras = [];
+  const sessions = readCoupleSessionsMap();
+  Object.values(sessions).forEach((session) => {
+    if (!session?.id) return;
+    COUPLE_PARTNERS.forEach((partner) => {
+      const slot = session.partners?.[partner];
+      if (!slot || slot.status !== "in_progress") return;
+      const alreadyListed = existingItems.some(
+        (item) =>
+          isIncompleteAssessment(item) &&
+          item.coupleId === session.id &&
+          item.couplePartner === partner
+      );
+      if (alreadyListed) return;
+      const name = String(slot.label || slot.demographics?.name || "").trim();
+      const other = partner === "a" ? "b" : "a";
+      const partnerName = String(
+        session.partners?.[other]?.label || session.partners?.[other]?.demographics?.name || ""
+      ).trim();
+      extras.push({
+        id: `couple-progress-${session.id}-${partner}`,
+        status: "incomplete",
+        source: "couple-session",
+        savedAt: session.updatedAt || session.createdAt || new Date().toISOString(),
+        completedAt: null,
+        respondent: "couple",
+        coupleId: session.id,
+        couplePartner: partner,
+        demographics: {
+          name,
+          age: slot.demographics?.age || "",
+          email: slot.demographics?.email || "",
+          occupation: slot.demographics?.occupation || "",
+          parentName: "",
+          partnerName,
+        },
+        summary: {
+          patientName: name,
+          firstName: name,
+          surname: "",
+          parentName: "",
+          partnerName,
+          coupleId: session.id,
+          couplePartner: partner,
+          completerName: name,
+          email: slot.demographics?.email || "",
+          age: slot.demographics?.age || "",
+          overallLabel: "",
+          domainProfiles: [],
+          progressLabel: "In progress",
+        },
+      });
+    });
+  });
+  return extras;
+}
+
+function getDashboardQuestionnaireItems() {
+  mirrorOpenDraftsToAssessments();
+  const items = readAssessments().map((item) => ({
+    ...item,
+    status: assessmentStatus(item),
+  }));
+  const all = collectCoupleIncompleteEntries(items).concat(items);
+  all.sort((a, b) => {
+    const statusOrder = (a.status === "incomplete" ? 0 : 1) - (b.status === "incomplete" ? 0 : 1);
+    if (statusOrder !== 0) return statusOrder;
+    const timeA = new Date(a.savedAt || a.completedAt || 0).getTime();
+    const timeB = new Date(b.savedAt || b.completedAt || 0).getTime();
+    return timeB - timeA;
+  });
+  return all;
+}
+
+function applyIncompleteAssessmentRecord(record) {
+  if (!record || assessmentStatus(record) !== "incomplete") return false;
+  const draft = record.draft || {
+    version: SENSORY_DRAFT_VERSION,
+    savedAt: record.savedAt,
+    inviteMode: Boolean(record.inviteMode),
+    patientResultsAccess: record.patientResultsAccess,
+    step: typeof record.step === "number" ? record.step : findStepIndex("demographics"),
+    language: record.language,
+    respondent: record.respondent,
+    lifeContext: record.lifeContext,
+    coupleId: record.coupleId,
+    couplePartner: record.couplePartner,
+    consent: [],
+    sharingConsent: record.sharingConsent,
+    demographics: record.demographics,
+    answers: record.answers,
+    idealSaturday: record.idealSaturday,
+    coupleWork: record.coupleWork,
+    contactPreference: record.contactPreference,
+    assessmentId: record.id,
+  };
+  applySensoryDraft(draft);
+  state.inProgressAssessmentId = record.id;
+  state.viewingArchivedId = null;
+  state.archiveReadOnly = false;
+  state.sampleReportPreview = false;
+  return true;
+}
+
+function clearDraftsForAssessment(record) {
+  if (!record?.id) return;
+  listSensoryDraftEntries().forEach(({ key, draft }) => {
+    const sameId = draft.assessmentId === record.id;
+    const sameCouple =
+      record.coupleId &&
+      draft.coupleId === record.coupleId &&
+      draft.couplePartner === record.couplePartner;
+    if (!sameId && !sameCouple) return;
+    try {
+      localStorage.removeItem(key);
+    } catch (_) {
+      /* ignore */
+    }
+  });
+}
+
+function deleteCoupleProgressEntry(id) {
+  const match = String(id || "").match(/^couple-progress-(.+)-([ab])$/);
+  if (!match) return false;
+  const session = getCoupleSession(match[1]);
+  const partner = match[2];
+  if (!session || !session.partners?.[partner]) return false;
+  if (session.partners[partner].status === "in_progress") {
+    session.partners[partner] = {
+      ...emptyCouplePartnerSlot(session.partners[partner].label || ""),
+    };
+    saveCoupleSession(session);
+  }
+  return true;
 }
 
 function deleteAssessmentById(id) {
   if (!id) return false;
   const items = readAssessments();
+  const record = items.find((item) => item.id === id) || null;
   const next = items.filter((item) => item.id !== id);
   if (next.length === items.length) return false;
   writeAssessments(next);
+  clearDraftsForAssessment(record);
   if (state.viewingArchivedId === id) state.viewingArchivedId = null;
+  if (state.inProgressAssessmentId === id) state.inProgressAssessmentId = null;
   return true;
 }
 
 function applyAssessmentRecord(record, options = {}) {
   if (!record) return false;
-  const viewMode =
-    options.viewMode === RESULTS_ACCESS.basic ? RESULTS_ACCESS.basic : RESULTS_ACCESS.full;
+  const reportLength = normalizeReportLength(
+    options.reportLength ||
+      (options.viewMode === RESULTS_ACCESS.basic ? REPORT_LENGTH.summary : REPORT_LENGTH.full)
+  );
+  const viewMode = reportLength === REPORT_LENGTH.full ? RESULTS_ACCESS.full : RESULTS_ACCESS.basic;
   state.viewingArchivedId = record.id;
+  state.inProgressAssessmentId = null;
   state.archiveReadOnly = true;
   state.reportViewMode = viewMode;
+  state.reportLengthMode = reportLength;
+  if (viewMode === RESULTS_ACCESS.basic) {
+    applyPreferredShortReportExtras(reportLength);
+  }
   state.sampleReportPreview = Boolean(record.isSample);
   state.completedAt = record.completedAt || null;
   state.language = LANGUAGES.includes(record.language) ? record.language : "en";
@@ -1124,6 +1593,7 @@ function exitArchivedReport() {
   state.viewingArchivedId = null;
   state.archiveReadOnly = false;
   state.reportViewMode = null;
+  state.reportLengthMode = null;
   state.sampleReportPreview = false;
   state.view = "dashboard";
   state.step = 0;
@@ -1527,7 +1997,7 @@ function normalizeResultsAccess(value) {
   if (raw === "0" || raw === "none" || raw === "false" || raw === "email") {
     return RESULTS_ACCESS.none;
   }
-  if (raw === "summary" || raw === "basic" || raw === "partial") {
+  if (raw === "summary" || raw === "basic" || raw === "partial" || raw === "short" || raw === "short-report") {
     return RESULTS_ACCESS.basic;
   }
   if (raw === "1" || raw === "full" || raw === "true" || raw === "all") {
@@ -1560,9 +2030,17 @@ function getPatientResultsAccess() {
 }
 
 function readShortReportSections() {
+  if (isPatientInvite()) {
+    if (state.patientReportKind === REPORT_VISIBILITY.short) {
+      return { overallPattern: true, domainGlance: true, trailCharacter: true };
+    }
+    return { overallPattern: false, domainGlance: false, trailCharacter: false };
+  }
   try {
     const raw = localStorage.getItem(SHORT_REPORT_PREF_KEY);
-    if (!raw) return { ...DEFAULT_SHORT_REPORT_SECTIONS };
+    if (!raw) {
+      return shortReportExtrasForLength(readTherapistPrefs().reportLength);
+    }
     const parsed = JSON.parse(raw);
     return {
       overallPattern: Boolean(parsed?.overallPattern),
@@ -1586,6 +2064,131 @@ function writeShortReportSections(sections) {
     /* ignore quota / private mode */
   }
   return next;
+}
+
+function defaultTherapistPrefs() {
+  return {
+    reportLength: REPORT_LENGTH.full,
+    reportVisibility: REPORT_VISIBILITY.none,
+    notifications: {
+      completed: true,
+      incomplete: true,
+      expiring: true,
+      downloaded: true,
+      followUp: true,
+    },
+  };
+}
+
+function therapistPrefsStorageKey() {
+  const user = currentAuthUser();
+  return user?.id ? `${THERAPIST_PREFS_KEY}:${user.id}` : THERAPIST_PREFS_KEY;
+}
+
+function normalizeReportLength(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw === "summary" || raw === "basic" || raw === "short-summary") return REPORT_LENGTH.summary;
+  if (raw === "short" || raw === "short-report") return REPORT_LENGTH.short;
+  return REPORT_LENGTH.full;
+}
+
+function normalizeReportVisibility(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw === "summary" || raw === "basic") return REPORT_VISIBILITY.summary;
+  if (raw === "short" || raw === "short-report") return REPORT_VISIBILITY.short;
+  if (raw === "full" || raw === "1" || raw === "true") return REPORT_VISIBILITY.full;
+  return REPORT_VISIBILITY.none;
+}
+
+function visibilityToResultsAccess(visibility) {
+  if (visibility === REPORT_VISIBILITY.full) return RESULTS_ACCESS.full;
+  if (visibility === REPORT_VISIBILITY.summary || visibility === REPORT_VISIBILITY.short) {
+    return RESULTS_ACCESS.basic;
+  }
+  return RESULTS_ACCESS.none;
+}
+
+function shortReportExtrasForLength(length) {
+  if (length === REPORT_LENGTH.short || length === REPORT_VISIBILITY.short) {
+    return { overallPattern: true, domainGlance: true, trailCharacter: true };
+  }
+  return { overallPattern: false, domainGlance: false, trailCharacter: false };
+}
+
+function readTherapistPrefs() {
+  const defaults = defaultTherapistPrefs();
+  try {
+    const raw = localStorage.getItem(therapistPrefsStorageKey());
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw);
+    return {
+      reportLength: normalizeReportLength(parsed.reportLength || defaults.reportLength),
+      reportVisibility: normalizeReportVisibility(
+        parsed.reportVisibility ?? defaults.reportVisibility
+      ),
+      notifications: { ...defaults.notifications, ...(parsed.notifications || {}) },
+    };
+  } catch (_) {
+    return defaults;
+  }
+}
+
+function writeTherapistPrefs(partial) {
+  const current = readTherapistPrefs();
+  const next = {
+    ...current,
+    ...partial,
+    notifications: { ...current.notifications, ...(partial.notifications || {}) },
+  };
+  next.reportLength = normalizeReportLength(next.reportLength);
+  next.reportVisibility = normalizeReportVisibility(next.reportVisibility);
+  try {
+    localStorage.setItem(therapistPrefsStorageKey(), JSON.stringify(next));
+  } catch (_) {
+    /* ignore */
+  }
+  if (Object.prototype.hasOwnProperty.call(partial, "reportVisibility")) {
+    syncInviteDraftFromVisibility(next.reportVisibility);
+  }
+  if (Object.prototype.hasOwnProperty.call(partial, "reportLength")) {
+    applyPreferredShortReportExtras(next.reportLength);
+  }
+  return next;
+}
+
+function wantsNotification(type) {
+  return readTherapistPrefs().notifications?.[type] !== false;
+}
+
+function draftVisibilityFromStored(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw === "basic" || raw === "partial") return REPORT_VISIBILITY.summary;
+  return normalizeReportVisibility(raw);
+}
+
+function syncInviteDraftFromVisibility(visibility) {
+  state.clinicianDraftVisibility = normalizeReportVisibility(visibility);
+  state.clinicianDraftResultsAccess = visibilityToResultsAccess(state.clinicianDraftVisibility);
+  try {
+    sessionStorage.setItem(CLINICIAN_PREF_KEY, state.clinicianDraftVisibility);
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function initTherapistPrefs() {
+  const prefs = readTherapistPrefs();
+  let saved = null;
+  try {
+    saved = sessionStorage.getItem(CLINICIAN_PREF_KEY);
+  } catch (_) {
+    saved = null;
+  }
+  syncInviteDraftFromVisibility(saved ? draftVisibilityFromStored(saved) : prefs.reportVisibility);
+}
+
+function applyPreferredShortReportExtras(kind) {
+  writeShortReportSections(shortReportExtrasForLength(kind));
 }
 
 function isShortReportDashboardPreview() {
@@ -1625,6 +2228,7 @@ function shouldEmailResultsToClinician() {
   if (state.archiveReadOnly) return false;
   if (state.sampleReportPreview) return false;
   if (DELIVERY_PROVIDER === "none") return false;
+  if (!wantsNotification("completed")) return false;
   // Couple pathway emails once via the combined-report submit (last partner).
   if (state.respondent === "couple") return false;
   // Email the detailed sensory report for every finished adult / teen / parent screening
@@ -1644,6 +2248,7 @@ function assessmentCompleterName() {
 function clearInviteSession() {
   state.inviteMode = false;
   state.patientResultsAccess = RESULTS_ACCESS.none;
+  state.patientReportKind = null;
   state.submissionStatus = null;
   state.submissionError = null;
   state.submissionErrorCode = null;
@@ -1660,11 +2265,15 @@ function getClinicianBaseUrl() {
 function buildPatientInviteUrl(access) {
   const url = new URL(getClinicianBaseUrl());
   url.searchParams.set("invite", "1");
-  const level = normalizeResultsAccess(access);
-  if (level === RESULTS_ACCESS.full) {
+  const visibility = draftVisibilityFromStored(
+    access || state.clinicianDraftVisibility || state.clinicianDraftResultsAccess
+  );
+  if (visibility === REPORT_VISIBILITY.full) {
     url.searchParams.set("results", "full");
-  } else if (level === RESULTS_ACCESS.basic) {
-    url.searchParams.set("results", "basic");
+  } else if (visibility === REPORT_VISIBILITY.short) {
+    url.searchParams.set("results", "short");
+  } else if (visibility === REPORT_VISIBILITY.summary) {
+    url.searchParams.set("results", "summary");
   } else {
     url.searchParams.set("results", "0");
   }
@@ -1705,6 +2314,15 @@ function readInviteFromUrl() {
     state.view = "login";
     return;
   }
+  if (params.get("forgot") === "1") {
+    state.view = "forgot";
+    return;
+  }
+  if (params.get("reset")) {
+    state.view = "reset";
+    state.resetToken = String(params.get("reset") || "").trim();
+    return;
+  }
   if (params.get("signup") === "1") {
     state.view = "signup";
     return;
@@ -1716,18 +2334,21 @@ function readInviteFromUrl() {
       state.clinicianUnlocked = true;
     }
     const savedPref = sessionStorage.getItem(CLINICIAN_PREF_KEY);
-    state.clinicianDraftResultsAccess = savedPref
-      ? normalizeResultsAccess(savedPref)
-      : RESULTS_ACCESS.none;
+    if (savedPref) {
+      syncInviteDraftFromVisibility(draftVisibilityFromStored(savedPref));
+    } else {
+      initTherapistPrefs();
+    }
     return;
   }
 
   if (params.get("invite") === "1") {
     state.inviteMode = true;
     // Therapist must opt the patient into a report. Missing/unknown → no access.
-    state.patientResultsAccess = params.has("results")
-      ? normalizeResultsAccess(params.get("results"))
-      : RESULTS_ACCESS.none;
+    const rawResults = params.has("results") ? params.get("results") : "none";
+    const visibility = draftVisibilityFromStored(rawResults);
+    state.patientReportKind = visibility;
+    state.patientResultsAccess = visibilityToResultsAccess(visibility);
     if (inviteNeedsAccount()) {
       beginInviteAccountGate();
     } else {
@@ -1797,6 +2418,7 @@ function buildSensoryDraft() {
   return {
     version: SENSORY_DRAFT_VERSION,
     savedAt: new Date().toISOString(),
+    assessmentId: state.inProgressAssessmentId || null,
     inviteMode: Boolean(state.inviteMode),
     patientResultsAccess: normalizeResultsAccess(state.patientResultsAccess),
     step: state.step,
@@ -1825,10 +2447,17 @@ function buildSensoryDraft() {
 
 function saveSensoryDraft() {
   if (!isSensoryDraftEligible()) return;
+  if (shouldPersistIncompleteProgress()) {
+    state.inProgressAssessmentId = resolveInProgressAssessmentId();
+  }
+  const draft = buildSensoryDraft();
   try {
-    localStorage.setItem(sensoryDraftStorageKey(), JSON.stringify(buildSensoryDraft()));
+    localStorage.setItem(sensoryDraftStorageKey(), JSON.stringify(draft));
   } catch (_) {
     /* Private mode / full storage — ignore */
+  }
+  if (shouldPersistIncompleteProgress()) {
+    persistIncompleteAssessmentFromDraft(draft);
   }
 }
 
@@ -1922,6 +2551,7 @@ function applySensoryDraft(draft) {
   state.coupleWork = normalizeCoupleWork(draft.coupleWork);
   state.sensoryArea = draft.sensoryArea || null;
   state.contactPreference = draft.contactPreference || null;
+  state.inProgressAssessmentId = draft.assessmentId || state.inProgressAssessmentId || null;
   if (isPatientInvite() && draft.patientResultsAccess) {
     state.patientResultsAccess = normalizeResultsAccess(draft.patientResultsAccess);
   }
@@ -1971,6 +2601,7 @@ function resetSensoryQuestionnaireProgress() {
   state.submissionErrorCode = null;
   state.submissionAttempted = false;
   state.viewingArchivedId = null;
+  state.inProgressAssessmentId = null;
   state.archiveReadOnly = false;
   state.reportViewMode = null;
   state.error = null;
@@ -2138,7 +2769,7 @@ function buildResultsReport() {
   ].filter((line) => line !== null);
 
   const profileBit = profileLabelPlain(metrics.meta);
-  const subject =
+  const subjectCore =
     state.respondent === "parent" && demo.name
       ? `${completerName} — Sensory screening (about ${demo.name})${profileBit ? ` — ${profileBit}` : ""}`
       : state.respondent === "couple"
@@ -2149,7 +2780,7 @@ function buildResultsReport() {
     scores,
     metrics,
     text: lines.join("\n"),
-    subject,
+    subject: `Completed: ${subjectCore}`,
   };
 }
 
@@ -2188,8 +2819,8 @@ function classifyDeliveryError(err, fallbackMessage) {
   return { message, code: null };
 }
 
-async function postFormSubmitJson(payload) {
-  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(getClinicianEmail())}`, {
+async function postFormSubmitJson(payload, toEmail = getClinicianEmail()) {
+  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(toEmail)}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -2212,13 +2843,13 @@ async function postFormSubmitJson(payload) {
   return { provider: "formsubmit-json" };
 }
 
-async function postFormSubmitFormData(payload) {
+async function postFormSubmitFormData(payload, toEmail = getClinicianEmail()) {
   const body = new FormData();
   Object.entries(payload).forEach(([key, value]) => {
     if (value == null) return;
     body.append(key, String(value));
   });
-  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(getClinicianEmail())}`, {
+  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(toEmail)}`, {
     method: "POST",
     headers: { Accept: "application/json" },
     body,
@@ -2239,7 +2870,7 @@ async function postFormSubmitFormData(payload) {
 }
 
 /** Last-resort delivery when fetch/AJAX is blocked (ad blockers, etc.). */
-function postFormSubmitViaHiddenForm(payload) {
+function postFormSubmitViaHiddenForm(payload, toEmail = getClinicianEmail()) {
   return new Promise((resolve, reject) => {
     const iframeName = `ssot-mail-${Date.now()}`;
     const iframe = document.createElement("iframe");
@@ -2250,7 +2881,7 @@ function postFormSubmitViaHiddenForm(payload) {
 
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = `https://formsubmit.co/${encodeURIComponent(getClinicianEmail())}`;
+    form.action = `https://formsubmit.co/${encodeURIComponent(toEmail)}`;
     form.target = iframeName;
     form.style.display = "none";
 
@@ -2368,6 +2999,325 @@ async function sendResultsEmail(report) {
   throw new Error("Email delivery is disabled in config.js");
 }
 
+function canSendClinicianMail() {
+  if (DELIVERY_PROVIDER === "none") return false;
+  if (state.sampleReportPreview) return false;
+  if (typeof window !== "undefined" && window.location.protocol === "file:") return false;
+  return true;
+}
+
+async function sendClinicianNotification({ subject, message, name, fields = {} }) {
+  assertEmailDeliveryContext();
+  const payloadBase = {
+    subject,
+    name: name || "Soulful Sensory screening",
+    email: getClinicianEmail(),
+    message,
+    ...fields,
+  };
+
+  if (DELIVERY_PROVIDER === "web3forms") {
+    if (!WEB3FORMS_KEY) {
+      throw new Error("Web3Forms access key is not configured in config.js");
+    }
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        ...payloadBase,
+        from_name: "Soulful Sensory Screening",
+        to: getClinicianEmail(),
+      }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+      throw new Error((data && data.message) || "Web3Forms could not send the email");
+    }
+    return { provider: "web3forms" };
+  }
+
+  if (DELIVERY_PROVIDER === "formsubmit") {
+    const formSubmitPayload = {
+      _subject: subject,
+      _template: "table",
+      _captcha: "false",
+      _honey: "",
+      _url: typeof window !== "undefined" ? window.location.href.split("#")[0] : "",
+      name: payloadBase.name,
+      email: payloadBase.email,
+      message: payloadBase.message,
+      ...fields,
+    };
+    try {
+      return await postFormSubmitJson(formSubmitPayload);
+    } catch (jsonErr) {
+      if (jsonErr?.code === "formsubmit-activation") throw jsonErr;
+      try {
+        return await postFormSubmitFormData(formSubmitPayload);
+      } catch (formDataErr) {
+        if (formDataErr?.code === "formsubmit-activation") throw formDataErr;
+        return await postFormSubmitViaHiddenForm(formSubmitPayload);
+      }
+    }
+  }
+
+  throw new Error("Email delivery is disabled in config.js");
+}
+
+function buildPasswordResetUrl(token) {
+  const url = new URL(getClinicianBaseUrl());
+  url.searchParams.set("reset", token);
+  return url.toString();
+}
+
+async function sendPasswordResetEmail({ email, name, token }) {
+  assertEmailDeliveryContext();
+  const toEmail = String(email || "").trim();
+  if (!toEmail) throw new Error("No email address was provided.");
+  const displayName = String(name || "").trim() || "there";
+  const resetUrl = buildPasswordResetUrl(token);
+  const subject = "Reset your Soulful Sensory OT password";
+  const message = [
+    `Hello ${displayName},`,
+    "",
+    "We received a request to reset the password for this Soulful Sensory OT account.",
+    "",
+    "Open this link in the same browser you use to sign in, then choose a new password:",
+    resetUrl,
+    "",
+    "This link expires in 24 hours. If you did not ask to reset your password, you can ignore this email.",
+  ].join("\n");
+
+  if (DELIVERY_PROVIDER === "web3forms") {
+    if (!WEB3FORMS_KEY) {
+      throw new Error("Web3Forms access key is not configured in config.js");
+    }
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        subject,
+        name: displayName,
+        email: toEmail,
+        to: toEmail,
+        from_name: "Soulful Sensory OT",
+        message,
+      }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || !isDeliverySuccessFlag(data.success)) {
+      throw new Error((data && data.message) || "Web3Forms could not send the email");
+    }
+    return { provider: "web3forms" };
+  }
+
+  if (DELIVERY_PROVIDER === "formsubmit") {
+    const formSubmitPayload = {
+      _subject: subject,
+      _template: "box",
+      _captcha: "false",
+      _honey: "",
+      name: displayName,
+      email: toEmail,
+      message,
+    };
+    try {
+      return await postFormSubmitJson(formSubmitPayload, toEmail);
+    } catch (jsonErr) {
+      if (jsonErr?.code === "formsubmit-activation") throw jsonErr;
+      try {
+        return await postFormSubmitFormData(formSubmitPayload, toEmail);
+      } catch (formDataErr) {
+        if (formDataErr?.code === "formsubmit-activation") throw formDataErr;
+        return await postFormSubmitViaHiddenForm(formSubmitPayload, toEmail);
+      }
+    }
+  }
+
+  throw new Error("Email delivery is disabled in config.js");
+}
+
+function queueClinicianNotification(options) {
+  if (!canSendClinicianMail()) return;
+  const type = options?.type;
+  if (type && !wantsNotification(type)) return;
+  sendClinicianNotification(options).catch((err) => {
+    console.warn("Clinician notification failed:", err);
+  });
+}
+
+function notifyIncompleteQuestionnaire(record) {
+  if (!record || !wantsNotification("incomplete")) return;
+  const name = dashboardPatientName(record);
+  const pathway = respondentLabel(record.respondent);
+  queueClinicianNotification({
+    type: "incomplete",
+    subject: `Incomplete: ${name} — ${pathway} questionnaire started`,
+    name,
+    fields: {
+      notification: "questionnaire-incomplete",
+      respondent: record.respondent || "",
+      lifeContext: record.lifeContext || "",
+    },
+    message: [
+      "A sensory questionnaire was started and is still incomplete.",
+      "",
+      `Patient: ${name}`,
+      record.summary?.email || record.demographics?.email
+        ? `Patient email: ${record.summary?.email || record.demographics?.email}`
+        : null,
+      `Pathway: ${pathway}${record.lifeContext ? ` · ${lifeContextDisplay(record.lifeContext)}` : ""}`,
+      record.summary?.progressLabel ? `Progress: ${record.summary.progressLabel}` : null,
+      record.savedAt ? `Last saved: ${formatQuestionnaireDate(record.savedAt, "en")}` : null,
+      "",
+      "Open the patient register on this device to continue or follow up.",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+}
+
+function notifyFollowUpRequested() {
+  if (state.archiveReadOnly || state.sampleReportPreview) return;
+  if (!wantsNotification("followUp")) return;
+  const name = assessmentCompleterName();
+  const pathway = respondentLabel(state.respondent);
+  const context = lifeContextDisplay(state.lifeContext);
+  queueClinicianNotification({
+    type: "followUp",
+    subject: `Follow-up: ${name} would like to discuss their report`,
+    name,
+    fields: {
+      notification: "follow-up-requested",
+      respondent: state.respondent || "",
+      lifeContext: state.lifeContext || "",
+    },
+    message: [
+      "A patient asked to book a follow-up discussion about their sensory report.",
+      "",
+      `Patient: ${name}`,
+      `Pathway: ${pathway}${context ? ` · ${context}` : ""}`,
+      state.demographics?.email ? `Patient email: ${state.demographics.email}` : null,
+      `When: ${new Date().toLocaleString("en-ZA")}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+}
+
+function persistContactPreferenceToArchive() {
+  const id = state.viewingArchivedId;
+  if (!id || state.sampleReportPreview) return;
+  const items = readAssessments();
+  const item = items.find((entry) => entry.id === id);
+  if (!item) return;
+  item.contactPreference = state.contactPreference;
+  writeAssessments(items);
+}
+
+function notifyReportDownloaded() {
+  if (!wantsNotification("downloaded")) return;
+  if (!canSendClinicianMail()) return;
+  const name = assessmentCompleterName();
+  const pathway = respondentLabel(state.respondent);
+  const context = lifeContextDisplay(state.lifeContext);
+  const id = state.viewingArchivedId || state.inProgressAssessmentId || name;
+  const now = Date.now();
+  if (state._lastDownloadNotify && state._lastDownloadNotify.id === id && now - state._lastDownloadNotify.at < 20000) {
+    return;
+  }
+  state._lastDownloadNotify = { id, at: now };
+  queueClinicianNotification({
+    type: "downloaded",
+    subject: `Downloaded: ${name} — ${pathway} report`,
+    name,
+    fields: {
+      notification: "report-downloaded",
+      respondent: state.respondent || "",
+      lifeContext: state.lifeContext || "",
+    },
+    message: [
+      "A sensory report was downloaded or printed.",
+      "",
+      `Patient: ${name}`,
+      `Pathway: ${pathway}${context ? ` · ${context}` : ""}`,
+      state.demographics?.email ? `Patient email: ${state.demographics.email}` : null,
+      `When: ${new Date().toLocaleString("en-ZA")}`,
+      state.archiveReadOnly ? "Source: Therapist dashboard" : "Source: On-screen report",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+}
+
+function notifyExpiringQuestionnaires() {
+  if (!canSendClinicianMail()) return;
+  if (!wantsNotification("expiring")) return;
+  const items = readAssessments();
+  let changed = false;
+  items.forEach((item) => {
+    if (assessmentStatus(item) !== "incomplete") return;
+    if (item.expiryNotifiedAt) return;
+    const daysLeft = questionnaireDaysUntilExpiry(item);
+    if (daysLeft == null || daysLeft > QUESTIONNAIRE_EXPIRY_WARNING_DAYS) return;
+    const name = dashboardPatientName(item);
+    const expires = questionnaireExpiresAt(item);
+    const pathway = respondentLabel(item.respondent);
+    const expired = daysLeft < 0;
+    queueClinicianNotification({
+      type: "expiring",
+      subject: expired
+        ? `Expired: ${name} — incomplete ${pathway} questionnaire`
+        : `Expiring: ${name} — incomplete ${pathway} questionnaire`,
+      name,
+      fields: {
+        notification: expired ? "questionnaire-expired" : "questionnaire-expiring",
+        respondent: item.respondent || "",
+        lifeContext: item.lifeContext || "",
+      },
+      message: [
+        expired
+          ? "An incomplete sensory questionnaire has reached its expiry window."
+          : "An incomplete sensory questionnaire is about to expire.",
+        "",
+        `Patient: ${name}`,
+        item.summary?.email || item.demographics?.email
+          ? `Patient email: ${item.summary?.email || item.demographics?.email}`
+          : null,
+        `Pathway: ${pathway}${item.lifeContext ? ` · ${lifeContextDisplay(item.lifeContext)}` : ""}`,
+        item.summary?.progressLabel ? `Progress: ${item.summary.progressLabel}` : null,
+        questionnaireStartedAt(item)
+          ? `Started: ${formatQuestionnaireDate(questionnaireStartedAt(item), "en")}`
+          : null,
+        item.savedAt ? `Last saved: ${formatQuestionnaireDate(item.savedAt, "en")}` : null,
+        expires ? `Expires: ${formatQuestionnaireDate(expires, "en")}` : null,
+        expired ? `Days overdue: ${Math.abs(daysLeft)}` : `Days remaining: ${daysLeft}`,
+        "",
+        `Incomplete screenings expire ${QUESTIONNAIRE_EXPIRY_DAYS} days after they are started. Open the patient register on this device to continue or remove it.`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
+    item.expiryNotifiedAt = new Date().toISOString();
+    if (!item.expiresAt && expires) item.expiresAt = expires;
+    changed = true;
+  });
+  if (changed) writeAssessments(items);
+}
+
+function maybeNotifyExpiringQuestionnaires() {
+  const now = Date.now();
+  if (state._lastExpiryCheck && now - state._lastExpiryCheck < 10 * 60 * 1000) return;
+  state._lastExpiryCheck = now;
+  try {
+    notifyExpiringQuestionnaires();
+  } catch (err) {
+    console.warn("Expiry notification check failed:", err);
+  }
+}
+
 function updateSubmissionStatusUi() {
   const copy = currentUi();
   const status = app.querySelector("[data-submission-status]");
@@ -2444,6 +3394,7 @@ function ensureCoupleCombinedSubmissionShape(session) {
 }
 
 function canOfferCoupleCombinedSubmit(session = null) {
+  if (!wantsNotification("completed")) return false;
   if (state.archiveReadOnly || state.sampleReportPreview) return false;
   if (DELIVERY_PROVIDER === "none") return false;
   const sess = session || (state.coupleId ? getCoupleSession(state.coupleId) : null);
@@ -2634,7 +3585,7 @@ function buildCoupleCombinedResultsReport(session = null) {
   ].filter((line) => line !== null);
 
   return {
-    subject: `${nameA} & ${nameB} — Combined couple sensory report`,
+    subject: `Completed: ${nameA} & ${nameB} — Combined couple sensory report`,
     text: lines.join("\n"),
     metrics: { profile: "Combined couple profile" },
     nameA,
@@ -2749,6 +3700,7 @@ function updateCoupleCombinedSubmissionUi() {
 }
 
 function ensureCoupleCombinedSubmitted({ force = false } = {}) {
+  if (!wantsNotification("completed")) return;
   if (!canOfferCoupleCombinedSubmit()) return;
   const session = ensureCoupleCombinedSubmissionShape(ensureCoupleSession());
   const sub = session.combinedSubmission;
@@ -2890,8 +3842,10 @@ function renderClinicianGate() {
 }
 
 function renderClinicianShare() {
-  const access = normalizeResultsAccess(state.clinicianDraftResultsAccess);
-  const inviteUrl = buildPatientInviteUrl(access);
+  const visibility = draftVisibilityFromStored(
+    state.clinicianDraftVisibility || state.clinicianDraftResultsAccess
+  );
+  const inviteUrl = buildPatientInviteUrl(visibility);
 
   return `
     <div class="clinician">
@@ -2900,27 +3854,34 @@ function renderClinicianShare() {
         <h1 id="clinician-heading" class="clinician__title">Patient invite links</h1>
         <p class="clinician__lead">
           Choose what the patient can see after finishing. Every completed adult, teen, or parent screening still emails the detailed report to
-          <strong>${escapeHtml(getClinicianEmail())}</strong>, with the completer’s name in the subject.
+          <strong>${escapeHtml(getClinicianEmail())}</strong>, with the completer’s name in the subject, unless you turn that off in My Preferences.
         </p>
 
         <fieldset class="clinician__toggle">
           <legend>Patient access to their results</legend>
           <label class="clinician__choice">
-            <input type="radio" name="invite-results" data-invite-results value="none"${access === RESULTS_ACCESS.none ? " checked" : ""} />
+            <input type="radio" name="invite-results" data-invite-results value="none"${visibility === REPORT_VISIBILITY.none ? " checked" : ""} />
             <span>
               <strong>No report access</strong>
               <em>Thank-you screen only. You share feedback in a booked session.</em>
             </span>
           </label>
           <label class="clinician__choice">
-            <input type="radio" name="invite-results" data-invite-results value="basic"${access === RESULTS_ACCESS.basic ? " checked" : ""} />
+            <input type="radio" name="invite-results" data-invite-results value="summary"${visibility === REPORT_VISIBILITY.summary ? " checked" : ""} />
             <span>
-              <strong>Brief report only</strong>
-              <em>A short completion note that asks them to book a follow-up. You keep the full detailed report.</em>
+              <strong>Short summary</strong>
+              <em>A brief completion note that asks them to book a follow-up. You keep the detailed report.</em>
             </span>
           </label>
           <label class="clinician__choice">
-            <input type="radio" name="invite-results" data-invite-results value="full"${access === RESULTS_ACCESS.full ? " checked" : ""} />
+            <input type="radio" name="invite-results" data-invite-results value="short"${visibility === REPORT_VISIBILITY.short ? " checked" : ""} />
+            <span>
+              <strong>Short report</strong>
+              <em>The short completion note plus overall pattern, domain glance, and trail character.</em>
+            </span>
+          </label>
+          <label class="clinician__choice">
+            <input type="radio" name="invite-results" data-invite-results value="full"${visibility === REPORT_VISIBILITY.full ? " checked" : ""} />
             <span>
               <strong>Full detailed report</strong>
               <em>They see the complete sensory trail profile in the app. You still receive the email.</em>
@@ -2947,7 +3908,7 @@ function renderClinicianShare() {
         <ol class="clinician__steps">
           <li>Choose their results access, then copy the link and send it by WhatsApp, SMS, or email.</li>
           <li>The patient creates an account, reads the homepage, then starts the questionnaire from the bottom.</li>
-          <li>The full report arrives in your inbox regardless of what they can see in the app.</li>
+          <li>The full report arrives in your inbox when they finish. You also get a note if a report is downloaded, or if an incomplete questionnaire is about to expire.</li>
         </ol>
         <p class="clinician__hint">
           First FormSubmit delivery: check <strong>${escapeHtml(getClinicianEmail())}</strong> for a one-time confirmation email and click Confirm.
@@ -2992,11 +3953,14 @@ function getDashboardStats(items) {
   const weekMs = 7 * 24 * 60 * 60 * 1000;
   return {
     total: items.length,
+    complete: items.filter((i) => assessmentStatus(i) === "complete").length,
+    incomplete: items.filter((i) => assessmentStatus(i) === "incomplete").length,
     adults: items.filter((i) => i.respondent === "adult").length,
     teens: items.filter((i) => i.respondent === "teen").length,
     parents: items.filter((i) => i.respondent === "parent").length,
     couples: items.filter((i) => i.respondent === "couple").length,
     recent: items.filter((i) => {
+      if (assessmentStatus(i) !== "complete") return false;
       const t = new Date(i.completedAt).getTime();
       return !Number.isNaN(t) && now - t <= weekMs;
     }).length,
@@ -3007,10 +3971,11 @@ function filteredDashboardAssessments() {
   const query = String(state.dashboardSearch || "")
     .trim()
     .toLowerCase();
-  const items = readAssessments();
+  const items = getDashboardQuestionnaireItems();
   if (!query) return items;
   return items.filter((item) => {
     const s = item.summary || {};
+    const status = assessmentStatus(item);
     const haystack = [
       s.patientName,
       s.firstName,
@@ -3022,6 +3987,8 @@ function filteredDashboardAssessments() {
       s.overallLabel,
       item.lifeContext,
       respondentLabel(item.respondent),
+      status,
+      status === "complete" ? "complete finished" : "incomplete in progress",
     ]
       .join(" ")
       .toLowerCase();
@@ -3029,26 +3996,49 @@ function filteredDashboardAssessments() {
   });
 }
 
-function renderDashboardAssessmentRow(item) {
+function dashboardPatientName(item) {
   const summary = item.summary || {};
-  const name =
+  const demo = item.demographics || {};
+  return (
     summary.patientName ||
     [summary.firstName, summary.surname].filter(Boolean).join(" ") ||
     summary.completerName ||
-    "Unnamed";
-  const dateLabel = formatQuestionnaireDate(item.completedAt, "en");
-  const profile = summary.overallLabel || "—";
+    demo.name ||
+    demo.parentName ||
+    "Unnamed"
+  );
+}
+
+function renderDashboardAssessmentRow(item) {
+  const summary = item.summary || {};
+  const name = dashboardPatientName(item);
+  const status = assessmentStatus(item);
+  const incomplete = status === "incomplete";
+  const dateLabel = formatQuestionnaireDate(item.savedAt || item.completedAt, "en");
+  const profile = incomplete
+    ? "In progress"
+    : summary.overallLabel || "—";
+  const progressLine = incomplete
+    ? summary.progressLabel || questionnaireProgressLabel(item.step)
+    : "";
   const context = lifeContextDisplay(item.lifeContext);
-  const email = summary.email || "";
+  const email = summary.email || item.demographics?.email || "";
   const domains = Array.isArray(summary.domainProfiles) ? summary.domainProfiles : [];
-  const domainLine = domains
-    .slice(0, 4)
-    .map((d) => escapeHtml(d.short || d.title))
-    .filter(Boolean)
-    .join(" · ");
+  const domainLine = incomplete
+    ? progressLine
+    : domains
+        .slice(0, 4)
+        .map((d) => escapeHtml(d.short || d.title))
+        .filter(Boolean)
+        .join(" · ");
+  const rowId = escapeHtml(item.id);
+  const expiryNote = incomplete ? questionnaireExpiryNote(item) : "";
+  const expirySoon =
+    incomplete && (questionnaireDaysUntilExpiry(item) ?? 99) <= QUESTIONNAIRE_EXPIRY_WARNING_DAYS;
+  const preferredLength = readTherapistPrefs().reportLength;
 
   return `
-    <article class="dash-row" data-assessment-id="${escapeHtml(item.id)}">
+    <article class="dash-row${incomplete ? " dash-row--incomplete" : ""}" data-assessment-id="${rowId}">
       <div class="dash-row__patient">
         <span class="dash-row__avatar" aria-hidden="true">${escapeHtml(dashboardInitials(name))}</span>
         <div class="dash-row__identity">
@@ -3072,9 +4062,18 @@ function renderDashboardAssessmentRow(item) {
           </p>
         </div>
       </div>
+      <div class="dash-row__status-col">
+        <span class="dash-row__col-label">Status</span>
+        <span class="dash-row__status dash-row__status--${status}">${incomplete ? "Incomplete" : "Complete"}</span>
+      </div>
       <div class="dash-row__date">
-        <span class="dash-row__col-label">Assessed</span>
+        <span class="dash-row__col-label">${incomplete ? "Last saved" : "Assessed"}</span>
         <strong>${escapeHtml(dateLabel || "—")}</strong>
+        ${
+          expiryNote
+            ? `<span class="dash-row__expiry${expirySoon ? " dash-row__expiry--soon" : ""}">${escapeHtml(expiryNote)}</span>`
+            : ""
+        }
       </div>
       <div class="dash-row__pathway">
         <span class="dash-row__col-label">Pathway</span>
@@ -3082,15 +4081,24 @@ function renderDashboardAssessmentRow(item) {
         ${context ? `<span class="dash-row__context">${escapeHtml(context)}</span>` : ""}
       </div>
       <div class="dash-row__pattern">
-        <span class="dash-row__col-label">Overall pattern</span>
+        <span class="dash-row__col-label">${incomplete ? "Progress" : "Overall pattern"}</span>
         <strong class="dash-row__pattern-value">${escapeHtml(profile)}</strong>
         ${domainLine ? `<p class="dash-row__domains">${domainLine}</p>` : ""}
       </div>
       <div class="dash-row__actions">
-        <button type="button" class="btn btn-primary btn--compact" data-action="open-assessment" data-assessment-id="${escapeHtml(item.id)}">View full</button>
-        <button type="button" class="btn btn-secondary btn--compact" data-action="open-assessment-summary" data-assessment-id="${escapeHtml(item.id)}">View short</button>
-        <button type="button" class="btn btn-secondary btn--compact" data-action="download-assessment" data-assessment-id="${escapeHtml(item.id)}">Download</button>
-        <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${escapeHtml(item.id)}" title="Remove from this device">Remove</button>
+        <span class="dash-row__col-label">${incomplete ? "Actions" : "Report"}</span>
+        ${
+          incomplete
+            ? `<button type="button" class="btn btn-primary btn--compact" data-action="continue-assessment" data-assessment-id="${rowId}">Continue</button>
+        <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
+            : `<div class="dash-report-switch" role="group" aria-label="Open report">
+          <button type="button" class="dash-report-switch__btn${preferredLength === REPORT_LENGTH.summary ? " is-preferred" : ""}" data-action="open-assessment-summary" data-assessment-id="${rowId}">Summary</button>
+          <button type="button" class="dash-report-switch__btn${preferredLength === REPORT_LENGTH.short ? " is-preferred" : ""}" data-action="open-assessment-short" data-assessment-id="${rowId}">Short</button>
+          <button type="button" class="dash-report-switch__btn${preferredLength === REPORT_LENGTH.full ? " is-preferred" : ""}" data-action="open-assessment" data-assessment-id="${rowId}">Full</button>
+        </div>
+        <button type="button" class="dash-row__tool" data-action="download-assessment" data-assessment-id="${rowId}">Download</button>
+        <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
+        }
       </div>
     </article>
   `;
@@ -3105,7 +4113,7 @@ function renderDashboardGate() {
         <p class="clinician__eyebrow">Therapist access</p>
         <h1 id="dashboard-gate-heading" class="clinician__title">Patient dashboard</h1>
         <p class="clinician__lead">
-          Unlock with your clinician PIN, or sign in as admin / therapist to see completed screenings.
+          Unlock with your clinician PIN, or sign in as admin / therapist to see complete and incomplete screenings.
         </p>
         ${
           state.clinicianPinError
@@ -3138,12 +4146,85 @@ function renderDashboardGate() {
   `;
 }
 
+function prefsChoice(name, value, checked, title, hint) {
+  return `
+    <label class="prefs-choice">
+      <input type="radio" name="${escapeHtml(name)}" value="${escapeHtml(value)}" ${checked ? "checked" : ""} />
+      <span>
+        <strong>${escapeHtml(title)}</strong>
+        <em>${escapeHtml(hint)}</em>
+      </span>
+    </label>
+  `;
+}
+
+function prefsCheck(key, checked, title, hint) {
+  return `
+    <label class="prefs-choice">
+      <input type="checkbox" data-pref-notify="${escapeHtml(key)}" ${checked ? "checked" : ""} />
+      <span>
+        <strong>${escapeHtml(title)}</strong>
+        <em>${escapeHtml(hint)}</em>
+      </span>
+    </label>
+  `;
+}
+
+function renderTherapistPreferences() {
+  const prefs = readTherapistPrefs();
+  const notes = prefs.notifications || {};
+  return `
+    <section class="dashboard__panel prefs-panel" aria-labelledby="prefs-heading">
+      <h2 id="prefs-heading" class="dashboard__panel-title">Report defaults &amp; notifications</h2>
+      <p class="prefs-lead">
+        These choices apply on this device for your therapist account. Invite links still let you override report visibility per patient.
+      </p>
+      ${
+        state.prefsNotice
+          ? `<p class="auth__notice dashboard__notice" role="status">${escapeHtml(state.prefsNotice)}</p>`
+          : ""
+      }
+
+      <fieldset class="prefs-section">
+        <legend>Default report length</legend>
+        <p class="prefs-hint">Used when you open a completed screening from the patient register. You can still switch between views on each report.</p>
+        ${prefsChoice("pref-report-length", REPORT_LENGTH.summary, prefs.reportLength === REPORT_LENGTH.summary, "Short summary", "A brief completion note that asks the patient to book a follow-up.")}
+        ${prefsChoice("pref-report-length", REPORT_LENGTH.short, prefs.reportLength === REPORT_LENGTH.short, "Short report", "The short note plus overall pattern, domain glance, and trail character.")}
+        ${prefsChoice("pref-report-length", REPORT_LENGTH.full, prefs.reportLength === REPORT_LENGTH.full, "Full report", "The complete sensory trail profile, including printable setting letters.")}
+      </fieldset>
+
+      <fieldset class="prefs-section">
+        <legend>Default report visibility</legend>
+        <p class="prefs-hint">What a new patient invite shows after they finish, until you change it on the invite page.</p>
+        ${prefsChoice("pref-report-visibility", REPORT_VISIBILITY.none, prefs.reportVisibility === REPORT_VISIBILITY.none, "No report access", "Thank-you screen only. You share feedback in session.")}
+        ${prefsChoice("pref-report-visibility", REPORT_VISIBILITY.summary, prefs.reportVisibility === REPORT_VISIBILITY.summary, "Short summary", "They see the brief completion note. You keep the detailed report.")}
+        ${prefsChoice("pref-report-visibility", REPORT_VISIBILITY.short, prefs.reportVisibility === REPORT_VISIBILITY.short, "Short report", "They see the short report extras. You keep the detailed report.")}
+        ${prefsChoice("pref-report-visibility", REPORT_VISIBILITY.full, prefs.reportVisibility === REPORT_VISIBILITY.full, "Full report", "They can open the complete sensory trail profile in the app.")}
+      </fieldset>
+
+      <fieldset class="prefs-section">
+        <legend>Notification preferences</legend>
+        <p class="prefs-hint">
+          Emails go to <strong>${escapeHtml(getClinicianEmail())}</strong> while this app is open on a hosted address.
+        </p>
+        ${prefsCheck("completed", notes.completed !== false, "Completed questionnaire", "Send the detailed report when an adult, teen, parent, or combined couple screening is finished.")}
+        ${prefsCheck("incomplete", notes.incomplete !== false, "Incomplete questionnaire", "Notify when someone starts a screening and it is saved as in progress.")}
+        ${prefsCheck("expiring", notes.expiring !== false, "Expiring or expired questionnaire", "Remind you in the last three days before an incomplete screening expires, and if it has already expired.")}
+        ${prefsCheck("downloaded", notes.downloaded !== false, "Report downloaded or printed", "Notify when a sensory report is printed or downloaded.")}
+        ${prefsCheck("followUp", notes.followUp !== false, "Follow-up discussion requested", "Notify when a patient says they would like to discuss their report with you.")}
+      </fieldset>
+    </section>
+  `;
+}
+
 function renderDashboard() {
   if (!canAccessTherapistDashboard()) {
     return renderDashboardGate();
   }
 
-  const allItems = readAssessments();
+  maybeNotifyExpiringQuestionnaires();
+  const prefsTab = state.dashboardTab === "preferences";
+  const allItems = getDashboardQuestionnaireItems();
   const items = filteredDashboardAssessments();
   const stats = getDashboardStats(allItems);
   const user = currentAuthUser();
@@ -3159,9 +4240,15 @@ function renderDashboard() {
         <div class="dashboard__masthead-inner">
           <div class="dashboard__masthead-copy">
             <p class="dashboard__eyebrow">Therapist</p>
-            <h1 id="dashboard-heading" class="dashboard__title">Patient register</h1>
+            <h1 id="dashboard-heading" class="dashboard__title">${
+              prefsTab ? "My Preferences" : "Patient register"
+            }</h1>
             <p class="dashboard__lead">
-              Review completed sensory screenings, open full results, and download printable reports.
+              ${
+                prefsTab
+                  ? "Set your default report length, what patients can see, and which emails you would like to receive."
+                  : "See which questionnaires are complete or still in progress, then open results or continue a screening."
+              }
             </p>
           </div>
           <div class="dashboard__header-actions">
@@ -3173,6 +4260,10 @@ function renderDashboard() {
             }
             <button type="button" class="btn btn-secondary" data-action="back-home">Home</button>
           </div>
+        </div>
+        <div class="dashboard-tabs" role="tablist" aria-label="Therapist dashboard">
+          <button type="button" class="dashboard-tab ${prefsTab ? "" : "is-active"}" role="tab" aria-selected="${!prefsTab}" data-action="dashboard-tab" data-tab="register">Patient register</button>
+          <button type="button" class="dashboard-tab ${prefsTab ? "is-active" : ""}" role="tab" aria-selected="${prefsTab}" data-action="dashboard-tab" data-tab="preferences">My Preferences</button>
         </div>
       </section>
 
@@ -3190,10 +4281,18 @@ function renderDashboard() {
           : ""
       }
 
+      ${
+        prefsTab
+          ? renderTherapistPreferences()
+          : `
       <div class="dashboard__stats" role="list">
         <div class="dashboard__stat" role="listitem">
-          <span class="dashboard__stat-value">${stats.total}</span>
-          <span class="dashboard__stat-label">Total</span>
+          <span class="dashboard__stat-value">${stats.complete}</span>
+          <span class="dashboard__stat-label">Complete</span>
+        </div>
+        <div class="dashboard__stat" role="listitem">
+          <span class="dashboard__stat-value">${stats.incomplete}</span>
+          <span class="dashboard__stat-label">Incomplete</span>
         </div>
         <div class="dashboard__stat" role="listitem">
           <span class="dashboard__stat-value">${stats.recent}</span>
@@ -3220,7 +4319,7 @@ function renderDashboard() {
       <section class="dashboard__panel" aria-labelledby="dashboard-list-heading">
         <div class="dashboard__toolbar">
           <div>
-            <h2 id="dashboard-list-heading" class="dashboard__panel-title">Completed assessments</h2>
+            <h2 id="dashboard-list-heading" class="dashboard__panel-title">Questionnaires</h2>
             <p class="dashboard__count">
               ${
                 items.length === allItems.length
@@ -3234,7 +4333,7 @@ function renderDashboard() {
             <input
               type="search"
               data-dashboard-search
-              placeholder="Search name, email, or profile…"
+              placeholder="Search name, email, or status…"
               value="${escapeHtml(state.dashboardSearch || "")}"
             />
           </label>
@@ -3244,8 +4343,8 @@ function renderDashboard() {
           allItems.length === 0
             ? `<div class="dashboard__empty">
                 <img src="assets/logo.png" alt="" class="dashboard__empty-logo" width="72" height="72" />
-                <p class="dashboard__empty-title">No completed screenings yet</p>
-                <p>When a patient finishes the questionnaire on this device, their assessment appears here for review and download.</p>
+                <p class="dashboard__empty-title">No screenings yet</p>
+                <p>When a patient starts or finishes the questionnaire on this device, it appears here as complete or incomplete.</p>
                 <div class="dashboard__empty-actions">
                   <button type="button" class="btn btn-primary" data-action="open-clinician">Create a patient invite</button>
                 </div>
@@ -3262,11 +4361,11 @@ function renderDashboard() {
                 </div>`
               : `<div class="dashboard__list" role="list">
                   <div class="dash-row dash-row--head" aria-hidden="true">
-                    <span>Patient</span>
-                    <span>Date</span>
-                    <span>Pathway</span>
-                    <span>Results</span>
-                    <span>Actions</span>
+                    <span class="dash-row__patient">Patient</span>
+                    <span class="dash-row__status-col">Status</span>
+                    <span class="dash-row__date">Date</span>
+                    <span class="dash-row__pathway">Pathway</span>
+                    <span class="dash-row__pattern">Results</span>
                   </div>
                   ${rows}
                 </div>`
@@ -3274,9 +4373,12 @@ function renderDashboard() {
       </section>
 
       <p class="dashboard__footnote">
-        Stored on this browser only · Reports also emailed to
+        Stored on this browser only · Completion, download, and expiry notes are emailed to
         <strong>${escapeHtml(getClinicianEmail())}</strong>
+        unless you turn them off in My Preferences.
       </p>
+          `
+      }
     </div>
   `;
 }
@@ -3299,15 +4401,26 @@ function resetAuthForm(role = "patient") {
   state.authBusy = false;
 }
 
+function clearAuthResetParams() {
+  state.resetToken = null;
+  if (!window.history?.replaceState) return;
+  const clean = new URL(window.location.href);
+  clean.searchParams.delete("reset");
+  clean.searchParams.delete("forgot");
+  window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
+}
+
 function renderHomeAccountLinks() {
   const user = currentAuthUser();
   if (user) {
     const tools =
       user.role === "admin"
         ? `<button type="button" class="btn btn-secondary" data-action="open-dashboard">Dashboard</button>
+           <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
            <button type="button" class="btn btn-secondary" data-action="open-settings">Settings</button>`
         : user.role === "therapist"
           ? `<button type="button" class="btn btn-secondary" data-action="open-dashboard">Dashboard</button>
+             <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
              <button type="button" class="btn btn-secondary" data-action="open-clinician">Invite patient</button>`
           : "";
     return `
@@ -3334,7 +4447,11 @@ function syncAccountChrome() {
   const mount = document.getElementById("account-chrome");
   if (!mount) return;
   const user = currentAuthUser();
-  const onAuthView = state.view === "login" || state.view === "signup";
+  const onAuthView =
+    state.view === "login" ||
+    state.view === "signup" ||
+    state.view === "forgot" ||
+    state.view === "reset";
 
   if (onAuthView) {
     if (isPatientInvite()) {
@@ -3363,9 +4480,11 @@ function syncAccountChrome() {
     : `<button type="button" class="account-chrome__link" data-action="open-dashboard">Therapist</button>`;
   const settingsLink =
     user.role === "admin"
-      ? `<button type="button" class="account-chrome__link" data-action="open-settings">Settings</button>`
+      ? `<button type="button" class="account-chrome__link" data-action="open-settings">Settings</button>
+         <button type="button" class="account-chrome__link" data-action="open-preferences">Preferences</button>`
       : user.role === "therapist"
-        ? `<button type="button" class="account-chrome__link" data-action="open-clinician">Invites</button>`
+        ? `<button type="button" class="account-chrome__link" data-action="open-clinician">Invites</button>
+           <button type="button" class="account-chrome__link" data-action="open-preferences">Preferences</button>`
         : "";
 
   mount.innerHTML = `
@@ -3440,9 +4559,65 @@ function renderLogin() {
       ? ""
       : `
       <p class="auth__switch">
+        <button type="button" class="auth__text-btn" data-action="open-forgot">Forgot your password?</button>
+      </p>
+      <p class="auth__switch">
         New here?
         <button type="button" class="auth__text-btn" data-action="open-signup">Create an account &amp; sign in</button>
       </p>
+    `,
+  });
+}
+
+function renderForgotPassword() {
+  const form = state.authForm;
+  return renderAuthShell({
+    eyebrow: "Account",
+    title: "Forgot password",
+    lead: "Enter the email on your therapist or admin account. If it matches, we will send a link to create a new password.",
+    body: `
+      <form class="auth__form" data-auth-form="forgot">
+        <label class="auth__field">
+          <span>Email</span>
+          <input type="email" name="email" data-auth-field="email" autocomplete="email" required value="${escapeHtml(form.email)}" />
+        </label>
+        <div class="auth__actions">
+          <button type="submit" class="btn btn-primary" ${state.authBusy ? "disabled" : ""}>
+            ${state.authBusy ? "Sending…" : "Email reset link"}
+          </button>
+          <button type="button" class="btn btn-secondary" data-action="open-login">Back to sign in</button>
+        </div>
+      </form>
+    `,
+    footer: `
+      <p class="auth__hint">Open the link in the same browser you use to sign in. The first email to a new address may ask you to confirm FormSubmit once.</p>
+    `,
+  });
+}
+
+function renderResetPassword() {
+  const form = state.authForm;
+  return renderAuthShell({
+    eyebrow: "Account",
+    title: "Choose a new password",
+    lead: "Enter a new password for your therapist account, then sign in with it.",
+    body: `
+      <form class="auth__form" data-auth-form="reset">
+        <label class="auth__field">
+          <span>New password</span>
+          <input type="password" name="password" data-auth-field="password" autocomplete="new-password" required minlength="8" value="${escapeHtml(form.password)}" />
+        </label>
+        <label class="auth__field">
+          <span>Confirm new password</span>
+          <input type="password" name="confirmPassword" data-auth-field="confirmPassword" autocomplete="new-password" required minlength="8" value="${escapeHtml(form.confirmPassword)}" />
+        </label>
+        <div class="auth__actions">
+          <button type="submit" class="btn btn-primary" ${state.authBusy ? "disabled" : ""}>
+            ${state.authBusy ? "Saving…" : "Save new password"}
+          </button>
+          <button type="button" class="btn btn-secondary" data-action="open-forgot">Request a new link</button>
+        </div>
+      </form>
     `,
   });
 }
@@ -3572,9 +4747,11 @@ function renderAccount() {
   const tools =
     user.role === "admin"
       ? `<button type="button" class="btn btn-primary" data-action="open-dashboard">Open patient dashboard</button>
+         <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
          <button type="button" class="btn btn-secondary" data-action="open-settings">Settings</button>`
       : user.role === "therapist"
         ? `<button type="button" class="btn btn-primary" data-action="open-dashboard">Open patient dashboard</button>
+           <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
            <button type="button" class="btn btn-secondary" data-action="open-clinician">Create patient invite</button>`
         : `<button type="button" class="btn btn-primary" data-action="start-sensory">Continue sensory pathway</button>`;
 
@@ -9238,6 +10415,7 @@ function printSensoryResultsPacket() {
   window.addEventListener("afterprint", cleanup);
 
   const runPrint = () => {
+    notifyReportDownloaded();
     window.print();
     window.setTimeout(cleanup, 2000);
   };
@@ -9262,6 +10440,7 @@ function printCoupleCombinedReport() {
   window.addEventListener("afterprint", cleanup);
 
   const runPrint = () => {
+    notifyReportDownloaded();
     window.print();
     window.setTimeout(cleanup, 2000);
   };
@@ -11014,6 +12193,8 @@ function render({ scrollToTop = false } = {}) {
   const isAuthView =
     state.view === "login" ||
     state.view === "signup" ||
+    state.view === "forgot" ||
+    state.view === "reset" ||
     state.view === "settings" ||
     state.view === "account" ||
     state.view === "dashboard";
@@ -11044,6 +12225,10 @@ function render({ scrollToTop = false } = {}) {
     html = renderAccount();
   } else if (state.view === "login") {
     html = renderLogin();
+  } else if (state.view === "forgot") {
+    html = renderForgotPassword();
+  } else if (state.view === "reset") {
+    html = renderResetPassword();
   } else if (state.view === "signup") {
     html = renderSignup();
   } else if (state.view === "clinician") {
@@ -11325,10 +12510,18 @@ function bindEvents() {
         }
         resetAuthForm(state.authForm.role || "patient");
         state.view = "login";
+        clearAuthResetParams();
         render({ scrollToTop: true });
       } else if (action === "open-signup") {
         resetAuthForm("patient");
         state.view = "signup";
+        render({ scrollToTop: true });
+      } else if (action === "open-forgot") {
+        state.authError = null;
+        state.authNotice = null;
+        state.authForm.password = "";
+        state.authForm.confirmPassword = "";
+        state.view = "forgot";
         render({ scrollToTop: true });
       } else if (action === "open-account") {
         state.view = currentAuthUser() ? "account" : "login";
@@ -11344,8 +12537,22 @@ function bindEvents() {
         }
         render({ scrollToTop: true });
       } else if (action === "open-dashboard") {
+        saveSensoryDraft();
         state.view = "dashboard";
+        state.dashboardTab = "register";
         state.dashboardNotice = null;
+        state.clinicianPinError = null;
+        if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
+          state.clinicianUnlocked = true;
+        }
+        maybeNotifyExpiringQuestionnaires();
+        render({ scrollToTop: true });
+      } else if (action === "open-preferences") {
+        saveSensoryDraft();
+        state.view = "dashboard";
+        state.dashboardTab = "preferences";
+        state.dashboardNotice = null;
+        state.prefsNotice = null;
         state.clinicianPinError = null;
         if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
           state.clinicianUnlocked = true;
@@ -11361,6 +12568,7 @@ function bindEvents() {
         handleLogout();
         render({ scrollToTop: true });
       } else if (action === "back-home") {
+        saveSensoryDraft();
         clearInviteSession();
         state.viewingArchivedId = null;
         state.archiveReadOnly = false;
@@ -11380,6 +12588,8 @@ function bindEvents() {
           clean.searchParams.delete("pathway");
           clean.searchParams.delete("context");
           clean.searchParams.delete("lifeContext");
+          clean.searchParams.delete("reset");
+          clean.searchParams.delete("forgot");
           window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
         }
         render({ scrollToTop: true });
@@ -11740,6 +12950,7 @@ function bindEvents() {
     }
 
     if (action === "back-home") {
+      saveSensoryDraft();
       clearInviteSession();
       state.viewingArchivedId = null;
       state.archiveReadOnly = false;
@@ -11782,6 +12993,17 @@ function bindEvents() {
       resetAuthForm(state.authForm.role || "patient");
       state.view = "login";
       state.authMode = "login";
+      clearAuthResetParams();
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "open-forgot") {
+      state.authError = null;
+      state.authNotice = null;
+      state.authForm.password = "";
+      state.authForm.confirmPassword = "";
+      state.view = "forgot";
       render({ scrollToTop: true });
       return;
     }
@@ -11831,8 +13053,27 @@ function bindEvents() {
     }
 
     if (action === "open-dashboard") {
+      saveSensoryDraft();
       state.view = "dashboard";
+      state.dashboardTab = "register";
       state.dashboardNotice = null;
+      state.clinicianPinError = null;
+      if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
+        state.clinicianUnlocked = true;
+      } else {
+        state.clinicianUnlocked = sessionStorage.getItem(CLINICIAN_SESSION_KEY) === "1";
+      }
+      maybeNotifyExpiringQuestionnaires();
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "open-preferences") {
+      saveSensoryDraft();
+      state.view = "dashboard";
+      state.dashboardTab = "preferences";
+      state.dashboardNotice = null;
+      state.prefsNotice = null;
       state.clinicianPinError = null;
       if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
         state.clinicianUnlocked = true;
@@ -11983,7 +13224,7 @@ function bindEvents() {
       return;
     }
 
-    if (action === "open-assessment" || action === "open-assessment-summary" || action === "download-assessment") {
+    if (action === "open-assessment" || action === "open-assessment-summary" || action === "open-assessment-short" || action === "download-assessment") {
       if (!canAccessTherapistDashboard()) {
         state.view = "dashboard";
         render({ scrollToTop: true });
@@ -11997,9 +13238,21 @@ function bindEvents() {
         render({ scrollToTop: true });
         return;
       }
-      const viewMode =
-        action === "open-assessment-summary" ? RESULTS_ACCESS.basic : RESULTS_ACCESS.full;
-      applyAssessmentRecord(record, { viewMode });
+      if (isIncompleteAssessment(record)) {
+        applyIncompleteAssessmentRecord(record);
+        render({ scrollToTop: true });
+        return;
+      }
+      const reportLength =
+        action === "open-assessment-short"
+          ? REPORT_LENGTH.short
+          : action === "open-assessment-summary"
+            ? REPORT_LENGTH.summary
+            : REPORT_LENGTH.full;
+      applyAssessmentRecord(record, {
+        viewMode: reportLength === REPORT_LENGTH.full ? RESULTS_ACCESS.full : RESULTS_ACCESS.basic,
+        reportLength,
+      });
       render({ scrollToTop: true });
       if (action === "download-assessment") {
         queueMicrotask(() => printSensoryResultsPacket());
@@ -12007,10 +13260,47 @@ function bindEvents() {
       return;
     }
 
+    if (action === "continue-assessment") {
+      if (!canAccessTherapistDashboard()) {
+        state.view = "dashboard";
+        render({ scrollToTop: true });
+        return;
+      }
+      const assessmentId = btn.dataset.assessmentId;
+      const coupleMatch = String(assessmentId || "").match(/^couple-progress-(.+)-([ab])$/);
+      if (coupleMatch) {
+        state.coupleId = coupleMatch[1];
+        startCouplePartnerQuestionnaire(coupleMatch[2]);
+        saveSensoryDraft();
+        render({ scrollToTop: true });
+        return;
+      }
+      const record = getAssessmentById(assessmentId);
+      if (!record || !isIncompleteAssessment(record)) {
+        state.dashboardNotice = "That incomplete questionnaire could not be found.";
+        state.view = "dashboard";
+        render({ scrollToTop: true });
+        return;
+      }
+      applyIncompleteAssessmentRecord(record);
+      render({ scrollToTop: true });
+      return;
+    }
+
     if (action === "switch-report-basic" || action === "switch-report-full") {
       if (!state.archiveReadOnly || !canAccessTherapistDashboard()) return;
-      state.reportViewMode =
-        action === "switch-report-basic" ? RESULTS_ACCESS.basic : RESULTS_ACCESS.full;
+      if (action === "switch-report-full") {
+        state.reportViewMode = RESULTS_ACCESS.full;
+        state.reportLengthMode = REPORT_LENGTH.full;
+      } else {
+        const length =
+          readTherapistPrefs().reportLength === REPORT_LENGTH.summary
+            ? REPORT_LENGTH.summary
+            : REPORT_LENGTH.short;
+        state.reportViewMode = RESULTS_ACCESS.basic;
+        state.reportLengthMode = length;
+        applyPreferredShortReportExtras(length);
+      }
       state.patientResultsAccess = state.reportViewMode;
       render({ scrollToTop: true });
       return;
@@ -12019,16 +13309,32 @@ function bindEvents() {
     if (action === "delete-assessment") {
       if (!canAccessTherapistDashboard()) return;
       const assessmentId = btn.dataset.assessmentId;
+      if (String(assessmentId || "").startsWith("couple-progress-")) {
+        const confirmed = window.confirm("Remove this incomplete couple questionnaire from the dashboard on this device?");
+        if (!confirmed) return;
+        deleteCoupleProgressEntry(assessmentId);
+        state.dashboardNotice = "Incomplete questionnaire removed from this device.";
+        state.view = "dashboard";
+        render({ scrollToTop: true });
+        return;
+      }
       const record = getAssessmentById(assessmentId);
       if (!record) return;
+      const incomplete = isIncompleteAssessment(record);
       const label =
         record.summary?.patientName ||
         record.summary?.completerName ||
-        "this assessment";
-      const confirmed = window.confirm(`Remove ${label} from the dashboard on this device?`);
+        (incomplete ? "this incomplete questionnaire" : "this assessment");
+      const confirmed = window.confirm(
+        incomplete
+          ? `Remove ${label} from the dashboard on this device? They can start again later.`
+          : `Remove ${label} from the dashboard on this device?`
+      );
       if (!confirmed) return;
       deleteAssessmentById(assessmentId);
-      state.dashboardNotice = "Assessment removed from this device.";
+      state.dashboardNotice = incomplete
+        ? "Incomplete questionnaire removed from this device."
+        : "Assessment removed from this device.";
       state.view = "dashboard";
       render({ scrollToTop: true });
       return;
@@ -12036,6 +13342,14 @@ function bindEvents() {
 
     if (action === "logout") {
       handleLogout();
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "dashboard-tab") {
+      state.dashboardTab = btn.dataset.tab === "preferences" ? "preferences" : "register";
+      state.prefsNotice = null;
+      state.dashboardNotice = null;
       render({ scrollToTop: true });
       return;
     }
@@ -12104,6 +13418,7 @@ function bindEvents() {
         state.clinicianUnlocked = true;
         state.clinicianPinError = null;
         sessionStorage.setItem(CLINICIAN_SESSION_KEY, "1");
+        initTherapistPrefs();
         // PIN unlock from the dashboard gate should land on the dashboard.
         if (state.view === "dashboard" || state.view === "home" || state.view === "login") {
           state.view = "dashboard";
@@ -12116,7 +13431,9 @@ function bindEvents() {
     }
 
     if (action === "copy-invite") {
-      const link = buildPatientInviteUrl(state.clinicianDraftResultsAccess);
+      const link = buildPatientInviteUrl(
+        state.clinicianDraftVisibility || state.clinicianDraftResultsAccess
+      );
       const done = () => {
         state.clinicianCopyStatus = "copied";
         render();
@@ -12315,9 +13632,32 @@ function bindEvents() {
     }
 
     if (e.target.matches("[data-invite-results]")) {
-      state.clinicianDraftResultsAccess = normalizeResultsAccess(e.target.value);
-      sessionStorage.setItem(CLINICIAN_PREF_KEY, state.clinicianDraftResultsAccess);
+      syncInviteDraftFromVisibility(e.target.value);
       state.clinicianCopyStatus = null;
+      render();
+      return;
+    }
+
+    if (e.target.name === "pref-report-length") {
+      writeTherapistPrefs({ reportLength: e.target.value });
+      state.prefsNotice = "Default report length saved.";
+      render();
+      return;
+    }
+
+    if (e.target.name === "pref-report-visibility") {
+      writeTherapistPrefs({ reportVisibility: e.target.value });
+      state.prefsNotice = "Default report visibility saved.";
+      render();
+      return;
+    }
+
+    if (e.target.matches("[data-pref-notify]")) {
+      const key = e.target.getAttribute("data-pref-notify");
+      const allowed = ["completed", "incomplete", "expiring", "downloaded", "followUp"];
+      if (!allowed.includes(key)) return;
+      writeTherapistPrefs({ notifications: { [key]: Boolean(e.target.checked) } });
+      state.prefsNotice = "Notification preferences saved.";
       render();
       return;
     }
@@ -12351,8 +13691,13 @@ function bindEvents() {
     }
 
     if (e.target.name === "contact") {
+      const previous = state.contactPreference;
       state.contactPreference = e.target.value;
+      persistContactPreferenceToArchive();
       saveSensoryDraft();
+      if (e.target.value === "yes" && previous !== "yes") {
+        notifyFollowUpRequested();
+      }
     }
 
     if (e.target.name === "work-report") {
@@ -12525,6 +13870,84 @@ function bindEvents() {
       state.authForm.password = "";
       state.authForm.confirmPassword = "";
       routeAfterAuth(result.user);
+      render({ scrollToTop: true });
+      return;
+    }
+
+    const forgotForm = e.target.closest('[data-auth-form="forgot"]');
+    if (forgotForm) {
+      e.preventDefault();
+      const formData = new FormData(forgotForm);
+      state.authForm.email = String(formData.get("email") || "");
+      state.authBusy = true;
+      state.authError = null;
+      state.authNotice = null;
+      render();
+      const result = await Auth.requestPasswordReset({ email: state.authForm.email });
+      if (!result.ok) {
+        state.authBusy = false;
+        state.authError = result.error;
+        render({ scrollToTop: true });
+        return;
+      }
+      if (result.sent && result.token) {
+        try {
+          await sendPasswordResetEmail({
+            email: result.email,
+            name: result.name,
+            token: result.token,
+          });
+        } catch (err) {
+          state.authBusy = false;
+          const classified = classifyDeliveryError(err, "Could not send the reset email");
+          if (classified.code === "formsubmit-activation") {
+            state.authNotice =
+              "Check that inbox for a one-time FormSubmit confirmation email and click Confirm, then request the reset link again.";
+            state.authError = null;
+          } else {
+            state.authError = classified.message;
+          }
+          render({ scrollToTop: true });
+          return;
+        }
+      }
+      state.authBusy = false;
+      state.authNotice =
+        "If that email belongs to a therapist or admin account, a reset link is on its way. It expires in 24 hours.";
+      render({ scrollToTop: true });
+      return;
+    }
+
+    const resetForm = e.target.closest('[data-auth-form="reset"]');
+    if (resetForm) {
+      e.preventDefault();
+      const formData = new FormData(resetForm);
+      state.authForm.password = String(formData.get("password") || "");
+      state.authForm.confirmPassword = String(formData.get("confirmPassword") || "");
+      if (state.authForm.password !== state.authForm.confirmPassword) {
+        state.authError = "Passwords do not match.";
+        render();
+        return;
+      }
+      state.authBusy = true;
+      state.authError = null;
+      state.authNotice = null;
+      render();
+      const result = await Auth.completePasswordReset({
+        token: state.resetToken,
+        password: state.authForm.password,
+      });
+      state.authBusy = false;
+      if (!result.ok) {
+        state.authError = result.error;
+        render({ scrollToTop: true });
+        return;
+      }
+      state.authForm.password = "";
+      state.authForm.confirmPassword = "";
+      state.authNotice = "Your password has been updated. Sign in with your new password.";
+      state.view = "login";
+      clearAuthResetParams();
       render({ scrollToTop: true });
       return;
     }
@@ -12703,6 +14126,29 @@ async function bootApp() {
     if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
       state.clinicianUnlocked = true;
     }
+    initTherapistPrefs();
+  }
+  if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
+    initTherapistPrefs();
+  }
+  if (state.view === "reset") {
+    if (!state.resetToken) {
+      state.authError = "This reset link is missing. Please request a new one.";
+      state.view = "forgot";
+    } else if (typeof Auth !== "undefined") {
+      try {
+        const peek = await Auth.peekPasswordReset(state.resetToken);
+        if (!peek.ok) {
+          state.authError = peek.error;
+          state.view = "forgot";
+          clearAuthResetParams();
+        }
+      } catch (err) {
+        console.error("Could not check reset link:", err);
+        state.authError = "This reset link could not be checked. Please request a new one.";
+        state.view = "forgot";
+      }
+    }
   }
   // Therapist invite links always require an account before the screening.
   if (inviteNeedsAccount() && (state.view === "home" || state.view === "sensory" || state.view === "questionnaire")) {
@@ -12737,6 +14183,7 @@ async function bootApp() {
   }
 
   render();
+  maybeNotifyExpiringQuestionnaires();
 }
 
 bootApp();
