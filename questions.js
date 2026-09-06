@@ -11,7 +11,7 @@ const QUESTIONNAIRE_UI = {
     introModalPurpose:
       "The idea is to identify sensory preferences — what you (or your child) tend to prefer and how the senses respond — so we can see how best to support you going forward.",
     introModalDisclaimer:
-      "This is not a standardised assessment tool. It is a questionnaire used to guide therapy and to help increase self-awareness. It is in no way a diagnostic tool.",
+      "Your sensory trail profile provides information about patterns in how you may experience and respond to sensory input. It should be interpreted alongside your individual history, environment, daily occupations and current circumstances. It is not intended to independently diagnose a medical, psychiatric or neurodevelopmental condition. Results should be interpreted by a qualified occupational therapist within the context of the individual's broader clinical presentation.",
     introModalNote:
       "There are no right or wrong answers. It is also fine if some of your answers seem to pull in opposite directions — sensory preferences are often mixed. Take your time, and go with your first instinct.",
     introModalCta: "Got it — let’s begin",
@@ -975,7 +975,7 @@ const QUESTIONNAIRE_UI = {
     introModalPurpose:
       "Die doel is om sensoriese voorkeure te identifiseer — wat jy (of jou kind) verkies en hoe die sintuie reageer — sodat ons kan sien hoe om jou vorentoe die beste te ondersteun.",
     introModalDisclaimer:
-      "Dit is nie ’n gestandaardiseerde assesseringshulpmiddel nie. Dit is ’n vraelys wat gebruik word om terapie te lei en selfbewustheid te help verhoog. Dit is geensins ’n diagnostiese hulpmiddel nie.",
+      "Jou sensoriese roete-profiel verskaf inligting oor patrone in hoe jy sensoriese insette mag ervaar en daarop mag reageer. Dit moet saam met jou individuele geskiedenis, omgewing, daaglikse okkupasies en huidige omstandighede geïnterpreteer word. Dit is nie bedoel om onafhanklik ’n mediese, psigiatriese of neuro-ontwikkelingstoestand te diagnoseer nie. Resultate moet deur ’n gekwalifiseerde arbeidsterapeut geïnterpreteer word binne die konteks van die individu se breër kliniese aanbieding.",
     introModalNote:
       "Daar is geen regte of verkeerde antwoorde nie. Dit is ook reg as party antwoorde in teenoorgestelde rigtings lyk trek — sensoriese voorkeure is dikwels gemeng. Neem jou tyd, en volg jou eerste intuïsie.",
     introModalCta: "Ek verstaan — kom ons begin",

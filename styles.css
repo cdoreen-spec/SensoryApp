@@ -15481,8 +15481,8 @@ body.has-intro-modal {
 .intro-modal__panel {
   position: relative;
   z-index: 1;
-  width: min(100%, 28.5rem);
-  max-height: min(92vh, 40rem);
+  width: min(100%, 32rem);
+  max-height: min(92vh, 44rem);
   overflow: auto;
   padding: 2rem 1.75rem 1.75rem;
   text-align: center;
@@ -15568,9 +15568,9 @@ body.has-intro-modal {
   background:
     linear-gradient(135deg, rgba(255, 248, 244, 0.98) 0%, rgba(247, 226, 218, 0.88) 100%);
   border: 1.5px solid rgba(169, 84, 70, 0.38);
-  font-size: 0.95rem !important;
-  font-weight: 600 !important;
-  line-height: 1.5 !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
   color: #4f2924 !important;
 }
 
