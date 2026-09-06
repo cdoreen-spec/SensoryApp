@@ -37,6 +37,8 @@ const state = {
   settingReportSections: null,
   /** Extra therapist-authored heading blocks for the work/school letter. */
   settingReportCustomSections: [],
+  /** Optional therapist comments/insights shown on generated reports. */
+  therapistInsights: "",
   error: null,
   /** Patient invite session: results emailed to clinician; on-screen report only if therapist granted it. */
   inviteMode: false,
@@ -1504,6 +1506,8 @@ function startCouplePartnerQuestionnaire(partner) {
     state.sharingConsent = createEmptySharingConsent(state.language, "couple", null);
     state.viewingArchivedId = slot.assessmentId || `couple-${session.id}-${partner}`;
     state.archiveReadOnly = true;
+    const archived = slot.assessmentId ? getAssessmentById(slot.assessmentId) : null;
+    state.therapistInsights = String(archived?.therapistInsights || slot.therapistInsights || "");
     state.step = findStepIndex("results");
     state.showIntroModal = false;
     state.showSensoryDiet = true;
@@ -1894,7 +1898,10 @@ function openCoupleHub(options = {}) {
   state.showIntroModal = false;
   state.error = null;
   if (options.coupleId) state.coupleId = options.coupleId;
-  ensureCoupleSession(state.coupleId);
+  const session = ensureCoupleSession(state.coupleId);
+  if (state.coupleShowMerge) {
+    state.therapistInsights = String(session?.therapistInsights || "");
+  }
 }
 
 function getAssessmentById(id) {
@@ -1971,6 +1978,7 @@ function buildAssessmentRecord() {
     inviteMode: Boolean(state.inviteMode),
     patientResultsAccess: normalizeResultsAccess(state.patientResultsAccess),
     patientUserId: user?.role === "patient" ? user.id : null,
+    therapistInsights: String(state.therapistInsights || ""),
     summary: buildAssessmentSummary(scores, metrics),
   };
 }
@@ -2389,6 +2397,7 @@ function applyAssessmentRecord(record, options = {}) {
   state.coupleWork = normalizeCoupleWork(record.coupleWork);
   state.sharingConsent = { ...(record.sharingConsent || {}) };
   state.contactPreference = record.contactPreference || null;
+  state.therapistInsights = String(record.therapistInsights || "");
   state.inviteMode = false;
   state.patientResultsAccess = viewMode;
   state.submissionStatus = null;
@@ -2429,6 +2438,7 @@ function exitArchivedReport() {
   state.idealSaturday = "";
   state.coupleWork = emptyCoupleWork();
   state.contactPreference = null;
+  state.therapistInsights = "";
   state.showSensoryDiet = false;
   state.showWorkReport = false;
   state.workReportDeclined = false;
@@ -3457,6 +3467,7 @@ function resetSensoryQuestionnaireProgress() {
   state.idealSaturday = "";
   state.coupleWork = emptyCoupleWork();
   state.contactPreference = null;
+  state.therapistInsights = "";
   state.showSensoryDiet = false;
   state.showWorkReport = false;
   state.workReportDeclined = false;
@@ -5166,19 +5177,16 @@ function renderCreatePatientForm() {
           </label>
         </div>
 
-        <fieldset class="prefs-section">
-          <legend>Questionnaire type</legend>
-          <p class="prefs-hint">The patient will complete this pathway. They cannot change it.</p>
-          ${QUESTIONNAIRE_ASSIGNMENTS.map((option) =>
-            prefsChoice(
-              "patient-questionnaire-type",
-              option.id,
-              type === option.id,
-              option.title,
-              option.hint
-            )
-          ).join("")}
-        </fieldset>
+        <label class="auth__field">
+          <span>Questionnaire type</span>
+          <select name="patient-questionnaire-type" required>
+            ${QUESTIONNAIRE_ASSIGNMENTS.map(
+              (option) =>
+                `<option value="${escapeHtml(option.id)}" ${type === option.id ? "selected" : ""}>${escapeHtml(option.title)}</option>`
+            ).join("")}
+          </select>
+        </label>
+        <p class="prefs-hint">${escapeHtml(assignment?.hint || "The patient will complete this pathway. They cannot change it.")}</p>
 
         <label class="auth__field">
           <span>Reason for referral</span>
@@ -7086,6 +7094,13 @@ function renderHome() {
         <p class="home-section__lead">
           Occupational therapy looks at how your sensory systems affect the way you experience and respond to the world around you. For adults and adolescents, this can help make sense of things like feeling overwhelmed, struggling to focus, needing movement, becoming drained by certain environments, or finding everyday life more difficult than it seems. By understanding your unique sensory patterns, OT can help you find practical ways to feel more regulated, comfortable and able to engage in the things that matter to you.
         </p>
+      </section>
+
+      <section class="home-section home-quote" aria-label="A note on sensory experience">
+        <blockquote class="home-quote__block">
+          <span class="home-quote__mark" aria-hidden="true">“</span>
+          <p>There is no ‘right’ way to experience the world. Understanding your sensory profile helps you discover your own map — what overwhelms you, what energises you, what settles you, and what you need to navigate life at your best.</p>
+        </blockquote>
       </section>
 
       <section class="home-helps" aria-labelledby="helps-heading">
@@ -9381,6 +9396,7 @@ function renderCoupleMerge(session = null) {
       ${thriveCompareHtml}
       ${parentingCompareHtml}
       ${renderCoupleWorkMergeSummaries(sess, copy)}
+      ${renderTherapistInsightsSection()}
       <figure class="couple-closing-quote">
         <span class="couple-closing-quote__mark" aria-hidden="true">“</span>
         <blockquote class="couple-closing-quote__text">
@@ -12155,6 +12171,99 @@ function renderInterpretSensoryWorld(copy, pageEntry) {
   `;
 }
 
+function canEditTherapistInsights() {
+  return canAccessTherapistDashboard() || Boolean(state.sampleReportPreview);
+}
+
+function formatTherapistInsightsHtml(text) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) return "";
+  return trimmed
+    .split(/\n{2,}/)
+    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, "<br />")}</p>`)
+    .join("");
+}
+
+function persistTherapistInsights(value) {
+  const text = String(value || "");
+  state.therapistInsights = text;
+  const skipArchive = Boolean(state.sampleReportPreview) && !(state.coupleShowMerge && state.coupleId);
+  if (!skipArchive && state.coupleShowMerge && state.coupleId) {
+    const session = getCoupleSession(state.coupleId);
+    if (session) {
+      session.therapistInsights = text;
+      saveCoupleSession(session);
+    }
+    return;
+  }
+  if (skipArchive) return;
+  const id = state.viewingArchivedId;
+  if (id) {
+    const items = readAssessments();
+    const index = items.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      items[index] = { ...items[index], therapistInsights: text, savedAt: new Date().toISOString() };
+      writeAssessments(items);
+    }
+  }
+  if (state.respondent === "couple" && state.coupleId && state.couplePartner) {
+    const session = getCoupleSession(state.coupleId);
+    const slot = session?.partners?.[state.couplePartner];
+    if (slot) {
+      slot.therapistInsights = text;
+      saveCoupleSession(session);
+    }
+  }
+}
+
+function refreshTherapistInsightsPreview() {
+  const text = String(state.therapistInsights || "").trim();
+  const section = app.querySelector(".therapist-insights");
+  const prose = app.querySelector("[data-therapist-insights-prose]");
+  const empty = app.querySelector("[data-therapist-insights-empty]");
+  const sign = app.querySelector("[data-therapist-insights-sign]");
+  if (section) section.classList.toggle("no-print", !text);
+  if (prose) {
+    prose.innerHTML = formatTherapistInsightsHtml(text);
+    prose.hidden = !text;
+  }
+  if (empty) empty.hidden = Boolean(text);
+  if (sign) sign.hidden = !text;
+}
+
+function renderTherapistInsightsSection() {
+  const copy = currentUi();
+  const editable = canEditTherapistInsights();
+  const text = String(state.therapistInsights || "").trim();
+  if (!editable && !text) return "";
+  const prose = formatTherapistInsightsHtml(text);
+  return `
+    <section class="therapist-insights${text ? "" : " no-print"}" aria-labelledby="therapist-insights-title">
+      <header class="therapist-insights__header">
+        <p class="therapist-insights__kicker">${escapeHtml(copy.therapistInsightsKicker || "Clinical notes")}</p>
+        <h2 id="therapist-insights-title" class="therapist-insights__title">${escapeHtml(copy.therapistInsightsTitle || "Therapist insights")}</h2>
+        <p class="therapist-insights__lead${editable ? " no-print" : ""}">${escapeHtml(
+          editable ? copy.therapistInsightsLead || "" : copy.therapistInsightsPatientLead || ""
+        )}</p>
+      </header>
+      <div class="therapist-insights__sheet">
+        ${
+          editable
+            ? `<label class="therapist-insights__editor no-print">
+                <span>${escapeHtml(copy.therapistInsightsField || "Comments and insights")}</span>
+                <textarea name="therapist-insights" data-therapist-insights rows="8" placeholder="${escapeHtml(copy.therapistInsightsPlaceholder || "")}">${escapeHtml(state.therapistInsights || "")}</textarea>
+              </label>`
+            : ""
+        }
+        <div class="therapist-insights__prose${editable ? " print-only" : ""}${text ? "" : " is-empty"}" data-therapist-insights-prose ${text ? "" : "hidden"}>${prose}</div>
+      </div>
+      <p class="therapist-insights__sign" data-therapist-insights-sign ${text ? "" : "hidden"}>${escapeHtml(
+        copy.therapistInsightsCredit || copy.reportConclusionCredit || "Soulful Sensory OT"
+      )}</p>
+    </section>
+  `;
+}
+
 function renderReportConclusion(pageEntry) {
   const copy = currentUi();
   const isParent = state.respondent === "parent";
@@ -12945,6 +13054,8 @@ function renderResultsSummary() {
 
         ${renderShortReportSectionExtras(metrics, sections)}
 
+        ${renderTherapistInsightsSection()}
+
         <section class="results-summary__next" aria-labelledby="summary-next-title">
           ${renderInterpretSectionBanner({
             image: "assets/short-report-sunlight-trail.png",
@@ -13317,6 +13428,7 @@ function renderResults() {
       ${renderCoupleWorkResults()}
       ${renderTrailSettingInterpretations(metrics, pagePlan)}
       ${isParent ? renderParentClosingQuote(copy) : ""}
+      ${renderTherapistInsightsSection()}
       </div>
 
       <div class="results-contact">
@@ -15124,6 +15236,12 @@ function bindEvents() {
           }
         }
       }, 180);
+      return;
+    }
+
+    if (e.target.matches("[data-therapist-insights]")) {
+      persistTherapistInsights(e.target.value);
+      refreshTherapistInsightsPreview();
       return;
     }
 

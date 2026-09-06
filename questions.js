@@ -956,6 +956,15 @@ const QUESTIONNAIRE_UI = {
     reportConclusionQuoteParent:
       "When you understand your child’s sensory needs, you understand them a little better.",
     reportConclusionCredit: "Soulful Sensory OT",
+    therapistInsightsKicker: "Clinical notes",
+    therapistInsightsTitle: "Therapist insights",
+    therapistInsightsLead:
+      "Add extra comments or insights if you would like them included on this report. They will appear on screen and in the printed PDF.",
+    therapistInsightsPatientLead: "Additional notes from the occupational therapist.",
+    therapistInsightsField: "Comments and insights",
+    therapistInsightsPlaceholder:
+      "e.g. Session observations, what to try at home, or questions to discuss at follow-up…",
+    therapistInsightsCredit: "Soulful Sensory OT",
   },
   af: {
     shellTitle: "Sensoriese Siftingsvraelys",
@@ -1911,6 +1920,15 @@ const QUESTIONNAIRE_UI = {
     reportConclusionQuoteParent:
       "Wanneer jy jou kind se sensoriese behoeftes verstaan, verstaan jy hulle ’n bietjie beter.",
     reportConclusionCredit: "Soulful Sensory OT",
+    therapistInsightsKicker: "Kliniese notas",
+    therapistInsightsTitle: "Terapeut-insigte",
+    therapistInsightsLead:
+      "Voeg ekstra opmerkings of insigte by as jy wil hê dit moet op hierdie verslag verskyn. Dit sal op die skerm en in die gedrukte PDF verskyn.",
+    therapistInsightsPatientLead: "Bykomende notas van die arbeidsterapeut.",
+    therapistInsightsField: "Opmerkings en insigte",
+    therapistInsightsPlaceholder:
+      "bv. Waarnemings uit die sessie, wat om by die huis te probeer, of vrae vir die opvolg…",
+    therapistInsightsCredit: "Soulful Sensory OT",
   },
 };
 

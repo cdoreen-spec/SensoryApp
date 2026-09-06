@@ -934,13 +934,13 @@ body.is-home .site-footer {
 }
 
 .home-quote {
-  padding: 1rem 0 2.5rem;
+  padding: 1.15rem 0 3rem;
 }
 
 .home-quote__block {
   margin: 0 auto;
-  max-width: 520px;
-  padding: 2rem 1.5rem;
+  max-width: 38rem;
+  padding: 2.15rem 1.4rem 2rem;
   border: none;
   background: transparent;
   border-radius: 0;
@@ -966,14 +966,26 @@ body.is-home .site-footer {
   bottom: 0;
 }
 
+.home-quote__mark {
+  display: block;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  font-weight: 600;
+  line-height: 0.65;
+  color: var(--sage);
+  opacity: 0.78;
+}
+
 .home-quote__block p {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: clamp(1.25rem, 3.2vw, 1.55rem);
+  font-size: clamp(1.12rem, 2.8vw, 1.38rem);
   font-style: italic;
-  font-weight: 500;
-  line-height: 1.55;
+  font-weight: 400;
+  line-height: 1.65;
   color: var(--forest);
+  text-wrap: pretty;
   animation: quoteSoft 1.2s ease 0.3s both;
 }
 
@@ -4406,6 +4418,7 @@ body.is-pain-screen .site-footer {
 .card--results .sense-detail-list,
 .card--results .sensory-diet,
 .card--results .report-conclusion,
+.card--results .therapist-insights,
 .card--results .work-report,
 .card--results .results-contact,
 .card--results .actions {
@@ -7700,6 +7713,131 @@ body.is-pain-screen .site-footer {
   text-transform: uppercase;
   color: var(--sage-dark);
   opacity: 0.8;
+}
+
+.therapist-insights {
+  position: relative;
+  margin: 2.4rem auto 1.75rem;
+  max-width: 42rem;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(54, 91, 70, 0.16);
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 0%, rgba(154, 186, 158, 0.2), transparent 62%),
+    linear-gradient(168deg, rgba(250, 252, 248, 0.98) 0%, rgba(236, 244, 238, 0.94) 58%, rgba(228, 238, 230, 0.96) 100%);
+  box-shadow: 0 16px 36px rgba(36, 75, 56, 0.08);
+}
+
+.therapist-insights__header {
+  padding: 1.45rem 1.5rem 0.35rem;
+  text-align: center;
+}
+
+.therapist-insights__kicker {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage-mid);
+}
+
+.therapist-insights__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+  font-weight: 600;
+  color: var(--forest);
+  letter-spacing: -0.02em;
+}
+
+.therapist-insights__title::after {
+  content: "";
+  display: block;
+  width: 3.2rem;
+  height: 2px;
+  margin: 0.8rem auto 0;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--sage-mid), rgba(210, 223, 209, 0.15));
+}
+
+.therapist-insights__lead {
+  margin: 0.85rem auto 0;
+  max-width: 34rem;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.therapist-insights__sheet {
+  margin: 1rem 1.15rem 0.35rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(250, 252, 248, 0.84));
+  border: 1px solid rgba(54, 91, 70, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.therapist-insights__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.therapist-insights__editor textarea {
+  font: inherit;
+  min-height: 9.5rem;
+  resize: vertical;
+  padding: 0.85rem 0.95rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(54, 91, 70, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.therapist-insights__editor textarea:focus {
+  outline: none;
+  border-color: var(--sage-mid);
+  box-shadow: 0 0 0 3px rgba(82, 119, 92, 0.15);
+}
+
+.therapist-insights__prose {
+  display: grid;
+  gap: 0.85rem;
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.therapist-insights__prose p {
+  margin: 0;
+}
+
+.therapist-insights__prose.is-empty,
+.therapist-insights__prose[hidden] {
+  display: none;
+}
+
+.therapist-insights__sign {
+  margin: 0.35rem 1.35rem 1.2rem;
+  text-align: right;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sage-mid);
+}
+
+.therapist-insights__sign[hidden] {
+  display: none;
+}
+
+.results-summary .therapist-insights,
+.couple-merge-cover ~ .therapist-insights {
+  margin-top: 1.75rem;
 }
 
 @media (max-width: 520px) {
@@ -13956,6 +14094,49 @@ body.is-pain-screen .site-footer {
     color: #3f6b4f;
   }
 
+  body.print-sensory-results .therapist-insights {
+    break-before: page;
+    page-break-before: always;
+    margin: 0;
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 0%, rgba(154, 186, 158, 0.16), transparent 58%),
+      #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-sensory-results .therapist-insights__header {
+    padding: 0 0 6mm;
+  }
+
+  body.print-sensory-results .therapist-insights__title {
+    font-size: 18pt;
+  }
+
+  body.print-sensory-results .therapist-insights__sheet {
+    margin: 0;
+    padding: 7mm 8mm;
+    border-radius: 0;
+    background: rgba(244, 248, 244, 0.75);
+    border-color: rgba(104, 139, 120, 0.28);
+  }
+
+  body.print-sensory-results .therapist-insights__prose {
+    font-size: 11.5pt;
+    line-height: 1.55;
+    color: #1c2a22;
+  }
+
+  body.print-sensory-results .therapist-insights__sign {
+    margin: 6mm 0 0;
+    font-size: 8pt;
+    color: #3f6b4f;
+  }
+
   .sensory-diet__trigger,
   .work-report__form,
   .work-report__actions,
@@ -14911,6 +15092,11 @@ body.is-auth .app {
   margin-bottom: 1.35rem;
 }
 
+.settings-stats--overview .settings-stat__label {
+  font-weight: 700;
+  color: var(--ink);
+}
+
 .settings-stat--muted .settings-stat__value {
   color: var(--ink-soft);
 }
@@ -15534,7 +15720,7 @@ body.is-dashboard .site-footer {
   height: 2px;
   margin: 1.05rem 0 1.15rem;
   border-radius: 99px;
-  background: linear-gradient(90deg, rgba(232, 214, 168, 0.95), rgba(232, 214, 168, 0.15));
+  background: linear-gradient(90deg, var(--sage-light), rgba(210, 223, 209, 0.18));
 }
 
 .dashboard__lead {
@@ -15831,6 +16017,18 @@ body.is-dashboard .site-footer {
 .patient-create__form .auth__field textarea {
   min-height: 6.5rem;
   resize: vertical;
+}
+
+.patient-create__form .auth__field select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 2.6rem;
+  background-color: rgba(255, 255, 255, 0.85);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23365b46' d='M1.2 1.3 6 6.1l4.8-4.8 1.1 1.1L6 8.3.1 2.4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.95rem center;
+  background-size: 0.85rem;
 }
 
 .patient-create__details {
@@ -16353,31 +16551,30 @@ body.is-dashboard .site-footer {
   border-bottom: 3px solid transparent;
   border-radius: 12px 12px 0 0;
   background: transparent;
-  color: rgba(244, 248, 244, 0.68);
+  color: rgba(244, 248, 244, 0.72);
   cursor: pointer;
+  transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
 }
 
 .dashboard-tab:hover {
   color: #fff;
-  background: rgba(250, 252, 248, 0.12);
+  background: rgba(210, 223, 209, 0.16);
 }
 
 .dashboard-tab.is-active {
-  color: var(--forest);
-  background: #c4a45a;
-  border-bottom-color: #8f7438;
+  color: #f7faf6;
+  background: var(--sage-mid);
+  border-bottom-color: var(--sage-dark);
   font-weight: 600;
-  font-size: 0.98rem;
-  letter-spacing: 0.02em;
 }
 
 .dashboard-tab.is-active:hover {
-  color: var(--forest);
-  background: #d0b36a;
+  color: #f7faf6;
+  background: var(--sage-dark);
 }
 
 .dashboard-tab:focus-visible {
-  outline: 2px solid rgba(232, 214, 168, 0.85);
+  outline: 2px solid var(--sage-light);
   outline-offset: 2px;
 }
 
