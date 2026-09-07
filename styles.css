@@ -1035,10 +1035,11 @@ body.is-home .site-footer {
 .home-profiles__name {
   margin: 0 0 0.45rem;
   font-family: var(--font-serif);
-  font-size: 1.12rem;
+  font-size: 1.22rem;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--forest);
+  color: #2f7a4a;
+  -webkit-text-stroke: 0.35px currentColor;
 }
 
 .home-profiles__text {
@@ -1055,61 +1056,9 @@ body.is-home .site-footer {
 }
 
 .home-profiles__example + .home-profiles__example {
-  margin-top: 0.75rem;
-}
-
-.home-profiles__example-kicker {
-  margin: 0 0 0.2rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--sage-dark);
-}
-
-.home-profiles__example-title {
-  margin: 0 0 0.15rem;
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--forest);
-}
-
-.home-profiles__example-pattern,
-.home-profiles__example-text {
-  margin: 0 0 0.55rem;
-  font-size: 0.86rem;
-  line-height: 1.45;
-  color: var(--ink-soft);
-}
-
-.home-profiles__chips {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0 0 0.7rem;
-  padding: 0;
-}
-
-.home-profiles__chip {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.4rem;
-  background: rgba(54, 91, 70, 0.08);
-  font-size: 0.72rem;
-  line-height: 1.25;
-}
-
-.home-profiles__chip span {
-  color: var(--ink-muted, #6a7a70);
-}
-
-.home-profiles__chip strong {
-  font-weight: 600;
-  color: var(--forest);
+  margin-top: 0.55rem;
+  padding-top: 0;
+  border-top: none;
 }
 
 .home-profiles__example-btn {

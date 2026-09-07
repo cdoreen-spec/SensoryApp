@@ -5386,61 +5386,16 @@ function renderViewerReportExample({
   respondent,
   lifeContext = null,
   coupleMerge = false,
-  extraNote = "",
+  label = "View sample report",
 } = {}) {
   if (!isViewerMode()) return "";
-  if (coupleMerge) {
-    return `
-      <div class="home-profiles__example">
-        <p class="home-profiles__example-kicker">Example report</p>
-        <p class="home-profiles__example-title">Taylor &amp; Jordan · combined profiles</p>
-        <p class="home-profiles__example-text">Two sample partners, compared side by side — overall patterns, sense-by-sense differences, and practical notes for home and work.</p>
-        <button type="button" class="btn btn-secondary btn--compact home-profiles__example-btn" data-action="preview-sample-report" data-sample-respondent="couple-merge">Open full example</button>
-      </div>
-    `;
-  }
-  const record = buildSampleAssessmentRecord({ respondent, lifeContext });
-  const demo = record.demographics || {};
-  const who =
-    respondent === "parent"
-      ? `${demo.parentName || "Jordan"} (about ${demo.name || "Sam"})`
-      : demo.name || "Sample";
-  const contextLabel =
-    respondent === "adult" && lifeContext === "work"
-      ? "Adult · work"
-      : respondent === "adult" && lifeContext === "home"
-        ? "Adult · home"
-        : respondent === "teen"
-          ? "Teen · home & school"
-          : respondent === "parent"
-            ? "Parent / child"
-            : respondent === "couple"
-              ? "Couple · one partner"
-              : "Sample";
-  const chips = (record.summary?.domainProfiles || [])
-    .slice(0, 6)
-    .map(
-      (row) =>
-        `<li class="home-profiles__chip"><span>${escapeHtml(row.title || "")}</span><strong>${escapeHtml(
-          row.short || "—"
-        )}</strong></li>`
-    )
-    .join("");
-  const contextAttr = lifeContext ? ` data-sample-context="${escapeHtml(lifeContext)}"` : "";
+  const respondentKey = coupleMerge ? "couple-merge" : respondent;
+  const contextAttr = !coupleMerge && lifeContext ? ` data-sample-context="${escapeHtml(lifeContext)}"` : "";
   return `
     <div class="home-profiles__example">
-      <p class="home-profiles__example-kicker">Example report · ${escapeHtml(contextLabel)}</p>
-      <p class="home-profiles__example-title">${escapeHtml(who)}</p>
-      <p class="home-profiles__example-pattern">${escapeHtml(record.summary?.overallLabel || "Sensory trail profile")}</p>
-      ${
-        extraNote
-          ? `<p class="home-profiles__example-text">${escapeHtml(extraNote)}</p>`
-          : ""
-      }
-      ${chips ? `<ul class="home-profiles__chips">${chips}</ul>` : ""}
       <button type="button" class="btn btn-secondary btn--compact home-profiles__example-btn" data-action="preview-sample-report" data-sample-respondent="${escapeHtml(
-        respondent
-      )}"${contextAttr}>Open full example</button>
+        respondentKey
+      )}"${contextAttr}>${escapeHtml(label)}</button>
     </div>
   `;
 }
@@ -7540,11 +7495,11 @@ function renderHome() {
           <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
           <p class="home-section__lead home-profiles__lead">
             Completing the questionnaire scores your sensory preferences. It helps you see where you may be becoming overloaded — or under-stimulated and in need of more input. Whether the focus is home, work or school, the results point toward practical sensory strategies that support regulation, so you can better protect your mood, energy, quality of life and your capacity for daily life.
-            ${
-              viewer
-                ? " Each option below includes a sample report you can open — generated examples only, not a real patient."
-                : ""
-            }
+              ${
+                viewer
+                  ? " Each option below includes a sample report you can open."
+                  : ""
+              }
           </p>
 
           <div class="home-profiles__grid" role="list" aria-label="Available questionnaire options">
@@ -7567,7 +7522,6 @@ function renderHome() {
               ${renderViewerReportExample({
                 respondent: "teen",
                 lifeContext: "homeSchool",
-                extraNote: "Teen reports cover home and school together.",
               })}
             </article>
             <article class="home-profiles__card" role="listitem">
@@ -7577,7 +7531,6 @@ function renderHome() {
               ${renderViewerReportExample({
                 respondent: "teen",
                 lifeContext: "homeSchool",
-                extraNote: "Teen reports cover home and school together.",
               })}
             </article>
             <article class="home-profiles__card home-profiles__card--wide" role="listitem">
@@ -7590,8 +7543,8 @@ function renderHome() {
               <p class="home-profiles__who">Couple</p>
               <h3 class="home-profiles__name">With your partner</h3>
               <p class="home-profiles__text">Each of you completes your own questionnaire, then your profiles are brought together. This helps you understand one another more clearly, recognise where sensory differences may contribute to tension, and find ways to support each other’s needs — fostering greater empathy and a more fulfilling relationship.</p>
-              ${renderViewerReportExample({ respondent: "couple" })}
-              ${renderViewerReportExample({ coupleMerge: true })}
+              ${renderViewerReportExample({ respondent: "couple", label: "View sample report" })}
+              ${renderViewerReportExample({ coupleMerge: true, label: "View combined sample report" })}
             </article>
           </div>
           </div>
@@ -7782,9 +7735,11 @@ function renderSensoryLanding() {
           </div>
 
           <div class="sensory-flow__cta sensory-flow__cta--end">
-            <p class="sensory-flow__cta-lead">Ready when you are</p>
+            <p class="sensory-flow__cta-lead">${isViewerMode() ? "See an example report" : "Ready when you are"}</p>
             ${
-              hasSensoryDraft()
+              isViewerMode()
+                ? `<button type="button" class="btn btn-primary sensory-flow__cta-btn" data-action="viewer-open-examples">See example reports</button>`
+                : hasSensoryDraft()
                 ? renderSensoryResumePanel()
                 : `<button type="button" class="btn btn-primary sensory-flow__cta-btn" data-action="start-questionnaire">Start the sensory screening</button>`
             }
