@@ -7170,6 +7170,7 @@ function renderProgress({ questionProgressHtml = "" } = {}) {
 function renderHome() {
   const copy = currentUi();
   const invite = isPatientInvite();
+  const viewer = isViewerMode();
 
   const pathwaysInner = invite
     ? `
@@ -7200,10 +7201,10 @@ function renderHome() {
                 <span class="trail-row__cue">Click here</span>
                 <span class="trail-row__top">
                   <span class="trail-row__name">Sensory questionnaire</span>
-                  <span class="trail-row__meta">${hasSensoryDraft() ? "Saved progress" : "10–15 min"}</span>
+                  <span class="trail-row__meta">${hasSensoryDraft() && !viewer ? "Saved progress" : "10–15 min"}</span>
                 </span>
                 <span class="trail-row__desc">${
-                  hasSensoryDraft()
+                  hasSensoryDraft() && !viewer
                     ? "Continue where you left off — your progress is saved on this device."
                     : "Explore how sound, touch, movement, light, smell and taste shape your everyday life."
                 }</span>
@@ -7248,7 +7249,6 @@ function renderHome() {
     : "";
 
   const signedIn = !!currentAuthUser();
-  const viewer = isViewerMode();
   const accountSection = invite
     ? ""
     : viewer
@@ -13084,7 +13084,10 @@ function renderWorkReport(scores) {
       <p class="profile-kicker">${escapeHtml(reportCopy.kicker)}</p>
       <h3 id="work-report-ask-title">${escapeHtml(reportCopy.askTitle)}</h3>
       <p class="work-report__ask-desc">${escapeHtml(reportCopy.subtitle)}</p>
-      <div class="contact-choice">
+      ${
+        isViewerMode()
+          ? ""
+          : `<div class="contact-choice">
         <label>
           <input type="radio" name="work-report" value="yes" ${open ? "checked" : ""} />
           ${escapeHtml(reportCopy.askYes)}
@@ -13093,7 +13096,8 @@ function renderWorkReport(scores) {
           <input type="radio" name="work-report" value="no" ${!open && state.workReportDeclined ? "checked" : ""} />
           ${escapeHtml(reportCopy.askNo)}
         </label>
-      </div>
+      </div>`
+      }
       ${panel}
     </section>
   `;
