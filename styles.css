@@ -909,7 +909,7 @@ body.is-home .site-footer {
   position: relative;
   z-index: 1;
   width: min(680px, calc(100% - 2.5rem));
-  margin: -7.5rem auto 0;
+  margin: 0.35rem auto 0;
   background: #f7faf7;
   box-shadow: 0 14px 36px rgba(42, 51, 44, 0.08);
   border: 1.5px solid rgba(54, 91, 70, 0.55);
@@ -930,6 +930,75 @@ body.is-home .site-footer {
 .home-pathways__intro {
   margin: 0 auto;
   max-width: 460px;
+  color: var(--ink-soft);
+}
+
+.home-profiles {
+  position: relative;
+  z-index: 1;
+  width: min(780px, calc(100% - 2.5rem));
+  margin: -6.75rem auto 0;
+  padding: 1.5rem 0 2.25rem;
+  text-align: center;
+}
+
+.home-profiles .home-section__title {
+  text-shadow: 0 0 22px rgba(250, 252, 248, 0.95), 0 1px 0 rgba(250, 252, 248, 0.7);
+}
+
+.home-profiles .botanical-divider {
+  margin: 0.25rem auto 1.35rem;
+}
+
+.home-profiles__lead {
+  margin: 0 auto 1.85rem;
+  max-width: 38rem;
+}
+
+.home-profiles__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  text-align: left;
+}
+
+.home-profiles__card {
+  margin: 0;
+  padding: 1.15rem 1.2rem 1.2rem;
+  background: rgba(247, 250, 247, 0.92);
+  border: 1px solid rgba(54, 91, 70, 0.16);
+  box-shadow: 0 8px 22px rgba(42, 51, 44, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+.home-profiles__card--wide,
+.home-profiles__card--couple {
+  grid-column: 1 / -1;
+}
+
+.home-profiles__who {
+  margin: 0 0 0.28rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+}
+
+.home-profiles__name {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-serif);
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--forest);
+}
+
+.home-profiles__text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
   color: var(--ink-soft);
 }
 
@@ -11117,7 +11186,22 @@ body.is-pain-screen .site-footer {
 
   .home-pathways__inner {
     width: calc(100% - 1.5rem);
-    margin-top: -3.25rem;
+    margin-top: 0.25rem;
+  }
+
+  .home-profiles {
+    width: calc(100% - 1.5rem);
+    margin-top: -3.75rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .home-profiles__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-profiles__card--wide,
+  .home-profiles__card--couple {
+    grid-column: auto;
   }
 
   .home-pathways__header {
