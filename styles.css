@@ -15687,7 +15687,7 @@ body.is-dashboard .site-footer {
   z-index: 1;
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.4rem 2rem;
   align-items: start;
   padding: 2.25rem 2.1rem 1.9rem;
@@ -16499,8 +16499,7 @@ body.is-dashboard .site-footer {
   }
 
   .dashboard__header-actions {
-    justify-content: flex-start;
-    padding-top: 0;
+    display: none;
   }
 
   .dashboard__title::after {
@@ -16576,6 +16575,36 @@ body.is-dashboard .site-footer {
 .dashboard-tab:focus-visible {
   outline: 2px solid var(--sage-light);
   outline-offset: 2px;
+}
+
+.dashboard-tab__short {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .dashboard-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    padding: 0;
+  }
+
+  .dashboard-tab {
+    width: 100%;
+    padding: 0.8rem 0.4rem 0.75rem;
+    font-size: 0.78rem;
+    text-align: center;
+    border-radius: 0;
+    line-height: 1.25;
+  }
+
+  .dashboard-tab__full {
+    display: none;
+  }
+
+  .dashboard-tab__short {
+    display: inline;
+  }
 }
 
 .prefs-panel {

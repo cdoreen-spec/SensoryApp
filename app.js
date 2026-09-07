@@ -5262,7 +5262,6 @@ function renderDashboard() {
   const allItems = getDashboardQuestionnaireItems();
   const items = filteredDashboardAssessments();
   const stats = getDashboardStats(allItems);
-  const user = currentAuthUser();
   const rows = items.map(renderDashboardAssessmentRow).join("");
   const heading = createTab
     ? "Add patient"
@@ -5288,20 +5287,17 @@ function renderDashboard() {
             <h1 id="dashboard-heading" class="dashboard__title">${heading}</h1>
             <p class="dashboard__lead">${lead}</p>
           </div>
-          <div class="dashboard__header-actions">
-            <button type="button" class="btn btn-primary" data-action="open-create-patient">Add patient</button>
-            ${
-              user?.role === "admin"
-                ? `<button type="button" class="btn btn-secondary" data-action="open-settings">Admin</button>`
-                : ""
-            }
-            <button type="button" class="btn btn-secondary" data-action="back-home">Home</button>
-          </div>
         </div>
         <div class="dashboard-tabs" role="tablist" aria-label="Therapist dashboard">
-          <button type="button" class="dashboard-tab ${!prefsTab && !createTab ? "is-active" : ""}" role="tab" aria-selected="${!prefsTab && !createTab}" data-action="dashboard-tab" data-tab="register">Patient register</button>
+          <button type="button" class="dashboard-tab ${!prefsTab && !createTab ? "is-active" : ""}" role="tab" aria-selected="${!prefsTab && !createTab}" data-action="dashboard-tab" data-tab="register">
+            <span class="dashboard-tab__full">Patient register</span>
+            <span class="dashboard-tab__short">Register</span>
+          </button>
           <button type="button" class="dashboard-tab ${createTab ? "is-active" : ""}" role="tab" aria-selected="${createTab}" data-action="dashboard-tab" data-tab="create">Add patient</button>
-          <button type="button" class="dashboard-tab ${prefsTab ? "is-active" : ""}" role="tab" aria-selected="${prefsTab}" data-action="dashboard-tab" data-tab="preferences">My Preferences</button>
+          <button type="button" class="dashboard-tab ${prefsTab ? "is-active" : ""}" role="tab" aria-selected="${prefsTab}" data-action="dashboard-tab" data-tab="preferences">
+            <span class="dashboard-tab__full">My Preferences</span>
+            <span class="dashboard-tab__short">Preferences</span>
+          </button>
         </div>
       </section>
 
@@ -5534,13 +5530,19 @@ function syncAccountChrome() {
   }
 
   const isClinician = user.role === "admin" || user.role === "therapist";
-  const dashLink = user.role === "admin"
-    ? `<button type="button" class="account-chrome__link" data-action="open-dashboard">Patients</button>`
-    : isClinician
-      ? `<button type="button" class="account-chrome__link" data-action="open-dashboard">Dashboard</button>`
-      : `<button type="button" class="account-chrome__link" data-action="open-dashboard">Therapist</button>`;
-  const settingsLink =
-    user.role === "admin"
+  const onDashboard = state.view === "dashboard";
+  const dashLink = onDashboard
+    ? `<button type="button" class="account-chrome__link" data-action="back-home">Home</button>`
+    : user.role === "admin"
+      ? `<button type="button" class="account-chrome__link" data-action="open-dashboard">Patients</button>`
+      : isClinician
+        ? `<button type="button" class="account-chrome__link" data-action="open-dashboard">Dashboard</button>`
+        : `<button type="button" class="account-chrome__link" data-action="open-dashboard">Therapist</button>`;
+  const settingsLink = onDashboard
+    ? user.role === "admin"
+      ? `<button type="button" class="account-chrome__link" data-action="open-settings">Admin</button>`
+      : ""
+    : user.role === "admin"
       ? `<button type="button" class="account-chrome__link" data-action="open-settings">Admin</button>
          <button type="button" class="account-chrome__link" data-action="open-preferences">Preferences</button>`
       : user.role === "therapist"
