@@ -69,6 +69,10 @@ const state = {
   reportViewMode: null,
   /** Dev/admin: viewing generated sample answers (not a real patient). */
   sampleReportPreview: false,
+  /** Public referral preview for other therapists (?viewer=1). */
+  viewerMode: false,
+  viewerNotice: null,
+  viewerCopyStatus: null, // null | copied
   dashboardSearch: "",
   dashboardNotice: null,
   dashboardTab: "register", // register | preferences | create
@@ -2426,7 +2430,7 @@ function exitArchivedReport() {
   state.reportViewMode = null;
   state.reportLengthMode = null;
   state.sampleReportPreview = false;
-  state.view = "dashboard";
+  state.view = isViewerMode() ? "home" : "dashboard";
   state.step = 0;
   state.respondent = null;
   state.lifeContext = null;
@@ -2453,6 +2457,98 @@ function exitArchivedReport() {
 
 function isSampleReportPreviewEnabled() {
   return Boolean(typeof APP_CONFIG !== "undefined" && APP_CONFIG.devAllowSampleReport);
+}
+
+function isViewerMode() {
+  return Boolean(state.viewerMode);
+}
+
+function canOpenSampleReportPreview() {
+  return isSampleReportPreviewEnabled() || isViewerMode();
+}
+
+function buildViewerUrl() {
+  const url = new URL(getClinicianBaseUrl());
+  url.searchParams.set("viewer", "1");
+  return url.toString();
+}
+
+function ensureViewerQuery() {
+  if (!isViewerMode() || !window.history?.replaceState) return;
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("viewer") === "1") return;
+  url.searchParams.set("viewer", "1");
+  window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+}
+
+function enterViewerMode() {
+  state.viewerMode = true;
+  state.viewerNotice = null;
+  state.sampleReportPreview = false;
+  state.viewingArchivedId = null;
+  state.archiveReadOnly = false;
+  state.reportViewMode = null;
+  state.view = "home";
+  state.step = 0;
+  state.showIntroModal = false;
+  ensureViewerQuery();
+}
+
+function exitViewerMode() {
+  state.viewerMode = false;
+  state.viewerNotice = null;
+  state.viewerCopyStatus = null;
+  state.sampleReportPreview = false;
+  state.viewingArchivedId = null;
+  state.archiveReadOnly = false;
+  if (window.history?.replaceState) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("viewer");
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+  }
+  if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
+    state.view = "dashboard";
+    state.dashboardTab = "register";
+    state.clinicianUnlocked = true;
+  } else {
+    state.view = "home";
+    state.step = 0;
+  }
+}
+
+function copyViewerLink() {
+  const link = buildViewerUrl();
+  const done = () => {
+    state.viewerCopyStatus = "copied";
+    render();
+    window.setTimeout(() => {
+      if (state.viewerCopyStatus === "copied") {
+        state.viewerCopyStatus = null;
+        render();
+      }
+    }, 2200);
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(link).then(done).catch(() => {
+      window.prompt("Copy this referral preview link", link);
+      done();
+    });
+  } else {
+    window.prompt("Copy this referral preview link", link);
+    done();
+  }
+}
+
+function returnViewerToHome() {
+  exitArchivedReport();
+  state.view = "home";
+  state.step = 0;
+  state.showIntroModal = false;
+  state.sensoryArea = null;
+  state.coupleShowMerge = false;
+  state.coupleId = null;
+  state.couplePartner = null;
+  ensureViewerQuery();
 }
 
 function canOfferSettingReportFor(respondent, lifeContext) {
@@ -2626,7 +2722,7 @@ function buildSampleAssessmentRecord(options = {}) {
 
 /** Open a full sample results report (no email, not saved to the patient register). */
 function openSampleReportPreview(options = {}) {
-  if (!isSampleReportPreviewEnabled()) return false;
+  if (!canOpenSampleReportPreview()) return false;
   if (options.coupleMerge || options.respondent === "couple-merge") {
     return openSampleCoupleMergePreview();
   }
@@ -2743,7 +2839,7 @@ function buildSampleCoupleMergeSession() {
 
 /** Open the combined couple profile with sample partners (not saved to the patient register). */
 function openSampleCoupleMergePreview() {
-  if (!isSampleReportPreviewEnabled()) return false;
+  if (!canOpenSampleReportPreview()) return false;
   // Couple merge preview is local layout/copy work — allow without clinician unlock
   // while sample reports are enabled, so edits do not require signing in first.
   const session = buildSampleCoupleMergeSession();
@@ -2775,11 +2871,18 @@ function renderSampleReportPreviewControls() {
 
 function renderSampleReportBanner() {
   if (!state.sampleReportPreview) return "";
+  const viewer = isViewerMode();
   return `
     <div class="sample-preview-banner no-print" role="status">
-      <strong>Sample preview</strong>
-      <span>Generated answers for layout checks — not a real patient assessment, and nothing is emailed.</span>
-      <button type="button" class="btn btn-secondary btn--compact" data-action="back-dashboard">Back to dashboard</button>
+      <strong>${viewer ? "Example report" : "Sample preview"}</strong>
+      <span>${
+        viewer
+          ? "A generated example for referring therapists — not a real patient, and nothing is saved or emailed."
+          : "Generated answers for layout checks — not a real patient assessment, and nothing is emailed."
+      }</span>
+      <button type="button" class="btn btn-secondary btn--compact" data-action="${
+        viewer ? "back-home" : "back-dashboard"
+      }">${viewer ? "Back to questionnaires" : "Back to dashboard"}</button>
     </div>
   `;
 }
@@ -3149,6 +3252,12 @@ function buildPatientInviteUrl(access) {
 
 function readInviteFromUrl() {
   const params = new URLSearchParams(window.location.search);
+  if (params.get("viewer") === "1") {
+    state.viewerMode = true;
+    state.view = "home";
+    state.step = 0;
+    return;
+  }
   if (params.get("settings") === "1" || params.get("admin") === "1") {
     state.view = "settings";
     return;
@@ -5251,6 +5360,91 @@ function renderTherapistPreferences() {
   `;
 }
 
+function renderViewerSharePanel() {
+  if (!canAccessTherapistDashboard()) return "";
+  return `
+    <section class="dashboard__viewer-share no-print" aria-labelledby="viewer-share-heading">
+      <div class="dashboard__viewer-share-copy">
+        <p class="dashboard__viewer-share-kicker">Referring therapists</p>
+        <h2 id="viewer-share-heading" class="dashboard__viewer-share-title">Referral preview</h2>
+        <p>
+          Send this link so other therapists can explore the home page and open an example of each report.
+          They will not see patient accounts, and nothing they open is saved or emailed.
+        </p>
+      </div>
+      <div class="dashboard__viewer-share-actions">
+        <button type="button" class="btn btn-primary" data-action="copy-viewer-link">
+          ${state.viewerCopyStatus === "copied" ? "Link copied" : "Copy referral preview link"}
+        </button>
+        <button type="button" class="btn btn-secondary" data-action="open-viewer-preview">Open preview</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderViewerReportExample({
+  respondent,
+  lifeContext = null,
+  coupleMerge = false,
+  extraNote = "",
+} = {}) {
+  if (!isViewerMode()) return "";
+  if (coupleMerge) {
+    return `
+      <div class="home-profiles__example">
+        <p class="home-profiles__example-kicker">Example report</p>
+        <p class="home-profiles__example-title">Taylor &amp; Jordan · combined profiles</p>
+        <p class="home-profiles__example-text">Two sample partners, compared side by side — overall patterns, sense-by-sense differences, and practical notes for home and work.</p>
+        <button type="button" class="btn btn-secondary btn--compact home-profiles__example-btn" data-action="preview-sample-report" data-sample-respondent="couple-merge">Open full example</button>
+      </div>
+    `;
+  }
+  const record = buildSampleAssessmentRecord({ respondent, lifeContext });
+  const demo = record.demographics || {};
+  const who =
+    respondent === "parent"
+      ? `${demo.parentName || "Jordan"} (about ${demo.name || "Sam"})`
+      : demo.name || "Sample";
+  const contextLabel =
+    respondent === "adult" && lifeContext === "work"
+      ? "Adult · work"
+      : respondent === "adult" && lifeContext === "home"
+        ? "Adult · home"
+        : respondent === "teen"
+          ? "Teen · home & school"
+          : respondent === "parent"
+            ? "Parent / child"
+            : respondent === "couple"
+              ? "Couple · one partner"
+              : "Sample";
+  const chips = (record.summary?.domainProfiles || [])
+    .slice(0, 6)
+    .map(
+      (row) =>
+        `<li class="home-profiles__chip"><span>${escapeHtml(row.title || "")}</span><strong>${escapeHtml(
+          row.short || "—"
+        )}</strong></li>`
+    )
+    .join("");
+  const contextAttr = lifeContext ? ` data-sample-context="${escapeHtml(lifeContext)}"` : "";
+  return `
+    <div class="home-profiles__example">
+      <p class="home-profiles__example-kicker">Example report · ${escapeHtml(contextLabel)}</p>
+      <p class="home-profiles__example-title">${escapeHtml(who)}</p>
+      <p class="home-profiles__example-pattern">${escapeHtml(record.summary?.overallLabel || "Sensory trail profile")}</p>
+      ${
+        extraNote
+          ? `<p class="home-profiles__example-text">${escapeHtml(extraNote)}</p>`
+          : ""
+      }
+      ${chips ? `<ul class="home-profiles__chips">${chips}</ul>` : ""}
+      <button type="button" class="btn btn-secondary btn--compact home-profiles__example-btn" data-action="preview-sample-report" data-sample-respondent="${escapeHtml(
+        respondent
+      )}"${contextAttr}>Open full example</button>
+    </div>
+  `;
+}
+
 function renderDashboard() {
   if (!canAccessTherapistDashboard()) {
     return renderDashboardGate();
@@ -5300,6 +5494,8 @@ function renderDashboard() {
           </button>
         </div>
       </section>
+
+      ${renderViewerSharePanel()}
 
       ${
         isSampleReportPreviewEnabled()
@@ -5503,6 +5699,19 @@ function syncAccountChrome() {
     state.view === "signup" ||
     state.view === "forgot" ||
     state.view === "reset";
+
+  if (isViewerMode()) {
+    const canExit = typeof Auth !== "undefined" && Auth.canAccessClinicianTools();
+    mount.innerHTML = `
+      <span class="account-chrome__viewer">Referral preview</span>
+      ${
+        canExit
+          ? `<button type="button" class="account-chrome__link" data-action="exit-viewer">Exit preview</button>`
+          : ""
+      }
+    `;
+    return;
+  }
 
   if (onAuthView) {
     if (isPatientInvite()) {
@@ -7039,9 +7248,27 @@ function renderHome() {
     : "";
 
   const signedIn = !!currentAuthUser();
+  const viewer = isViewerMode();
   const accountSection = invite
     ? ""
-    : `
+    : viewer
+      ? `
+      <section class="home-section home-viewer" aria-labelledby="viewer-heading">
+        <p class="home-section__eyebrow">For referring therapists</p>
+        <h2 id="viewer-heading" class="home-section__title">Referral preview</h2>
+        <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+        <p class="home-section__lead">
+          This is a walk-through of Soulful Sensory OT’s screening app — the home page patients see, the questionnaire types you can refer for, and an example of each report. Nothing you open here is saved or emailed.
+        </p>
+        ${
+          state.viewerNotice
+            ? `<p class="home-viewer__notice" role="status">${escapeHtml(state.viewerNotice)}</p>`
+            : ""
+        }
+        <p class="home-viewer__next">Scroll to <a href="#profiles-heading">questionnaire options</a> to open a sample report, or browse how the sensory pathway is introduced.</p>
+      </section>
+    `
+      : `
       <section class="home-section home-account" aria-labelledby="account-heading">
         <p class="home-section__eyebrow">${signedIn ? "Your account" : "Get started"}</p>
         <h2 id="account-heading" class="home-section__title">${signedIn ? "Welcome back" : "Sign in"}</h2>
@@ -7053,7 +7280,7 @@ function renderHome() {
     `;
 
   return `
-    <div class="home${invite ? " home--invite" : ""}">
+    <div class="home${invite ? " home--invite" : ""}${viewer ? " home--viewer" : ""}">
       <section class="home-hero" aria-labelledby="home-brand">
         <div class="home-hero__atmosphere" aria-hidden="true">
           <div class="home-hero__sunwash"></div>
@@ -7082,7 +7309,7 @@ function renderHome() {
       ${accountSection}
 
       ${
-        !invite && isSampleReportPreviewEnabled()
+        !invite && !viewer && isSampleReportPreviewEnabled() && canAccessTherapistDashboard()
           ? `<section class="home-section home-sample-preview" aria-label="Sample report preview">
               ${renderSampleReportPreviewControls()}
             </section>`
@@ -7295,44 +7522,78 @@ function renderHome() {
         </div>
 
         <section class="home-profiles" aria-labelledby="profiles-heading">
+          <div class="home-profiles__scene" aria-hidden="true">
+            <img
+              src="assets/home-profiles-trail.jpg"
+              alt=""
+              class="home-profiles__photo"
+              width="1024"
+              height="678"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="home-profiles__veil"></div>
+          </div>
+          <div class="home-profiles__inner">
           <p class="home-section__eyebrow">Questionnaire options</p>
           <h2 id="profiles-heading" class="home-section__title">A trail for every context</h2>
           <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
           <p class="home-section__lead home-profiles__lead">
             Completing the questionnaire scores your sensory preferences. It helps you see where you may be becoming overloaded — or under-stimulated and in need of more input. Whether the focus is home, work or school, the results point toward practical sensory strategies that support regulation, so you can better protect your mood, energy, quality of life and your capacity for daily life.
+            ${
+              viewer
+                ? " Each option below includes a sample report you can open — generated examples only, not a real patient."
+                : ""
+            }
           </p>
 
           <div class="home-profiles__grid" role="list" aria-label="Available questionnaire options">
             <article class="home-profiles__card" role="listitem">
               <p class="home-profiles__who">Adult</p>
               <h3 class="home-profiles__name">For work</h3>
-              <p class="home-profiles__text">A self-report focused on the workplace — how sensory input affects focus, energy and the environments where you work.</p>
+              <p class="home-profiles__text">Helps you identify the work setup that best supports productivity, creativity and focus — whether that is a private office, a shared space, or working remotely — according to your sensory needs and capacity.</p>
+              ${renderViewerReportExample({ respondent: "adult", lifeContext: "work" })}
             </article>
             <article class="home-profiles__card" role="listitem">
               <p class="home-profiles__who">Adult</p>
               <h3 class="home-profiles__name">For home</h3>
               <p class="home-profiles__text">A self-report focused on home life — rest, routines and the sensory landscape of everyday living.</p>
+              ${renderViewerReportExample({ respondent: "adult", lifeContext: "home" })}
             </article>
             <article class="home-profiles__card" role="listitem">
               <p class="home-profiles__who">Teenager</p>
               <h3 class="home-profiles__name">For school</h3>
               <p class="home-profiles__text">For teenagers describing their own sensory experience at school — learning, attention and the classroom environment.</p>
+              ${renderViewerReportExample({
+                respondent: "teen",
+                lifeContext: "homeSchool",
+                extraNote: "Teen reports cover home and school together.",
+              })}
             </article>
             <article class="home-profiles__card" role="listitem">
               <p class="home-profiles__who">Teenager</p>
               <h3 class="home-profiles__name">For home</h3>
               <p class="home-profiles__text">For teenagers describing their own sensory experience at home — rest, family life and the spaces they return to each day.</p>
+              ${renderViewerReportExample({
+                respondent: "teen",
+                lifeContext: "homeSchool",
+                extraNote: "Teen reports cover home and school together.",
+              })}
             </article>
             <article class="home-profiles__card home-profiles__card--wide" role="listitem">
               <p class="home-profiles__who">Parent</p>
               <h3 class="home-profiles__name">On behalf of a teenager</h3>
               <p class="home-profiles__text">For parents answering about their teenager’s sensory experiences, to better understand their needs and how to support them.</p>
+              ${renderViewerReportExample({ respondent: "parent" })}
             </article>
             <article class="home-profiles__card home-profiles__card--wide home-profiles__card--couple" role="listitem">
               <p class="home-profiles__who">Couple</p>
               <h3 class="home-profiles__name">With your partner</h3>
               <p class="home-profiles__text">Each of you completes your own questionnaire, then your profiles are brought together. This helps you understand one another more clearly, recognise where sensory differences may contribute to tension, and find ways to support each other’s needs — fostering greater empathy and a more fulfilling relationship.</p>
+              ${renderViewerReportExample({ respondent: "couple" })}
+              ${renderViewerReportExample({ coupleMerge: true })}
             </article>
+          </div>
           </div>
         </section>
 
@@ -7426,7 +7687,12 @@ function renderSensoryLanding() {
             Sensory systems shape how you move through everyday life — at home, at work, at school, and in relationship with others.
           </p>
           ${
-            hasSensoryDraft()
+            isViewerMode()
+              ? `<div class="sensory-flow__cta">
+            <button type="button" class="btn btn-primary sensory-flow__cta-btn" data-action="viewer-open-examples">See example reports</button>
+            <p class="sensory-flow__cta-note">This preview does not run a live questionnaire. Open a sample report from the home page to see what referring therapists can send patients for.</p>
+          </div>`
+              : hasSensoryDraft()
               ? renderSensoryResumePanel()
               : `<div class="sensory-flow__cta">
             <button type="button" class="btn btn-primary sensory-flow__cta-btn" data-action="start-questionnaire">Start the sensory screening</button>
@@ -12216,6 +12482,7 @@ function renderInterpretSensoryWorld(copy, pageEntry) {
 }
 
 function canEditTherapistInsights() {
+  if (isViewerMode()) return false;
   return canAccessTherapistDashboard() || Boolean(state.sampleReportPreview);
 }
 
@@ -12648,7 +12915,10 @@ function renderWorkReport(scores) {
       <div id="work-report-panel" class="work-report__panel is-open">
         <p class="work-report__intro">${escapeHtml(reportCopy.intro)}</p>
 
-        <div class="work-report__form">
+        ${
+          isViewerMode()
+            ? ""
+            : `<div class="work-report__form">
           <label class="work-report__field">
             <span>${escapeHtml(reportCopy.name)}</span>
             <input type="text" data-work-report="name" value="${escapeHtml(report.name)}" autocomplete="name" />
@@ -12690,7 +12960,8 @@ function renderWorkReport(scores) {
               : ""
           }
           ${showVisualControls ? renderSchoolVisualPicker(reportCopy) : ""}
-        </div>
+        </div>`
+        }
 
         <div class="work-report__preview" id="work-report-document">
           <p class="work-report__preview-label">${escapeHtml(reportCopy.preview)}</p>
@@ -13364,6 +13635,7 @@ function renderResults() {
   const context = lifeContextLabel();
   const framing = getContextFraming(state.lifeContext, state.language);
   const fromDashboard = Boolean(state.archiveReadOnly) && canAccessTherapistDashboard();
+  const fromViewer = isViewerMode() && Boolean(state.sampleReportPreview || state.archiveReadOnly);
   const pagePlan = buildReportPagePlan(copy, scores, metrics);
   const isParent = state.respondent === "parent";
   const isWorkProfile = state.respondent === "adult" && state.lifeContext === "work";
@@ -13454,6 +13726,11 @@ function renderResults() {
               <button type="button" class="btn btn-secondary" data-action="switch-report-basic">Preview short report</button>
               <button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
             </div>`
+          : fromViewer
+            ? `<div class="results-dashboard-bar no-print">
+              <button type="button" class="btn btn-secondary" data-action="back-home">← Back to questionnaires</button>
+              <button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
+            </div>`
           : ""
       }
 
@@ -13475,7 +13752,10 @@ function renderResults() {
       ${renderTherapistInsightsSection()}
       </div>
 
-      <div class="results-contact">
+      ${
+        isViewerMode()
+          ? ""
+          : `<div class="results-contact">
         <h3>${escapeHtml(copy.contactTitle)}</h3>
         <div class="contact-choice">
           <label>
@@ -13487,7 +13767,8 @@ function renderResults() {
             ${escapeHtml(copy.contactNo)}
           </label>
         </div>
-      </div>
+      </div>`
+      }
 
       ${renderWorkReport(scores)}
 
@@ -13495,7 +13776,9 @@ function renderResults() {
         ${
           fromDashboard
             ? `<button class="btn btn-secondary" data-action="back-dashboard">← Dashboard</button>`
-            : `<button class="btn btn-secondary" data-action="back">${escapeHtml(copy.review)}</button>`
+            : fromViewer
+              ? `<button class="btn btn-secondary" data-action="back-home">← Back to questionnaires</button>`
+              : `<button class="btn btn-secondary" data-action="back">${escapeHtml(copy.review)}</button>`
         }
         <button class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
         ${
@@ -13567,7 +13850,9 @@ function render({ scrollToTop = false } = {}) {
   document.body.classList.toggle("is-dashboard", state.view === "dashboard");
   document.body.classList.toggle("is-auth", isAuthView);
   document.body.classList.toggle("is-settings", state.view === "settings");
+  document.body.classList.toggle("is-viewer", isViewerMode());
   document.body.classList.toggle("has-intro-modal", Boolean(state.showIntroModal));
+  ensureViewerQuery();
 
   if (state.view === "settings") {
     html = renderSettings();
@@ -13930,6 +14215,9 @@ function bindEvents() {
       } else if (action === "logout") {
         handleLogout();
         render({ scrollToTop: true });
+      } else if (action === "exit-viewer") {
+        exitViewerMode();
+        render({ scrollToTop: true });
       } else if (action === "back-home") {
         saveSensoryDraft();
         clearInviteSession();
@@ -14143,6 +14431,64 @@ function bindEvents() {
 
     // Prefer attribute read for SVG nodes (more reliable than dataset in some browsers)
     const action = btn.getAttribute("data-action") || btn.dataset.action;
+
+    if (action === "copy-viewer-link") {
+      copyViewerLink();
+      return;
+    }
+    if (action === "open-viewer-preview") {
+      enterViewerMode();
+      render({ scrollToTop: true });
+      return;
+    }
+    if (action === "exit-viewer") {
+      exitViewerMode();
+      render({ scrollToTop: true });
+      return;
+    }
+    if (action === "viewer-open-examples") {
+      state.viewerNotice = null;
+      returnViewerToHome();
+      render({ scrollToTop: false });
+      queueMicrotask(() => {
+        document.getElementById("profiles-heading")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return;
+    }
+    if (isViewerMode()) {
+      if (
+        action === "start-questionnaire" ||
+        action === "resume-questionnaire" ||
+        action === "start-assigned-questionnaire" ||
+        action === "start-pain"
+      ) {
+        state.viewerNotice =
+          "This preview does not run live questionnaires. Open an example report under each questionnaire type below.";
+        returnViewerToHome();
+        render({ scrollToTop: false });
+        queueMicrotask(() => {
+          document.getElementById("profiles-heading")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        return;
+      }
+      if (action === "couple-back-hub") {
+        returnViewerToHome();
+        render({ scrollToTop: true });
+        return;
+      }
+      const allowed = new Set([
+        "start-sensory",
+        "back-home",
+        "preview-sample-report",
+        "print",
+        "print-couple-report",
+        "print-work-report",
+        "toggle-sensory-diet",
+        "couple-start",
+        "back-dashboard",
+      ]);
+      if (!allowed.has(action)) return;
+    }
 
     if (action === "start-sensory") {
       if (inviteNeedsAccount()) {
@@ -14587,14 +14933,19 @@ function bindEvents() {
     }
 
     if (action === "preview-sample-report") {
-      if (!isSampleReportPreviewEnabled()) return;
+      if (!canOpenSampleReportPreview()) return;
       const opened = openSampleReportPreview({
         respondent: btn.dataset.sampleRespondent || "adult",
         lifeContext: btn.dataset.sampleContext || null,
       });
       if (!opened) {
-        state.dashboardNotice = "Sample report preview is not available.";
-        state.view = "dashboard";
+        if (isViewerMode()) {
+          state.viewerNotice = "That example report could not be opened.";
+          state.view = "home";
+        } else {
+          state.dashboardNotice = "Sample report preview is not available.";
+          state.view = "dashboard";
+        }
       }
       render({ scrollToTop: true });
       return;
@@ -15747,7 +16098,7 @@ async function bootApp() {
   // ?preview=couple-merge opens the combined couple profile with sample partners.
   const sampleBoot = state._openSamplePreviewOnBoot;
   delete state._openSamplePreviewOnBoot;
-  if (sampleBoot && isSampleReportPreviewEnabled()) {
+  if (sampleBoot && canOpenSampleReportPreview()) {
     const wantsCoupleMerge = Boolean(sampleBoot.coupleMerge || sampleBoot.respondent === "couple-merge");
     if (wantsCoupleMerge) {
       openSampleCoupleMergePreview();
