@@ -7294,6 +7294,48 @@ function renderHome() {
           <img src="assets/outeniqua-pathways.png" alt="" class="home-pathways__canopy" width="1536" height="1024" />
         </div>
 
+        <section class="home-profiles" aria-labelledby="profiles-heading">
+          <p class="home-section__eyebrow">Questionnaire options</p>
+          <h2 id="profiles-heading" class="home-section__title">A trail for every context</h2>
+          <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+          <p class="home-section__lead home-profiles__lead">
+            Completing the questionnaire scores your sensory preferences. It helps you see where you may be becoming overloaded — or under-stimulated and in need of more input. Whether the focus is home, work or school, the results point toward practical sensory strategies that support regulation, so you can better protect your mood, energy, quality of life and your capacity for daily life.
+          </p>
+
+          <div class="home-profiles__grid" role="list" aria-label="Available questionnaire options">
+            <article class="home-profiles__card" role="listitem">
+              <p class="home-profiles__who">Adult</p>
+              <h3 class="home-profiles__name">For work</h3>
+              <p class="home-profiles__text">A self-report focused on the workplace — how sensory input affects focus, energy and the environments where you work.</p>
+            </article>
+            <article class="home-profiles__card" role="listitem">
+              <p class="home-profiles__who">Adult</p>
+              <h3 class="home-profiles__name">For home</h3>
+              <p class="home-profiles__text">A self-report focused on home life — rest, routines and the sensory landscape of everyday living.</p>
+            </article>
+            <article class="home-profiles__card" role="listitem">
+              <p class="home-profiles__who">Teenager</p>
+              <h3 class="home-profiles__name">For school</h3>
+              <p class="home-profiles__text">For teenagers describing their own sensory experience at school — learning, attention and the classroom environment.</p>
+            </article>
+            <article class="home-profiles__card" role="listitem">
+              <p class="home-profiles__who">Teenager</p>
+              <h3 class="home-profiles__name">For home</h3>
+              <p class="home-profiles__text">For teenagers describing their own sensory experience at home — rest, family life and the spaces they return to each day.</p>
+            </article>
+            <article class="home-profiles__card home-profiles__card--wide" role="listitem">
+              <p class="home-profiles__who">Parent</p>
+              <h3 class="home-profiles__name">On behalf of a teenager</h3>
+              <p class="home-profiles__text">For parents answering about their teenager’s sensory experiences, to better understand their needs and how to support them.</p>
+            </article>
+            <article class="home-profiles__card home-profiles__card--wide home-profiles__card--couple" role="listitem">
+              <p class="home-profiles__who">Couple</p>
+              <h3 class="home-profiles__name">With your partner</h3>
+              <p class="home-profiles__text">Each of you completes your own questionnaire, then your profiles are brought together. This helps you understand one another more clearly, recognise where sensory differences may contribute to tension, and find ways to support each other’s needs — fostering greater empathy and a more fulfilling relationship.</p>
+            </article>
+          </div>
+        </section>
+
         <div class="home-pathways__inner">
           ${pathwaysInner}
         </div>
