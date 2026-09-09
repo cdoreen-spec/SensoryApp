@@ -659,22 +659,26 @@ function patientCredentialsText(details) {
 function patientInviteMessage(details) {
   const firstName = String(details.name || "there").trim().split(/\s+/)[0] || "there";
   return [
-    `Hello ${firstName},`,
+    `Dear ${firstName},`,
     "",
-    "Your occupational therapist at Soulful Sensory OT has created an account for you to complete a sensory questionnaire.",
+    "An account has been created for you at Soulful Sensory OT so you can complete a sensory questionnaire.",
     "",
-    `Questionnaire: ${details.questionnaireType || "Sensory screening"}`,
+    "Please open the questionnaire and use the email and password provided to access it.",
+    "",
     details.expiresAt ? `This invitation expires on ${details.expiresAt}.` : `This invitation expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.`,
     "",
     "Sign in with:",
     `Email: ${details.email}`,
     details.password ? `Password: ${details.password}` : "Use the password your therapist sent you.",
     "",
-    "Open this link, sign in, then start the questionnaire:",
+    "Open this link, sign in, then complete the questionnaire:",
     details.inviteUrl || "",
     "",
     "If the link does not work, go to the Soulful Sensory OT website and sign in with the email and password above.",
     "",
+    "Kind regards,",
+    "Cayley Alberts",
+    "Occupational Therapist",
     "Soulful Sensory OT",
   ]
     .filter((line) => line !== undefined)
@@ -682,7 +686,7 @@ function patientInviteMessage(details) {
 }
 
 function patientInviteEmailSubject(details) {
-  return "Your Soulful Sensory OT questionnaire";
+  return "Your sensory questionnaire from Soulful Sensory OT";
 }
 
 function whatsappPhoneDigits(phone) {
@@ -713,6 +717,44 @@ function patientInviteMailtoUrl(details) {
   return `mailto:${encodeURIComponent(details.email || "")}?subject=${subject}&body=${body}`;
 }
 
+async function sendViaGmailBackend({
+  to,
+  subject,
+  message,
+  name,
+  kind,
+  inviteUrl,
+  resetUrl,
+  questionnaireType,
+  expiresAt,
+  email,
+  password,
+  intro,
+  sections,
+}) {
+  if (DELIVERY_PROVIDER !== "gmail") return null;
+  if (typeof SsotBackend === "undefined" || !SsotBackend.isEnabled()) {
+    throw new Error(
+      "Gmail sending needs the practice server. From this folder run npm start, or host the site on Netlify with the Gmail App Password set."
+    );
+  }
+  return SsotBackend.sendEmail({
+    to,
+    subject,
+    message,
+    name,
+    kind,
+    inviteUrl,
+    resetUrl,
+    questionnaireType,
+    expiresAt,
+    email,
+    password,
+    intro,
+    sections,
+  });
+}
+
 async function sendPatientInviteEmail(details) {
   assertEmailDeliveryContext();
   const toEmail = String(details?.email || "").trim();
@@ -720,6 +762,20 @@ async function sendPatientInviteEmail(details) {
   const displayName = String(details.name || "").trim() || "there";
   const subject = patientInviteEmailSubject(details);
   const message = patientInviteMessage(details);
+
+  const gmail = await sendViaGmailBackend({
+    to: toEmail,
+    subject,
+    message,
+    name: displayName,
+    kind: "invite",
+    inviteUrl: details.inviteUrl,
+    questionnaireType: details.questionnaireType,
+    expiresAt: details.expiresAt,
+    email: toEmail,
+    password: details.password,
+  });
+  if (gmail) return gmail;
 
   if (DELIVERY_PROVIDER === "web3forms") {
     if (!WEB3FORMS_KEY) {
@@ -936,6 +992,7 @@ function writeAssessments(items) {
       ASSESSMENTS_KEY,
       JSON.stringify({ version: ASSESSMENTS_VERSION, items })
     );
+    if (typeof SsotBackend !== "undefined") SsotBackend.noteChanged();
   } catch (_) {
     /* Private mode / full storage — ignore */
   }
@@ -968,6 +1025,7 @@ function readPayments() {
 function writePayments(store) {
   try {
     localStorage.setItem(PAYMENTS_KEY, JSON.stringify(store));
+    if (typeof SsotBackend !== "undefined") SsotBackend.noteChanged();
   } catch (_) {
     /* Private mode / full storage — ignore */
   }
@@ -1133,7 +1191,9 @@ function getAdminOverviewStats() {
       ? "Off"
       : DELIVERY_PROVIDER === "web3forms"
         ? "Web3Forms"
-        : "FormSubmit";
+        : DELIVERY_PROVIDER === "gmail"
+          ? "Gmail"
+          : "FormSubmit";
   return {
     totalPatients: userStats.patients,
     therapists: userStats.therapists,
@@ -1270,6 +1330,7 @@ function writeCoupleSessionsMap(sessions) {
       COUPLE_SESSIONS_KEY,
       JSON.stringify({ version: COUPLE_SESSIONS_VERSION, sessions })
     );
+    if (typeof SsotBackend !== "undefined") SsotBackend.noteChanged();
   } catch (_) {
     /* ignore */
   }
@@ -3627,6 +3688,73 @@ function profileLabelPlain(meta) {
   return meta.label || meta.short || String(meta);
 }
 
+function completionNoticeIntro() {
+  return "A sensory questionnaire has been completed. This is a short notice — open the patient register in the web app for the full report.";
+}
+
+function trailCharacterSummary(lean) {
+  if (!lean || !shouldShowTrailProfile()) return "";
+  const copy = currentUi();
+  const roster = getTeenCrewRoster(copy);
+  const you = roster.find((m) => m.id === getTeenCrewId(lean));
+  if (!you) return "";
+  return you.tag ? `${you.name} · ${you.tag}` : you.name;
+}
+
+function totalScoreRows(metrics) {
+  return [
+    ["Sensitive / avoiding", String(metrics?.sensitive ?? 0)],
+    ["Sensory neutral", String(metrics?.neutral ?? 0)],
+    ["Sensory seeking", String(metrics?.seeking ?? 0)],
+  ];
+}
+
+function patientDetailRows(demo = {}, extra = []) {
+  const isParent = state.respondent === "parent";
+  const context = lifeContextLabel();
+  const questionnaire = [respondentLabel(state.respondent), context].filter(Boolean).join(" · ");
+  const rows = [
+    [isParent ? "Child’s name" : "Name", demo.name || "—"],
+    demo.parentName ? ["Parent / guardian", demo.parentName] : null,
+    demo.partnerName ? ["Partner", demo.partnerName] : null,
+    ["Age", demo.age || "—"],
+    demo.email ? ["Email", demo.email] : null,
+    demo.occupation ? ["Occupation / school", demo.occupation] : null,
+    ["Questionnaire", questionnaire || "—"],
+    ...extra,
+  ];
+  return rows.filter(Boolean);
+}
+
+function formatCompletionEmailText(intro, sections) {
+  const lines = [intro, ""];
+  (sections || []).forEach((section) => {
+    if (!section?.heading) return;
+    lines.push(section.heading);
+    if (section.text) lines.push(section.text);
+    (section.rows || []).forEach((row) => {
+      const label = Array.isArray(row) ? row[0] : row?.label;
+      const value = Array.isArray(row) ? row[1] : row?.value;
+      if (label && value != null && value !== "") lines.push(`${label}: ${value}`);
+    });
+    lines.push("");
+  });
+  return lines.join("\n").trim();
+}
+
+function completionEmailSections({ metrics, demo, extraDetailRows = [] }) {
+  const sections = [
+    { heading: "Patient details", rows: patientDetailRows(demo, extraDetailRows) },
+    { heading: "Total score", rows: totalScoreRows(metrics) },
+    { heading: "Overall pattern", text: profileLabelPlain(metrics?.meta) || metrics?.leanHeadline || "—" },
+  ];
+  const character = trailCharacterSummary(metrics?.lean);
+  if (character) {
+    sections.push({ heading: "Sensory trail character", text: character });
+  }
+  return sections;
+}
+
 function buildResultsReport() {
   const scores = scoreAllDomains(
     state.answers,
@@ -3637,124 +3765,15 @@ function buildResultsReport() {
   const metrics = getProfileMetrics(scores);
   const demo = state.demographics;
   const completerName = assessmentCompleterName();
-  const context = lifeContextLabel() || "—";
-  const respondent =
-    state.respondent === "parent"
-      ? "Parent (about child)"
-      : state.respondent === "teen"
-        ? "Teen"
-        : state.respondent === "couple"
-          ? `Couple · ${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}`
-          : "Adult";
-
-  const detailRows = getScoreRows(scores);
-  const domainDetailLines = detailRows
-    .map((row) => {
-      const score = scores.find((s) => s.id === row.id);
-      const counts = score
-        ? ` (sensitive/avoiding ${score.sensitive}, neutral ${score.neutral ?? 0}, seeking ${score.seeking}, of ${score.scored})`
-        : "";
-      return [
-        `${row.title}: ${row.profileShort || row.thresholdLabel}${counts}`,
-        row.thresholdFull ? `  Threshold: ${row.thresholdFull}` : null,
-        row.implication ? `  Implication: ${row.implication}` : null,
-        row.recommendation ? `  Recommendation: ${row.recommendation}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n");
-    })
-    .join("\n\n");
-
-  const sharingItems = getSharingConsentItems(
-    state.language,
-    state.respondent || "adult",
-    state.lifeContext
-  );
-  const sharingLines = sharingItems.map((item) => {
-    const allowed = Boolean(state.sharingConsent?.[item.id]);
-    const party = item.shortLabel || item.id;
-    return `  ${party}: ${allowed ? "MAY SHARE" : "permission NOT given"}`;
-  });
-
-  const lines = [
-    "Soulful Sensory OT — Detailed sensory screening report",
-    `Submitted: ${new Date().toLocaleString()}`,
-    `Completed by: ${completerName}`,
-    `Patient results access in app: ${resultsAccessLabel()}`,
-    `Source: ${isPatientInvite() ? "Patient invite link" : "Public home pathway"}`,
-    "",
-    "— Details —",
-    state.respondent === "parent"
-      ? `Child’s name: ${demo.name || "—"}`
-      : `Name: ${demo.name || "—"}`,
-    demo.parentName ? `Parent / guardian (completed assessment): ${demo.parentName}` : null,
-    demo.partnerName ? `Partner: ${demo.partnerName}` : null,
-    `Age: ${demo.age || "—"}`,
-    `Email: ${demo.email || "—"}`,
-    demo.occupation ? `Occupation / school: ${demo.occupation}` : null,
-    `Respondent: ${respondent}`,
-    state.coupleId ? `Couple session: ${state.coupleId}` : null,
-    state.couplePartner
-      ? `Couple partner: ${state.couplePartner === "b" ? "Partner 2" : "Partner 1"}`
-      : null,
-    `Language: ${state.language === "af" ? "Afrikaans" : "English"}`,
-    `Life context: ${context}`,
-    state.contactPreference ? `Contact preference: ${state.contactPreference}` : null,
-    "",
-    "— Sharing permissions (what you may / may not share) —",
-    ...(sharingLines.length ? sharingLines : ["  (no sharing options recorded)"]),
-    "",
-    "— Overall pattern —",
-    `Profile: ${profileLabelPlain(metrics.meta)}`,
-    metrics.leanHeadline,
-    ...(shouldShowTrailProfile()
-      ? (() => {
-          const copy = currentUi();
-          const isParent = state.respondent === "parent";
-          const roster = getTeenCrewRoster(copy);
-          const you = roster.find((m) => m.id === getTeenCrewId(metrics.lean));
-          const youAre = isParent ? copy.teenCrewYouAreParent : copy.teenCrewYouAre;
-          return you
-            ? [
-                "",
-                "— Sensory Trail Character —",
-                `${youAre}: ${you.name}`,
-                you.tag,
-                you.summary,
-                "",
-                copy.teenCrewCrewTitle,
-                ...roster.map((m) => `• ${m.name} (${m.tag}): ${m.summary}`),
-              ]
-            : [];
-        })()
-      : []),
-    ...(getTrailSettingKeys(state.respondent, state.lifeContext)
-      .map((settingKey) => {
-        const guide = getTrailSettingGuide(settingKey, metrics.lean, state.language);
-        if (!guide) return [];
-        return [
-          "",
-          `— ${guide.title || guide.kicker} —`,
-          guide.needsLabel + ":",
-          guide.needs,
-          guide.supportLabel + ":",
-          ...(guide.support || []).map((item) => `• ${item}`),
-        ];
-      })
-      .flat()),
-    ...(state.idealSaturday?.trim() && !isCouplePathway()
-      ? ["", "— Best Saturday —", state.idealSaturday.trim()]
-      : []),
-    ...(isCouplePathway() && state.coupleWork?.employment
-      ? ["", "— Work & home life —", formatCoupleWorkSummary(normalizeCoupleWork(state.coupleWork))]
-      : []),
-    `Sensitive / avoiding: ${metrics.sensitive}`,
-    `Sensory neutral: ${metrics.neutral ?? 0}`,
-    `Sensory seeking: ${metrics.seeking}`,
-    "",
-    "— Detailed report by sensory system —",
-    domainDetailLines || "(no domain scores)",
-  ].filter((line) => line !== null);
+  const extraDetailRows = [];
+  if (state.respondent === "couple" && state.couplePartner) {
+    extraDetailRows.push([
+      "Couple partner",
+      state.couplePartner === "b" ? "Partner 2" : "Partner 1",
+    ]);
+  }
+  const intro = completionNoticeIntro();
+  const sections = completionEmailSections({ metrics, demo, extraDetailRows });
 
   const profileBit = profileLabelPlain(metrics.meta);
   const subjectCore =
@@ -3767,7 +3786,9 @@ function buildResultsReport() {
   return {
     scores,
     metrics,
-    text: lines.join("\n"),
+    intro,
+    sections,
+    text: formatCompletionEmailText(intro, sections),
     subject: `Completed: ${subjectCore}`,
   };
 }
@@ -3952,6 +3973,17 @@ async function sendResultsEmail(report) {
     message: report.text,
   };
 
+  const gmail = await sendViaGmailBackend({
+    to: getClinicianEmail(),
+    subject: payloadBase.subject,
+    message: payloadBase.message,
+    name: payloadBase.name,
+    kind: "report",
+    intro: report.intro,
+    sections: report.sections,
+  });
+  if (gmail) return gmail;
+
   if (DELIVERY_PROVIDER === "web3forms") {
     if (!WEB3FORMS_KEY) {
       throw new Error("Web3Forms access key is not configured in config.js");
@@ -4025,6 +4057,15 @@ async function sendClinicianNotification({ subject, message, name, fields = {} }
     ...fields,
   };
 
+  const gmail = await sendViaGmailBackend({
+    to: getClinicianEmail(),
+    subject,
+    message,
+    name: payloadBase.name,
+    kind: "notification",
+  });
+  if (gmail) return gmail;
+
   if (DELIVERY_PROVIDER === "web3forms") {
     if (!WEB3FORMS_KEY) {
       throw new Error("Web3Forms access key is not configured in config.js");
@@ -4097,6 +4138,16 @@ async function sendPasswordResetEmail({ email, name, token }) {
     "",
     "This link expires in 24 hours. If you did not ask to reset your password, you can ignore this email.",
   ].join("\n");
+
+  const gmail = await sendViaGmailBackend({
+    to: toEmail,
+    subject,
+    message,
+    name: displayName,
+    kind: "password-reset",
+    resetUrl,
+  });
+  if (gmail) return gmail;
 
   if (DELIVERY_PROVIDER === "web3forms") {
     if (!WEB3FORMS_KEY) {
@@ -4432,170 +4483,71 @@ function coupleCombinedSubmissionStatusMessage(copy = currentUi(), session = nul
   return copy.coupleCombinedLead;
 }
 
-function buildCouplePartnerEmailBlock(partner, slot, copy) {
+function couplePartnerMetrics(slot) {
+  const language = slot?.language || state.language || "en";
+  if (slot?.answers) {
+    const domains = getSensoryDomains(language, "couple");
+    const scores = scoreAllDomains(slot.answers, domains, language, "couple");
+    const overall = scoreOverall(scores, language, "couple");
+    return { ...overall, lean: overall.profile };
+  }
+  const summary = slot?.summary || {};
+  return {
+    sensitive: summary.sensitive ?? 0,
+    neutral: summary.neutral ?? 0,
+    seeking: summary.seeking ?? 0,
+    lean: summary.lean || "",
+    meta: { label: summary.overallLabel || "" },
+  };
+}
+
+function couplePartnerEmailSections(partner, slot, copy) {
   const name =
     String(slot?.label || slot?.demographics?.name || "").trim() ||
     (partner === "b" ? copy.couplePartnerB : copy.couplePartnerA);
   const demo = slot?.demographics || {};
-  const summary = slot?.summary || {};
-  const domains = Array.isArray(summary.domainProfiles)
-    ? summary.domainProfiles
-        .map((d) => `  • ${d.title || d.id}: ${d.short || "—"}`)
-        .join("\n")
-    : "  (no domain summary)";
-  const workSummary = formatCoupleWorkSummary(normalizeCoupleWork(slot?.coupleWork), copy);
-  return [
-    `— ${name} (${partner === "b" ? "Partner 2" : "Partner 1"}) —`,
-    `Name: ${name}`,
-    demo.age ? `Age: ${demo.age}` : null,
-    demo.email ? `Email: ${demo.email}` : null,
-    demo.occupation ? `Occupation: ${demo.occupation}` : null,
-    demo.partnerName ? `Partner: ${demo.partnerName}` : null,
-    `Overall: ${summary.overallLabel || "—"}`,
-    summary.leanHeadline || null,
-    "Domains:",
-    domains,
-    workSummary ? ["", "Work & home life:", workSummary].join("\n") : null,
-  ]
-    .filter((line) => line !== null && line !== "")
-    .join("\n");
+  const metrics = couplePartnerMetrics(slot);
+  const partnerLabel = partner === "b" ? "Partner 2" : "Partner 1";
+  const rows = [
+    ["Name", name],
+    ["Couple partner", partnerLabel],
+    demo.age ? ["Age", demo.age] : null,
+    demo.email ? ["Email", demo.email] : null,
+    demo.occupation ? ["Occupation", demo.occupation] : null,
+  ].filter(Boolean);
+  const pattern = profileLabelPlain(metrics.meta) || metrics.leanHeadline || "—";
+  const character = trailCharacterSummary(metrics.lean || metrics.profile);
+  const sections = [
+    { heading: `Patient details — ${name}`, rows },
+    { heading: `Total score — ${name}`, rows: totalScoreRows(metrics) },
+    { heading: `Overall pattern — ${name}`, text: pattern },
+  ];
+  if (character) {
+    sections.push({ heading: `Sensory trail character — ${name}`, text: character });
+  }
+  return sections;
 }
 
 function buildCoupleCombinedResultsReport(session = null) {
   const copy = currentUi();
-  const sess = ensureCoupleCombinedSubmissionShape(
-    session || ensureCoupleSession()
-  );
+  const sess = ensureCoupleCombinedSubmissionShape(session || ensureCoupleSession());
   if (!bothCouplePartnersComplete(sess)) {
     throw new Error("Both partners must complete before submitting the combined report.");
   }
 
   const nameA = couplePartnerLabel("a", sess);
   const nameB = couplePartnerLabel("b", sess);
-  const language = state.language === "af" ? "Afrikaans" : "English";
-  const comparison =
-    typeof buildCoupleComparisonReport === "function"
-      ? buildCoupleComparisonReport(sess, state.language)
-      : null;
-  const workComparison =
-    typeof buildCoupleWorkComparison === "function"
-      ? buildCoupleWorkComparison(sess, state.language)
-      : null;
-  const conflictSummary =
-    typeof buildCoupleConflictAreas === "function"
-      ? buildCoupleConflictAreas(sess, state.language)
-      : null;
-  const thriveSummary =
-    typeof buildCoupleThriveSummary === "function"
-      ? buildCoupleThriveSummary(sess, state.language)
-      : null;
-  const parentingComparison =
-    typeof buildCoupleParentingComparison === "function"
-      ? buildCoupleParentingComparison(sess, state.language)
-      : null;
-
-  const sectionLines = [];
-  if (comparison?.sections?.length) {
-    sectionLines.push("", `— ${copy.coupleCompareTitle} —`, copy.coupleCompareIntro || "");
-    comparison.sections.forEach((section) => {
-      const title = copy[section.titleKey] || section.titleKey;
-      sectionLines.push("", title);
-      (section.partnerLines || []).forEach((line) => {
-        if (line?.text) sectionLines.push(`  ${line.text}`);
-      });
-      (section.together || []).filter(Boolean).forEach((text) => {
-        sectionLines.push(`  Together: ${text}`);
-      });
-    });
-  }
-
-  if (workComparison) {
-    sectionLines.push(
-      "",
-      `— ${copy[workComparison.titleKey] || copy.coupleWorkResultsTitle} —`,
-      copy[workComparison.introKey] || ""
-    );
-    (workComparison.partners || []).forEach((card) => {
-      sectionLines.push("", card.name);
-      (card.rows || []).forEach((row) => {
-        sectionLines.push(`  ${row.label}: ${row.value}`);
-      });
-      if (card.note) sectionLines.push(`  ${card.note}`);
-    });
-    (workComparison.together || []).filter(Boolean).forEach((text) => {
-      sectionLines.push(`  Together: ${text}`);
-    });
-  }
-
-  if (conflictSummary) {
-    sectionLines.push(
-      "",
-      `— ${copy[conflictSummary.titleKey] || copy.coupleCompareConflictTitle} —`,
-      copy[conflictSummary.introKey] || copy.coupleCompareConflictIntro || ""
-    );
-    if ((conflictSummary.areas || []).length) {
-      conflictSummary.areas.forEach((area) => {
-        sectionLines.push("", area.title, area.text);
-        (area.tips || []).filter(Boolean).forEach((tip) => {
-          sectionLines.push(`  • ${tip}`);
-        });
-      });
-    } else if (conflictSummary.emptyNote) {
-      sectionLines.push(conflictSummary.emptyNote);
-    }
-  }
-
-  if (thriveSummary) {
-    sectionLines.push(
-      "",
-      `— ${copy[thriveSummary.titleKey] || copy.coupleCompareThriveTitle} —`,
-      copy[thriveSummary.introKey] || ""
-    );
-    (thriveSummary.partners || []).forEach((card) => {
-      sectionLines.push("", card.name);
-      (card.needs || []).forEach((need) => sectionLines.push(`  • ${need}`));
-    });
-  }
-
-  if (parentingComparison) {
-    sectionLines.push(
-      "",
-      `— ${copy[parentingComparison.titleKey] || copy.coupleCompareParentingTitle} —`,
-      copy[parentingComparison.introKey] || ""
-    );
-    (parentingComparison.partnerLines || []).forEach((line) => {
-      if (line?.text) sectionLines.push(`  ${line.text}`);
-    });
-    (parentingComparison.together || []).filter(Boolean).forEach((text) => {
-      sectionLines.push(`  Together: ${text}`);
-    });
-  }
-
-  const lines = [
-    "Soulful Sensory OT — Combined couple sensory report",
-    `Submitted: ${new Date().toLocaleString()}`,
-    `Submitted by: ${assessmentCompleterName()}${
-      state.couplePartner === "a" || state.couplePartner === "b"
-        ? ` (${state.couplePartner === "b" ? "Partner 2" : "Partner 1"})`
-        : ""
-    }`,
-    `Couple session: ${sess.id}`,
-    `Partners: ${nameA} & ${nameB}`,
-    `Language: ${language}`,
-    `Source: Couple pathway (combined submit)`,
-    "",
-    buildCouplePartnerEmailBlock("a", sess.partners.a, copy),
-    "",
-    buildCouplePartnerEmailBlock("b", sess.partners.b, copy),
-    ...sectionLines,
-    "",
-    "— Closing —",
-    copy.coupleClosingQuote || "",
-  ].filter((line) => line !== null);
+  const intro = completionNoticeIntro();
+  const sections = [
+    ...couplePartnerEmailSections("a", sess.partners.a, copy),
+    ...couplePartnerEmailSections("b", sess.partners.b, copy),
+  ];
 
   return {
     subject: `Completed: ${nameA} & ${nameB} — Combined couple sensory report`,
-    text: lines.join("\n"),
+    intro,
+    sections,
+    text: formatCompletionEmailText(intro, sections),
     metrics: { profile: "Combined couple profile" },
     nameA,
     nameB,
@@ -4619,6 +4571,17 @@ async function sendCoupleCombinedEmail(report) {
     submittedBy: state.couplePartner || "",
     message: report.text,
   };
+
+  const gmail = await sendViaGmailBackend({
+    to: getClinicianEmail(),
+    subject: payloadBase.subject,
+    message: payloadBase.message,
+    name: payloadBase.name,
+    kind: "report",
+    intro: report.intro,
+    sections: report.sections,
+  });
+  if (gmail) return gmail;
 
   if (DELIVERY_PROVIDER === "web3forms") {
     if (!WEB3FORMS_KEY) {
@@ -5255,7 +5218,7 @@ function renderCreatePatientForm() {
     <section class="dashboard__panel patient-create" aria-labelledby="create-patient-heading">
       <h2 id="create-patient-heading" class="dashboard__panel-title">Create a patient account</h2>
       <p class="prefs-lead">
-        The therapist creates the patient’s account and chooses the questionnaire. Every questionnaire type expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
+        The therapist creates the patient’s account and chooses the questionnaire. An invite is emailed from soulfulsensoryot@gmail.com. Every questionnaire type expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
       </p>
       ${
         state.patientFormError
@@ -5348,7 +5311,7 @@ function renderTherapistPreferences() {
       <fieldset class="prefs-section">
         <legend>Notification preferences</legend>
         <p class="prefs-hint">
-          Emails go to <strong>${escapeHtml(getClinicianEmail())}</strong> while this app is open on a hosted address.
+          Completed reports and reminders are emailed from <strong>soulfulsensoryot@gmail.com</strong> to <strong>${escapeHtml(getClinicianEmail())}</strong>.
         </p>
         ${prefsCheck("completed", notes.completed !== false, "Completed questionnaire", "Send the detailed report when an adult, teen, parent, or combined couple screening is finished.")}
         ${prefsCheck("incomplete", notes.incomplete !== false, "Incomplete questionnaire", "Notify when someone starts a screening and it is saved as in progress.")}
@@ -5418,7 +5381,7 @@ function renderDashboard() {
       ? "My Preferences"
       : "Patient register";
   const lead = createTab
-    ? "Create the patient’s account, choose their questionnaire, and send them the sign-in details. Every type expires after 14 days."
+    ? "Create the patient’s account, choose their questionnaire, and email them the link from soulfulsensoryot@gmail.com. Every type expires after 14 days."
     : prefsTab
       ? "Set your default report length, what patients can see, and which emails you would like to receive."
       : "Create a patient account to assign a questionnaire, then see which screenings are complete or still in progress.";
@@ -5816,7 +5779,7 @@ function renderForgotPassword() {
       </form>
     `,
     footer: `
-      <p class="auth__hint">Open the link in the same browser you use to sign in. The first email to a new address may ask you to confirm FormSubmit once.</p>
+      <p class="auth__hint">The reset email is sent from soulfulsensoryot@gmail.com. The link expires in 24 hours.</p>
     `,
   });
 }
@@ -7490,62 +7453,96 @@ function renderHome() {
             <div class="home-profiles__veil"></div>
           </div>
           <div class="home-profiles__inner">
-          <p class="home-section__eyebrow">Questionnaire options</p>
-          <h2 id="profiles-heading" class="home-section__title">A trail for every context</h2>
-          <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
-          <p class="home-section__lead home-profiles__lead">
-            Completing the questionnaire scores your sensory preferences. It helps you see where you may be becoming overloaded — or under-stimulated and in need of more input. Whether the focus is home, work or school, the results point toward practical sensory strategies that support regulation, so you can better protect your mood, energy, quality of life and your capacity for daily life.
-              ${
-                viewer
-                  ? " Each option below includes a sample report you can open."
-                  : ""
-              }
-          </p>
+          <header class="home-profiles__intro">
+            <p class="home-section__eyebrow">Questionnaire options</p>
+            <h2 id="profiles-heading" class="home-section__title">A trail for every context</h2>
+            <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
+            <p class="home-profiles__lead-opener">Completing the questionnaire scores your sensory preferences.</p>
+            <p class="home-section__lead home-profiles__lead">It helps you see where you may be becoming overloaded — or under-stimulated and in need of more input. Results point toward practical strategies for <span class="home-profiles__context home-profiles__context--home">home</span>, <span class="home-profiles__context home-profiles__context--work">work</span> or <span class="home-profiles__context home-profiles__context--school">school</span>, so you can better protect your mood, energy and capacity for daily life.</p>
+            ${
+              viewer
+                ? `<p class="home-profiles__lead-note">Each route below includes a sample report you can open.</p>`
+                : ""
+            }
+          </header>
 
-          <div class="home-profiles__grid" role="list" aria-label="Available questionnaire options">
-            <article class="home-profiles__card" role="listitem">
-              <p class="home-profiles__who">Adult</p>
-              <h3 class="home-profiles__name">For work</h3>
-              <p class="home-profiles__text">Helps you identify the work setup that best supports productivity, creativity and focus — whether that is a private office, a shared space, or working remotely — according to your sensory needs and capacity.</p>
-              ${renderViewerReportExample({ respondent: "adult", lifeContext: "work" })}
-            </article>
-            <article class="home-profiles__card" role="listitem">
-              <p class="home-profiles__who">Adult</p>
-              <h3 class="home-profiles__name">For home</h3>
-              <p class="home-profiles__text">A self-report focused on home life — rest, routines and the sensory landscape of everyday living.</p>
-              ${renderViewerReportExample({ respondent: "adult", lifeContext: "home" })}
-            </article>
-            <article class="home-profiles__card" role="listitem">
-              <p class="home-profiles__who">Teenager</p>
-              <h3 class="home-profiles__name">For school</h3>
-              <p class="home-profiles__text">For teenagers describing their own sensory experience at school — learning, attention and the classroom environment.</p>
-              ${renderViewerReportExample({
-                respondent: "teen",
-                lifeContext: "homeSchool",
-              })}
-            </article>
-            <article class="home-profiles__card" role="listitem">
-              <p class="home-profiles__who">Teenager</p>
-              <h3 class="home-profiles__name">For home</h3>
-              <p class="home-profiles__text">For teenagers describing their own sensory experience at home — rest, family life and the spaces they return to each day.</p>
-              ${renderViewerReportExample({
-                respondent: "teen",
-                lifeContext: "homeSchool",
-              })}
-            </article>
-            <article class="home-profiles__card home-profiles__card--wide" role="listitem">
-              <p class="home-profiles__who">Parent</p>
-              <h3 class="home-profiles__name">On behalf of a teenager</h3>
-              <p class="home-profiles__text">For parents answering about their teenager’s sensory experiences, to better understand their needs and how to support them.</p>
-              ${renderViewerReportExample({ respondent: "parent" })}
-            </article>
-            <article class="home-profiles__card home-profiles__card--wide home-profiles__card--couple" role="listitem">
-              <p class="home-profiles__who">Couple</p>
-              <h3 class="home-profiles__name">With your partner</h3>
-              <p class="home-profiles__text">Each of you completes your own questionnaire, then your profiles are brought together. This helps you understand one another more clearly, recognise where sensory differences may contribute to tension, and find ways to support each other’s needs — fostering greater empathy and a more fulfilling relationship.</p>
-              ${renderViewerReportExample({ respondent: "couple", label: "View sample report" })}
-              ${renderViewerReportExample({ coupleMerge: true, label: "View combined sample report" })}
-            </article>
+          <div class="home-profiles__index" aria-label="Available questionnaire options">
+            <section class="home-profiles__group home-profiles__group--adult" aria-labelledby="profiles-adult">
+              <p class="home-profiles__mile" aria-hidden="true">01</p>
+              <h3 id="profiles-adult" class="home-profiles__group-title">Adult</h3>
+              <ul class="home-profiles__routes">
+                <li class="home-profiles__route">
+                  <h4 class="home-profiles__name">For work</h4>
+                  <div class="home-profiles__route-body">
+                    <p class="home-profiles__text">Helps you identify the work setup that best supports productivity, creativity and focus — whether that is a private office, a shared space, or working remotely — according to your sensory needs and capacity.</p>
+                    ${renderViewerReportExample({ respondent: "adult", lifeContext: "work" })}
+                  </div>
+                </li>
+                <li class="home-profiles__route">
+                  <h4 class="home-profiles__name">For home</h4>
+                  <div class="home-profiles__route-body">
+                    <p class="home-profiles__text">A self-report focused on home life — rest, routines and the sensory landscape of everyday living.</p>
+                    ${renderViewerReportExample({ respondent: "adult", lifeContext: "home" })}
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <section class="home-profiles__group home-profiles__group--teen" aria-labelledby="profiles-teen">
+              <p class="home-profiles__mile" aria-hidden="true">02</p>
+              <h3 id="profiles-teen" class="home-profiles__group-title">Teenager</h3>
+              <ul class="home-profiles__routes">
+                <li class="home-profiles__route">
+                  <h4 class="home-profiles__name">For school</h4>
+                  <div class="home-profiles__route-body">
+                    <p class="home-profiles__text">For teenagers describing their own sensory experience at school — learning, attention and the classroom environment.</p>
+                    ${renderViewerReportExample({
+                      respondent: "teen",
+                      lifeContext: "homeSchool",
+                    })}
+                  </div>
+                </li>
+                <li class="home-profiles__route">
+                  <h4 class="home-profiles__name">For home</h4>
+                  <div class="home-profiles__route-body">
+                    <p class="home-profiles__text">For teenagers describing their own sensory experience at home — rest, family life and the spaces they return to each day.</p>
+                    ${renderViewerReportExample({
+                      respondent: "teen",
+                      lifeContext: "homeSchool",
+                    })}
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <section class="home-profiles__group home-profiles__group--parent" aria-labelledby="profiles-parent">
+              <p class="home-profiles__mile" aria-hidden="true">03</p>
+              <h3 id="profiles-parent" class="home-profiles__group-title">Parent</h3>
+              <ul class="home-profiles__routes">
+                <li class="home-profiles__route">
+                  <h4 class="home-profiles__name">On behalf of a teenager</h4>
+                  <div class="home-profiles__route-body">
+                    <p class="home-profiles__text">For parents answering about their teenager’s sensory experiences, to better understand their needs and how to support them.</p>
+                    ${renderViewerReportExample({ respondent: "parent" })}
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <section class="home-profiles__group home-profiles__group--couple" aria-labelledby="profiles-couple">
+              <p class="home-profiles__mile" aria-hidden="true">04</p>
+              <h3 id="profiles-couple" class="home-profiles__group-title">Couple</h3>
+              <ul class="home-profiles__routes">
+                <li class="home-profiles__route">
+                  <h4 class="home-profiles__name">With your partner</h4>
+                  <div class="home-profiles__route-body">
+                    <p class="home-profiles__text">Each of you completes your own questionnaire, then your profiles are brought together. This helps you understand one another more clearly, recognise where sensory differences may contribute to tension, and find ways to support each other’s needs — fostering greater empathy and a more fulfilling relationship.</p>
+                    ${renderViewerReportExample({ respondent: "couple", label: "View sample report" })}
+                    ${renderViewerReportExample({ coupleMerge: true, label: "View combined sample report" })}
+                  </div>
+                </li>
+              </ul>
+            </section>
           </div>
           </div>
         </section>
@@ -16001,9 +15998,19 @@ function refreshSettingReportCustomPreview(customId) {
 
 bindEvents();
 readInviteFromUrl();
-window.addEventListener("pagehide", saveSensoryDraft);
+window.addEventListener("pagehide", () => {
+  saveSensoryDraft();
+  if (typeof SsotBackend !== "undefined") SsotBackend.flush().catch(() => {});
+});
 
 async function bootApp() {
+  if (typeof SsotBackend !== "undefined") {
+    try {
+      await SsotBackend.hydrate();
+    } catch (err) {
+      console.error("Failed to load shared patient records:", err);
+    }
+  }
   if (typeof Auth !== "undefined") {
     try {
       await Auth.ensureAdminSeed();
