@@ -798,6 +798,81 @@ body.is-home .site-footer {
   border-bottom-color: rgba(255, 255, 255, 0.75);
 }
 
+.home--invite .home-hero {
+  min-height: min(100svh, 860px);
+  padding-bottom: 4rem;
+}
+
+.home--invite .home-hero__tagline {
+  max-width: 28rem;
+  margin-bottom: 1.25rem;
+}
+
+.home-hero__start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 auto 1.35rem;
+}
+
+.home-hero__start .sensory-resume {
+  margin-top: 0;
+}
+
+.home-hero__start-cue {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f4ead0;
+  text-shadow: 0 1px 8px rgba(8, 22, 16, 0.45);
+}
+
+.home-hero__start-btn {
+  min-width: min(100%, 22rem);
+  padding: 1.2rem 2.6rem;
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: var(--forest);
+  background: linear-gradient(180deg, #f7edd4 0%, #e8d19a 100%);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.28),
+    0 12px 32px rgba(8, 22, 16, 0.4);
+  animation: inviteStartPulse 2.4s ease-in-out infinite;
+}
+
+.home-hero__start-btn:hover,
+.home-hero__start-btn:focus-visible {
+  color: var(--forest);
+  background: linear-gradient(180deg, #fff6df 0%, #efd7a4 100%);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.42),
+    0 16px 36px rgba(8, 22, 16, 0.46);
+}
+
+.home-hero__start-note {
+  margin: 0;
+  max-width: 24rem;
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+@keyframes inviteStartPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.28),
+      0 12px 32px rgba(8, 22, 16, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 0 7px rgba(244, 234, 196, 0.4),
+      0 16px 36px rgba(8, 22, 16, 0.46);
+  }
+}
+
 @keyframes scrollNudge {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(3px); }
@@ -3872,7 +3947,15 @@ body.is-pain-screen .site-footer {
 
 .home-invite-start {
   text-align: center;
-  padding-bottom: 3.5rem;
+  width: min(640px, calc(100% - 2rem));
+  margin: 0.5rem auto 2.5rem;
+  padding: 2.15rem 1.5rem 2.4rem;
+  border-radius: 24px;
+  border: 2px solid rgba(36, 75, 56, 0.2);
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 0%, rgba(244, 234, 196, 0.55), transparent 70%),
+    linear-gradient(180deg, #f7f6ec 0%, #e7efe0 100%);
+  box-shadow: 0 16px 36px rgba(36, 75, 56, 0.14);
 }
 
 .home-invite-start__cta {
@@ -3883,18 +3966,31 @@ body.is-pain-screen .site-footer {
   margin-top: 1.5rem;
 }
 
+.home-invite-start__cue {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+}
+
 .home-invite-start__btn {
   min-width: min(100%, 20rem);
   padding: 1.15rem 2.75rem;
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.01em;
   line-height: 1.25;
-  box-shadow: 0 12px 28px rgba(36, 75, 56, 0.28);
+  box-shadow:
+    0 0 0 3px rgba(36, 75, 56, 0.12),
+    0 12px 28px rgba(36, 75, 56, 0.28);
 }
 
 .home-invite-start__btn:hover {
-  box-shadow: 0 14px 32px rgba(36, 75, 56, 0.34);
+  box-shadow:
+    0 0 0 4px rgba(36, 75, 56, 0.16),
+    0 14px 32px rgba(36, 75, 56, 0.34);
 }
 
 .home-invite-start__note {

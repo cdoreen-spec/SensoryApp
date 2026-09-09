@@ -7096,7 +7096,7 @@ function renderHome() {
             <p class="home-section__eyebrow home-section__eyebrow--on-forest">Your screening</p>
             <h2 id="pathways-heading" class="home-section__title home-section__title--pathways">A gentle next step</h2>
             <p class="home-section__lead home-pathways__intro">
-              Take your time with the page. When you’re ready, the start button is waiting at the bottom.
+              Take your time with the page. The start button is at the top — and again just below if you’d rather read first.
             </p>
           </div>
         `
@@ -7158,6 +7158,7 @@ function renderHome() {
           hasSensoryDraft()
             ? renderSensoryResumePanel()
             : `<div class="home-invite-start__cta">
+          <p class="home-invite-start__cue">${escapeHtml(copy.inviteHomeStartCue)}</p>
           <button type="button" class="btn btn-primary home-invite-start__btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
           <p class="home-invite-start__note">${escapeHtml(copy.inviteHomeStartNote)}</p>
         </div>`
@@ -7213,7 +7214,16 @@ function renderHome() {
             invite
               ? `<p class="invite-banner invite-banner--hero" role="status">${escapeHtml(inviteBannerText(copy))}</p>
           <p class="home-hero__tagline">${escapeHtml(copy.inviteHomeScroll)}</p>
-          <a class="home-hero__scroll" href="#start-screening">Scroll to begin</a>`
+          ${
+            hasSensoryDraft()
+              ? `<div class="home-hero__start">${renderSensoryResumePanel()}</div>`
+              : `<div class="home-hero__start">
+            <p class="home-hero__start-cue">${escapeHtml(copy.inviteHomeStartCue)}</p>
+            <button type="button" class="btn btn-primary home-hero__start-btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
+            <p class="home-hero__start-note">${escapeHtml(copy.inviteHomeStartNote)}</p>
+          </div>`
+          }
+          <a class="home-hero__scroll" href="#ot-heading">${escapeHtml(copy.inviteHomeReadMore)}</a>`
               : `<p class="home-hero__tagline">${
                   isPainPathwayEnabled()
                     ? "Gentle pathways into sensory understanding, and into living more fully with pain."
@@ -7552,6 +7562,8 @@ function renderHome() {
         </div>
       </section>
 
+      ${inviteStart}
+
       <section class="home-section home-contact" aria-labelledby="contact-heading">
         <img src="assets/logo.png" alt="Soulful Sensory OT logo" class="home-contact__logo" width="120" height="120" />
         <p class="home-section__eyebrow">Contact</p>
@@ -7577,8 +7589,6 @@ function renderHome() {
         </div>
         <p class="home-contact__hint">Questions or bookings — message anytime on WhatsApp.</p>
       </section>
-
-      ${inviteStart}
 
       <a
         class="whatsapp-fab"
