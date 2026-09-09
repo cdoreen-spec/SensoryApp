@@ -1,0 +1,342 @@
+{
+  "users": [
+    {
+      "id": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
+      "name": "Cayley Alberts",
+      "email": "soulfulsensoryot@gmail.com",
+      "role": "admin",
+      "status": "active",
+      "phone": "068 901 4209",
+      "notes": "Primary practice administrator",
+      "salt": "54e3108f3625cf04ccd059f4ddcacead",
+      "passwordHash": "a80380032c777199e15419d1a680f03c9c5aab03c3bd53c09a8f4daf8e359857",
+      "createdAt": "2026-09-09T18:49:24.925Z",
+      "lastLoginAt": "2026-09-09T18:51:03.885Z",
+      "updatedAt": "2026-09-09T18:51:03.885Z"
+    },
+    {
+      "id": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
+      "name": "Cayley test",
+      "firstName": "Cayley",
+      "surname": "test",
+      "email": "c.doreen@hotmail.com",
+      "role": "patient",
+      "status": "active",
+      "phone": "0788157173",
+      "age": "32",
+      "notes": "",
+      "questionnaireType": "adult",
+      "lifeContext": "home",
+      "reasonForReferral": "testing",
+      "expiresAt": "2026-09-23T18:51:56.294Z",
+      "inviteToken": "f5c687e987ff5477bbbbeffafc41b7ab",
+      "createdByUserId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
+      "assessmentId": "0cce500f-2e04-4900-a76a-ea4d75d51ce1",
+      "reportVisibility": "none",
+      "temporaryPassword": "",
+      "salt": "5fa630cd73d9e72da38aa5cb1ec135b2",
+      "passwordHash": "86801d8e258515bdde862e7691411c5aaca1ee77dc2a46a097ff00af6540d7b3",
+      "createdAt": "2026-09-09T18:51:56.294Z",
+      "lastLoginAt": "2026-09-09T18:57:29.350Z",
+      "updatedAt": "2026-09-09T18:57:29.350Z"
+    }
+  ],
+  "assessments": {
+    "version": 1,
+    "items": [
+      {
+        "id": "0cce500f-2e04-4900-a76a-ea4d75d51ce1",
+        "version": 1,
+        "status": "complete",
+        "completedAt": "2026-09-09T19:03:47.536Z",
+        "savedAt": "2026-09-09T19:03:47.537Z",
+        "startedAt": "2026-09-09T18:51:56.294Z",
+        "expiresAt": "2026-09-23T18:51:56.294Z",
+        "expiryNotifiedAt": null,
+        "respondent": "adult",
+        "language": "en",
+        "lifeContext": "home",
+        "coupleId": null,
+        "couplePartner": null,
+        "demographics": {
+          "name": "Cayley test",
+          "age": "32",
+          "email": "c.doreen@hotmail.com",
+          "occupation": "OT",
+          "parentName": "",
+          "partnerName": ""
+        },
+        "reasonForReferral": "testing",
+        "answers": {
+          "auditory": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            false,
+            false
+          ],
+          "tactile": [
+            true,
+            true,
+            false,
+            true,
+            true,
+            false,
+            true
+          ],
+          "movement": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true
+          ],
+          "visual": [
+            false,
+            true,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "smellTaste": [
+            true,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "everyday": [
+            true,
+            false,
+            true,
+            true
+          ]
+        },
+        "idealSaturday": "sleep in, run and explore then relax",
+        "coupleWork": {
+          "employment": null,
+          "workLocation": null,
+          "workLocationOther": "",
+          "workWith": null,
+          "workWithOther": "",
+          "workingHours": "",
+          "endOfDay": [],
+          "rechargeAfterWork": [],
+          "rechargeAfterWorkOther": "",
+          "rechargingSaturday": "",
+          "isParent": null
+        },
+        "sharingConsent": {
+          "parents": false,
+          "school": false,
+          "treatingTeam": true
+        },
+        "contactPreference": null,
+        "inviteMode": true,
+        "patientResultsAccess": "none",
+        "patientUserId": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
+        "step": 12,
+        "summary": {
+          "patientName": "Cayley test",
+          "firstName": "Cayley",
+          "surname": "test",
+          "parentName": "",
+          "partnerName": "",
+          "coupleId": null,
+          "couplePartner": null,
+          "completerName": "Cayley test",
+          "email": "c.doreen@hotmail.com",
+          "age": "32",
+          "overallProfile": "sensitive",
+          "overallLabel": "Sensory Sensitive / Avoiding",
+          "leanHeadline": "You lean toward a lower sensory threshold — noticing input quickly.",
+          "sensitive": 21,
+          "seeking": 8,
+          "neutral": 1,
+          "scored": 45,
+          "domainProfiles": [
+            {
+              "id": "auditory",
+              "title": "Auditory Processing",
+              "short": "Sensitive"
+            },
+            {
+              "id": "tactile",
+              "title": "Tactile Processing",
+              "short": "Sensitive"
+            },
+            {
+              "id": "movement",
+              "title": "Movement & Body Awareness",
+              "short": "Seeking"
+            },
+            {
+              "id": "visual",
+              "title": "Visual Processing",
+              "short": "Neutral"
+            },
+            {
+              "id": "smellTaste",
+              "title": "Smell & Taste",
+              "short": "Sensitive"
+            },
+            {
+              "id": "everyday",
+              "title": "Everyday Sensory Moments",
+              "short": "Sensitive"
+            }
+          ]
+        },
+        "draft": {
+          "version": 1,
+          "savedAt": "2026-09-09T19:03:45.339Z",
+          "assessmentId": "0cce500f-2e04-4900-a76a-ea4d75d51ce1",
+          "inviteMode": true,
+          "patientResultsAccess": "none",
+          "step": 12,
+          "language": "en",
+          "respondent": "adult",
+          "lifeContext": "home",
+          "coupleId": null,
+          "couplePartner": null,
+          "consent": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "sharingConsent": {
+            "parents": false,
+            "school": false,
+            "treatingTeam": true
+          },
+          "demographics": {
+            "name": "Cayley test",
+            "age": "32",
+            "email": "c.doreen@hotmail.com",
+            "occupation": "OT",
+            "parentName": "",
+            "partnerName": ""
+          },
+          "answers": {
+            "auditory": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              false,
+              false
+            ],
+            "tactile": [
+              true,
+              true,
+              false,
+              true,
+              true,
+              false,
+              true
+            ],
+            "movement": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              false,
+              true,
+              false,
+              false,
+              true,
+              true
+            ],
+            "visual": [
+              false,
+              true,
+              true,
+              false,
+              true,
+              false,
+              true
+            ],
+            "smellTaste": [
+              true,
+              true,
+              true,
+              true,
+              false,
+              false,
+              false,
+              false
+            ],
+            "everyday": [
+              true,
+              false,
+              true,
+              true
+            ]
+          },
+          "idealSaturday": "sleep in, run and explore then relax",
+          "coupleWork": {
+            "employment": null,
+            "workLocation": null,
+            "workLocationOther": "",
+            "workWith": null,
+            "workWithOther": "",
+            "workingHours": "",
+            "endOfDay": [],
+            "rechargeAfterWork": [],
+            "rechargeAfterWorkOther": "",
+            "rechargingSaturday": "",
+            "isParent": null
+          },
+          "sensoryArea": null,
+          "contactPreference": null
+        },
+        "reportGeneratedAt": "2026-09-09T19:03:47.536Z",
+        "therapistInsights": ""
+      }
+    ]
+  },
+  "coupleSessions": {
+    "version": 1,
+    "sessions": {}
+  },
+  "payments": {
+    "version": 1,
+    "currency": "ZAR",
+    "items": []
+  },
+  "settings": {},
+  "sessions": {
+    "55531fc64e3b06cee4e07febf65c303826823d859181504b": {
+      "userId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
+      "role": "admin",
+      "createdAt": "2026-09-09T18:51:03.886Z",
+      "expiresAt": "2026-09-23T18:51:03.886Z"
+    },
+    "31439a1a1eb6a622290aff5b6c90f1050067b4f903f8b33f": {
+      "userId": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
+      "role": "patient",
+      "createdAt": "2026-09-09T18:57:29.350Z",
+      "expiresAt": "2026-09-23T18:57:29.350Z"
+    }
+  }
+}
