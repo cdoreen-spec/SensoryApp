@@ -5359,11 +5359,6 @@ body.is-pain-screen .site-footer {
   max-width: min(44rem, 100%);
 }
 
-.trail-profile__figure--overview {
-  max-width: min(52rem, 100%);
-  background: #f7f6f1;
-}
-
 .trail-profile--overview-teen {
   text-align: center;
 }

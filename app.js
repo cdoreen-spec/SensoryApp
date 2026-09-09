@@ -10762,10 +10762,10 @@ function renderSensoryTrailOverview(pageEntry) {
           : `<h3 id="trail-overview-title" class="visually-hidden">${escapeHtml(title)}</h3>`
       }
       ${renderTrailProfilePageFigure({
-        src: "assets/sensory-trail-profile.png?v=20260909w",
+        src: "assets/sensory-trail-profile.png?v=20260909x",
         alt: copy.teenCrewSummaryAria,
-        width: 1024,
-        height: 966,
+        width: 682,
+        height: 1024,
         className: "trail-profile__figure--overview",
       })}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
