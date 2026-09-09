@@ -799,13 +799,19 @@ body.is-home .site-footer {
 }
 
 .home--invite .home-hero {
-  min-height: min(100svh, 860px);
-  padding-bottom: 4rem;
+  min-height: auto;
+  padding: 3.75rem 1.5rem 3.5rem;
+}
+
+.home--invite .home-hero__logo {
+  width: clamp(108px, 22vw, 148px);
+  height: clamp(108px, 22vw, 148px);
+  margin-bottom: 0.9rem;
 }
 
 .home--invite .home-hero__tagline {
   max-width: 28rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.35rem;
 }
 
 .home-hero__start {
@@ -813,64 +819,40 @@ body.is-home .site-footer {
   flex-direction: column;
   align-items: center;
   gap: 0.7rem;
-  margin: 0 auto 1.35rem;
+  margin: 0 auto 1.25rem;
+  padding: 1.2rem 1.4rem 1.3rem;
+  width: min(100%, 28rem);
+  border-radius: 18px;
+  background: rgba(250, 252, 248, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 16px 36px rgba(8, 22, 16, 0.22);
+  backdrop-filter: blur(12px);
 }
 
 .home-hero__start .sensory-resume {
   margin-top: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  backdrop-filter: none;
 }
 
-.home-hero__start-cue {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #f4ead0;
-  text-shadow: 0 1px 8px rgba(8, 22, 16, 0.45);
-}
-
-.home-hero__start-btn {
-  min-width: min(100%, 22rem);
-  padding: 1.2rem 2.6rem;
-  font-size: 1.22rem;
-  font-weight: 700;
-  color: var(--forest);
-  background: linear-gradient(180deg, #f7edd4 0%, #e8d19a 100%);
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.28),
-    0 12px 32px rgba(8, 22, 16, 0.4);
-  animation: inviteStartPulse 2.4s ease-in-out infinite;
-}
-
-.home-hero__start-btn:hover,
-.home-hero__start-btn:focus-visible {
-  color: var(--forest);
-  background: linear-gradient(180deg, #fff6df 0%, #efd7a4 100%);
-  box-shadow:
-    0 0 0 4px rgba(255, 255, 255, 0.42),
-    0 16px 36px rgba(8, 22, 16, 0.46);
+.btn.btn-primary.home-hero__start-btn {
+  min-width: min(100%, 20rem);
+  padding: 0.95rem 2.1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .home-hero__start-note {
   margin: 0;
-  max-width: 24rem;
-  font-size: 0.9rem;
+  max-width: 22rem;
+  font-size: 0.88rem;
   font-weight: 300;
+  line-height: 1.45;
   color: rgba(255, 255, 255, 0.86);
-}
-
-@keyframes inviteStartPulse {
-  0%, 100% {
-    box-shadow:
-      0 0 0 3px rgba(255, 255, 255, 0.28),
-      0 12px 32px rgba(8, 22, 16, 0.4);
-  }
-  50% {
-    box-shadow:
-      0 0 0 7px rgba(244, 234, 196, 0.4),
-      0 16px 36px rgba(8, 22, 16, 0.46);
-  }
 }
 
 @keyframes scrollNudge {
@@ -3947,50 +3929,32 @@ body.is-pain-screen .site-footer {
 
 .home-invite-start {
   text-align: center;
-  width: min(640px, calc(100% - 2rem));
-  margin: 0.5rem auto 2.5rem;
-  padding: 2.15rem 1.5rem 2.4rem;
-  border-radius: 24px;
-  border: 2px solid rgba(36, 75, 56, 0.2);
+  width: min(640px, calc(100% - 2.5rem));
+  margin: 0.25rem auto 2.75rem;
+  padding: 2.5rem 1.5rem 2.6rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   background:
-    radial-gradient(ellipse 80% 70% at 50% 0%, rgba(244, 234, 196, 0.55), transparent 70%),
-    linear-gradient(180deg, #f7f6ec 0%, #e7efe0 100%);
-  box-shadow: 0 16px 36px rgba(36, 75, 56, 0.14);
+    linear-gradient(165deg, rgba(250, 252, 248, 0.96), rgba(236, 243, 236, 0.92)),
+    var(--warm-white);
+  box-shadow: var(--shadow);
 }
 
 .home-invite-start__cta {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-.home-invite-start__cue {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sage-dark);
+  gap: 0.7rem;
+  margin-top: 1.35rem;
 }
 
 .home-invite-start__btn {
   min-width: min(100%, 20rem);
-  padding: 1.15rem 2.75rem;
-  font-size: 1.2rem;
-  font-weight: 700;
+  padding: 0.95rem 2.1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.25;
-  box-shadow:
-    0 0 0 3px rgba(36, 75, 56, 0.12),
-    0 12px 28px rgba(36, 75, 56, 0.28);
-}
-
-.home-invite-start__btn:hover {
-  box-shadow:
-    0 0 0 4px rgba(36, 75, 56, 0.16),
-    0 14px 32px rgba(36, 75, 56, 0.34);
 }
 
 .home-invite-start__note {
@@ -5393,6 +5357,11 @@ body.is-pain-screen .site-footer {
 .trail-profile--page .trail-profile__figure {
   margin: 0 auto;
   max-width: min(44rem, 100%);
+}
+
+.trail-profile__figure--overview {
+  max-width: min(52rem, 100%);
+  background: #f7f6f1;
 }
 
 .trail-profile--overview-teen {
@@ -14717,6 +14686,9 @@ body.is-pain-screen .site-footer {
 .invite-banner--hero {
   margin: 0 0 1rem;
   max-width: 36rem;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(12, 32, 24, 0.4);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .clinician {

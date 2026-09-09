@@ -7096,7 +7096,7 @@ function renderHome() {
             <p class="home-section__eyebrow home-section__eyebrow--on-forest">Your screening</p>
             <h2 id="pathways-heading" class="home-section__title home-section__title--pathways">A gentle next step</h2>
             <p class="home-section__lead home-pathways__intro">
-              Take your time with the page. The start button is at the top — and again just below if you’d rather read first.
+              You can begin the questionnaire from the top of this page, or from the button below.
             </p>
           </div>
         `
@@ -7158,9 +7158,7 @@ function renderHome() {
           hasSensoryDraft()
             ? renderSensoryResumePanel()
             : `<div class="home-invite-start__cta">
-          <p class="home-invite-start__cue">${escapeHtml(copy.inviteHomeStartCue)}</p>
           <button type="button" class="btn btn-primary home-invite-start__btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
-          <p class="home-invite-start__note">${escapeHtml(copy.inviteHomeStartNote)}</p>
         </div>`
         }
       </section>
@@ -7218,7 +7216,6 @@ function renderHome() {
             hasSensoryDraft()
               ? `<div class="home-hero__start">${renderSensoryResumePanel()}</div>`
               : `<div class="home-hero__start">
-            <p class="home-hero__start-cue">${escapeHtml(copy.inviteHomeStartCue)}</p>
             <button type="button" class="btn btn-primary home-hero__start-btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
             <p class="home-hero__start-note">${escapeHtml(copy.inviteHomeStartNote)}</p>
           </div>`
@@ -10698,19 +10695,19 @@ function shouldShowTrailProfile() {
 function getTrailDescriptionPage(crewId) {
   const pages = {
     explorer: {
-      src: "assets/sensory-description-explorer.png?v=20260815a",
-      width: 723,
+      src: "assets/sensory-description-explorer.png?v=20260909v",
+      width: 724,
       height: 1024,
       alt: "Sensory Explorer description — high threshold, sensory seeking",
     },
     adaptor: {
-      src: "assets/sensory-description-adaptor.png?v=20260815a",
-      width: 724,
+      src: "assets/sensory-description-adaptor.png?v=20260909v",
+      width: 723,
       height: 1024,
       alt: "Sensory Adaptor description — medium threshold, sensory neutral",
     },
     observer: {
-      src: "assets/sensory-description-observer.png?v=20260815a",
+      src: "assets/sensory-description-observer.png?v=20260909v",
       width: 724,
       height: 1024,
       alt: "Sensory Observer description — low threshold, sensory sensitive",
@@ -10765,10 +10762,10 @@ function renderSensoryTrailOverview(pageEntry) {
           : `<h3 id="trail-overview-title" class="visually-hidden">${escapeHtml(title)}</h3>`
       }
       ${renderTrailProfilePageFigure({
-        src: "assets/sensory-trail-profile.png?v=20260817",
+        src: "assets/sensory-trail-profile.png?v=20260909w",
         alt: copy.teenCrewSummaryAria,
-        width: 682,
-        height: 1024,
+        width: 1024,
+        height: 966,
         className: "trail-profile__figure--overview",
       })}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
