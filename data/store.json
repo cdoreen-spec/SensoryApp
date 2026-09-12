@@ -8,11 +8,11 @@
       "status": "active",
       "phone": "068 901 4209",
       "notes": "Primary practice administrator",
-      "salt": "54e3108f3625cf04ccd059f4ddcacead",
-      "passwordHash": "a80380032c777199e15419d1a680f03c9c5aab03c3bd53c09a8f4daf8e359857",
+      "salt": "1c5b457b22dd2de3b989ee9a38506370",
+      "passwordHash": "d9e4a4ba69f361f34bdc009e9f99f49970779b2f32dd30062fd811c6d208cccb",
       "createdAt": "2026-09-09T18:49:24.925Z",
-      "lastLoginAt": "2026-09-09T18:51:03.885Z",
-      "updatedAt": "2026-09-09T18:51:03.885Z"
+      "lastLoginAt": "2026-09-09T20:05:18.338Z",
+      "updatedAt": "2026-09-09T20:05:18.338Z"
     },
     {
       "id": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
@@ -39,6 +39,32 @@
       "createdAt": "2026-09-09T18:51:56.294Z",
       "lastLoginAt": "2026-09-09T18:57:29.350Z",
       "updatedAt": "2026-09-09T18:57:29.350Z"
+    },
+    {
+      "id": "b06f177e-d514-4cc2-b3e7-26b5d3a7f8df",
+      "name": "Preview Patient",
+      "firstName": "Preview",
+      "surname": "Patient",
+      "email": "preview@soulfulsensoryot.test",
+      "role": "patient",
+      "status": "active",
+      "phone": "0000000000",
+      "age": "30",
+      "notes": "Local preview account for checking the start button",
+      "questionnaireType": "adult",
+      "lifeContext": "home",
+      "reasonForReferral": "Local preview of the start button",
+      "expiresAt": "2026-09-23T20:05:18.287Z",
+      "inviteToken": "d9733c81b4c3cbae0ee726bfb17cde65",
+      "createdByUserId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
+      "assessmentId": null,
+      "reportVisibility": "none",
+      "temporaryPassword": "Preview2026!",
+      "salt": "a24628e6dd172e85b1684327ecef55da",
+      "passwordHash": "5ebade99a9cfef8c5c9050a3ced0ab382428ad8620bbf6a36856c2f7ff0de916",
+      "createdAt": "2026-09-09T20:05:18.282Z",
+      "lastLoginAt": null,
+      "updatedAt": "2026-09-09T20:05:18.282Z"
     }
   ],
   "assessments": {
@@ -337,6 +363,12 @@
       "role": "patient",
       "createdAt": "2026-09-09T18:57:29.350Z",
       "expiresAt": "2026-09-23T18:57:29.350Z"
+    },
+    "06b6717b1b05fa692cd4c4f9d6ada8388242dde50399d383": {
+      "userId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
+      "role": "admin",
+      "createdAt": "2026-09-09T20:05:18.338Z",
+      "expiresAt": "2026-09-23T20:05:18.338Z"
     }
   }
 }
