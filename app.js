@@ -168,7 +168,7 @@ const WHATSAPP_FEEDBACK_URL =
 const CLINICIAN_PIN =
   (typeof APP_CONFIG !== "undefined" && APP_CONFIG.clinicianPin) || "soulfulot";
 const DELIVERY_PROVIDER =
-  (typeof APP_CONFIG !== "undefined" && APP_CONFIG.deliveryProvider) || "formsubmit";
+  (typeof APP_CONFIG !== "undefined" && APP_CONFIG.deliveryProvider) || "gmail";
 const WEB3FORMS_KEY =
   (typeof APP_CONFIG !== "undefined" && APP_CONFIG.web3formsAccessKey) || "";
 
@@ -732,11 +732,15 @@ async function sendViaGmailBackend({
   intro,
   sections,
 }) {
-  if (DELIVERY_PROVIDER !== "gmail") return null;
-  if (typeof SsotBackend === "undefined" || !SsotBackend.isEnabled()) {
-    throw new Error(
-      "Gmail sending needs the practice server. From this folder run npm start, or host the site on Netlify with the Gmail App Password set."
-    );
+  if (DELIVERY_PROVIDER === "none" || DELIVERY_PROVIDER === "web3forms") return null;
+  const backendReady = typeof SsotBackend !== "undefined" && SsotBackend.isEnabled();
+  if (!backendReady) {
+    if (DELIVERY_PROVIDER === "gmail") {
+      throw new Error(
+        "Gmail sending needs the practice server. From this folder run npm start, or host the site on Netlify with the Gmail App Password set."
+      );
+    }
+    return null;
   }
   return SsotBackend.sendEmail({
     to,
@@ -801,30 +805,9 @@ async function sendPatientInviteEmail(details) {
     return { provider: "web3forms" };
   }
 
-  if (DELIVERY_PROVIDER === "formsubmit") {
-    const formSubmitPayload = {
-      _subject: subject,
-      _template: "box",
-      _captcha: "false",
-      _honey: "",
-      name: displayName,
-      email: toEmail,
-      message,
-    };
-    try {
-      return await postFormSubmitJson(formSubmitPayload, toEmail);
-    } catch (jsonErr) {
-      if (jsonErr?.code === "formsubmit-activation") throw jsonErr;
-      try {
-        return await postFormSubmitFormData(formSubmitPayload, toEmail);
-      } catch (formDataErr) {
-        if (formDataErr?.code === "formsubmit-activation") throw formDataErr;
-        return await postFormSubmitViaHiddenForm(formSubmitPayload, toEmail);
-      }
-    }
-  }
-
-  throw new Error("Email delivery is disabled in config.js");
+  throw new Error(
+    "Patient invites are sent once from Gmail, with the working questionnaire link. Run npm start locally, or set GMAIL_APP_PASSWORD on Netlify."
+  );
 }
 
 function detailsFromAssessmentRecord(record) {
@@ -5195,7 +5178,7 @@ function renderCreatedPatientSuccess(details) {
           </button>
         </div>
       </div>
-      <p class="prefs-hint">Copy link is a backup if email or WhatsApp does not go through. Send again if something went wrong.</p>
+      <p class="prefs-hint">The email includes the questionnaire link. Copy link is only a backup if they cannot find the message.</p>
       <div class="clinician__actions">
         ${
           details.userId

@@ -15,14 +15,16 @@ This web app solves all of those.
 
 ## Run locally
 
-Open `index.html` in any modern browser, or serve the folder:
+For the full app, including Gmail invites, use the practice server:
 
 ```bash
-# Python 3
-python3 -m http.server 8080
-
-# Then visit http://localhost:8080
+npm start
+# Then visit http://127.0.0.1:8787
 ```
+
+Copy `.env.example` to `.env` and add the Gmail App Password. Gmail sends the questionnaire link once — patients do not need to confirm anything before it works.
+
+You can also open `index.html` or serve the folder with `python3 -m http.server 8080` to look at the screens, but patient emails need `npm start` or a Netlify host with `GMAIL_APP_PASSWORD` set.
 
 ## Scoring logic
 
@@ -58,12 +60,9 @@ For each sensory system, the app compares sensitive vs seeking counts and assign
 
 ## Results email (every completed screening)
 
-When someone finishes an **adult**, **teenager**, or **parent** sensory screening (from the home pathway or an invite link), a detailed report is emailed to `clinicianEmail` in `config.js` (default: `soulfulsensoryot@gmail.com`). The email subject starts with the name of the person who completed the assessment.
+When someone finishes an **adult**, **teenager**, or **parent** sensory screening (from the home pathway or an invite link), a short notice is emailed to `clinicianEmail` in `config.js` (default: `soulfulsensoryot@gmail.com`). The full report stays in the app.
 
-1. **Host the site** on a public URL (FormSubmit cannot email from `file://`).
-2. **First email only:** FormSubmit sends a confirmation to that address — open it and click Confirm. After that, results arrive automatically.
-
-Optional: set `deliveryProvider: "web3forms"` and add a [Web3Forms](https://web3forms.com) access key if you prefer that provider. Set `deliveryProvider: "none"` to turn emails off.
+Emails go out from Gmail through the practice server. Set `GMAIL_APP_PASSWORD` in `.env` (local) or Netlify. Optional: set `deliveryProvider: "web3forms"` with an access key, or `"none"` to turn emails off.
 
 ## Therapist patient dashboard
 
@@ -78,13 +77,10 @@ Note: the list lives in localStorage on this device. Use the same computer/brows
 
 ## Send to patients (clinician invites)
 
-1. From the dashboard choose **Invite links**, or open **Clinician invite link** / `?clinician=1`.
-2. Unlock with the PIN in `config.js` (`clinicianPin` — default `soulfulot`; change this).
-3. Choose their access **when you create the link** (patients have no report by default):
-   - **No report access** — thank-you only; you get the full email and give feedback in a booked session
-   - **Basic summary only** — high-level overall pattern; detailed report stays for your feedback session
-   - **Full detailed report** — they see the complete sensory profile; you still get the email
-4. Copy the invite link and send it to the patient.
+1. Sign in as a therapist or admin and add the patient on the dashboard.
+2. Choose their questionnaire type and report visibility when you create the account.
+3. Tap **Send email**. Gmail sends one invite from soulfulsensoryot@gmail.com with sign-in details and the working questionnaire link. The patient opens that link and starts — they do not have to click a separate confirmation first.
+4. You can still copy the link or send it on WhatsApp if you need a backup.
 
 ## Google Forms alternative
 
