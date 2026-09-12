@@ -2,22 +2,21 @@
  * Soulful Sensory OT — delivery & clinician settings
  *
  * Change CLINICIAN_PIN before sharing the clinician link with anyone.
- * Email delivery uses FormSubmit (https://formsubmit.co) — the first
- * real submission sends a confirmation email to CLINICIAN_EMAIL; click
- * Confirm once, then every completed adult / teen / parent screening
- * emails the detailed report. Download and expiry reminders use the same
- * inbox. AJAX delivery disables FormSubmit reCAPTCHA (_captcha: false) so the
- * browser gets a JSON response instead of an HTML captcha page.
+ * Emails are sent once from soulfulsensoryot@gmail.com through the practice
+ * server (`npm start` locally, or the Netlify function). Patient invites
+ * include the working questionnaire link — there is no FormSubmit
+ * confirm-and-resend step. Set GMAIL_APP_PASSWORD in `.env` or Netlify.
  */
 const APP_CONFIG = {
   clinicianEmail: "soulfulsensoryot@gmail.com",
   /** PIN for the clinician share page (?clinician=1). Change this. */
   clinicianPin: "soulfulot",
   /**
-   * FormSubmit AJAX endpoint. Uses clinicianEmail above.
-   * Or set a Web3Forms access key and switch deliveryProvider to "web3forms".
+   * Gmail via the practice server. Set GMAIL_USER and GMAIL_APP_PASSWORD
+   * in `.env` (local) or Netlify environment variables.
+   * Use "web3forms" only with an access key, or "none" to turn emails off.
    */
-  deliveryProvider: "formsubmit", // "formsubmit" | "web3forms" | "none"
+  deliveryProvider: "gmail", // "gmail" | "web3forms" | "none"
   web3formsAccessKey: "",
   /**
    * Show the Pain pathway button on the home screen.
