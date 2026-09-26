@@ -3101,6 +3101,9 @@ function normalizeResultsAccess(value) {
 }
 
 function getPatientResultsAccess() {
+  if (isAdminPatientPreview()) {
+    return visibilityToResultsAccess(readTherapistPrefs().reportVisibility);
+  }
   // Dashboard reopen: therapist chooses full packet or patient short-report preview.
   if (state.archiveReadOnly) {
     if (state.reportViewMode === RESULTS_ACCESS.basic) {
@@ -5775,11 +5778,12 @@ function syncAccountChrome() {
   }
 
   if (onAuthView) {
-    if (isPatientInvite()) {
+    if (isPatientInvite() && !isPlatformAdmin()) {
       mount.innerHTML = "";
       return;
     }
     mount.innerHTML = `
+      ${viewAs}
       <button type="button" class="account-chrome__link" data-action="open-dashboard">Dashboard</button>
       <button type="button" class="account-chrome__link" data-action="back-home">Home</button>
     `;
