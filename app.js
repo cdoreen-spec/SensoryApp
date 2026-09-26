@@ -984,6 +984,8 @@ async function emailOpenReportToClinician() {
   }
   render();
 }
+
+async function submitMockInvite(formData) {
   if (typeof Auth === "undefined" || !Auth.createPatientAccount) return;
   const firstName = String(formData.get("firstName") || "").trim();
   const surname = String(formData.get("surname") || "").trim();
