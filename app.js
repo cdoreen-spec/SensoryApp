@@ -69,8 +69,13 @@ const state = {
   reportViewMode: null,
   /** Dev/admin: viewing generated sample answers (not a real patient). */
   sampleReportPreview: false,
-  /** Public referral preview for other therapists (?viewer=1). */
+  /** Public demo walkthrough for other therapists (?viewer=1). */
   viewerMode: false,
+  /**
+   * Admin-only preview of an existing screen. Never written to the user record.
+   * admin | therapist | patient | demo
+   */
+  adminPreview: "admin",
   viewerNotice: null,
   viewerCopyStatus: null, // null | copied
   dashboardSearch: "",
@@ -906,6 +911,7 @@ function openCreatePatientView() {
 }
 
 function startAssignedQuestionnaire() {
+  if (isAdminPatientPreview()) return false;
   const user = currentAssignedPatient();
   if (!user) {
     beginInviteAccountGate();
@@ -1326,6 +1332,7 @@ function getCoupleSession(id) {
 }
 
 function saveCoupleSession(session) {
+  if (isAdminPatientPreview()) return session || null;
   if (!session?.id) return null;
   session.updatedAt = new Date().toISOString();
   const sessions = readCoupleSessionsMap();
@@ -2033,6 +2040,7 @@ function buildAssessmentRecord() {
 
 /** Persist a completed screening so therapists can reopen & print later (this browser). */
 function ensureAssessmentArchived() {
+  if (isAdminPatientPreview()) return null;
   if (state.sampleReportPreview) return null;
   if (!state.respondent || !RESPONDENT_TYPES.includes(state.respondent)) return null;
   if (state.archiveReadOnly && state.viewingArchivedId) return state.viewingArchivedId;
@@ -2071,6 +2079,7 @@ function draftLooksStarted(draft) {
 }
 
 function shouldPersistIncompleteProgress() {
+  if (isAdminPatientPreview()) return false;
   if (state.sampleReportPreview || state.archiveReadOnly) return false;
   if (!isSensoryDraftEligible()) return false;
   if (!state.respondent || !RESPONDENT_TYPES.includes(state.respondent)) return false;
@@ -2503,6 +2512,32 @@ function isSampleReportPreviewEnabled() {
   return Boolean(typeof APP_CONFIG !== "undefined" && APP_CONFIG.devAllowSampleReport);
 }
 
+/**
+ * Admin "View as" choices. Add or rename options here.
+ * These only change which existing screen an admin is looking at.
+ */
+const ADMIN_VIEW_AS_OPTIONS = Object.freeze([
+  { id: "admin", label: "Admin" },
+  { id: "therapist", label: "Therapist" },
+  { id: "patient", label: "Patient" },
+  { id: "demo", label: "Demo" },
+]);
+
+function isPlatformAdmin() {
+  const user = currentAuthUser();
+  return Boolean(user && user.role === "admin" && user.status === "active");
+}
+
+function adminPreviewMode() {
+  if (!isPlatformAdmin()) return "admin";
+  const mode = state.adminPreview;
+  return ADMIN_VIEW_AS_OPTIONS.some((option) => option.id === mode) ? mode : "admin";
+}
+
+function isAdminPatientPreview() {
+  return adminPreviewMode() === "patient";
+}
+
 function isViewerMode() {
   return Boolean(state.viewerMode);
 }
@@ -2525,7 +2560,21 @@ function ensureViewerQuery() {
   window.history.replaceState({}, "", url.pathname + url.search + url.hash);
 }
 
+function clearViewerModeFlag() {
+  state.viewerMode = false;
+  state.viewerNotice = null;
+  state.viewerCopyStatus = null;
+  if (window.history?.replaceState) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("viewer")) {
+      url.searchParams.delete("viewer");
+      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    }
+  }
+}
+
 function enterViewerMode() {
+  if (isPlatformAdmin()) state.adminPreview = "demo";
   state.viewerMode = true;
   state.viewerNotice = null;
   state.sampleReportPreview = false;
@@ -2539,25 +2588,63 @@ function enterViewerMode() {
 }
 
 function exitViewerMode() {
-  state.viewerMode = false;
-  state.viewerNotice = null;
-  state.viewerCopyStatus = null;
+  clearViewerModeFlag();
   state.sampleReportPreview = false;
   state.viewingArchivedId = null;
   state.archiveReadOnly = false;
-  if (window.history?.replaceState) {
-    const url = new URL(window.location.href);
-    url.searchParams.delete("viewer");
-    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
-  }
   if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
+    if (isPlatformAdmin()) state.adminPreview = "therapist";
     state.view = "dashboard";
     state.dashboardTab = "register";
     state.clinicianUnlocked = true;
   } else {
+    state.adminPreview = "admin";
     state.view = "home";
     state.step = 0;
   }
+}
+
+function applyAdminPreview(mode) {
+  if (!isPlatformAdmin()) {
+    state.adminPreview = "admin";
+    return;
+  }
+  const next = ADMIN_VIEW_AS_OPTIONS.some((option) => option.id === mode) ? mode : "admin";
+  state.adminPreview = next;
+  if (next !== "demo") clearViewerModeFlag();
+
+  if (next === "admin") {
+    state.sampleReportPreview = false;
+    state.viewingArchivedId = null;
+    state.archiveReadOnly = false;
+    state.reportViewMode = null;
+    state.view = "settings";
+    state.settingsTab = "overview";
+    return;
+  }
+  if (next === "therapist") {
+    state.sampleReportPreview = false;
+    state.viewingArchivedId = null;
+    state.archiveReadOnly = false;
+    state.reportViewMode = null;
+    state.view = "dashboard";
+    state.dashboardTab = "register";
+    state.dashboardNotice = null;
+    state.clinicianUnlocked = true;
+    return;
+  }
+  if (next === "patient") {
+    state.sampleReportPreview = false;
+    state.viewingArchivedId = null;
+    state.archiveReadOnly = false;
+    state.reportViewMode = null;
+    state.inviteMode = false;
+    state.view = "home";
+    state.step = 0;
+    state.showIntroModal = false;
+    return;
+  }
+  enterViewerMode();
 }
 
 function copyViewerLink() {
@@ -2574,11 +2661,11 @@ function copyViewerLink() {
   };
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(link).then(done).catch(() => {
-      window.prompt("Copy this referral preview link", link);
+      window.prompt("Copy this demo link", link);
       done();
     });
   } else {
-    window.prompt("Copy this referral preview link", link);
+    window.prompt("Copy this demo link", link);
     done();
   }
 }
@@ -2960,6 +3047,7 @@ function continueInviteSession() {
 
 function handleLogout() {
   if (typeof Auth !== "undefined") Auth.logoutUser();
+  state.adminPreview = "admin";
   state.clinicianUnlocked = false;
   state.viewingArchivedId = null;
   state.archiveReadOnly = false;
@@ -3231,6 +3319,7 @@ function inviteBannerText(copy = currentUi()) {
 }
 
 function shouldEmailResultsToClinician() {
+  if (isAdminPatientPreview()) return false;
   if (state.archiveReadOnly) return false;
   if (state.sampleReportPreview) return false;
   if (DELIVERY_PROVIDER === "none") return false;
@@ -3470,6 +3559,7 @@ function buildSensoryDraft() {
 }
 
 function saveSensoryDraft() {
+  if (isAdminPatientPreview()) return;
   if (!isSensoryDraftEligible()) return;
   if (shouldPersistIncompleteProgress()) {
     state.inProgressAssessmentId = resolveInProgressAssessmentId();
@@ -3486,6 +3576,7 @@ function saveSensoryDraft() {
 }
 
 function clearSensoryDraft() {
+  if (isAdminPatientPreview()) return;
   try {
     localStorage.removeItem(sensoryDraftStorageKey());
   } catch (_) {
@@ -4223,6 +4314,7 @@ function notifyIncompleteQuestionnaire(record) {
 }
 
 function notifyFollowUpRequested() {
+  if (isAdminPatientPreview()) return;
   if (state.archiveReadOnly || state.sampleReportPreview) return;
   if (!wantsNotification("followUp")) return;
   const name = assessmentCompleterName();
@@ -5311,8 +5403,8 @@ function renderViewerSharePanel() {
   return `
     <section class="dashboard__viewer-share no-print" aria-labelledby="viewer-share-heading">
       <div class="dashboard__viewer-share-copy">
-        <p class="dashboard__viewer-share-kicker">Referring therapists</p>
-        <h2 id="viewer-share-heading" class="dashboard__viewer-share-title">Referral preview</h2>
+        <p class="dashboard__viewer-share-kicker">For other therapists</p>
+        <h2 id="viewer-share-heading" class="dashboard__viewer-share-title">Demo view</h2>
         <p>
           Send this link so other therapists can explore the home page and open an example of each report.
           They will not see patient accounts, and nothing they open is saved or emailed.
@@ -5320,9 +5412,9 @@ function renderViewerSharePanel() {
       </div>
       <div class="dashboard__viewer-share-actions">
         <button type="button" class="btn btn-primary" data-action="copy-viewer-link">
-          ${state.viewerCopyStatus === "copied" ? "Link copied" : "Copy referral preview link"}
+          ${state.viewerCopyStatus === "copied" ? "Link copied" : "Copy demo link"}
         </button>
-        <button type="button" class="btn btn-secondary" data-action="open-viewer-preview">Open preview</button>
+        <button type="button" class="btn btn-secondary" data-action="open-viewer-preview">Open demo</button>
       </div>
     </section>
   `;
@@ -5557,8 +5649,12 @@ function clearAuthResetParams() {
 function renderHomeAccountLinks() {
   const user = currentAuthUser();
   if (user) {
-    const tools =
-      user.role === "admin"
+    const viewingAsTherapist = isPlatformAdmin() && adminPreviewMode() === "therapist";
+    const tools = viewingAsTherapist
+      ? `<button type="button" class="btn btn-secondary" data-action="open-dashboard">Dashboard</button>
+         <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>
+         <button type="button" class="btn btn-secondary" data-action="open-create-patient">Add patient</button>`
+      : user.role === "admin"
         ? `<button type="button" class="btn btn-secondary" data-action="open-settings">Admin</button>
            <button type="button" class="btn btn-secondary" data-action="open-dashboard">Patients</button>
            <button type="button" class="btn btn-secondary" data-action="open-preferences">My Preferences</button>`
@@ -5591,10 +5687,48 @@ function renderHomeAccountLinks() {
   `;
 }
 
+function renderViewAsControl() {
+  if (!isPlatformAdmin()) return "";
+  const current = adminPreviewMode();
+  const options = ADMIN_VIEW_AS_OPTIONS.map(
+    (option) =>
+      `<option value="${option.id}" ${option.id === current ? "selected" : ""}>${escapeHtml(option.label)}</option>`
+  ).join("");
+  return `
+    <label class="view-as">
+      <span class="view-as__label">Viewing as</span>
+      <select class="view-as__select" data-view-as aria-label="Viewing as">
+        ${options}
+      </select>
+    </label>
+  `;
+}
+
+function syncPreviewBar() {
+  const bar = document.getElementById("preview-bar");
+  if (!bar) return;
+  const mode = adminPreviewMode();
+  const show = isPlatformAdmin() && mode !== "admin";
+  document.body.classList.toggle("has-preview-bar", show);
+  if (!show) {
+    bar.hidden = true;
+    bar.innerHTML = "";
+    return;
+  }
+  const label = ADMIN_VIEW_AS_OPTIONS.find((option) => option.id === mode)?.label || "Preview";
+  bar.hidden = false;
+  bar.innerHTML = `
+    <p class="preview-bar__text">Preview mode · ${escapeHtml(label)} view</p>
+    <button type="button" class="preview-bar__return" data-action="return-admin-preview">Return to Admin</button>
+  `;
+}
+
 function syncAccountChrome() {
   const mount = document.getElementById("account-chrome");
   if (!mount) return;
   const user = currentAuthUser();
+  const viewAs = renderViewAsControl();
+  const preview = adminPreviewMode();
   const onAuthView =
     state.view === "login" ||
     state.view === "signup" ||
@@ -5604,12 +5738,38 @@ function syncAccountChrome() {
   if (isViewerMode()) {
     const canExit = typeof Auth !== "undefined" && Auth.canAccessClinicianTools();
     mount.innerHTML = `
-      <span class="account-chrome__viewer">Referral preview</span>
+      ${viewAs}
+      <span class="account-chrome__viewer">Demo view</span>
       ${
         canExit
-          ? `<button type="button" class="account-chrome__link" data-action="exit-viewer">Exit preview</button>`
+          ? `<button type="button" class="account-chrome__link" data-action="exit-viewer">Exit demo</button>`
           : ""
       }
+    `;
+    return;
+  }
+
+  if (isPlatformAdmin() && preview === "patient") {
+    mount.innerHTML = `
+      ${viewAs}
+      <button type="button" class="account-chrome__link" data-action="back-home">Home</button>
+    `;
+    return;
+  }
+
+  if (isPlatformAdmin() && preview === "therapist") {
+    const onDashboard = state.view === "dashboard";
+    mount.innerHTML = `
+      ${viewAs}
+      <button type="button" class="account-chrome__link" data-action="open-account">${escapeHtml(user.name.split(" ")[0] || "Account")}</button>
+      ${
+        onDashboard
+          ? `<button type="button" class="account-chrome__link" data-action="back-home">Home</button>`
+          : `<button type="button" class="account-chrome__link" data-action="open-dashboard">Dashboard</button>`
+      }
+      <button type="button" class="account-chrome__link" data-action="open-create-patient">Add patient</button>
+      <button type="button" class="account-chrome__link" data-action="open-preferences">Preferences</button>
+      <button type="button" class="account-chrome__link" data-action="logout">Sign out</button>
     `;
     return;
   }
@@ -5661,6 +5821,7 @@ function syncAccountChrome() {
         : "";
 
   mount.innerHTML = `
+    ${viewAs}
     <button type="button" class="account-chrome__link" data-action="open-account">${escapeHtml(user.name.split(" ")[0] || "Account")}</button>
     ${dashLink}
     ${settingsLink}
@@ -7092,9 +7253,10 @@ function renderHomeProfileCard({ kicker, name, text, image, examples = "" }) {
 function renderHome() {
   const copy = currentUi();
   const invite = isPatientInvite();
+  const patientLanding = invite || isAdminPatientPreview();
   const viewer = isViewerMode();
 
-  const pathwaysInner = invite
+  const pathwaysInner = patientLanding
     ? `
           <div class="home-pathways__header">
             <p class="home-section__eyebrow home-section__eyebrow--on-forest">Your screening</p>
@@ -7151,7 +7313,7 @@ function renderHome() {
           </div>
         `;
 
-  const inviteStart = invite
+  const inviteStart = patientLanding
     ? `
       <section class="home-section home-invite-start" id="start-screening" aria-labelledby="invite-start-heading">
         <p class="home-section__eyebrow">Your questionnaire</p>
@@ -7159,7 +7321,7 @@ function renderHome() {
         <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
         <p class="home-section__lead">${escapeHtml(copy.inviteHomeStartLead)}</p>
         ${
-          hasSensoryDraft()
+          invite && hasSensoryDraft()
             ? renderSensoryResumePanel()
             : `<div class="home-invite-start__cta">
           <button type="button" class="btn btn-primary home-invite-start__btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
@@ -7170,13 +7332,13 @@ function renderHome() {
     : "";
 
   const signedIn = !!currentAuthUser();
-  const accountSection = invite
+  const accountSection = patientLanding
     ? ""
     : viewer
       ? `
       <section class="home-section home-viewer" aria-labelledby="viewer-heading">
         <p class="home-section__eyebrow">For referring therapists</p>
-        <h2 id="viewer-heading" class="home-section__title">Referral preview</h2>
+        <h2 id="viewer-heading" class="home-section__title">Demo view</h2>
         <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
         <p class="home-section__lead">
           This is a walk-through of Soulful Sensory OT’s screening app — the home page patients see, the questionnaire types you can refer for, and an example of each report. Nothing you open here is saved or emailed.
@@ -7201,7 +7363,7 @@ function renderHome() {
     `;
 
   return `
-    <div class="home${invite ? " home--invite" : ""}${viewer ? " home--viewer" : ""}">
+    <div class="home${patientLanding ? " home--invite" : ""}${viewer ? " home--viewer" : ""}">
       <section class="home-hero" aria-labelledby="home-brand">
         <div class="home-hero__atmosphere" aria-hidden="true">
           <div class="home-hero__sunwash"></div>
@@ -7213,11 +7375,11 @@ function renderHome() {
           <p class="home-hero__eyebrow">Occupational Therapy Services</p>
           <h1 id="home-brand" class="home-hero__brand">Soulful Sensory OT</h1>
           ${
-            invite
+            patientLanding
               ? `<p class="invite-banner invite-banner--hero" role="status">${escapeHtml(inviteBannerText(copy))}</p>
           <p class="home-hero__tagline">${escapeHtml(copy.inviteHomeScroll)}</p>
           ${
-            hasSensoryDraft()
+            invite && hasSensoryDraft()
               ? `<div class="home-hero__start">${renderSensoryResumePanel()}</div>`
               : `<div class="home-hero__start">
             <button type="button" class="btn btn-primary home-hero__start-btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
@@ -7238,7 +7400,7 @@ function renderHome() {
       ${accountSection}
 
       ${
-        !invite && !viewer && isSampleReportPreviewEnabled() && canAccessTherapistDashboard()
+        !patientLanding && !viewer && isSampleReportPreviewEnabled() && canAccessTherapistDashboard()
           ? `<section class="home-section home-sample-preview" aria-label="Sample report preview">
               ${renderSampleReportPreviewControls()}
             </section>`

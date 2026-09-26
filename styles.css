@@ -1004,7 +1004,7 @@ body.is-home .site-footer {
   flex-direction: column;
   align-items: center;
   margin: 0 auto 0.2rem;
-  max-width: 40rem;
+  max-width: none;
   text-align: center;
 }
 
