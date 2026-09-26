@@ -7158,7 +7158,7 @@ function moveStep(delta) {
 function renderShell(content, progress, { stepType = "welcome", domainId = null } = {}) {
   const copy = currentUi();
   const domainAttr = domainId ? ` data-domain="${domainId}"` : "";
-  const inviteBanner = isPatientInvite()
+  const inviteBanner = isPatientInvite() || isAdminPatientPreview()
     ? `<p class="invite-banner" role="status">${escapeHtml(inviteBannerText(copy))}</p>`
     : "";
   return `
@@ -13910,6 +13910,7 @@ function syncQuestionnaireChrome() {
 }
 
 function render({ scrollToTop = false } = {}) {
+  if (!isPlatformAdmin()) state.adminPreview = "admin";
   let html;
   const isPainView =
     state.view === "pain" ||
@@ -14068,6 +14069,7 @@ function render({ scrollToTop = false } = {}) {
   }
 
   syncQuestionnaireChrome();
+  syncPreviewBar();
   syncAccountChrome();
   app.innerHTML = renderFileProtocolBanner() + html;
   if (state.showIntroModal) {
@@ -14268,6 +14270,11 @@ function bindEvents() {
         if (!currentAuthUser()) resetAuthForm();
         render({ scrollToTop: true });
       } else if (action === "open-settings") {
+        if (isPlatformAdmin()) {
+          applyAdminPreview("admin");
+          render({ scrollToTop: true });
+          return;
+        }
         const user = currentAuthUser();
         if (!user || user.role !== "admin") {
           state.authError = "Admin access required.";
@@ -14278,6 +14285,12 @@ function bindEvents() {
         }
         render({ scrollToTop: true });
       } else if (action === "open-dashboard") {
+        if (isPlatformAdmin()) {
+          saveSensoryDraft();
+          applyAdminPreview("therapist");
+          render({ scrollToTop: true });
+          return;
+        }
         saveSensoryDraft();
         state.view = "dashboard";
         state.dashboardTab = "register";
@@ -14336,6 +14349,22 @@ function bindEvents() {
         }
         render({ scrollToTop: true });
       }
+    });
+    accountChrome.addEventListener("change", (e) => {
+      const select = e.target.closest("[data-view-as]");
+      if (!select) return;
+      applyAdminPreview(select.value);
+      render({ scrollToTop: true });
+    });
+  }
+
+  const previewBar = document.getElementById("preview-bar");
+  if (previewBar) {
+    previewBar.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action='return-admin-preview']");
+      if (!btn) return;
+      applyAdminPreview("admin");
+      render({ scrollToTop: true });
     });
   }
 
@@ -14581,6 +14610,13 @@ function bindEvents() {
     }
 
     if (action === "start-sensory") {
+      if (isAdminPatientPreview()) {
+        state.view = "sensory";
+        state.sensoryArea = null;
+        state.error = null;
+        render({ scrollToTop: true });
+        return;
+      }
       if (inviteNeedsAccount()) {
         beginInviteAccountGate();
         render({ scrollToTop: true });
@@ -14605,6 +14641,12 @@ function bindEvents() {
     }
 
     if (action === "start-questionnaire") {
+      if (isAdminPatientPreview()) {
+        state.sensoryArea = btn.dataset.area || null;
+        resetSensoryQuestionnaireProgress();
+        render({ scrollToTop: true });
+        return;
+      }
       if (inviteNeedsAccount()) {
         beginInviteAccountGate();
         render({ scrollToTop: true });
@@ -14844,6 +14886,11 @@ function bindEvents() {
     }
 
     if (action === "open-settings") {
+      if (isPlatformAdmin()) {
+        applyAdminPreview("admin");
+        render({ scrollToTop: true });
+        return;
+      }
       const user = currentAuthUser();
       if (!user || user.role !== "admin") {
         state.authError = "Admin access required.";
@@ -14865,6 +14912,12 @@ function bindEvents() {
     }
 
     if (action === "open-dashboard") {
+      if (isPlatformAdmin()) {
+        saveSensoryDraft();
+        applyAdminPreview("therapist");
+        render({ scrollToTop: true });
+        return;
+      }
       saveSensoryDraft();
       state.view = "dashboard";
       state.dashboardTab = "register";
@@ -16220,6 +16273,8 @@ async function bootApp() {
       }
     }
   }
+
+  if (isViewerMode() && isPlatformAdmin()) state.adminPreview = "demo";
 
   render();
   maybeNotifyExpiringQuestionnaires();
