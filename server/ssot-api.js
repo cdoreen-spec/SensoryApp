@@ -684,8 +684,9 @@ async function handleSendEmail(state, body) {
 
   let allowed = false;
   if (sessionUser && isStaff(sessionUser)) allowed = true;
-  else if (sessionUser && sessionUser.role === ROLES.patient && to === clinician) allowed = true;
-  else if (inviteUser && to === clinician) allowed = true;
+  else if (to === clinician && (body.kind === "report" || (sessionUser && sessionUser.role === ROLES.patient) || inviteUser)) {
+    allowed = true;
+  }
   else if (body.kind === "password-reset") {
     const target = state.users.find((entry) => entry.email === to);
     allowed = canReceivePasswordReset(target);

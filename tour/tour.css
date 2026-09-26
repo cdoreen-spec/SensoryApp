@@ -2,6 +2,14 @@
 
 body.tour-open {
   overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body.tour-open .site-header,
+body.tour-open .site-footer,
+body.tour-open .whatsapp-fab {
+  visibility: hidden;
 }
 
 .home--viewer .home-hero {
@@ -76,12 +84,19 @@ body.tour-open {
 .tour {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 4000;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
   background: var(--cream, #edf2eb);
   color: var(--ink, #2a332c);
   font-family: var(--font-sans, "Source Sans 3", system-ui, sans-serif);
+}
+
+.tour.is-idle .tour__dock {
+  display: none;
 }
 
 .tour__stage {
@@ -99,6 +114,12 @@ body.tour-open {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.55s ease;
+}
+
+.tour__frame.is-fading {
+  opacity: 0;
 }
 
 .tour__frame img {
@@ -111,6 +132,7 @@ body.tour-open {
 
 .tour__frame .whatsapp-fab,
 .tour__frame .home-tour-cta,
+.tour__frame .home-viewer,
 .tour__frame.is-dashboard .dashboard__viewer-share,
 .tour__frame.is-dashboard .dashboard__sample-strip {
   display: none;
@@ -130,14 +152,8 @@ body.tour-open {
   position: relative;
   z-index: 2;
   border-radius: 16px;
-  box-shadow: 0 0 0 3px var(--forest, #244b38), 0 0 0 10px rgba(120, 146, 123, 0.28);
-  animation: tourPulse 2.6s ease-in-out infinite;
-}
-
-@keyframes tourPulse {
-  0%,
-  100% { box-shadow: 0 0 0 3px var(--forest, #244b38), 0 0 0 8px rgba(120, 146, 123, 0.18); }
-  50% { box-shadow: 0 0 0 3px var(--forest, #244b38), 0 0 0 14px rgba(120, 146, 123, 0.32); }
+  box-shadow: 0 0 0 2px var(--forest, #244b38), 0 0 0 9px rgba(120, 146, 123, 0.2);
+  transition: box-shadow 0.7s ease;
 }
 
 .tour__line {
@@ -293,19 +309,6 @@ body.tour-open {
   border-top: 1px solid rgba(36, 75, 56, 0.12);
 }
 
-.tour__caption {
-  margin: 0 0 0.45rem;
-  min-height: 2.7em;
-  color: var(--forest, #244b38);
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.tour__caption[hidden] {
-  display: none;
-}
-
 .tour__progress {
   display: flex;
   align-items: center;
@@ -389,7 +392,6 @@ body.tour-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tour-hot,
   .home-hero__content,
   .home-hero__logo {
     animation: none;
@@ -397,5 +399,6 @@ body.tour-open {
 
   .tour__frame {
     scroll-behavior: auto;
+    transition: none;
   }
 }

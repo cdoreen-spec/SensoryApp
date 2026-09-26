@@ -11,7 +11,7 @@ window.TOUR_SCRIPT = {
       "title": "Introduction",
       "kind": "home",
       "durationMs": 15000,
-      "narration": "Welcome to SoulfulSensory — an online sensory profiling platform designed to help teenagers and adults better understand how their sensory preferences influence everyday life.",
+      "narration": "Welcome to SoulfulSensory. It's a simple online sensory profile for teenagers and adults, so you can see how the senses shape ordinary, everyday life.",
       "captions": [
         { "at": 0, "text": "Welcome to SoulfulSensory — an online sensory profiling platform." },
         { "at": 0.42, "text": "It helps teenagers and adults understand how their sensory preferences influence everyday life." }
@@ -29,7 +29,7 @@ window.TOUR_SCRIPT = {
       "title": "Why sensory profiling",
       "kind": "home",
       "durationMs": 17000,
-      "narration": "We all process sensory information differently. For some people, certain environments can feel overwhelming, while others may need more movement, sound or sensory input to feel alert and focused. Understanding these patterns can help make everyday life feel more manageable.",
+      "narration": "We all take the world in a little differently. A busy place can feel like too much for some people. Others need a bit more movement, or some sound, just to feel alert. Once those patterns are clearer, the day is easier to manage.",
       "captions": [
         { "at": 0, "text": "We all process sensory information differently." },
         { "at": 0.18, "text": "For some people, certain environments can feel overwhelming, while others may need more movement, sound or sensory input to feel alert and focused." },
@@ -52,20 +52,20 @@ window.TOUR_SCRIPT = {
       "title": "Questionnaires",
       "kind": "home",
       "durationMs": 21000,
-      "narration": "SoulfulSensory offers different questionnaires depending on the person's age and everyday environment. Adults can explore their sensory preferences at work or at home, while teenagers can explore their needs at school or at home. A parent can also complete a profile about their teenager, and couples can explore their sensory preferences alongside one another.",
+      "narration": "There are a few questionnaires, depending on someone's age and where they spend the day. Adults can look at work, or at home. Teenagers can look at school, or at home. A parent can fill one in about their teenager. And couples can look at their sensory preferences side by side.",
       "captions": [
-        { "at": 0, "text": "SoulfulSensory offers different questionnaires depending on the person's age and everyday environment." },
-        { "at": 0.28, "text": "Adults can explore their sensory preferences at work or at home, while teenagers can explore their needs at school or at home." },
-        { "at": 0.68, "text": "A parent can also complete a profile about their teenager, and couples can explore their sensory preferences alongside one another." }
+        { "at": 0, "text": "There are a few questionnaires, depending on someone's age and where they spend the day." },
+        { "at": 0.28, "text": "Adults can look at work or home. Teenagers can look at school or home." },
+        { "at": 0.68, "text": "A parent can fill one in about their teenager, and couples can look at their preferences side by side." }
       ],
       "lines": [],
       "beats": [
-        { "at": 0, "action": "highlight", "target": "[data-tour='adult-work']" },
-        { "at": 0.34, "action": "highlight", "target": "[data-tour='adult-home']" },
-        { "at": 0.46, "action": "highlight", "target": "[data-tour='teen-school']" },
-        { "at": 0.58, "action": "highlight", "target": "[data-tour='teen-home']" },
-        { "at": 0.72, "action": "highlight", "target": "[data-tour='parent']" },
-        { "at": 0.86, "action": "highlight", "target": "[data-tour='couple']" }
+        { "at": 0.02, "action": "highlight", "target": "[data-tour='adult-work']" },
+        { "at": 0.22, "action": "highlight", "target": "[data-tour='adult-home']" },
+        { "at": 0.38, "action": "highlight", "target": "[data-tour='teen-school']" },
+        { "at": 0.52, "action": "highlight", "target": "[data-tour='teen-home']" },
+        { "at": 0.68, "action": "highlight", "target": "[data-tour='parent']" },
+        { "at": 0.84, "action": "highlight", "target": "[data-tour='couple']" }
       ]
     },
     {
@@ -74,7 +74,7 @@ window.TOUR_SCRIPT = {
       "kind": "questions",
       "sample": true,
       "durationMs": 15000,
-      "narration": "The questionnaire is completed online and asks about everyday sensory experiences. Responses are automatically scored to help identify patterns in how the person notices, responds to and seeks sensory input.",
+      "narration": "You fill it in online. The questions are about ordinary sensory moments. The answers are scored for you, so you can see how someone notices sensation, how they respond, and when they go looking for a bit more.",
       "captions": [
         { "at": 0, "text": "The questionnaire is completed online and asks about everyday sensory experiences." },
         { "at": 0.48, "text": "Responses are automatically scored to help identify patterns in how the person notices, responds to and seeks sensory input." }
@@ -92,7 +92,7 @@ window.TOUR_SCRIPT = {
       "kind": "results",
       "sample": true,
       "durationMs": 26000,
-      "narration": "The results build a picture of the person's individual sensory preferences. The aim isn't to put someone into a box, but to make patterns easier to recognise — including where they may become overloaded, where they may need more input, and which environments or activities may support them. These insights can be translated into practical strategies for everyday life at home, school or work.",
+      "narration": "The results sketch a picture of that person's sensory preferences. The idea isn't to put them in a box. It's just to make the patterns easier to see. Where they get overloaded. Where they need a bit more input. And which places or activities tend to support them. From there, it turns into practical ideas for home, school, or work.",
       "captions": [
         { "at": 0, "text": "The results build a picture of the person's individual sensory preferences." },
         { "at": 0.22, "text": "The aim isn't to put someone into a box, but to make patterns easier to recognise — including where they may become overloaded, where they may need more input, and which environments or activities may support them." },
@@ -114,7 +114,7 @@ window.TOUR_SCRIPT = {
       "kind": "results",
       "sample": true,
       "durationMs": 13000,
-      "narration": "Results can also be brought together into a clear report, helping the person and their therapist understand the findings and identify practical ways to support their sensory needs.",
+      "narration": "Those results can also sit together in a clear report, so the person and their therapist can talk through what it means, and what might actually help.",
       "captions": [
         { "at": 0, "text": "Results can also be brought together into a clear report." },
         { "at": 0.4, "text": "It helps the person and their therapist understand the findings and identify practical ways to support their sensory needs." }
@@ -130,17 +130,16 @@ window.TOUR_SCRIPT = {
       "kind": "dashboard",
       "sample": true,
       "durationMs": 13000,
-      "narration": "For therapists, patients and profiles can be managed from one place. Questionnaires can be sent to patients, progress can be monitored, and completed results and reports can be accessed through the therapist dashboard.",
+      "narration": "For therapists, it all sits in one place. You can send a questionnaire, see how it's going, and open the results and the report from the dashboard.",
       "captions": [
-        { "at": 0, "text": "For therapists, patients and profiles can be managed from one place." },
-        { "at": 0.34, "text": "Questionnaires can be sent to patients, progress can be monitored, and completed results and reports can be accessed through the therapist dashboard." }
+        { "at": 0, "text": "For therapists, it all sits in one place." },
+        { "at": 0.4, "text": "You can send a questionnaire, see how it's going, and open the results and the report." }
       ],
       "lines": [],
       "beats": [
-        { "at": 0, "action": "highlight", "target": "[data-tab='create']" },
-        { "at": 0.28, "action": "highlight", "target": "[data-assessment-id='tour-sample-assigned']" },
-        { "at": 0.52, "action": "highlight", "target": "[data-assessment-id='tour-sample-progress']" },
-        { "at": 0.76, "action": "highlight", "target": "[data-assessment-id='tour-sample-complete'] .dash-report-switch, [data-assessment-id='tour-sample-complete']" }
+        { "at": 0.06, "action": "highlight", "target": "[data-tab='create']" },
+        { "at": 0.4, "action": "highlight", "target": "[data-assessment-id='tour-sample-progress']" },
+        { "at": 0.7, "action": "highlight", "target": "[data-assessment-id='tour-sample-complete']" }
       ]
     },
     {
@@ -148,7 +147,7 @@ window.TOUR_SCRIPT = {
       "title": "Explore the demo",
       "kind": "end",
       "durationMs": 10000,
-      "narration": "Sensory needs are individual. Understanding them can be an important first step towards finding strategies that fit the person, their environment and their everyday life. Explore the SoulfulSensory demo to learn more.",
+      "narration": "Sensory needs are different for everyone. Understanding them is often a good first step. Have a look through the demo if you'd like to see a bit more.",
       "captions": [
         { "at": 0, "text": "Sensory needs are individual." },
         { "at": 0.18, "text": "Understanding them can be an important first step towards finding strategies that fit the person, their environment and their everyday life." },

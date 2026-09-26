@@ -19,7 +19,7 @@
   let frame = null;
   let lineEl = null;
   let lineText = null;
-  let captionEl = null;
+  let scrollJob = 0;
   let sampleEl = null;
   let startEl = null;
   let endEl = null;
@@ -28,10 +28,8 @@
   let timeEl = null;
   let playBtn = null;
   let muteBtn = null;
-  let captionBtn = null;
   let session = null;
   let group = "";
-  let captionsOn = true;
   let muted = false;
   let audio = null;
 
@@ -213,7 +211,6 @@
         <p class="tour__loading" hidden>Preparing the tour…</p>
       </div>
       <div class="tour__dock">
-        <p class="tour__caption" aria-live="polite"></p>
         <div class="tour__progress">
           <div class="tour__bar" aria-hidden="true"><span></span></div>
           <span class="tour__time">0:00 / ${clock(plannedTotal)}</span>
@@ -222,7 +219,6 @@
           <button type="button" data-tour="pause" aria-label="Pause tour">Pause</button>
           <button type="button" data-tour="mute" aria-pressed="false" aria-label="Mute narration">Mute</button>
           <button type="button" data-tour="restart" aria-label="Restart tour">Restart</button>
-          <button type="button" data-tour="captions" aria-pressed="true" aria-label="Turn captions off">Captions</button>
           <button type="button" data-tour="exit" aria-label="Exit tour">Exit tour</button>
           <button type="button" data-tour="demo" aria-label="Leave the tour and explore the demo">Explore demo</button>
         </div>
@@ -232,7 +228,6 @@
     frame = root.querySelector(".tour__frame");
     lineEl = root.querySelector(".tour__line");
     lineText = lineEl.querySelector("p");
-    captionEl = root.querySelector(".tour__caption");
     sampleEl = root.querySelector(".tour__sample");
     startEl = root.querySelector(".tour__start");
     endEl = root.querySelector(".tour__end");
@@ -241,7 +236,6 @@
     timeEl = root.querySelector(".tour__time");
     playBtn = root.querySelector("[data-tour='pause']");
     muteBtn = root.querySelector("[data-tour='mute']");
-    captionBtn = root.querySelector("[data-tour='captions']");
 
     root.querySelector(".tour__start-play").addEventListener("click", () => begin(0));
     root.addEventListener("click", (event) => {
@@ -251,7 +245,6 @@
       if (action === "pause") togglePause();
       else if (action === "mute") toggleMute();
       else if (action === "restart") begin(0);
-      else if (action === "captions") toggleCaptions();
       else if (action === "exit") closeTour();
       else if (action === "demo") exploreDemo();
       else if (action === "end" && button.getAttribute("data-tour-end") === "demo") exploreDemo();
@@ -279,6 +272,7 @@
   function open() {
     mount();
     document.body.classList.add("tour-open");
+    if (session && session.active) return;
     showStart();
     const play = root.querySelector(".tour__start-play");
     if (play) play.focus();
@@ -293,7 +287,7 @@
     endEl.hidden = true;
     lineEl.hidden = true;
     sampleEl.hidden = true;
-    captionEl.textContent = "Press start, then the tour plays through on its own. Captions stay on if you mute the sound.";
+    root.classList.add("is-idle");
     setProgress(0);
     playBtn.textContent = "Play";
     playBtn.setAttribute("aria-label", "Play tour");
@@ -305,10 +299,12 @@
     root = null;
     document.body.classList.remove("tour-open");
     const url = new URL(window.location.href);
-    if (url.searchParams.has("tour")) {
+    const path = url.pathname.replace(/\/+$/, "");
+    if (url.searchParams.has("tour") || path.endsWith("/tour")) {
       url.searchParams.delete("tour");
       url.searchParams.set("viewer", "1");
-      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+      const nextPath = path.endsWith("/tour") ? path.slice(0, -"/tour".length) || "/" : url.pathname;
+      window.history.replaceState({}, "", `${nextPath}?${url.searchParams.toString()}${url.hash}`);
     }
     const opener = document.querySelector("[data-action='start-tour']");
     if (opener) opener.focus();
@@ -318,13 +314,6 @@
     closeTour();
     const target = document.getElementById("profiles-heading");
     if (target) target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-  }
-
-  function toggleCaptions() {
-    captionsOn = !captionsOn;
-    captionBtn.setAttribute("aria-pressed", captionsOn ? "true" : "false");
-    captionBtn.setAttribute("aria-label", captionsOn ? "Turn captions off" : "Turn captions on");
-    captionEl.hidden = !captionsOn;
   }
 
   function toggleMute() {
@@ -392,6 +381,7 @@
       resumeSpeech: null,
     };
     session = current;
+    root.classList.remove("is-idle");
     startEl.hidden = true;
     playBtn.textContent = "Pause";
     playBtn.setAttribute("aria-label", "Pause tour");
@@ -422,8 +412,10 @@
       console.error("Tour scene could not use the existing screen:", error);
       html = `<div class="tour__card" style="margin:1.5rem"><h2>${escapeText(scene.title)}</h2><p>This part of the tour could not open the usual screen. The narration continues.</p></div>`;
     }
-    showScene(scene, html);
-    const clip = await clipFor(scene, index === 0);
+    const shown = showScene(scene, html);
+    const clipPromise = clipFor(scene, index === 0);
+    await shown;
+    const clip = await clipPromise;
     if (!current.active) return;
     prefetch(index + 1);
     const started = performance.now();
@@ -463,41 +455,53 @@
   }
 
   function showScene(scene, html) {
-    endEl.hidden = scene.kind !== "end";
-    sampleEl.hidden = !scene.sample;
-    if (scene.kind === "end") {
-      frame.innerHTML = "";
-      frame.className = "tour__frame is-end";
-      group = "end";
-    } else if (group !== scene.kind) {
-      frame.innerHTML = html;
-      frame.className = `tour__frame is-${scene.kind}`;
-      group = scene.kind;
-      frame.scrollTop = 0;
-    } else {
-      frame.className = `tour__frame is-${scene.kind}`;
-    }
-    applyFraction(scene, 0);
-    const status = root.querySelector(".tour__caption");
-    if (status && captionsOn) {
-      /* caption text is set by applyFraction */
-    }
+    return new Promise((resolve) => {
+      const place = () => {
+        endEl.hidden = scene.kind !== "end";
+        sampleEl.hidden = !scene.sample;
+        const switched = group !== scene.kind;
+        if (scene.kind === "end") {
+          frame.innerHTML = "";
+          frame.className = "tour__frame is-end";
+          group = "end";
+          frame.classList.remove("is-fading");
+          applyFraction(scene, 0);
+          resolve();
+          return;
+        }
+        if (switched) {
+          frame.innerHTML = html;
+          frame.className = `tour__frame is-${scene.kind} is-fading`;
+          group = scene.kind;
+          frame.scrollTop = 0;
+          scrollJob += 1;
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (!frame) return resolve();
+              frame.classList.remove("is-fading");
+              applyFraction(scene, 0);
+              resolve();
+            });
+          });
+          return;
+        }
+        frame.className = `tour__frame is-${scene.kind}`;
+        applyFraction(scene, 0);
+        resolve();
+      };
+      const changing = Boolean(group) && group !== scene.kind;
+      if (!changing || reduced) {
+        place();
+        return;
+      }
+      frame.classList.add("is-fading");
+      window.setTimeout(place, 420);
+    });
   }
 
   function applyFraction(scene, fraction) {
     const at = Math.max(0, Math.min(0.999, fraction));
-    const caption = latest(scene.captions, at);
-    if (captionsOn) {
-      captionEl.hidden = false;
-      captionEl.textContent = caption ? caption.text : "";
-    }
-    const line = scene.kind === "end" ? null : latest(scene.lines, at);
-    if (line && line.text) {
-      lineText.textContent = line.text;
-      lineEl.hidden = false;
-    } else {
-      lineEl.hidden = true;
-    }
+    if (lineEl) lineEl.hidden = true;
     (scene.beats || []).forEach((beat, beatIndex) => {
       if (beat.fired || at + 0.001 < beat.at) return;
       beat.fired = true;
@@ -537,10 +541,35 @@
   }
 
   function scrollTo(node) {
+    if (!node || !frame) return;
     const frameBox = frame.getBoundingClientRect();
     const nodeBox = node.getBoundingClientRect();
-    const top = frame.scrollTop + (nodeBox.top - frameBox.top) - 18;
-    frame.scrollTo({ top: Math.max(0, top), behavior: reduced ? "auto" : "smooth" });
+    const padTop = Math.max(64, frame.clientHeight * 0.18);
+    const padBottom = Math.max(80, frame.clientHeight * 0.2);
+    const topIn = nodeBox.top - frameBox.top;
+    const bottomIn = nodeBox.bottom - frameBox.top;
+    const max = Math.max(0, frame.scrollHeight - frame.clientHeight);
+    const desired = frame.scrollTop + topIn - padTop;
+    const target = Math.max(0, Math.min(desired, max));
+    const alreadyComfortable = topIn >= padTop * 0.55 && bottomIn <= frame.clientHeight - padBottom;
+    if (alreadyComfortable || Math.abs(target - frame.scrollTop) < 16) return;
+    if (reduced) {
+      frame.scrollTop = target;
+      return;
+    }
+    const job = ++scrollJob;
+    const from = frame.scrollTop;
+    const distance = target - from;
+    const duration = Math.min(2000, Math.max(1100, 720 + Math.abs(distance) * 0.42));
+    const start = performance.now();
+    const step = (now) => {
+      if (job !== scrollJob || !frame) return;
+      const t = Math.min(1, (now - start) / duration);
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      frame.scrollTop = from + distance * eased;
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
   function markAnswer(index, value) {
@@ -641,6 +670,8 @@
 
   function pickVoice() {
     const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+    const tessa = voices.find((voice) => /tessa/i.test(voice.name));
+    if (tessa) return tessa;
     const male = /\b(male|daniel|alex|fred|thomas|tom|david|rishi|lee|gordon|arthur|albert|bruce|ralph|aaron)\b/i;
     const female = /female|samantha|victoria|karen|moira|tessa|serena|kate|fiona|susan|zira|aria|jenny|libby|sonia|natasha|allison|ava|emma|sara|veena|catherine/i;
     let best = null;
@@ -703,8 +734,8 @@
         const total = Math.max(1, chunks.join(" ").length);
         const utterance = new SpeechSynthesisUtterance(chunk);
         const mine = ++token;
-        utterance.rate = 0.92;
-        utterance.pitch = 1.02;
+        utterance.rate = 0.86;
+        utterance.pitch = 1;
         utterance.lang = voice && voice.lang ? voice.lang : "en-ZA";
         if (voice) utterance.voice = voice;
         const started = performance.now();
@@ -725,6 +756,10 @@
             visual.setNarration(Math.min(1, (before + chunk.length + 1) / total));
           }
           index += 1;
+          if (ok && index < chunks.length && current.active && !current.paused && !current.muted) {
+            window.setTimeout(next, 320);
+            return;
+          }
           next();
         };
         utterance.onend = () => done(true);
@@ -735,7 +770,21 @@
         if (current.paused || !current.active || settled) return;
         next();
       };
-      next();
+      let talking = false;
+      const startTalking = () => {
+        if (talking || settled) return;
+        talking = true;
+        next();
+      };
+      if (window.speechSynthesis.getVoices().length) startTalking();
+      else {
+        const go = () => {
+          window.speechSynthesis.removeEventListener("voiceschanged", go);
+          startTalking();
+        };
+        window.speechSynthesis.addEventListener("voiceschanged", go);
+        window.setTimeout(go, 450);
+      }
       setTimeout(finish, scene.durationMs + 8000);
     });
   }
