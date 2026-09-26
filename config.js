@@ -24,10 +24,10 @@ const APP_CONFIG = {
    */
   showPainPathway: false,
 
-  /** Seeded admin account (created automatically on first load). Change the password. */
+  /** Same sign-in password for admin, therapist, and patient accounts. */
   adminName: "Cayley Alberts",
   adminEmail: "soulfulsensoryot@gmail.com",
-  adminPassword: "SoulfulAdmin2026!",
+  adminPassword: "soulfulot",
   adminPhone: "068 901 4209",
   practiceName: "Soulful Sensory OT",
   /** Patients are created by a therapist; public self-signup stays off. */

@@ -121,35 +121,59 @@ function pruneSessions(state) {
   state.sessions = sessions;
 }
 
+function sharedAccountPassword() {
+  return String(process.env.ADMIN_PASSWORD || "soulfulot");
+}
+
+function applySharedPassword(user, password) {
+  if (!user || user.passwordCustomized) return false;
+  let changed = false;
+  if (!user.salt) {
+    user.salt = createSalt();
+    changed = true;
+  }
+  const passwordHash = hashPassword(password, user.salt);
+  if (user.passwordHash !== passwordHash) {
+    user.passwordHash = passwordHash;
+    changed = true;
+  }
+  if (user.role === ROLES.patient && user.temporaryPassword !== password) {
+    user.temporaryPassword = password;
+    changed = true;
+  }
+  return changed;
+}
+
 function seedAdmin(state) {
   const email = normalizeEmail(process.env.ADMIN_EMAIL || "soulfulsensoryot@gmail.com");
-  const password = String(process.env.ADMIN_PASSWORD || "SoulfulAdmin2026!");
+  const password = sharedAccountPassword();
   const name = String(process.env.ADMIN_NAME || "Cayley Alberts");
   const existing = (state.users || []).find((user) => user.role === ROLES.admin || user.email === email);
-  if (existing) {
+  if (!existing) {
+    const salt = createSalt();
+    state.users.push({
+      id: createId("user"),
+      name,
+      email,
+      role: ROLES.admin,
+      status: STATUS.active,
+      phone: process.env.ADMIN_PHONE || "068 901 4209",
+      notes: "Primary practice administrator",
+      salt,
+      passwordHash: hashPassword(password, salt),
+      createdAt: new Date().toISOString(),
+      lastLoginAt: null,
+      updatedAt: null,
+    });
+  } else {
     existing.role = ROLES.admin;
     existing.status = STATUS.active;
-    if (!existing.passwordCustomized && password) {
-      existing.salt = createSalt();
-      existing.passwordHash = hashPassword(password, existing.salt);
-    }
-    return;
   }
-  const salt = createSalt();
-  state.users.push({
-    id: createId("user"),
-    name,
-    email,
-    role: ROLES.admin,
-    status: STATUS.active,
-    phone: process.env.ADMIN_PHONE || "068 901 4209",
-    notes: "Primary practice administrator",
-    salt,
-    passwordHash: hashPassword(password, salt),
-    createdAt: new Date().toISOString(),
-    lastLoginAt: null,
-    updatedAt: null,
-  });
+  let changed = !existing;
+  for (const user of state.users || []) {
+    if (applySharedPassword(user, password)) changed = true;
+  }
+  return changed;
 }
 
 function normalizeState(raw) {
@@ -198,9 +222,9 @@ async function loadState() {
     }
   }
   const before = state.users.length;
-  seedAdmin(state);
+  const passwordsChanged = seedAdmin(state);
   pruneSessions(state);
-  if (state.users.length !== before) await saveState(state);
+  if (passwordsChanged || state.users.length !== before) await saveState(state);
   return state;
 }
 
@@ -459,7 +483,7 @@ async function handleRegister(state, body) {
   const settings = { requireTherapistApproval: true, allowTherapistSignup: true, ...state.settings };
   const email = normalizeEmail(body.email);
   const name = String(body.name || "").trim();
-  const password = String(body.password || "");
+  const password = sharedAccountPassword();
   const role = body.role === ROLES.therapist ? ROLES.therapist : ROLES.patient;
   if (!name) return json(400, { ok: false, error: "Please enter your name." });
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

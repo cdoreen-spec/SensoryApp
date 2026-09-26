@@ -9,10 +9,10 @@
       "phone": "068 901 4209",
       "notes": "Primary practice administrator",
       "salt": "1c5b457b22dd2de3b989ee9a38506370",
-      "passwordHash": "d9e4a4ba69f361f34bdc009e9f99f49970779b2f32dd30062fd811c6d208cccb",
+      "passwordHash": "01bd5d57faa1b7029d2d388e2da8efeeab85f267f5311255c053ca4d3c2572c9",
       "createdAt": "2026-09-09T18:49:24.925Z",
-      "lastLoginAt": "2026-09-09T20:05:18.338Z",
-      "updatedAt": "2026-09-09T20:05:18.338Z"
+      "lastLoginAt": "2026-09-26T16:01:25.546Z",
+      "updatedAt": "2026-09-26T16:01:25.546Z"
     },
     {
       "id": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
@@ -33,12 +33,12 @@
       "createdByUserId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
       "assessmentId": "0cce500f-2e04-4900-a76a-ea4d75d51ce1",
       "reportVisibility": "none",
-      "temporaryPassword": "",
+      "temporaryPassword": "soulfulot",
       "salt": "5fa630cd73d9e72da38aa5cb1ec135b2",
-      "passwordHash": "86801d8e258515bdde862e7691411c5aaca1ee77dc2a46a097ff00af6540d7b3",
+      "passwordHash": "89f343f3e430c6895952a5be6967ec07833afdf99ac734e1ad15d23e6a3dbc52",
       "createdAt": "2026-09-09T18:51:56.294Z",
-      "lastLoginAt": "2026-09-09T18:57:29.350Z",
-      "updatedAt": "2026-09-09T18:57:29.350Z"
+      "lastLoginAt": "2026-09-26T16:01:25.561Z",
+      "updatedAt": "2026-09-26T16:01:25.561Z"
     },
     {
       "id": "b06f177e-d514-4cc2-b3e7-26b5d3a7f8df",
@@ -59,12 +59,12 @@
       "createdByUserId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
       "assessmentId": null,
       "reportVisibility": "none",
-      "temporaryPassword": "Preview2026!",
+      "temporaryPassword": "soulfulot",
       "salt": "a24628e6dd172e85b1684327ecef55da",
-      "passwordHash": "5ebade99a9cfef8c5c9050a3ced0ab382428ad8620bbf6a36856c2f7ff0de916",
+      "passwordHash": "ea83ab8be1a6289e47fb89f62e2ca594759133bc588c40cfc3c6f380c646dd18",
       "createdAt": "2026-09-09T20:05:18.282Z",
-      "lastLoginAt": null,
-      "updatedAt": "2026-09-09T20:05:18.282Z"
+      "lastLoginAt": "2026-09-26T16:01:25.562Z",
+      "updatedAt": "2026-09-26T16:01:25.562Z"
     }
   ],
   "assessments": {
@@ -352,23 +352,23 @@
   },
   "settings": {},
   "sessions": {
-    "55531fc64e3b06cee4e07febf65c303826823d859181504b": {
+    "2c752751f4bcf756096bd8e6fd4bab6726cd5f1437eab9b4": {
       "userId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
       "role": "admin",
-      "createdAt": "2026-09-09T18:51:03.886Z",
-      "expiresAt": "2026-09-23T18:51:03.886Z"
+      "createdAt": "2026-09-26T16:01:25.553Z",
+      "expiresAt": "2026-10-10T16:01:25.553Z"
     },
-    "31439a1a1eb6a622290aff5b6c90f1050067b4f903f8b33f": {
+    "143d60bc2d5c1d270975bf8d04b0fc8456257c115c5db669": {
       "userId": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
       "role": "patient",
-      "createdAt": "2026-09-09T18:57:29.350Z",
-      "expiresAt": "2026-09-23T18:57:29.350Z"
+      "createdAt": "2026-09-26T16:01:25.561Z",
+      "expiresAt": "2026-10-10T16:01:25.561Z"
     },
-    "06b6717b1b05fa692cd4c4f9d6ada8388242dde50399d383": {
-      "userId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
-      "role": "admin",
-      "createdAt": "2026-09-09T20:05:18.338Z",
-      "expiresAt": "2026-09-23T20:05:18.338Z"
+    "a76ff2a8687ce25d5ff0a8ed453d588390ee94800b551dce": {
+      "userId": "b06f177e-d514-4cc2-b3e7-26b5d3a7f8df",
+      "role": "patient",
+      "createdAt": "2026-09-26T16:01:25.562Z",
+      "expiresAt": "2026-10-10T16:01:25.562Z"
     }
   }
 }

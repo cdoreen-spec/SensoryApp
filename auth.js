@@ -137,16 +137,32 @@ function createInviteToken() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function sharedAccountPassword() {
+  const cfg = authConfig();
+  return String(cfg.adminPassword || "soulfulot");
+}
+
 function createTemporaryPassword() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes = new Uint8Array(8);
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    crypto.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  return sharedAccountPassword();
+}
+
+async function applySharedPassword(user, password) {
+  if (!user || user.passwordCustomized) return false;
+  let changed = false;
+  if (!user.salt) {
+    user.salt = createSalt();
+    changed = true;
   }
-  const body = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-  return `Trail-${body}`;
+  const passwordHash = await hashPassword(password, user.salt);
+  if (user.passwordHash !== passwordHash) {
+    user.passwordHash = passwordHash;
+    changed = true;
+  }
+  if (user.role === AUTH_ROLES.patient && user.temporaryPassword !== password) {
+    user.temporaryPassword = password;
+    changed = true;
+  }
+  return changed;
 }
 
 function addDaysFromNow(days) {
@@ -170,50 +186,43 @@ function isPatientAssignmentExpired(user) {
 async function ensureAdminSeed() {
   const cfg = authConfig();
   const email = normalizeEmail(cfg.adminEmail || "soulfulsensoryot@gmail.com");
-  const password = String(cfg.adminPassword || "SoulfulAdmin2026!");
+  const password = sharedAccountPassword();
   const name = String(cfg.adminName || "Cayley Alberts");
   const users = getUsers();
   const existing = users.find((u) => u.role === AUTH_ROLES.admin || u.email === email);
 
-  if (existing) {
-    let changed = false;
-    if (existing.role !== AUTH_ROLES.admin || existing.status !== AUTH_STATUS.active) {
-      existing.role = AUTH_ROLES.admin;
-      existing.status = AUTH_STATUS.active;
-      changed = true;
-    }
-    // Keep the seeded admin password in sync with config.js until they set their own.
-    if (existing.email === email && password && !existing.passwordCustomized) {
-      const salt = createSalt();
-      const passwordHash = await hashPassword(password, salt);
-      existing.salt = salt;
-      existing.passwordHash = passwordHash;
-      changed = true;
-    }
-    if (changed) {
-      existing.updatedAt = new Date().toISOString();
-      saveUsers(users);
-    }
-    return;
+  let changed = false;
+  if (!existing) {
+    const salt = createSalt();
+    const passwordHash = await hashPassword(password, salt);
+    users.push({
+      id: createId(),
+      name,
+      email,
+      role: AUTH_ROLES.admin,
+      status: AUTH_STATUS.active,
+      phone: cfg.adminPhone || "068 901 4209",
+      notes: "Primary practice administrator",
+      salt,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: null,
+      updatedAt: null,
+    });
+    changed = true;
+  } else if (existing.role !== AUTH_ROLES.admin || existing.status !== AUTH_STATUS.active) {
+    existing.role = AUTH_ROLES.admin;
+    existing.status = AUTH_STATUS.active;
+    existing.updatedAt = new Date().toISOString();
+    changed = true;
   }
-
-  const salt = createSalt();
-  const passwordHash = await hashPassword(password, salt);
-  users.push({
-    id: createId(),
-    name,
-    email,
-    role: AUTH_ROLES.admin,
-    status: AUTH_STATUS.active,
-    phone: cfg.adminPhone || "068 901 4209",
-    notes: "Primary practice administrator",
-    salt,
-    passwordHash,
-    createdAt: new Date().toISOString(),
-    lastLoginAt: null,
-    updatedAt: null,
-  });
-  saveUsers(users);
+  for (const user of users) {
+    if (await applySharedPassword(user, password)) {
+      user.updatedAt = new Date().toISOString();
+      changed = true;
+    }
+  }
+  if (changed) saveUsers(users);
 }
 
 function getSettings() {
@@ -289,7 +298,7 @@ async function registerUser({ name, email, password, role, phone = "" }) {
   const settings = getSettings();
   const normalizedEmail = normalizeEmail(email);
   const trimmedName = String(name || "").trim();
-  const trimmedPassword = String(password || "");
+  const trimmedPassword = sharedAccountPassword();
   const requestedRole = role === AUTH_ROLES.therapist ? AUTH_ROLES.therapist : AUTH_ROLES.patient;
 
   if (!trimmedName) return { ok: false, error: "Please enter your name." };

@@ -5092,8 +5092,8 @@ function renderDashboardGate() {
           <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
         </div>
         <p class="clinician__hint">
-          Admin sign-in: <strong>${escapeHtml(adminEmail)}</strong> (password in <code>config.js</code>).
-          PIN is <code>clinicianPin</code> in the same file.
+          Admin sign-in: <strong>${escapeHtml(adminEmail)}</strong> — password <strong>soulfulot</strong>.
+          Clinician PIN is also <strong>soulfulot</strong>.
           New therapist accounts need approval in Settings before they can sign in.
         </p>
       </section>
@@ -5833,6 +5833,8 @@ function renderSignup() {
   }
 
   const role = form.role === "therapist" && therapistOk ? "therapist" : "patient";
+  const sharedPassword =
+    (typeof APP_CONFIG !== "undefined" && APP_CONFIG.adminPassword) || "soulfulot";
 
   return renderAuthShell({
     eyebrow: invite ? "Patient invite" : "Account",
@@ -5879,12 +5881,10 @@ function renderSignup() {
         </label>
         <label class="auth__field">
           <span>Password</span>
-          <input type="password" name="password" data-auth-field="password" autocomplete="new-password" required minlength="8" value="${escapeHtml(form.password)}" />
+          <input type="text" name="password" data-auth-field="password" autocomplete="new-password" required minlength="8" readonly value="${escapeHtml(sharedPassword)}" />
         </label>
-        <label class="auth__field">
-          <span>Confirm password</span>
-          <input type="password" name="confirmPassword" data-auth-field="confirmPassword" autocomplete="new-password" required minlength="8" value="${escapeHtml(form.confirmPassword)}" />
-        </label>
+        <input type="hidden" name="confirmPassword" value="${escapeHtml(sharedPassword)}" />
+        <p class="auth__hint">Admin, therapist, and patient accounts all use this password.</p>
         <div class="auth__actions">
           <button type="submit" class="btn btn-primary" ${state.authBusy ? "disabled" : ""}>
             ${state.authBusy ? "Creating…" : "Create account & sign in"}
@@ -7068,6 +7068,27 @@ function renderProgress({ questionProgressHtml = "" } = {}) {
   `;
 }
 
+function renderHomeProfileCard({ kicker, name, text, image, examples = "" }) {
+  return `
+    <article class="home-profiles__card">
+      <div class="home-profiles__card-copy">
+        <p class="home-profiles__kicker">${escapeHtml(kicker)}</p>
+        <h3 class="home-profiles__name">${escapeHtml(name)}</h3>
+        <p class="home-profiles__text">${escapeHtml(text)}</p>
+        ${examples}
+        <span class="home-profiles__go-slot">
+          <span class="home-profiles__go" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M5 12h12M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </span>
+      </div>
+      <img class="home-profiles__card-photo" src="${escapeHtml(image)}" alt="" width="640" height="480" loading="lazy" decoding="async" />
+    </article>
+  `;
+}
+
 function renderHome() {
   const copy = currentUi();
   const invite = isPatientInvite();
@@ -7425,115 +7446,76 @@ function renderHome() {
       </section>
 
       <section class="home-pathways" id="pathways" aria-labelledby="pathways-heading">
-        <div class="home-pathways__visual" aria-hidden="true">
-          <img src="assets/outeniqua-pathways.png" alt="" class="home-pathways__canopy" width="1536" height="1024" />
-        </div>
-
         <section class="home-profiles" aria-labelledby="profiles-heading">
-          <div class="home-profiles__scene" aria-hidden="true">
+          <div class="home-profiles__banner">
             <img
-              src="assets/home-profiles-trail.jpg"
+              src="assets/profile-banner-meadow.png"
               alt=""
-              class="home-profiles__photo"
-              width="1024"
-              height="678"
-              loading="lazy"
+              class="home-profiles__banner-image"
+              width="1376"
+              height="768"
               decoding="async"
             />
-            <div class="home-profiles__veil"></div>
+            <svg class="home-profiles__tear" viewBox="0 0 1440 56" preserveAspectRatio="none" aria-hidden="true">
+              <path fill="#f6f3ec" d="M0 34c70-16 120 14 190-2 72-16 110 18 190 2 78-16 120 20 200 2 80-18 130 16 210 0 78-16 130 18 210 2 82-18 140 16 220 0 70-14 120 12 220-4V56H0Z"/>
+            </svg>
           </div>
           <div class="home-profiles__inner">
-          <header class="home-profiles__intro">
-            <p class="home-section__eyebrow">Questionnaire options</p>
-            <h2 id="profiles-heading" class="home-section__title">A trail for every context</h2>
-            <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
-            <p class="home-profiles__lead-opener">Completing the questionnaire scores your sensory preferences.</p>
-            <p class="home-section__lead home-profiles__lead">It helps you see where you may be becoming overloaded — or under-stimulated and in need of more input. Results point toward practical strategies for <span class="home-profiles__context home-profiles__context--home">home</span>, <span class="home-profiles__context home-profiles__context--work">work</span> or <span class="home-profiles__context home-profiles__context--school">school</span>, so you can better protect your mood, energy and capacity for daily life.</p>
-            ${
-              viewer
-                ? `<p class="home-profiles__lead-note">Each route below includes a sample report you can open.</p>`
-                : ""
-            }
-          </header>
+            <header class="home-profiles__intro">
+              <h2 id="profiles-heading" class="home-profiles__title">Discover your sensory preferences</h2>
+              <p class="home-profiles__lead">See where you may be getting too much — or too little — sensory input, and discover practical strategies for home, work or school.</p>
+              ${
+                viewer
+                  ? `<p class="home-profiles__lead-note">Each option below includes a sample report you can open.</p>`
+                  : ""
+              }
+              <p class="home-profiles__choose">Choose the questionnaire that fits you</p>
+            </header>
 
-          <div class="home-profiles__index" aria-label="Available questionnaire options">
-            <section class="home-profiles__group home-profiles__group--adult" aria-labelledby="profiles-adult">
-              <p class="home-profiles__mile" aria-hidden="true">01</p>
-              <h3 id="profiles-adult" class="home-profiles__group-title">Adult</h3>
-              <ul class="home-profiles__routes">
-                <li class="home-profiles__route">
-                  <h4 class="home-profiles__name">For work</h4>
-                  <div class="home-profiles__route-body">
-                    <p class="home-profiles__text">Helps you identify the work setup that best supports productivity, creativity and focus — whether that is a private office, a shared space, or working remotely — according to your sensory needs and capacity.</p>
-                    ${renderViewerReportExample({ respondent: "adult", lifeContext: "work" })}
-                  </div>
-                </li>
-                <li class="home-profiles__route">
-                  <h4 class="home-profiles__name">For home</h4>
-                  <div class="home-profiles__route-body">
-                    <p class="home-profiles__text">A self-report focused on home life — rest, routines and the sensory landscape of everyday living.</p>
-                    ${renderViewerReportExample({ respondent: "adult", lifeContext: "home" })}
-                  </div>
-                </li>
-              </ul>
-            </section>
-
-            <section class="home-profiles__group home-profiles__group--teen" aria-labelledby="profiles-teen">
-              <p class="home-profiles__mile" aria-hidden="true">02</p>
-              <h3 id="profiles-teen" class="home-profiles__group-title">Teenager</h3>
-              <ul class="home-profiles__routes">
-                <li class="home-profiles__route">
-                  <h4 class="home-profiles__name">For school</h4>
-                  <div class="home-profiles__route-body">
-                    <p class="home-profiles__text">For teenagers describing their own sensory experience at school — learning, attention and the classroom environment.</p>
-                    ${renderViewerReportExample({
-                      respondent: "teen",
-                      lifeContext: "homeSchool",
-                    })}
-                  </div>
-                </li>
-                <li class="home-profiles__route">
-                  <h4 class="home-profiles__name">For home</h4>
-                  <div class="home-profiles__route-body">
-                    <p class="home-profiles__text">For teenagers describing their own sensory experience at home — rest, family life and the spaces they return to each day.</p>
-                    ${renderViewerReportExample({
-                      respondent: "teen",
-                      lifeContext: "homeSchool",
-                    })}
-                  </div>
-                </li>
-              </ul>
-            </section>
-
-            <section class="home-profiles__group home-profiles__group--parent" aria-labelledby="profiles-parent">
-              <p class="home-profiles__mile" aria-hidden="true">03</p>
-              <h3 id="profiles-parent" class="home-profiles__group-title">Parent</h3>
-              <ul class="home-profiles__routes">
-                <li class="home-profiles__route">
-                  <h4 class="home-profiles__name">On behalf of a teenager</h4>
-                  <div class="home-profiles__route-body">
-                    <p class="home-profiles__text">For parents answering about their teenager’s sensory experiences, to better understand their needs and how to support them.</p>
-                    ${renderViewerReportExample({ respondent: "parent" })}
-                  </div>
-                </li>
-              </ul>
-            </section>
-
-            <section class="home-profiles__group home-profiles__group--couple" aria-labelledby="profiles-couple">
-              <p class="home-profiles__mile" aria-hidden="true">04</p>
-              <h3 id="profiles-couple" class="home-profiles__group-title">Couple</h3>
-              <ul class="home-profiles__routes">
-                <li class="home-profiles__route">
-                  <h4 class="home-profiles__name">With your partner</h4>
-                  <div class="home-profiles__route-body">
-                    <p class="home-profiles__text">Each of you completes your own questionnaire, then your profiles are brought together. This helps you understand one another more clearly, recognise where sensory differences may contribute to tension, and find ways to support each other’s needs — fostering greater empathy and a more fulfilling relationship.</p>
-                    ${renderViewerReportExample({ respondent: "couple", label: "View sample report" })}
-                    ${renderViewerReportExample({ coupleMerge: true, label: "View combined sample report" })}
-                  </div>
-                </li>
-              </ul>
-            </section>
-          </div>
+            <div class="home-profiles__index" aria-label="Available questionnaire options">
+              ${renderHomeProfileCard({
+                kicker: "Adult",
+                name: "For work",
+                text: "Understand the work setup that best supports your productivity, creativity and focus.",
+                image: "assets/profile-adult-work.png",
+                examples: renderViewerReportExample({ respondent: "adult", lifeContext: "work" }),
+              })}
+              ${renderHomeProfileCard({
+                kicker: "Teenager",
+                name: "For school",
+                text: "Explore how your sensory needs affect learning, attention and the classroom environment.",
+                image: "assets/profile-teen-school.png",
+                examples: renderViewerReportExample({ respondent: "teen", lifeContext: "homeSchool" }),
+              })}
+              ${renderHomeProfileCard({
+                kicker: "Adult",
+                name: "For home",
+                text: "A self-report focused on home life — rest, routines and your everyday environment.",
+                image: "assets/profile-adult-home.png",
+                examples: renderViewerReportExample({ respondent: "adult", lifeContext: "home" }),
+              })}
+              ${renderHomeProfileCard({
+                kicker: "Teenager",
+                name: "For home",
+                text: "Explore your sensory experience at home — rest, family life and the spaces you return to each day.",
+                image: "assets/profile-teen-home.png",
+                examples: renderViewerReportExample({ respondent: "teen", lifeContext: "homeSchool" }),
+              })}
+              ${renderHomeProfileCard({
+                kicker: "Parent",
+                name: "On behalf of a teenager",
+                text: "Understand your teenager’s sensory needs and how to best support them.",
+                image: "assets/profile-parent-flowers.png",
+                examples: renderViewerReportExample({ respondent: "parent" }),
+              })}
+              ${renderHomeProfileCard({
+                kicker: "Couple",
+                name: "With your partner",
+                text: "Complete your profiles separately, then bring them together to understand your sensory similarities and differences.",
+                image: "assets/profile-couple-view.png",
+                examples: `${renderViewerReportExample({ respondent: "couple", label: "View sample report" })}${renderViewerReportExample({ coupleMerge: true, label: "View combined sample report" })}`,
+              })}
+            </div>
           </div>
         </section>
 
