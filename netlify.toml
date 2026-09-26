@@ -4,10 +4,20 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["server/**", "assets/email/**"]
+  included_files = ["server/**", "assets/email/**", "tour/tour-config.js"]
   external_node_modules = ["nodemailer", "@netlify/blobs"]
 
 [[redirects]]
   from = "/api/ssot"
   to = "/.netlify/functions/ssot"
+  status = 200
+
+[[redirects]]
+  from = "/api/tour-audio"
+  to = "/.netlify/functions/tour-audio"
+  status = 200
+
+[[redirects]]
+  from = "/tour"
+  to = "/index.html"
   status = 200

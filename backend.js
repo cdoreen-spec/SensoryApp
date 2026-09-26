@@ -40,7 +40,7 @@ const SsotBackend = (() => {
   }
 
   function isEnabled() {
-    return Boolean(configuredUrl()) && live !== false;
+    return Boolean(configuredUrl());
   }
 
   function getSessionToken() {
@@ -104,13 +104,19 @@ const SsotBackend = (() => {
     };
   }
 
+  function itemTime(item) {
+    return Date.parse(item?.savedAt || item?.completedAt || item?.updatedAt || item?.createdAt || 0) || 0;
+  }
+
   function mergeById(existing, incoming) {
     const map = new Map();
     for (const item of existing || []) {
       if (item?.id) map.set(item.id, item);
     }
     for (const item of incoming || []) {
-      if (item?.id) map.set(item.id, item);
+      if (!item?.id) continue;
+      const current = map.get(item.id);
+      if (!current || itemTime(item) >= itemTime(current)) map.set(item.id, item);
     }
     return [...map.values()];
   }
@@ -132,7 +138,7 @@ const SsotBackend = (() => {
           const current = readJson(SSOT_ASSESSMENTS_KEY, { version: 1, items: [] });
           writeJson(SSOT_ASSESSMENTS_KEY, {
             version: 1,
-            items: replace ? incoming : mergeById(current.items || [], incoming),
+            items: mergeById(current.items || [], incoming),
           });
         }
       }
@@ -197,9 +203,13 @@ const SsotBackend = (() => {
       applySnapshot(data);
       lastError = null;
       live = true;
+      if (getSessionToken()) {
+        flush().catch((err) => {
+          console.warn("Could not sync a newer local screening:", err);
+        });
+      }
       return data;
     } catch (err) {
-      live = false;
       lastError = err;
       console.warn("Could not load shared patient records:", err);
       return { ok: false, error: err.message };
@@ -293,7 +303,11 @@ const SsotBackend = (() => {
     intro,
     sections,
   }) {
-    await flush();
+    try {
+      await flush();
+    } catch (err) {
+      console.warn("Saved screening could not sync before the email was sent:", err);
+    }
     const data = await request({
       action: "sendEmail",
       sessionToken: getSessionToken(),

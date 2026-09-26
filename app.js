@@ -71,6 +71,17 @@ const state = {
   sampleReportPreview: false,
   /** Public demo walkthrough for other therapists (?viewer=1). */
   viewerMode: false,
+  /** Open the narrated tour once the page is ready (?tour=1). */
+  openTourOnBoot: false,
+  /**
+   * True only while the tour is drawing a throwaway copy of a screen.
+   * Blocks saves, emails, and draft clearing so the tour cannot touch records.
+   */
+  tourCapture: false,
+  /** Which screen the tour is drawing: home | questions | results | dashboard */
+  tourCaptureMode: null,
+  /** In-memory sample rows for the tour's therapist scene. Never stored. */
+  tourDashboardItems: null,
   /**
    * Admin-only preview of an existing screen. Never written to the user record.
    * admin | therapist | patient | demo
@@ -93,6 +104,14 @@ const state = {
   },
   patientFormError: null,
   patientFormBusy: false,
+  mockInviteForm: {
+    firstName: "",
+    surname: "",
+    email: "",
+    questionnaireType: "adult-home",
+  },
+  mockInviteError: null,
+  mockInviteBusy: false,
   createdPatient: null,
   patientSendStatus: null, // null | sending | sent | error
   patientSendError: null,
@@ -335,6 +354,7 @@ function routeAfterAuth(user) {
 }
 
 function canAccessTherapistDashboard() {
+  if (state.tourCapture) return state.tourCaptureMode === "dashboard";
   if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) return true;
   return Boolean(state.clinicianUnlocked);
 }
@@ -875,6 +895,194 @@ function resolvePatientInviteDetails(source) {
   return state.createdPatient;
 }
 
+async function emailArchivedReportToClinician(record) {
+  if (!record || assessmentStatus(record) !== "complete") {
+    state.dashboardNotice = "Finish the questionnaire before emailing the report.";
+    render();
+    return;
+  }
+  const summary = record.summary || {};
+  const demo = record.demographics || {};
+  const name = dashboardPatientName(record);
+  const sections = [
+    {
+      heading: "Patient details",
+      rows: [
+        ["Name", name],
+        ["Email", summary.email || demo.email || "—"],
+        ["Age", summary.age || demo.age || "—"],
+        [
+          "Questionnaire",
+          [respondentLabel(record.respondent), lifeContextDisplay(record.lifeContext)].filter(Boolean).join(" · ") || "—",
+        ],
+      ],
+    },
+    {
+      heading: "Total score",
+      rows: [
+        ["Sensitive / avoiding", String(summary.sensitive ?? 0)],
+        ["Sensory neutral", String(summary.neutral ?? 0)],
+        ["Sensory seeking", String(summary.seeking ?? 0)],
+      ],
+    },
+    {
+      heading: "Overall pattern",
+      text: [summary.overallLabel, summary.leanHeadline].filter(Boolean).join(" — ") || "—",
+    },
+  ];
+  const domainRows = (Array.isArray(summary.domainProfiles) ? summary.domainProfiles : [])
+    .map((domain) => [domain.title || domain.short || domain.id, domain.short || domain.profile || "—"])
+    .filter((row) => row[0]);
+  if (domainRows.length) sections.push({ heading: "Sense by sense", rows: domainRows });
+  const intro = completionNoticeIntro();
+  const profileBit = summary.overallLabel ? ` — ${summary.overallLabel}` : "";
+  state.dashboardNotice = `Sending the report to ${getClinicianEmail()}…`;
+  render();
+  try {
+    await sendViaGmailBackend({
+      to: getClinicianEmail(),
+      subject: `Completed: ${name} — Sensory screening${profileBit}`,
+      message: formatCompletionEmailText(intro, sections),
+      name,
+      kind: "report",
+      intro,
+      sections,
+    });
+    state.dashboardNotice = `Report emailed to ${getClinicianEmail()}.`;
+  } catch (err) {
+    const classified = classifyDeliveryError(err, "Could not email the report");
+    state.dashboardNotice = classified.message;
+  }
+  render();
+}
+
+async function emailOpenReportToClinician() {
+  let report;
+  try {
+    report = buildResultsReport();
+  } catch (err) {
+    state.dashboardNotice = "Open a finished report before emailing it.";
+    render();
+    return;
+  }
+  state.dashboardNotice = `Sending the report to ${getClinicianEmail()}…`;
+  render();
+  try {
+    await sendViaGmailBackend({
+      to: getClinicianEmail(),
+      subject: report.subject,
+      message: report.text,
+      name: assessmentCompleterName(),
+      kind: "report",
+      intro: report.intro,
+      sections: report.sections,
+    });
+    state.dashboardNotice = `Report emailed to ${getClinicianEmail()}.`;
+  } catch (err) {
+    const classified = classifyDeliveryError(err, "Could not email the report");
+    state.dashboardNotice = classified.message;
+  }
+  render();
+}
+  if (typeof Auth === "undefined" || !Auth.createPatientAccount) return;
+  const firstName = String(formData.get("firstName") || "").trim();
+  const surname = String(formData.get("surname") || "").trim();
+  const email = String(formData.get("email") || "").trim();
+  const questionnaireType = String(formData.get("patient-questionnaire-type") || "adult-home");
+  state.mockInviteForm = { firstName, surname, email, questionnaireType };
+  state.mockInviteError = null;
+  state.mockInviteBusy = true;
+  render();
+
+  const assignment = parseQuestionnaireAssignment(questionnaireType);
+  const reasonForReferral = "Mock sensory questionnaire";
+  const phone = "0000000000";
+  const age = "30";
+  const expiresAt = addDaysIso(new Date().toISOString(), QUESTIONNAIRE_EXPIRY_DAYS);
+  const reportVisibility = readTherapistPrefs().reportVisibility;
+  const normalizedEmail = email.toLowerCase();
+  const existing =
+    typeof Auth.listUsers === "function"
+      ? Auth.listUsers().find((user) => String(user.email || "").toLowerCase() === normalizedEmail)
+      : null;
+
+  let result;
+  if (existing && existing.role !== "patient") {
+    state.mockInviteBusy = false;
+    state.mockInviteError = "That email already belongs to a therapist or admin account.";
+    render({ scrollToTop: true });
+    return;
+  }
+
+  if (existing) {
+    const updated = Auth.updateUserById(existing.id, {
+      firstName,
+      surname,
+      name: [firstName, surname].filter(Boolean).join(" "),
+      phone,
+      age,
+      questionnaireType: assignment?.respondent || existing.questionnaireType,
+      lifeContext: assignment?.lifeContext || "",
+      reasonForReferral,
+      expiresAt,
+      reportVisibility,
+    });
+    if (!updated.ok) {
+      state.mockInviteBusy = false;
+      state.mockInviteError = updated.error || "Could not refresh this mock invite.";
+      render({ scrollToTop: true });
+      return;
+    }
+    result = await Auth.resetPatientPassword(existing.id);
+  } else {
+    result = await Auth.createPatientAccount({
+      firstName,
+      surname,
+      email,
+      phone,
+      age,
+      questionnaireType,
+      reasonForReferral,
+      createdByUserId: currentAuthUser()?.id || null,
+      reportVisibility,
+      expiryDays: QUESTIONNAIRE_EXPIRY_DAYS,
+    });
+  }
+
+  state.mockInviteBusy = false;
+  if (!result?.ok) {
+    state.mockInviteError = result?.error || "Could not create the mock invite.";
+    render({ scrollToTop: true });
+    return;
+  }
+
+  const patient = {
+    ...result.user,
+    expiresAt: result.user?.expiresAt || expiresAt,
+    reportVisibility: result.user?.reportVisibility || reportVisibility,
+  };
+  createAssignedAssessment(patient);
+  state.createdPatient = patientCredentialsPayload(
+    patient,
+    result.password,
+    buildAssignedPatientInviteUrl(patient)
+  );
+  state.dashboardTab = "create";
+  state.patientSendStatus = null;
+  state.patientSendError = null;
+  state.dashboardNotice = `Mock invite ready for ${assignedPatientFullName(patient)}. The report will be emailed to ${getClinicianEmail()} when they finish.`;
+  state.mockInviteForm = {
+    firstName: "",
+    surname: "",
+    email: "",
+    questionnaireType: "adult-home",
+  };
+  render({ scrollToTop: true });
+  await deliverPatientInviteEmail(state.createdPatient, {
+    noticePrefix: "Mock invite sent.",
+  });
+}
+
 async function handleSendPatientInviteEmail(details, { fromDashboard = false } = {}) {
   if (!details) {
     state.dashboardNotice = "This patient account is not on this device.";
@@ -976,6 +1184,7 @@ function readAssessments() {
 }
 
 function writeAssessments(items) {
+  if (state.tourCapture) return;
   try {
     localStorage.setItem(
       ASSESSMENTS_KEY,
@@ -2040,6 +2249,7 @@ function buildAssessmentRecord() {
 
 /** Persist a completed screening so therapists can reopen & print later (this browser). */
 function ensureAssessmentArchived() {
+  if (state.tourCapture) return null;
   if (isAdminPatientPreview()) return null;
   if (state.sampleReportPreview) return null;
   if (!state.respondent || !RESPONDENT_TYPES.includes(state.respondent)) return null;
@@ -2079,6 +2289,7 @@ function draftLooksStarted(draft) {
 }
 
 function shouldPersistIncompleteProgress() {
+  if (state.tourCapture) return false;
   if (isAdminPatientPreview()) return false;
   if (state.sampleReportPreview || state.archiveReadOnly) return false;
   if (!isSensoryDraftEligible()) return false;
@@ -2323,6 +2534,12 @@ function collectCoupleIncompleteEntries(existingItems) {
 }
 
 function getDashboardQuestionnaireItems() {
+  if (state.tourCapture && Array.isArray(state.tourDashboardItems)) {
+    return state.tourDashboardItems.map((item) => ({
+      ...item,
+      status: assessmentStatus(item),
+    }));
+  }
   mirrorOpenDraftsToAssessments();
   const items = readAssessments().map((item) => ({
     ...item,
@@ -3322,6 +3539,7 @@ function inviteBannerText(copy = currentUi()) {
 }
 
 function shouldEmailResultsToClinician() {
+  if (state.tourCapture) return false;
   if (isAdminPatientPreview()) return false;
   if (state.archiveReadOnly) return false;
   if (state.sampleReportPreview) return false;
@@ -3386,12 +3604,20 @@ function buildPatientInviteUrl(access) {
   return url.toString();
 }
 
+function isTourLink() {
+  const params = new URLSearchParams(window.location.search);
+  const path = window.location.pathname.replace(/\/+$/, "");
+  return params.get("tour") === "1" || path === "/tour" || path.endsWith("/tour");
+}
+
 function readInviteFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("viewer") === "1") {
+  if (params.get("viewer") === "1" || isTourLink()) {
     state.viewerMode = true;
     state.view = "home";
     state.step = 0;
+    state.showIntroModal = false;
+    if (isTourLink()) state.openTourOnBoot = true;
     return;
   }
   if (params.get("settings") === "1" || params.get("admin") === "1") {
@@ -3562,6 +3788,7 @@ function buildSensoryDraft() {
 }
 
 function saveSensoryDraft() {
+  if (state.tourCapture) return;
   if (isAdminPatientPreview()) return;
   if (!isSensoryDraftEligible()) return;
   if (shouldPersistIncompleteProgress()) {
@@ -3579,7 +3806,7 @@ function saveSensoryDraft() {
 }
 
 function clearSensoryDraft() {
-  if (isAdminPatientPreview()) return;
+  if (state.tourCapture || isAdminPatientPreview()) return;
   try {
     localStorage.removeItem(sensoryDraftStorageKey());
   } catch (_) {
@@ -3766,7 +3993,7 @@ function profileLabelPlain(meta) {
 }
 
 function completionNoticeIntro() {
-  return "A sensory questionnaire has been completed. This is a short notice — open the patient register in the web app for the full report.";
+  return "A sensory questionnaire has been completed. The summary below is the report. Open the patient register in the web app for the full trail profile and printable letters.";
 }
 
 function trailCharacterSummary(lean) {
@@ -3819,16 +4046,29 @@ function formatCompletionEmailText(intro, sections) {
   return lines.join("\n").trim();
 }
 
-function completionEmailSections({ metrics, demo, extraDetailRows = [] }) {
+function completionEmailSections({ metrics, scores, demo, extraDetailRows = [] }) {
+  const pattern = [profileLabelPlain(metrics?.meta), metrics?.leanHeadline].filter(Boolean).join(" — ");
   const sections = [
     { heading: "Patient details", rows: patientDetailRows(demo, extraDetailRows) },
     { heading: "Total score", rows: totalScoreRows(metrics) },
-    { heading: "Overall pattern", text: profileLabelPlain(metrics?.meta) || metrics?.leanHeadline || "—" },
+    { heading: "Overall pattern", text: pattern || "—" },
   ];
+  const domainRows = getScoreRows(scores || []).map((row) => [
+    row.shortTitle || row.title,
+    [row.profileShort, row.implication].filter(Boolean).join(" — "),
+  ]);
+  if (domainRows.length) {
+    sections.push({ heading: "Sense by sense", rows: domainRows });
+  }
   const character = trailCharacterSummary(metrics?.lean);
   if (character) {
     sections.push({ heading: "Sensory trail character", text: character });
   }
+  const registerUrl = `${getClinicianBaseUrl()}/?dashboard=1`;
+  sections.push({
+    heading: "Full report",
+    text: `Open the patient register for the complete trail profile: ${registerUrl}`,
+  });
   return sections;
 }
 
@@ -3850,7 +4090,7 @@ function buildResultsReport() {
     ]);
   }
   const intro = completionNoticeIntro();
-  const sections = completionEmailSections({ metrics, demo, extraDetailRows });
+  const sections = completionEmailSections({ metrics, scores, demo, extraDetailRows });
 
   const profileBit = profileLabelPlain(metrics.meta);
   const subjectCore =
@@ -4446,6 +4686,7 @@ function notifyExpiringQuestionnaires() {
 }
 
 function maybeNotifyExpiringQuestionnaires() {
+  if (state.tourCapture) return;
   const now = Date.now();
   if (state._lastExpiryCheck && now - state._lastExpiryCheck < 10 * 60 * 1000) return;
   state._lastExpiryCheck = now;
@@ -5146,6 +5387,7 @@ function renderDashboardAssessmentRow(item) {
           <button type="button" class="dash-report-switch__btn${preferredLength === REPORT_LENGTH.short ? " is-preferred" : ""}" data-action="open-assessment-short" data-assessment-id="${rowId}">Short</button>
           <button type="button" class="dash-report-switch__btn${preferredLength === REPORT_LENGTH.full ? " is-preferred" : ""}" data-action="open-assessment" data-assessment-id="${rowId}">Full</button>
         </div>
+        <button type="button" class="dash-row__tool" data-action="email-clinician-report" data-assessment-id="${rowId}">Send again</button>
         <button type="button" class="dash-row__tool" data-action="download-assessment" data-assessment-id="${rowId}">Download</button>
         <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
         }
@@ -5283,6 +5525,60 @@ function renderCreatedPatientSuccess(details) {
         <button type="button" class="btn btn-secondary" data-action="create-another-patient">Add another patient</button>
         <button type="button" class="btn btn-secondary" data-action="dashboard-tab" data-tab="register">Back to register</button>
       </div>
+    </section>
+  `;
+}
+
+function renderMockInviteForm() {
+  const form = state.mockInviteForm || {
+    firstName: "",
+    surname: "",
+    email: "",
+    questionnaireType: "adult-home",
+  };
+  const type = form.questionnaireType || "adult-home";
+  return `
+    <section class="dashboard__panel patient-create" aria-labelledby="mock-invite-heading">
+      <h2 id="mock-invite-heading" class="dashboard__panel-title">Send a mock invite</h2>
+      <p class="prefs-lead">
+        Email someone a practice link for one sensory questionnaire. When they finish, the report summary is emailed to ${escapeHtml(getClinicianEmail())}.
+      </p>
+      <p class="prefs-hint">The link uses this computer’s address. They need to open it here while the practice server is running, unless the site is hosted online.</p>
+      ${
+        state.mockInviteError
+          ? `<p class="error-banner" role="alert">${escapeHtml(state.mockInviteError)}</p>`
+          : ""
+      }
+      <form class="patient-create__form" data-mock-invite>
+        <div class="patient-create__grid">
+          <label class="auth__field">
+            <span>Name</span>
+            <input type="text" name="firstName" autocomplete="given-name" required value="${escapeHtml(form.firstName)}" />
+          </label>
+          <label class="auth__field">
+            <span>Surname</span>
+            <input type="text" name="surname" autocomplete="family-name" required value="${escapeHtml(form.surname)}" />
+          </label>
+          <label class="auth__field">
+            <span>Email address</span>
+            <input type="email" name="email" autocomplete="email" required value="${escapeHtml(form.email)}" />
+          </label>
+        </div>
+        <label class="auth__field">
+          <span>Questionnaire type</span>
+          <select name="patient-questionnaire-type" required>
+            ${QUESTIONNAIRE_ASSIGNMENTS.map(
+              (option) =>
+                `<option value="${escapeHtml(option.id)}" ${type === option.id ? "selected" : ""}>${escapeHtml(option.title)}</option>`
+            ).join("")}
+          </select>
+        </label>
+        <div class="clinician__actions">
+          <button type="submit" class="btn btn-primary" ${state.mockInviteBusy ? "disabled" : ""}>
+            ${state.mockInviteBusy ? "Sending invite…" : "Send mock invite"}
+          </button>
+        </div>
+      </form>
     </section>
   `;
 }
@@ -5514,7 +5810,7 @@ function renderDashboard() {
             ? typeof Auth !== "undefined" && Auth.canAccessClinicianTools()
               ? state.createdPatient
                 ? renderCreatedPatientSuccess(state.createdPatient)
-                : renderCreatePatientForm()
+                : `${renderMockInviteForm()}${renderCreatePatientForm()}`
               : `<section class="dashboard__panel patient-create">
                   <h2 class="dashboard__panel-title">Sign in to add a patient</h2>
                   <p class="prefs-lead">Patient accounts can only be created by a signed-in therapist or admin.</p>
@@ -7233,9 +7529,10 @@ function renderProgress({ questionProgressHtml = "" } = {}) {
   `;
 }
 
-function renderHomeProfileCard({ kicker, name, text, image, examples = "" }) {
+function renderHomeProfileCard({ kicker, name, text, image, examples = "", tour = "" }) {
+  const tourAttr = tour ? ` data-tour="${escapeHtml(tour)}"` : "";
   return `
-    <article class="home-profiles__card">
+    <article class="home-profiles__card"${tourAttr}>
       <div class="home-profiles__card-copy">
         <p class="home-profiles__kicker">${escapeHtml(kicker)}</p>
         <h3 class="home-profiles__name">${escapeHtml(name)}</h3>
@@ -7252,6 +7549,134 @@ function renderHomeProfileCard({ kicker, name, text, image, examples = "" }) {
       <img class="home-profiles__card-photo" src="${escapeHtml(image)}" alt="" width="640" height="480" loading="lazy" decoding="async" />
     </article>
   `;
+}
+
+const HOME_TRAIL_STOPS = [
+  {
+    side: "left",
+    title: "Understand yourself",
+    text: "Your sensory patterns and how they shape everyday life.",
+    image: "assets/heading-forest-trail.png",
+    alt: "A sunlit dirt path through a green forest",
+  },
+  {
+    side: "right",
+    title: "Relationships & connection",
+    text: "How different sensory needs meet in communication and connection.",
+    image: "assets/couple-intro-trail.png",
+    alt: "A narrow path through tall grass and wildflowers between two hills",
+  },
+  {
+    side: "left",
+    title: "Work & burnout",
+    text: "Energy, stress and a work setup that supports you.",
+    image: "assets/profile-adult-work.png",
+    alt: "A laptop and a leafy plant on a light wooden desk",
+  },
+  {
+    side: "right",
+    title: "School & studying",
+    text: "What helps you feel regulated and ready to learn.",
+    image: "assets/profile-teen-school.png",
+    alt: "A green backpack beside a stack of books",
+  },
+  {
+    side: "left",
+    title: "Attention & focus",
+    text: "What supports concentration — and what gets in the way.",
+    image: "assets/heading-home-trail.png",
+    alt: "A quiet forest with tall trees and filtered sunlight",
+  },
+];
+
+function homeTrailPeakIcon() {
+  return `<span class="home-helps__peaks" aria-hidden="true"><svg viewBox="0 0 36 16" width="34" height="15"><path d="M1 15 L9 6 L14 11 L20 2 L27 10 L32 6 L35 15 Z" fill="currentColor" opacity="0.32"/><path d="M4 15 L12 5 L17 11 L24 2 L34 15 Z" fill="currentColor"/></svg></span>`;
+}
+
+function homeTrailArrowIcon() {
+  return `<span class="home-helps__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 12h12M13 6.5 18.5 12 13 17.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+}
+
+function homeTrailSprig(modifier) {
+  return `<svg class="home-helps__sprig home-helps__sprig--${modifier}" viewBox="0 0 80 160" fill="none" aria-hidden="true">
+    <path d="M40 152C38 112 44 72 34 16" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+    <path d="M38 42C22 34 12 24 4 12c16 6 28 16 36 32" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
+    <path d="M36 72C20 66 10 58 2 46c16 6 28 16 36 28" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
+    <path d="M38 104C24 98 14 90 8 78c14 6 26 14 34 28" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
+    <path d="M36 34c14-8 26-14 38-20-14 8-24 16-34 26" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
+    <path d="M38 64c16-8 28-14 40-22-16 8-26 16-36 28" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
+    <path d="M40 94c14-6 26-12 36-22-14 8-24 16-32 26" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function renderHomeTrail() {
+  const stops = HOME_TRAIL_STOPS.map((stop, index) => {
+    const curve =
+      stop.side === "left"
+        ? "M32 0C12 28 12 44 32 60C52 76 52 92 32 120"
+        : "M32 0C52 28 52 44 32 60C12 76 12 92 32 120";
+    const join =
+      index < HOME_TRAIL_STOPS.length - 1 ? `<span class="home-helps__join" aria-hidden="true"></span>` : "";
+    return `<li class="home-helps__stop home-helps__stop--${stop.side}">
+      <div class="home-helps__layout">
+        <figure class="home-helps__photo">
+          <img src="${stop.image}" alt="${escapeHtml(stop.alt)}" width="480" height="640" loading="lazy" decoding="async" />
+        </figure>
+        <article class="home-helps__card">
+          <div class="home-helps__copy">
+            ${homeTrailPeakIcon()}
+            <h3 class="home-helps__title">${escapeHtml(stop.title)}</h3>
+            <p class="home-helps__text">${escapeHtml(stop.text)}</p>
+          </div>
+          ${homeTrailArrowIcon()}
+        </article>
+      </div>
+      <div class="home-helps__spine" aria-hidden="true">
+        <svg class="home-helps__spine-line" viewBox="0 0 64 120" preserveAspectRatio="none">
+          <path d="${curve}" />
+        </svg>
+        <span class="home-helps__node"></span>
+        ${join}
+      </div>
+    </li>`;
+  }).join("");
+
+  return `<section class="home-helps" aria-labelledby="helps-heading">
+    <header class="home-helps__banner">
+      <div class="home-helps__banner-media" aria-hidden="true">
+        <img
+          src="assets/home-helps-banner.png"
+          alt=""
+          class="home-helps__banner-image"
+          width="1024"
+          height="639"
+          decoding="async"
+        />
+      </div>
+      <div class="home-helps__banner-veil" aria-hidden="true"></div>
+      <div class="home-helps__banner-copy">
+        <h2 id="helps-heading" class="home-helps__title-main">Your sensory trail</h2>
+        <p class="home-helps__subtitle">One path, with different places to explore.</p>
+        <p class="home-helps__intro">Discover how your sensory preferences show up in different areas of your life, and find practical strategies for everyday living.</p>
+      </div>
+      <svg class="home-helps__wave" viewBox="0 0 1440 72" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#f6f3ec" d="M0 34c48-18 96 10 150-4 62-16 96 20 168 4 70-16 108 22 180 4 74-18 112 18 186 2 72-16 120 20 196 2 78-18 124 16 198 0 76-18 130 16 210-2 52-12 90 8 152-6V72H0Z"/>
+      </svg>
+    </header>
+    <div class="home-helps__map">
+      ${homeTrailSprig("a")}
+      ${homeTrailSprig("b")}
+      ${homeTrailSprig("c")}
+      ${homeTrailSprig("d")}
+      <div class="home-helps__origin">
+        <p class="home-helps__trailhead">Trailhead</p>
+        <span class="home-helps__origin-dot" aria-hidden="true"></span>
+      </div>
+      <ol class="home-helps__stops">
+        ${stops}
+      </ol>
+    </div>
+  </section>`;
 }
 
 function renderHome() {
@@ -7341,6 +7766,15 @@ function renderHome() {
     : viewer
       ? `
       <section class="home-section home-viewer" aria-labelledby="viewer-heading">
+        <div class="home-tour-cta">
+          <p class="home-tour-cta__kicker">For referring therapists</p>
+          <h2 class="home-tour-cta__title">Take the 2-minute tour</h2>
+          <p class="home-tour-cta__support">New to SoulfulSensory? See how sensory profiling works in around 2 minutes.</p>
+          <div class="home-tour-cta__actions">
+            <button type="button" class="btn btn-primary home-tour-cta__play" data-action="start-tour">▶ Take the 2-minute tour</button>
+            <a class="btn btn-secondary home-tour-cta__demo" href="#profiles-heading">Explore the full demo</a>
+          </div>
+        </div>
         <p class="home-section__eyebrow">For referring therapists</p>
         <h2 id="viewer-heading" class="home-section__title">Demo view</h2>
         <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
@@ -7391,11 +7825,13 @@ function renderHome() {
           </div>`
           }
           <a class="home-hero__scroll" href="#ot-heading">${escapeHtml(copy.inviteHomeReadMore)}</a>`
-              : `<p class="home-hero__tagline">${
-                  isPainPathwayEnabled()
-                    ? "Gentle pathways into sensory understanding, and into living more fully with pain."
-                    : "Exploring and understanding your sensory world."
-                }</p>
+              : viewer
+                ? `<p class="home-hero__tagline">Exploring and understanding your sensory world.</p>`
+                : `<p class="home-hero__tagline">${
+                    isPainPathwayEnabled()
+                      ? "Gentle pathways into sensory understanding, and into living more fully with pain."
+                      : "Exploring and understanding your sensory world."
+                  }</p>
           <a class="home-hero__scroll" href="#pathways">Choose a pathway</a>`
           }
         </div>
@@ -7427,189 +7863,7 @@ function renderHome() {
         </blockquote>
       </section>
 
-      <section class="home-helps" aria-labelledby="helps-heading">
-        <div class="home-helps__atmosphere" aria-hidden="true">
-          <div class="home-helps__ridge home-helps__ridge--far"></div>
-          <div class="home-helps__ridge home-helps__ridge--mid"></div>
-          <div class="home-helps__ridge home-helps__ridge--near"></div>
-          <div class="home-helps__contours"></div>
-        </div>
-        <header class="home-helps__banner">
-          <div class="home-helps__banner-media" aria-hidden="true">
-            <img
-              src="assets/home-helps-banner.png"
-              alt=""
-              class="home-helps__banner-image"
-              width="1024"
-              height="639"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <div class="home-helps__banner-veil" aria-hidden="true"></div>
-          <div class="home-helps__banner-content">
-            <p class="home-section__eyebrow home-helps__banner-eyebrow">The sensory questionnaire</p>
-            <h2 id="helps-heading" class="home-section__title home-helps__banner-title">How this can help you:</h2>
-          </div>
-        </header>
-        <div class="home-helps__inner">
-          <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
-          <p class="home-section__lead home-helps__lead">
-            One main path — seven side trails into the places sensory understanding can take you.
-          </p>
-
-          <div class="home-helps__map" role="list" aria-label="Side trails from the sensory questionnaire">
-            <svg class="home-helps__routes" viewBox="0 0 640 920" preserveAspectRatio="xMidYMin meet" aria-hidden="true">
-              <defs>
-                <linearGradient id="helpsTrailFade" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#52775c" stop-opacity="0.15" />
-                  <stop offset="8%" stop-color="#365b46" stop-opacity="0.85" />
-                  <stop offset="92%" stop-color="#365b46" stop-opacity="0.85" />
-                  <stop offset="100%" stop-color="#52775c" stop-opacity="0.15" />
-                </linearGradient>
-                <symbol id="helpsMiniPeak" viewBox="0 0 36 18">
-                  <path d="M2 16 L10 5 L15 11 L22 2 L34 16 Z" fill="currentColor" />
-                </symbol>
-              </defs>
-
-              <!-- Main hiking trail (winding) -->
-              <path
-                class="home-helps__main-path"
-                d="M320 30
-                   C335 72, 300 98, 324 128
-                   C348 168, 295 198, 318 238
-                   C342 282, 298 312, 322 352
-                   C348 396, 292 426, 316 468
-                   C342 512, 296 542, 320 584
-                   C346 628, 290 658, 318 700
-                   C344 744, 298 774, 320 816
-                   C332 858, 312 882, 320 908"
-              />
-
-              <!-- Curvy side trails — stop short of the wording -->
-              <path class="home-helps__branch home-helps__branch--1" d="M324 128 C295 82, 255 175, 242 138 C236 122, 230 112, 232 118" />
-              <path class="home-helps__branch home-helps__branch--2" d="M318 238 C352 188, 395 295, 410 252 C416 234, 424 222, 422 230" />
-              <path class="home-helps__branch home-helps__branch--3" d="M322 352 C288 308, 250 405, 240 368 C234 352, 228 338, 230 344" />
-              <path class="home-helps__branch home-helps__branch--4" d="M316 468 C355 418, 398 530, 414 490 C420 472, 428 452, 426 460" />
-              <path class="home-helps__branch home-helps__branch--5" d="M320 584 C285 536, 248 640, 238 600 C232 584, 226 568, 228 574" />
-              <path class="home-helps__branch home-helps__branch--6" d="M318 700 C358 648, 402 765, 418 722 C424 704, 432 686, 430 694" />
-              <path class="home-helps__branch home-helps__branch--7" d="M320 816 C286 770, 252 872, 240 834 C234 818, 228 802, 230 808" />
-
-              <!-- Branch end peaks (sit between trail and text) -->
-              <g class="home-helps__end-peaks" fill="#365b46">
-                <use href="#helpsMiniPeak" x="214" y="108" width="28" height="14" opacity="0.55" />
-                <use href="#helpsMiniPeak" x="410" y="220" width="28" height="14" opacity="0.55" />
-                <use href="#helpsMiniPeak" x="212" y="334" width="28" height="14" opacity="0.55" />
-                <use href="#helpsMiniPeak" x="414" y="450" width="28" height="14" opacity="0.55" />
-                <use href="#helpsMiniPeak" x="210" y="564" width="28" height="14" opacity="0.55" />
-                <use href="#helpsMiniPeak" x="418" y="684" width="28" height="14" opacity="0.55" />
-                <use href="#helpsMiniPeak" x="212" y="798" width="28" height="14" opacity="0.55" />
-              </g>
-
-              <!-- Junction cairns on the main trail -->
-              <circle class="home-helps__junction" cx="324" cy="128" r="5.5" />
-              <circle class="home-helps__junction" cx="318" cy="238" r="5.5" />
-              <circle class="home-helps__junction" cx="322" cy="352" r="5.5" />
-              <circle class="home-helps__junction" cx="316" cy="468" r="5.5" />
-              <circle class="home-helps__junction" cx="320" cy="584" r="5.5" />
-              <circle class="home-helps__junction" cx="318" cy="700" r="5.5" />
-              <circle class="home-helps__junction" cx="320" cy="816" r="5.5" />
-
-              <circle class="home-helps__trailhead" cx="320" cy="30" r="7" />
-              <circle class="home-helps__trailend" cx="320" cy="908" r="4.5" />
-            </svg>
-
-            <p class="home-helps__trailhead-label" aria-hidden="true">Trailhead</p>
-
-            <article class="home-helps__dest home-helps__dest--1" role="listitem" style="--i:1">
-              <div class="home-helps__sign">
-                <span class="home-helps__peaks" aria-hidden="true">
-                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
-                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
-                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
-                  </svg>
-                </span>
-                <h3 class="home-helps__title">Understand yourself</h3>
-                <p class="home-helps__text">Your sensory patterns and how they shape everyday life.</p>
-              </div>
-            </article>
-            <article class="home-helps__dest home-helps__dest--2" role="listitem" style="--i:2">
-              <div class="home-helps__sign">
-                <span class="home-helps__peaks" aria-hidden="true">
-                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
-                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
-                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
-                  </svg>
-                </span>
-                <h3 class="home-helps__title">Relationships &amp; conflict</h3>
-                <p class="home-helps__text">How different needs show up in communication and conflict.</p>
-              </div>
-            </article>
-            <article class="home-helps__dest home-helps__dest--3" role="listitem" style="--i:3">
-              <div class="home-helps__sign">
-                <span class="home-helps__peaks" aria-hidden="true">
-                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
-                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
-                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
-                  </svg>
-                </span>
-                <h3 class="home-helps__title">Work &amp; burnout</h3>
-                <p class="home-helps__text">Energy, stress, and a work setup that fits you better.</p>
-              </div>
-            </article>
-            <article class="home-helps__dest home-helps__dest--4" role="listitem" style="--i:4">
-              <div class="home-helps__sign">
-                <span class="home-helps__peaks" aria-hidden="true">
-                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
-                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
-                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
-                  </svg>
-                </span>
-                <h3 class="home-helps__title">School &amp; studying</h3>
-                <p class="home-helps__text">What helps you feel regulated and ready to learn.</p>
-              </div>
-            </article>
-            <article class="home-helps__dest home-helps__dest--5" role="listitem" style="--i:5">
-              <div class="home-helps__sign">
-                <span class="home-helps__peaks" aria-hidden="true">
-                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
-                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
-                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
-                  </svg>
-                </span>
-                <h3 class="home-helps__title">Attention &amp; focus</h3>
-                <p class="home-helps__text">What supports concentration — and what gets in the way.</p>
-              </div>
-            </article>
-            <article class="home-helps__dest home-helps__dest--6" role="listitem" style="--i:6">
-              <div class="home-helps__sign">
-                <span class="home-helps__peaks" aria-hidden="true">
-                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
-                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
-                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
-                  </svg>
-                </span>
-                <h3 class="home-helps__title">Stress &amp; anxiety</h3>
-                <p class="home-helps__text">Sensory factors behind overwhelm, and ways to settle.</p>
-              </div>
-            </article>
-            <article class="home-helps__dest home-helps__dest--7" role="listitem" style="--i:7">
-              <div class="home-helps__sign">
-                <span class="home-helps__peaks" aria-hidden="true">
-                  <svg viewBox="0 0 52 22" width="44" height="18" fill="none">
-                    <path d="M4 20 L14 6 L20 14 L28 2 L40 16 L46 10 L50 20 Z" fill="currentColor" opacity="0.28"/>
-                    <path d="M8 20 L18 7 L24 15 L32 3 L48 20 Z" fill="currentColor" opacity="0.55"/>
-                  </svg>
-                </span>
-                <h3 class="home-helps__title">Sensory overload</h3>
-                <p class="home-helps__text">What tips you over — and how to recover.</p>
-              </div>
-            </article>
-
-            <p class="home-helps__trailend-label" aria-hidden="true">Keep walking</p>
-          </div>
-        </div>
-      </section>
+      ${renderHomeTrail()}
 
       <section class="home-pathways" id="pathways" aria-labelledby="pathways-heading">
         <section class="home-profiles" aria-labelledby="profiles-heading">
@@ -7644,6 +7898,7 @@ function renderHome() {
                 name: "For work",
                 text: "Understand the work setup that best supports your productivity, creativity and focus.",
                 image: "assets/profile-adult-work.png",
+                tour: "adult-work",
                 examples: renderViewerReportExample({ respondent: "adult", lifeContext: "work" }),
               })}
               ${renderHomeProfileCard({
@@ -7651,6 +7906,7 @@ function renderHome() {
                 name: "For school",
                 text: "Explore how your sensory needs affect learning, attention and the classroom environment.",
                 image: "assets/profile-teen-school.png",
+                tour: "teen-school",
                 examples: renderViewerReportExample({ respondent: "teen", lifeContext: "homeSchool" }),
               })}
               ${renderHomeProfileCard({
@@ -7658,6 +7914,7 @@ function renderHome() {
                 name: "For home",
                 text: "A self-report focused on home life — rest, routines and your everyday environment.",
                 image: "assets/profile-adult-home.png",
+                tour: "adult-home",
                 examples: renderViewerReportExample({ respondent: "adult", lifeContext: "home" }),
               })}
               ${renderHomeProfileCard({
@@ -7665,6 +7922,7 @@ function renderHome() {
                 name: "For home",
                 text: "Explore your sensory experience at home — rest, family life and the spaces you return to each day.",
                 image: "assets/profile-teen-home.png",
+                tour: "teen-home",
                 examples: renderViewerReportExample({ respondent: "teen", lifeContext: "homeSchool" }),
               })}
               ${renderHomeProfileCard({
@@ -7672,6 +7930,7 @@ function renderHome() {
                 name: "On behalf of a teenager",
                 text: "Understand your teenager’s sensory needs and how to best support them.",
                 image: "assets/profile-parent-flowers.png",
+                tour: "parent",
                 examples: renderViewerReportExample({ respondent: "parent" }),
               })}
               ${renderHomeProfileCard({
@@ -7679,6 +7938,7 @@ function renderHome() {
                 name: "With your partner",
                 text: "Complete your profiles separately, then bring them together to understand your sensory similarities and differences.",
                 image: "assets/profile-couple-view.png",
+                tour: "couple",
                 examples: `${renderViewerReportExample({ respondent: "couple", label: "View sample report" })}${renderViewerReportExample({ coupleMerge: true, label: "View combined sample report" })}`,
               })}
             </div>
@@ -7692,30 +7952,37 @@ function renderHome() {
 
       ${inviteStart}
 
-      <section class="home-section home-contact" aria-labelledby="contact-heading">
-        <img src="assets/logo.png" alt="Soulful Sensory OT logo" class="home-contact__logo" width="120" height="120" />
-        <p class="home-section__eyebrow">Contact</p>
-        <h2 id="contact-heading" class="home-section__title">Get in touch</h2>
-        <p class="home-contact__name">Cayley Alberts</p>
-        <p class="home-contact__role">Occupational Therapist · Soulful Sensory OT</p>
-        <div class="home-contact__links">
-          <a
-            class="home-contact__whatsapp"
-            href="${WHATSAPP_URL}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg class="home-contact__whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
-              <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            <span class="home-contact__whatsapp-text">
-              <span class="home-contact__whatsapp-label">WhatsApp</span>
-              <span class="home-contact__whatsapp-number">068 901 4209</span>
-            </span>
-          </a>
-          <a class="home-contact__email" href="mailto:soulfulsensoryot@gmail.com">soulfulsensoryot@gmail.com</a>
+      <section class="home-contact" aria-labelledby="contact-heading">
+        <div class="home-hero__atmosphere" aria-hidden="true">
+          <div class="home-hero__sunwash"></div>
+          <div class="home-hero__ridge home-hero__ridge--far"></div>
+          <div class="home-hero__ridge home-hero__ridge--near"></div>
         </div>
-        <p class="home-contact__hint">Questions or bookings — message anytime on WhatsApp.</p>
+        <div class="home-contact__content">
+          <img src="assets/logo.png" alt="Soulful Sensory OT logo" class="home-hero__logo home-contact__logo" width="120" height="120" />
+          <p class="home-contact__eyebrow">Contact</p>
+          <h2 id="contact-heading" class="home-contact__title">Get in touch</h2>
+          <p class="home-contact__name">Cayley Alberts</p>
+          <p class="home-contact__role">Occupational Therapist · Soulful Sensory OT</p>
+          <div class="home-contact__links">
+            <a
+              class="home-contact__whatsapp"
+              href="${WHATSAPP_URL}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg class="home-contact__whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+                <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              <span class="home-contact__whatsapp-text">
+                <span class="home-contact__whatsapp-label">WhatsApp</span>
+                <span class="home-contact__whatsapp-number">068 901 4209</span>
+              </span>
+            </a>
+            <a class="home-contact__email" href="mailto:soulfulsensoryot@gmail.com">soulfulsensoryot@gmail.com</a>
+          </div>
+          <p class="home-contact__hint">Questions or bookings — message anytime on WhatsApp.</p>
+        </div>
       </section>
 
       <a
@@ -13432,6 +13699,8 @@ function renderResultsSummary() {
           ? `<div class="results-dashboard-bar no-print">
               <button type="button" class="btn btn-secondary" data-action="back-dashboard">← Back to dashboard</button>
               <button type="button" class="btn btn-secondary" data-action="switch-report-full">View full report</button>
+              <button type="button" class="btn btn-primary" data-action="email-clinician-report">Email report</button>
+              ${state.dashboardNotice ? `<p class="auth__notice dashboard__notice" role="status">${escapeHtml(state.dashboardNotice)}</p>` : ""}
             </div>`
           : ""
       }
@@ -13818,7 +14087,9 @@ function renderResults() {
           ? `<div class="results-dashboard-bar no-print">
               <button type="button" class="btn btn-secondary" data-action="back-dashboard">← Back to dashboard</button>
               <button type="button" class="btn btn-secondary" data-action="switch-report-basic">Preview short report</button>
-              <button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
+              <button type="button" class="btn btn-primary" data-action="email-clinician-report">Email report</button>
+              <button type="button" class="btn btn-secondary" data-action="print">${escapeHtml(copy.print)}</button>
+              ${state.dashboardNotice ? `<p class="auth__notice dashboard__notice" role="status">${escapeHtml(state.dashboardNotice)}</p>` : ""}
             </div>`
           : fromViewer
             ? `<div class="results-dashboard-bar no-print">
@@ -14373,6 +14644,13 @@ function bindEvents() {
   }
 
   app.addEventListener("click", (e) => {
+    const tourBtn = e.target.closest("[data-action='start-tour']");
+    if (tourBtn) {
+      e.preventDefault();
+      if (window.SoulfulTour) window.SoulfulTour.open();
+      return;
+    }
+
     const languageBtn = e.target.closest("[data-language]");
     if (languageBtn) {
       const nextLanguage = languageBtn.dataset.language;
@@ -15246,6 +15524,15 @@ function bindEvents() {
       return;
     }
 
+    if (action === "email-clinician-report") {
+      if (btn.dataset.assessmentId) {
+        emailArchivedReportToClinician(getAssessmentById(btn.dataset.assessmentId));
+      } else {
+        emailOpenReportToClinician();
+      }
+      return;
+    }
+
     if (action === "send-patient-email" || action === "send-patient-email-again") {
       const details = resolvePatientInviteDetails(btn);
       const fromDashboard = Boolean(btn.dataset.assessmentId) && state.dashboardTab === "register";
@@ -15887,6 +16174,13 @@ function bindEvents() {
   });
 
   app.addEventListener("submit", async (e) => {
+    const mockForm = e.target.closest("[data-mock-invite]");
+    if (mockForm) {
+      e.preventDefault();
+      await submitMockInvite(new FormData(mockForm));
+      return;
+    }
+
     const patientForm = e.target.closest("[data-patient-form]");
     if (patientForm) {
       e.preventDefault();
@@ -16282,6 +16576,7 @@ async function bootApp() {
 
   render();
   maybeNotifyExpiringQuestionnaires();
+  if (state.openTourOnBoot && window.SoulfulTour) window.SoulfulTour.open();
 }
 
 bootApp();

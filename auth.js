@@ -723,6 +723,8 @@ function updateUserById(userId, patch) {
     target.questionnaireType = patch.questionnaireType.trim();
   }
   if (typeof patch.lifeContext === "string") target.lifeContext = patch.lifeContext.trim();
+  if (typeof patch.expiresAt === "string") target.expiresAt = patch.expiresAt;
+  if (typeof patch.reportVisibility === "string") target.reportVisibility = patch.reportVisibility.trim();
   if (typeof patch.assessmentId === "string") target.assessmentId = patch.assessmentId;
   if (patch.role) target.role = patch.role;
   if (patch.status) target.status = patch.status;

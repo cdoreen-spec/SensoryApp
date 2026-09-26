@@ -454,6 +454,80 @@ function buildResetUrl(token, origin) {
   return `${base}/?reset=${encodeURIComponent(token)}`;
 }
 
+function isCompleteAssessment(item) {
+  if (!item) return false;
+  if (item.status === "complete") return true;
+  return Boolean(item.completedAt && item.summary);
+}
+
+function completionReport(item) {
+  const summary = item.summary || {};
+  const demo = item.demographics || {};
+  const name = summary.patientName || summary.completerName || demo.name || "Patient";
+  const sections = [
+    {
+      heading: "Patient details",
+      rows: [
+        ["Name", name],
+        ["Email", summary.email || demo.email || ""],
+        ["Age", String(summary.age || demo.age || "")],
+        ["Questionnaire", [item.respondent, item.lifeContext].filter(Boolean).join(" · ")],
+      ],
+    },
+    {
+      heading: "Total score",
+      rows: [
+        ["Sensitive / avoiding", String(summary.sensitive ?? 0)],
+        ["Sensory neutral", String(summary.neutral ?? 0)],
+        ["Sensory seeking", String(summary.seeking ?? 0)],
+      ],
+    },
+    {
+      heading: "Overall pattern",
+      text: [summary.overallLabel, summary.leanHeadline].filter(Boolean).join(" — ") || "—",
+    },
+  ];
+  const domains = Array.isArray(summary.domainProfiles) ? summary.domainProfiles : [];
+  if (domains.length) {
+    sections.push({
+      heading: "Sense by sense",
+      rows: domains.map((domain) => [domain.title || domain.short || domain.id, domain.short || ""]),
+    });
+  }
+  const profile = summary.overallLabel ? ` — ${summary.overallLabel}` : "";
+  return {
+    name,
+    subject: `Completed: ${name} — Sensory screening${profile}`,
+    intro: "A sensory questionnaire has been completed. The summary below is the report. Open the patient register for the full trail profile.",
+    sections,
+  };
+}
+
+async function emailNewlyCompleted(beforeItems, items) {
+  const before = new Map((beforeItems || []).filter((item) => item?.id).map((item) => [item.id, item]));
+  for (const item of items || []) {
+    if (!isCompleteAssessment(item) || item.reportEmailedAt) continue;
+    const previous = before.get(item.id);
+    if (previous && isCompleteAssessment(previous)) continue;
+    const report = completionReport(item);
+    try {
+      await sendGmail({
+        to: clinicianEmail(),
+        subject: report.subject,
+        message: report.intro,
+        name: report.name,
+        kind: "report",
+        intro: report.intro,
+        sections: report.sections,
+      });
+      item.reportEmailedAt = new Date().toISOString();
+      console.log(`Report emailed to ${clinicianEmail()} for ${report.name}`);
+    } catch (err) {
+      console.error(`Report email failed for ${report.name}: ${err.message}`);
+    }
+  }
+}
+
 async function handleLogin(state, body) {
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
@@ -467,8 +541,10 @@ async function handleLogin(state, body) {
   if (user.status === STATUS.disabled) {
     return json(403, { ok: false, error: "This account has been disabled. Contact the admin." });
   }
+  const beforeAssessments = [...(state.assessments.items || [])];
   if (isStaff(user) && body.localSnapshot) {
     mergeSnapshot(state, body.localSnapshot);
+    await emailNewlyCompleted(beforeAssessments, state.assessments.items);
   }
   user.lastLoginAt = new Date().toISOString();
   if (user.temporaryPassword) user.temporaryPassword = "";
@@ -571,8 +647,10 @@ async function handleHydrate(state, body) {
 async function handlePush(state, body) {
   const user = getSessionUser(state, body.sessionToken);
   if (!user) return json(401, { ok: false, error: "Please sign in again." });
+  const beforeAssessments = [...(state.assessments.items || [])];
   if (isStaff(user)) {
     mergeSnapshot(state, body);
+    await emailNewlyCompleted(beforeAssessments, state.assessments.items);
     await saveState(state);
     return json(200, { ok: true, ...staffSnapshot(state) });
   }
@@ -591,6 +669,7 @@ async function handlePush(state, body) {
     );
     state.assessments.items = mergeById(state.assessments.items, allowed);
   }
+  await emailNewlyCompleted(beforeAssessments, state.assessments.items);
   await saveState(state);
   return json(200, { ok: true, ...patientSnapshot(state, user) });
 }

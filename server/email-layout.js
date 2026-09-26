@@ -275,16 +275,16 @@ function buildEmailHtml(options, { publicImages } = {}) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)}</title>
 </head>
-<body style="margin:0;padding:0;background:${COLORS.sage};">
+<body style="margin:0;padding:0;background:#ffffff;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(
     content.hero || title
   )}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.sage};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;">
     <tr>
       <td align="center" style="padding:28px 12px 40px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${COLORS.paper};border-radius:18px;overflow:hidden;box-shadow:0 18px 50px rgba(36,75,56,0.18);">
           <tr>
-            <td align="center" bgcolor="${COLORS.sage}" style="padding:22px 24px 8px;background:${COLORS.sage};">
+            <td align="center" bgcolor="${COLORS.paper}" style="padding:28px 24px 18px;background:${COLORS.paper};">
               <img src="${src.brand}" width="168" alt="Soulful Sensory OT" style="display:block;width:168px;max-width:70%;height:auto;border:0;" />
             </td>
           </tr>

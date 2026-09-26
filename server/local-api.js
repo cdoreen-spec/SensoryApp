@@ -32,6 +32,8 @@ const MIME = {
   ".woff2": "font/woff2",
   ".txt": "text/plain; charset=utf-8",
   ".pdf": "application/pdf",
+  ".mp3": "audio/mpeg",
+  ".mpeg": "audio/mpeg",
 };
 
 const BLOCKED = new Set([".env", ".git", "node_modules", "data", "server"]);
@@ -107,12 +109,57 @@ async function handleApi(req, res, url) {
   }
   const origin = `http://${HOST}:${PORT}`;
   const result = await handleRequest(payload, { origin });
+  if (payload.action === "sendEmail" || result.status >= 400) {
+    console.log(
+      `${payload.action || "request"} ${result.status}${result.body?.error ? ` — ${result.body.error}` : ""}${
+        payload.to ? ` to ${payload.to}` : ""
+      }`
+    );
+  }
   send(res, result.status, result.body, { "Content-Type": "application/json; charset=utf-8" });
+}
+
+async function handleTourAudio(req, res, url) {
+  if (req.method !== "GET") {
+    send(res, 405, { ok: false, fallback: "browser" }, { "Content-Type": "application/json; charset=utf-8" });
+    return;
+  }
+  const { readCachedAudio, writeCachedAudio, synthesizeScene } = require("./tour-tts");
+  const id = String(url.searchParams.get("id") || "");
+  const cached = readCachedAudio(id);
+  if (cached) {
+    send(res, 200, cached, {
+      "Content-Type": "audio/mpeg",
+      "Cache-Control": "public, max-age=31536000",
+    });
+    return;
+  }
+  try {
+    const result = await synthesizeScene(id);
+    if (!result.buffer) {
+      send(
+        res,
+        result.status || 404,
+        { ok: false, fallback: "browser" },
+        { "Content-Type": "application/json; charset=utf-8" }
+      );
+      return;
+    }
+    writeCachedAudio(id, result.buffer);
+    send(res, 200, result.buffer, {
+      "Content-Type": "audio/mpeg",
+      "Cache-Control": "public, max-age=31536000",
+      "X-Tour-Voice": result.provider || "tts",
+    });
+  } catch (err) {
+    console.error("Tour narration failed:", err.message || err);
+    send(res, 502, { ok: false, fallback: "browser" }, { "Content-Type": "application/json; charset=utf-8" });
+  }
 }
 
 function serveStatic(req, res, url) {
   let relative = decodeURIComponent(url.pathname || "/");
-  if (relative === "/") relative = "/index.html";
+  if (relative === "/" || relative === "/tour" || relative === "/tour/") relative = "/index.html";
   const filePath = path.resolve(ROOT, `.${relative}`);
   if (!filePath.startsWith(ROOT + path.sep) && filePath !== ROOT) {
     send(res, 403, "Forbidden");
@@ -143,6 +190,10 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === "/api/ssot" || url.pathname === "/.netlify/functions/ssot") {
       await handleApi(req, res, url);
+      return;
+    }
+    if (url.pathname === "/api/tour-audio") {
+      await handleTourAudio(req, res, url);
       return;
     }
     if (req.method !== "GET" && req.method !== "HEAD") {

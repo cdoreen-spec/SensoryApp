@@ -1,0 +1,401 @@
+/* Narrated tour. Sits over the existing app and uses its colours. */
+
+body.tour-open {
+  overflow: hidden;
+}
+
+.home--viewer .home-hero {
+  min-height: 0;
+  align-items: flex-start;
+  padding: 1.75rem 1.25rem 1.5rem;
+}
+
+.home--viewer .home-hero__logo {
+  width: 84px;
+  height: 84px;
+  margin-bottom: 0.65rem;
+}
+
+.home-tour-cta {
+  margin: 0 auto 1.75rem;
+  padding: 1.2rem 1.15rem 1.3rem;
+  max-width: 40rem;
+  text-align: center;
+  background: var(--warm-white, #fafcf8);
+  border: 1px solid rgba(36, 75, 56, 0.14);
+  border-radius: 22px;
+  box-shadow: 0 16px 40px rgba(36, 75, 56, 0.08);
+}
+
+.home-tour-cta__kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sage-dark, #365b46);
+}
+
+.home-tour-cta__title {
+  margin: 0;
+  font-family: var(--font-display, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.65rem, 5vw, 2.15rem);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--forest, #244b38);
+}
+
+.home-tour-cta__support {
+  margin: 0.7rem auto 1.05rem;
+  max-width: 34rem;
+  color: var(--ink-soft, #4a554c);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.home-tour-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+}
+
+.home-tour-cta__play,
+.home-tour-cta__demo {
+  min-height: 48px;
+  font-size: 1.02rem;
+}
+
+.home-tour-cta__demo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream, #edf2eb);
+  color: var(--ink, #2a332c);
+  font-family: var(--font-sans, "Source Sans 3", system-ui, sans-serif);
+}
+
+.tour__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background:
+    linear-gradient(180deg, rgba(237, 242, 235, 0.2), rgba(237, 242, 235, 0.2)),
+    var(--cream, #edf2eb);
+}
+
+.tour__frame {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  pointer-events: none;
+}
+
+.tour__frame img {
+  max-width: 100%;
+}
+
+.tour__frame.is-completing .question-list .question:nth-child(n + 4) {
+  display: none;
+}
+
+.tour__frame .whatsapp-fab,
+.tour__frame .home-tour-cta,
+.tour__frame.is-dashboard .dashboard__viewer-share,
+.tour__frame.is-dashboard .dashboard__sample-strip {
+  display: none;
+}
+
+.tour__frame.is-dashboard .dashboard,
+.tour__frame.is-dashboard .dash-row,
+.tour__frame.is-dashboard .dash-row__actions {
+  max-width: 100%;
+}
+
+.tour__frame.is-dashboard .dash-row__actions {
+  flex-wrap: wrap;
+}
+
+.tour-hot {
+  position: relative;
+  z-index: 2;
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px var(--forest, #244b38), 0 0 0 10px rgba(120, 146, 123, 0.28);
+  animation: tourPulse 2.6s ease-in-out infinite;
+}
+
+@keyframes tourPulse {
+  0%,
+  100% { box-shadow: 0 0 0 3px var(--forest, #244b38), 0 0 0 8px rgba(120, 146, 123, 0.18); }
+  50% { box-shadow: 0 0 0 3px var(--forest, #244b38), 0 0 0 14px rgba(120, 146, 123, 0.32); }
+}
+
+.tour__line {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tour__line[hidden] {
+  display: none;
+}
+
+.tour__line p {
+  margin: 0;
+  max-width: 36rem;
+  padding: 0.7rem 1rem;
+  border-radius: 16px;
+  background: rgba(250, 252, 248, 0.94);
+  color: var(--forest, #244b38);
+  font-family: var(--font-display, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.15rem, 4.2vw, 1.55rem);
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 10px 28px rgba(36, 75, 56, 0.12);
+}
+
+.tour__sample {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 4;
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(36, 75, 56, 0.9);
+  color: #f6f3ec;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+}
+
+.tour__sample[hidden] {
+  display: none;
+}
+
+.tour__start,
+.tour__end {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  overflow: auto;
+  background:
+    linear-gradient(180deg, rgba(237, 242, 235, 0.2), rgba(237, 242, 235, 0.55)),
+    url("../assets/outeniqua-trail-hero.png") center 30% / cover no-repeat;
+}
+
+.tour__start[hidden],
+.tour__end[hidden] {
+  display: none;
+}
+
+.tour__card {
+  width: min(100%, 34rem);
+  padding: 1.4rem 1.2rem 1.3rem;
+  text-align: center;
+  background: rgba(250, 252, 248, 0.96);
+  border-radius: 22px;
+  box-shadow: 0 18px 50px rgba(36, 75, 56, 0.16);
+}
+
+.tour__logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.tour__kicker {
+  margin: 0.8rem 0 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sage-dark, #365b46);
+}
+
+.tour__card h2 {
+  margin: 0;
+  font-family: var(--font-display, "Source Serif 4", Georgia, serif);
+  font-size: clamp(1.7rem, 5vw, 2.2rem);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--forest, #244b38);
+}
+
+.tour__card p {
+  margin: 0.75rem 0 0;
+  color: var(--ink-soft, #4a554c);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.tour__start-play,
+.tour__end-actions .btn {
+  min-height: 48px;
+  margin-top: 1rem;
+  font-size: 1.05rem;
+}
+
+.tour__end-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+  margin-top: 0.4rem;
+}
+
+.tour__end-actions .btn {
+  margin-top: 0;
+  text-decoration: none;
+}
+
+.tour__loading {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  z-index: 6;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(36, 75, 56, 0.92);
+  color: #f6f3ec;
+  font-size: 0.95rem;
+}
+
+.tour__loading[hidden] {
+  display: none;
+}
+
+.tour__dock {
+  flex: 0 0 auto;
+  padding: 0.65rem 0.85rem calc(0.7rem + env(safe-area-inset-bottom));
+  background: rgba(250, 252, 248, 0.97);
+  border-top: 1px solid rgba(36, 75, 56, 0.12);
+}
+
+.tour__caption {
+  margin: 0 0 0.45rem;
+  min-height: 2.7em;
+  color: var(--forest, #244b38);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.tour__caption[hidden] {
+  display: none;
+}
+
+.tour__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.55rem;
+}
+
+.tour__bar {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(36, 75, 56, 0.12);
+}
+
+.tour__bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--sage-mid, #52775c);
+}
+
+.tour__time {
+  flex: 0 0 auto;
+  color: var(--ink-soft, #4a554c);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.92rem;
+}
+
+.tour__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tour__controls button,
+.tour__controls a {
+  min-height: 44px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(36, 75, 56, 0.16);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--forest, #244b38);
+  font: inherit;
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tour__controls button[aria-pressed="true"] {
+  background: var(--sage-pale, #e4ece2);
+  border-color: var(--sage-mid, #52775c);
+}
+
+.tour__controls button:focus-visible,
+.tour__controls a:focus-visible,
+.tour__start-play:focus-visible,
+.tour__end-actions .btn:focus-visible,
+.home-tour-cta__play:focus-visible,
+.home-tour-cta__demo:focus-visible {
+  outline: 3px solid var(--forest, #244b38);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .home-tour-cta__actions,
+  .tour__end-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-tour-cta__actions .btn,
+  .tour__end-actions .btn {
+    width: 100%;
+  }
+
+  .tour__controls button,
+  .tour__controls a {
+    flex: 1 1 calc(50% - 0.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-hot,
+  .home-hero__content,
+  .home-hero__logo {
+    animation: none;
+  }
+
+  .tour__frame {
+    scroll-behavior: auto;
+  }
+}
