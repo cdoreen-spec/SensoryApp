@@ -8,11 +8,11 @@
       "status": "active",
       "phone": "068 901 4209",
       "notes": "Primary practice administrator",
-      "salt": "1c5b457b22dd2de3b989ee9a38506370",
-      "passwordHash": "01bd5d57faa1b7029d2d388e2da8efeeab85f267f5311255c053ca4d3c2572c9",
+      "salt": "8de816db5fc5c93d82bcb894efdefef2",
+      "passwordHash": "e6de671c7321906844c849a7f3fa7a816c19455a3d43eeeb0789dd4dceabf5f2",
       "createdAt": "2026-09-09T18:49:24.925Z",
-      "lastLoginAt": "2026-09-26T16:01:25.546Z",
-      "updatedAt": "2026-09-26T16:01:25.546Z"
+      "lastLoginAt": "2026-09-27T17:19:16.558Z",
+      "updatedAt": "2026-09-27T17:19:16.558Z"
     },
     {
       "id": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
@@ -28,17 +28,17 @@
       "questionnaireType": "adult",
       "lifeContext": "home",
       "reasonForReferral": "testing",
-      "expiresAt": "2026-09-23T18:51:56.294Z",
+      "expiresAt": "2026-10-10T16:24:18.980Z",
       "inviteToken": "f5c687e987ff5477bbbbeffafc41b7ab",
       "createdByUserId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
       "assessmentId": "0cce500f-2e04-4900-a76a-ea4d75d51ce1",
       "reportVisibility": "none",
-      "temporaryPassword": "soulfulot",
+      "temporaryPassword": "",
       "salt": "5fa630cd73d9e72da38aa5cb1ec135b2",
-      "passwordHash": "89f343f3e430c6895952a5be6967ec07833afdf99ac734e1ad15d23e6a3dbc52",
+      "passwordHash": "22b7a36c21842cdc30ecd5680d088fbbc56365e94c32b1a9b31c803a07a05838",
       "createdAt": "2026-09-09T18:51:56.294Z",
       "lastLoginAt": "2026-09-26T16:01:25.561Z",
-      "updatedAt": "2026-09-26T16:01:25.561Z"
+      "updatedAt": "2026-09-26T16:24:18.980Z"
     },
     {
       "id": "b06f177e-d514-4cc2-b3e7-26b5d3a7f8df",
@@ -59,12 +59,38 @@
       "createdByUserId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
       "assessmentId": null,
       "reportVisibility": "none",
-      "temporaryPassword": "soulfulot",
+      "temporaryPassword": "",
       "salt": "a24628e6dd172e85b1684327ecef55da",
-      "passwordHash": "ea83ab8be1a6289e47fb89f62e2ca594759133bc588c40cfc3c6f380c646dd18",
+      "passwordHash": "20e7e2a381ea180d877e3dc3ed764b9f43b6b4473d6d14802386ab028a9f160c",
       "createdAt": "2026-09-09T20:05:18.282Z",
-      "lastLoginAt": "2026-09-26T16:01:25.562Z",
-      "updatedAt": "2026-09-26T16:01:25.562Z"
+      "lastLoginAt": null,
+      "updatedAt": "2026-09-26T16:01:32.500Z"
+    },
+    {
+      "id": "303cd90d-53d6-4934-b0aa-90561328d510",
+      "name": "Link Test",
+      "firstName": "Link",
+      "surname": "Test",
+      "email": "soulfulsensoryot+linktest@gmail.com",
+      "role": "patient",
+      "status": "active",
+      "phone": "0689014209",
+      "age": "34",
+      "notes": "",
+      "questionnaireType": "adult",
+      "lifeContext": "home",
+      "reasonForReferral": "Testing the emailed questionnaire link",
+      "expiresAt": "2026-10-11T17:22:02.227Z",
+      "inviteToken": "56352eec9626aec0ebb7cde1dc22f213",
+      "createdByUserId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
+      "assessmentId": "eb3fe012-5735-4e8d-ac83-8375d758f3c4",
+      "reportVisibility": "none",
+      "temporaryPassword": "",
+      "salt": "1bd62deb54a2ce7be1c09079827c7486",
+      "passwordHash": "761086ea0d2e960787185e0d2004331bb148dd3651e7f3b429d2ad94b58b2171",
+      "createdAt": "2026-09-27T17:22:02.227Z",
+      "lastLoginAt": "2026-09-27T17:23:24.136Z",
+      "updatedAt": "2026-09-27T17:23:24.136Z"
     }
   ],
   "assessments": {
@@ -73,11 +99,11 @@
       {
         "id": "0cce500f-2e04-4900-a76a-ea4d75d51ce1",
         "version": 1,
-        "status": "complete",
-        "completedAt": "2026-09-09T19:03:47.536Z",
-        "savedAt": "2026-09-09T19:03:47.537Z",
-        "startedAt": "2026-09-09T18:51:56.294Z",
-        "expiresAt": "2026-09-23T18:51:56.294Z",
+        "status": "assigned",
+        "completedAt": null,
+        "savedAt": "2026-09-26T16:24:18.980Z",
+        "startedAt": "2026-09-26T16:24:18.980Z",
+        "expiresAt": "2026-10-10T16:24:18.980Z",
         "expiryNotifiedAt": null,
         "respondent": "adult",
         "language": "en",
@@ -94,65 +120,14 @@
         },
         "reasonForReferral": "testing",
         "answers": {
-          "auditory": [
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            false,
-            false
-          ],
-          "tactile": [
-            true,
-            true,
-            false,
-            true,
-            true,
-            false,
-            true
-          ],
-          "movement": [
-            true,
-            true,
-            true,
-            true,
-            true,
-            false,
-            true,
-            false,
-            false,
-            true,
-            true
-          ],
-          "visual": [
-            false,
-            true,
-            true,
-            false,
-            true,
-            false,
-            true
-          ],
-          "smellTaste": [
-            true,
-            true,
-            true,
-            true,
-            false,
-            false,
-            false,
-            false
-          ],
-          "everyday": [
-            true,
-            false,
-            true,
-            true
-          ]
+          "auditory": [],
+          "tactile": [],
+          "movement": [],
+          "visual": [],
+          "smellTaste": [],
+          "everyday": []
         },
-        "idealSaturday": "sleep in, run and explore then relax",
+        "idealSaturday": "",
         "coupleWork": {
           "employment": null,
           "workLocation": null,
@@ -175,7 +150,7 @@
         "inviteMode": true,
         "patientResultsAccess": "none",
         "patientUserId": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
-        "step": 12,
+        "step": 1,
         "summary": {
           "patientName": "Cayley test",
           "firstName": "Cayley",
@@ -187,28 +162,159 @@
           "completerName": "Cayley test",
           "email": "c.doreen@hotmail.com",
           "age": "32",
-          "overallProfile": "sensitive",
-          "overallLabel": "Sensory Sensitive / Avoiding",
-          "leanHeadline": "You lean toward a lower sensory threshold — noticing input quickly.",
-          "sensitive": 21,
-          "seeking": 8,
-          "neutral": 1,
+          "overallProfile": "",
+          "overallLabel": "",
+          "leanHeadline": "",
+          "sensitive": 0,
+          "seeking": 0,
+          "neutral": 0,
+          "scored": 0,
+          "domainProfiles": [],
+          "progressLabel": "Not started"
+        },
+        "draft": null,
+        "reportGeneratedAt": "2026-09-09T19:03:47.536Z",
+        "therapistInsights": ""
+      },
+      {
+        "id": "eb3fe012-5735-4e8d-ac83-8375d758f3c4",
+        "version": 1,
+        "status": "complete",
+        "completedAt": "2026-09-27T17:24:38.362Z",
+        "savedAt": "2026-09-27T17:24:38.362Z",
+        "startedAt": "2026-09-27T17:22:02.227Z",
+        "expiresAt": "2026-10-11T17:22:02.227Z",
+        "expiryNotifiedAt": null,
+        "respondent": "adult",
+        "language": "en",
+        "lifeContext": "home",
+        "coupleId": null,
+        "couplePartner": null,
+        "demographics": {
+          "name": "Link Test",
+          "age": "34",
+          "email": "soulfulsensoryot+linktest@gmail.com",
+          "occupation": "",
+          "parentName": "",
+          "partnerName": ""
+        },
+        "reasonForReferral": "Testing the emailed questionnaire link",
+        "answers": {
+          "auditory": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "tactile": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "movement": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "visual": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "smellTaste": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "everyday": [
+            false,
+            false,
+            false,
+            false
+          ]
+        },
+        "idealSaturday": "A quiet morning outside, then a calm afternoon at home.",
+        "coupleWork": {
+          "employment": null,
+          "workLocation": null,
+          "workLocationOther": "",
+          "workWith": null,
+          "workWithOther": "",
+          "workingHours": "",
+          "endOfDay": [],
+          "rechargeAfterWork": [],
+          "rechargeAfterWorkOther": "",
+          "rechargingSaturday": "",
+          "isParent": null
+        },
+        "sharingConsent": {
+          "parents": false,
+          "school": false,
+          "treatingTeam": false
+        },
+        "contactPreference": null,
+        "inviteMode": true,
+        "patientResultsAccess": "none",
+        "patientUserId": "303cd90d-53d6-4934-b0aa-90561328d510",
+        "step": 6,
+        "summary": {
+          "patientName": "Link Test",
+          "firstName": "Link",
+          "surname": "Test",
+          "parentName": "",
+          "partnerName": "",
+          "coupleId": null,
+          "couplePartner": null,
+          "completerName": "Link Test",
+          "email": "soulfulsensoryot+linktest@gmail.com",
+          "age": "34",
+          "overallProfile": "neutral",
+          "overallLabel": "Sensory Neutral",
+          "leanHeadline": "The answers sit in a more balanced middle ground.",
+          "sensitive": 0,
+          "seeking": 0,
+          "neutral": 0,
           "scored": 45,
           "domainProfiles": [
             {
               "id": "auditory",
               "title": "Auditory Processing",
-              "short": "Sensitive"
+              "short": "Neutral"
             },
             {
               "id": "tactile",
               "title": "Tactile Processing",
-              "short": "Sensitive"
+              "short": "Neutral"
             },
             {
               "id": "movement",
               "title": "Movement & Body Awareness",
-              "short": "Seeking"
+              "short": "Neutral"
             },
             {
               "id": "visual",
@@ -218,22 +324,22 @@
             {
               "id": "smellTaste",
               "title": "Smell & Taste",
-              "short": "Sensitive"
+              "short": "Neutral"
             },
             {
               "id": "everyday",
               "title": "Everyday Sensory Moments",
-              "short": "Sensitive"
+              "short": "Neutral"
             }
           ]
         },
         "draft": {
           "version": 1,
-          "savedAt": "2026-09-09T19:03:45.339Z",
-          "assessmentId": "0cce500f-2e04-4900-a76a-ea4d75d51ce1",
+          "savedAt": "2026-09-27T17:24:25.205Z",
+          "assessmentId": "eb3fe012-5735-4e8d-ac83-8375d758f3c4",
           "inviteMode": true,
           "patientResultsAccess": "none",
-          "step": 12,
+          "step": 6,
           "language": "en",
           "respondent": "adult",
           "lifeContext": "home",
@@ -250,76 +356,25 @@
           "sharingConsent": {
             "parents": false,
             "school": false,
-            "treatingTeam": true
+            "treatingTeam": false
           },
           "demographics": {
-            "name": "Cayley test",
-            "age": "32",
-            "email": "c.doreen@hotmail.com",
-            "occupation": "OT",
+            "name": "Link Test",
+            "age": "34",
+            "email": "soulfulsensoryot+linktest@gmail.com",
+            "occupation": "",
             "parentName": "",
             "partnerName": ""
           },
           "answers": {
-            "auditory": [
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              false,
-              false
-            ],
-            "tactile": [
-              true,
-              true,
-              false,
-              true,
-              true,
-              false,
-              true
-            ],
-            "movement": [
-              true,
-              true,
-              true,
-              true,
-              true,
-              false,
-              true,
-              false,
-              false,
-              true,
-              true
-            ],
-            "visual": [
-              false,
-              true,
-              true,
-              false,
-              true,
-              false,
-              true
-            ],
-            "smellTaste": [
-              true,
-              true,
-              true,
-              true,
-              false,
-              false,
-              false,
-              false
-            ],
-            "everyday": [
-              true,
-              false,
-              true,
-              true
-            ]
+            "auditory": [],
+            "tactile": [],
+            "movement": [],
+            "visual": [],
+            "smellTaste": [],
+            "everyday": []
           },
-          "idealSaturday": "sleep in, run and explore then relax",
+          "idealSaturday": "",
           "coupleWork": {
             "employment": null,
             "workLocation": null,
@@ -336,8 +391,9 @@
           "sensoryArea": null,
           "contactPreference": null
         },
-        "reportGeneratedAt": "2026-09-09T19:03:47.536Z",
-        "therapistInsights": ""
+        "reportGeneratedAt": "2026-09-27T17:24:38.362Z",
+        "therapistInsights": "",
+        "reportEmailedAt": "2026-09-27T17:24:38.367Z"
       }
     ]
   },
@@ -351,24 +407,5 @@
     "items": []
   },
   "settings": {},
-  "sessions": {
-    "2c752751f4bcf756096bd8e6fd4bab6726cd5f1437eab9b4": {
-      "userId": "1f7d6ac1-9273-4089-8d38-934c32dbaa62",
-      "role": "admin",
-      "createdAt": "2026-09-26T16:01:25.553Z",
-      "expiresAt": "2026-10-10T16:01:25.553Z"
-    },
-    "143d60bc2d5c1d270975bf8d04b0fc8456257c115c5db669": {
-      "userId": "ad70e706-ebad-46bc-a4d0-8d7ec3465d9e",
-      "role": "patient",
-      "createdAt": "2026-09-26T16:01:25.561Z",
-      "expiresAt": "2026-10-10T16:01:25.561Z"
-    },
-    "a76ff2a8687ce25d5ff0a8ed453d588390ee94800b551dce": {
-      "userId": "b06f177e-d514-4cc2-b3e7-26b5d3a7f8df",
-      "role": "patient",
-      "createdAt": "2026-09-26T16:01:25.562Z",
-      "expiresAt": "2026-10-10T16:01:25.562Z"
-    }
-  }
+  "sessions": {}
 }

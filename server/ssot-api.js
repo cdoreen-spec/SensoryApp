@@ -144,6 +144,15 @@ function applySharedPassword(user, password) {
   return changed;
 }
 
+function syncSharedPasswords(state) {
+  const password = sharedAccountPassword();
+  let changed = false;
+  for (const user of state.users || []) {
+    if (applySharedPassword(user, password)) changed = true;
+  }
+  return changed;
+}
+
 function seedAdmin(state) {
   const email = normalizeEmail(process.env.ADMIN_EMAIL || "soulfulsensoryot@gmail.com");
   const password = sharedAccountPassword();
@@ -170,9 +179,7 @@ function seedAdmin(state) {
     existing.status = STATUS.active;
   }
   let changed = !existing;
-  for (const user of state.users || []) {
-    if (applySharedPassword(user, password)) changed = true;
-  }
+  if (syncSharedPasswords(state)) changed = true;
   return changed;
 }
 
@@ -437,6 +444,10 @@ function escapeHtml(value) {
 }
 
 function json(status, body) {
+  const origin = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+  if (origin && body && typeof body === "object" && !Array.isArray(body) && body.publicOrigin == null) {
+    body.publicOrigin = origin;
+  }
   return { status, body };
 }
 
@@ -650,6 +661,7 @@ async function handlePush(state, body) {
   const beforeAssessments = [...(state.assessments.items || [])];
   if (isStaff(user)) {
     mergeSnapshot(state, body);
+    syncSharedPasswords(state);
     await emailNewlyCompleted(beforeAssessments, state.assessments.items);
     await saveState(state);
     return json(200, { ok: true, ...staffSnapshot(state) });

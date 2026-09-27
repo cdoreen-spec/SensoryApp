@@ -649,6 +649,21 @@ function buildAssignedPatientInviteUrl(user, access) {
   return url.toString();
 }
 
+async function passwordForPatientInvite(user, fallbackPassword) {
+  if (typeof SsotBackend !== "undefined" && SsotBackend.isEnabled() && SsotBackend.flush) {
+    try {
+      await SsotBackend.flush();
+    } catch (err) {
+      console.warn("Could not save the patient before emailing the link:", err);
+    }
+  }
+  const synced =
+    typeof Auth !== "undefined" && user?.id
+      ? Auth.listUsers().find((entry) => entry.id === user.id)
+      : null;
+  return synced?.temporaryPassword || fallbackPassword || user?.temporaryPassword || "";
+}
+
 function patientCredentialsPayload(user, password, inviteUrl) {
   const expires = user?.expiresAt
     ? formatQuestionnaireDate(user.expiresAt, "en")
@@ -1064,9 +1079,10 @@ async function submitMockInvite(formData) {
     reportVisibility: result.user?.reportVisibility || reportVisibility,
   };
   createAssignedAssessment(patient);
+  const invitePassword = await passwordForPatientInvite(patient, result.password);
   state.createdPatient = patientCredentialsPayload(
     patient,
-    result.password,
+    invitePassword,
     buildAssignedPatientInviteUrl(patient)
   );
   state.dashboardTab = "create";
@@ -3288,6 +3304,30 @@ function handleLogout() {
   }
 }
 
+function refreshInviteSignIn() {
+  if (!isPatientInvite() || !state.pendingInviteToken || currentAuthUser()) return;
+  const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
+  if (!assigned) return;
+  state.authForm.email = assigned.email || state.authForm.email || "";
+  state.authForm.name = assignedPatientFullName(assigned);
+  state.view = "login";
+  state.authMode = "login";
+  state.authError = null;
+  state.authNotice = "Your therapist created an account for you. Sign in with the email and password they sent.";
+}
+
+function reconnectStaffServerSession() {
+  if (state.tourCapture || state.openTourOnBoot || isPatientInvite()) return;
+  if (typeof SsotBackend === "undefined" || !SsotBackend.isEnabled() || SsotBackend.getSessionToken()) return;
+  if (typeof Auth === "undefined" || !Auth.canAccessClinicianTools()) return;
+  Auth.logoutUser();
+  state.clinicianUnlocked = false;
+  state.view = "login";
+  state.authMode = "login";
+  state.authError = null;
+  state.authNotice = "Sign in again so patient accounts are saved for the emailed questionnaire link.";
+}
+
 function beginInviteAccountGate() {
   resetAuthForm("patient");
   const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
@@ -3581,11 +3621,22 @@ function clearInviteSession() {
   state.pendingInviteToken = null;
 }
 
+function isLocalAppHost(hostname) {
+  const host = String(hostname || "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+}
+
 function getClinicianBaseUrl() {
   const url = new URL(window.location.href);
   url.hash = "";
   url.search = "";
-  return url.toString().replace(/\/$/, "") || window.location.href.split("?")[0];
+  const current = url.toString().replace(/\/$/, "") || window.location.href.split("?")[0];
+  if (!isLocalAppHost(url.hostname)) return current;
+  if (typeof SsotBackend !== "undefined" && typeof SsotBackend.publicAppUrl === "function") {
+    const published = SsotBackend.publicAppUrl();
+    if (published) return published;
+  }
+  return current;
 }
 
 function buildPatientInviteUrl(access) {
@@ -4275,8 +4326,21 @@ function postFormSubmitViaHiddenForm(payload, toEmail = getClinicianEmail()) {
   });
 }
 
+function setCurrentReportEmailedAt(value) {
+  const id = state.viewingArchivedId;
+  if (!id) return;
+  const items = readAssessments();
+  const item = items.find((entry) => entry.id === id);
+  if (!item) return;
+  if (value) item.reportEmailedAt = value;
+  else delete item.reportEmailedAt;
+  writeAssessments(items);
+}
+
 async function sendResultsEmail(report) {
   assertEmailDeliveryContext();
+  const serverSynced = typeof SsotBackend !== "undefined" && SsotBackend.isEnabled();
+  if (serverSynced) setCurrentReportEmailedAt(new Date().toISOString());
 
   const demo = state.demographics;
   const completerName = assessmentCompleterName();
@@ -4292,16 +4356,23 @@ async function sendResultsEmail(report) {
     message: report.text,
   };
 
-  const gmail = await sendViaGmailBackend({
-    to: getClinicianEmail(),
-    subject: payloadBase.subject,
-    message: payloadBase.message,
-    name: payloadBase.name,
-    kind: "report",
-    intro: report.intro,
-    sections: report.sections,
-  });
+  let gmail = null;
+  try {
+    gmail = await sendViaGmailBackend({
+      to: getClinicianEmail(),
+      subject: payloadBase.subject,
+      message: payloadBase.message,
+      name: payloadBase.name,
+      kind: "report",
+      intro: report.intro,
+      sections: report.sections,
+    });
+  } catch (err) {
+    if (serverSynced) setCurrentReportEmailedAt(null);
+    throw err;
+  }
   if (gmail) return gmail;
+  if (serverSynced) setCurrentReportEmailedAt(null);
 
   if (DELIVERY_PROVIDER === "web3forms") {
     if (!WEB3FORMS_KEY) {
@@ -5545,7 +5616,11 @@ function renderMockInviteForm() {
       <p class="prefs-lead">
         Email someone a practice link for one sensory questionnaire. When they finish, the report summary is emailed to ${escapeHtml(getClinicianEmail())}.
       </p>
-      <p class="prefs-hint">The link uses this computer’s address. They need to open it here while the practice server is running, unless the site is hosted online.</p>
+      <p class="prefs-hint">${
+        isLocalAppHost(new URL(getClinicianBaseUrl()).hostname)
+          ? "This link uses this computer’s address. Open the live site when you send it, so the patient can open it from their email."
+          : "The link uses the live site address, so the patient can open it from their email."
+      }</p>
       ${
         state.mockInviteError
           ? `<p class="error-banner" role="alert">${escapeHtml(state.mockInviteError)}</p>`
@@ -16214,9 +16289,10 @@ function bindEvents() {
         return;
       }
       createAssignedAssessment(result.user);
+      const invitePassword = await passwordForPatientInvite(result.user, result.password);
       state.createdPatient = patientCredentialsPayload(
         result.user,
-        result.password,
+        invitePassword,
         buildAssignedPatientInviteUrl(result.user)
       );
       state.dashboardTab = "create";
@@ -16505,6 +16581,8 @@ async function bootApp() {
       console.error("Failed to seed admin account:", err);
     }
   }
+  refreshInviteSignIn();
+  reconnectStaffServerSession();
   // Deep links to admin settings require an active admin session.
   if (state.view === "settings") {
     const user = currentAuthUser();

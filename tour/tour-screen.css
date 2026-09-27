@@ -1,0 +1,41 @@
+/* Styles for the phone screen inside the tour. The iframe is a real narrow
+   viewport, so the existing mobile layout of the app is what shows. */
+
+html,
+body {
+  margin: 0;
+  background: #edf2eb;
+  scroll-behavior: auto;
+}
+
+body.tour-screen .home-tour-cta,
+body.tour-screen .home-viewer,
+body.tour-screen .whatsapp-fab,
+body.tour-screen .dashboard__viewer-share,
+body.tour-screen .dashboard__sample-strip,
+body.tour-screen .account-chrome,
+body.tour-screen .preview-bar {
+  display: none !important;
+}
+
+body.is-completing .question-list .question:nth-child(n + 4) {
+  display: none;
+}
+
+body.tour-screen .dashboard,
+body.tour-screen .dash-row,
+body.tour-screen .dash-row__actions {
+  max-width: 100%;
+}
+
+body.tour-screen .dash-row__actions {
+  flex-wrap: wrap;
+}
+
+.tour-hot {
+  position: relative;
+  z-index: 2;
+  border-radius: 16px;
+  box-shadow: 0 0 0 2px #244b38, 0 0 0 8px rgba(120, 146, 123, 0.22);
+  transition: box-shadow 0.6s ease;
+}

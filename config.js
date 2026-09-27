@@ -16,6 +16,12 @@ const APP_CONFIG = {
    * in `.env` (local) or Netlify environment variables.
    * Use "web3forms" only with an access key, or "none" to turn emails off.
    */
+  /**
+   * Live address of this site (the Cloudflare domain), with no trailing slash.
+   * Invite links use it when the page is opened on localhost.
+   * Leave blank to use the address currently open in the browser.
+   */
+  publicAppUrl: "",
   deliveryProvider: "gmail", // "gmail" | "web3forms" | "none"
   web3formsAccessKey: "",
   /**

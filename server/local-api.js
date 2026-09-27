@@ -58,6 +58,21 @@ function loadDotEnv(filePath) {
   }
 }
 
+function forwardedOrigin(req) {
+  const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  const forwardedHost = String(req.headers["x-forwarded-host"] || req.headers["x-original-host"] || "")
+    .split(",")[0]
+    .trim();
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "https").split(",")[0].trim() || "https";
+  if (forwardedHost && !/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(forwardedHost)) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  const headerOrigin = String(req.headers.origin || "").trim().replace(/\/$/, "");
+  if (headerOrigin && !/localhost|127\.0\.0\.1|\[::1\]/i.test(headerOrigin)) return headerOrigin;
+  return `http://${HOST}:${PORT}`;
+}
+
 function send(res, status, body, headers = {}) {
   const payload = typeof body === "string" || Buffer.isBuffer(body) ? body : JSON.stringify(body);
   res.writeHead(status, {
@@ -107,8 +122,7 @@ async function handleApi(req, res, url) {
     send(res, 400, { ok: false, error: "Invalid JSON" }, { "Content-Type": "application/json; charset=utf-8" });
     return;
   }
-  const origin = `http://${HOST}:${PORT}`;
-  const result = await handleRequest(payload, { origin });
+  const result = await handleRequest(payload, { origin: forwardedOrigin(req) });
   if (payload.action === "sendEmail" || result.status >= 400) {
     console.log(
       `${payload.action || "request"} ${result.status}${result.body?.error ? ` — ${result.body.error}` : ""}${

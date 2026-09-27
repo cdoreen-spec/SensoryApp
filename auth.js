@@ -1,8 +1,8 @@
 /**
  * Soulful Sensory OT — client-side accounts & session
  *
- * Users and settings are stored in this browser's localStorage.
- * For multi-device access later, swap the storage layer for a backend.
+ * Accounts are mirrored to the practice server when it is connected, so a
+ * patient can open an emailed link on their own device.
  */
 
 const AUTH_USERS_KEY = "ssot-users-v1";
@@ -95,8 +95,16 @@ function getUsers() {
   return Array.isArray(users) ? users : [];
 }
 
+function practiceServerReady() {
+  return typeof SsotBackend !== "undefined" && typeof SsotBackend.isEnabled === "function" && SsotBackend.isEnabled();
+}
+
 function saveUsers(users) {
   writeJson(AUTH_USERS_KEY, users);
+  if (typeof state !== "undefined" && state.tourCapture) return;
+  if (typeof SsotBackend !== "undefined" && typeof SsotBackend.noteChanged === "function") {
+    SsotBackend.noteChanged();
+  }
 }
 
 function publicUser(user) {
@@ -184,6 +192,7 @@ function isPatientAssignmentExpired(user) {
 }
 
 async function ensureAdminSeed() {
+  if (practiceServerReady()) return;
   const cfg = authConfig();
   const email = normalizeEmail(cfg.adminEmail || "soulfulsensoryot@gmail.com");
   const password = sharedAccountPassword();
@@ -318,6 +327,29 @@ async function registerUser({ name, email, password, role, phone = "" }) {
     return { ok: false, error: "An account with this email already exists." };
   }
 
+  if (practiceServerReady() && requestedRole === AUTH_ROLES.therapist) {
+    try {
+      const remote = await SsotBackend.register({
+        name: trimmedName,
+        email: normalizedEmail,
+        password: trimmedPassword,
+        role: requestedRole,
+        phone: String(phone || "").trim(),
+      });
+      if (!remote?.ok || !remote.user) {
+        return { ok: false, error: remote?.error || "Could not create the account." };
+      }
+      if (remote.user.id && remote.user.status === AUTH_STATUS.active) setSession(remote.user.id);
+      return {
+        ok: true,
+        user: remote.user,
+        pending: Boolean(remote.pending || remote.user.status === AUTH_STATUS.pending),
+      };
+    } catch (err) {
+      return { ok: false, error: err?.message || "Could not reach the practice server." };
+    }
+  }
+
   const salt = createSalt();
   const passwordHash = await hashPassword(trimmedPassword, salt);
   const needsApproval =
@@ -359,6 +391,18 @@ async function loginUser({ email, password }) {
   await ensureAdminSeed();
   const normalizedEmail = normalizeEmail(email);
   const trimmedPassword = String(password || "");
+  if (practiceServerReady()) {
+    try {
+      const remote = await SsotBackend.login(normalizedEmail, trimmedPassword);
+      if (!remote?.ok || !remote.user?.id) {
+        return { ok: false, error: remote?.error || "Incorrect email or password." };
+      }
+      setSession(remote.user.id);
+      return { ok: true, user: remote.user };
+    } catch (err) {
+      return { ok: false, error: err?.message || "Could not reach the practice server." };
+    }
+  }
   const users = getUsers();
   const user = users.find((u) => u.email === normalizedEmail);
 
@@ -658,6 +702,9 @@ async function completePasswordReset({ token, password }) {
 
 function logoutUser() {
   clearSession();
+  if (typeof SsotBackend !== "undefined" && typeof SsotBackend.clearSession === "function") {
+    SsotBackend.clearSession();
+  }
 }
 
 function listUsers() {

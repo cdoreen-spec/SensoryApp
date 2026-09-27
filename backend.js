@@ -3,6 +3,7 @@
  * Talks to the Netlify function or the local Node API.
  */
 const SSOT_BACKEND_SESSION_KEY = "ssot-backend-session-v1";
+const SSOT_PUBLIC_ORIGIN_KEY = "ssot-public-origin-v1";
 const SSOT_USERS_KEY = "ssot-users-v1";
 const SSOT_SETTINGS_KEY = "ssot-settings-v1";
 const SSOT_ASSESSMENTS_KEY = "ssot-assessments-v1";
@@ -16,27 +17,70 @@ const SsotBackend = (() => {
   let lastError = null;
   let live = null;
 
+  function isLocalHost(hostname) {
+    const host = String(hostname || "").toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+  }
+
+  function rememberPublicOrigin(origin) {
+    const value = String(origin || "").trim().replace(/\/$/, "");
+    if (!value) return;
+    try {
+      const host = new URL(value).hostname;
+      if (isLocalHost(host)) return;
+      localStorage.setItem(SSOT_PUBLIC_ORIGIN_KEY, value);
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  function rememberCurrentOrigin() {
+    if (typeof location === "undefined") return;
+    if (location.protocol !== "http:" && location.protocol !== "https:") return;
+    rememberPublicOrigin(location.origin);
+  }
+
+  function publicAppUrl() {
+    const cfg = typeof APP_CONFIG !== "undefined" ? APP_CONFIG : {};
+    const configured = String(cfg.publicAppUrl || "").trim().replace(/\/$/, "");
+    if (configured) return configured;
+    try {
+      const saved = localStorage.getItem(SSOT_PUBLIC_ORIGIN_KEY) || "";
+      if (saved) return saved.replace(/\/$/, "");
+    } catch (_) {
+      /* ignore */
+    }
+    if (
+      typeof location !== "undefined" &&
+      (location.protocol === "http:" || location.protocol === "https:") &&
+      !isLocalHost(location.hostname)
+    ) {
+      return location.origin;
+    }
+    return "";
+  }
+
   function configuredUrl() {
     const cfg = typeof APP_CONFIG !== "undefined" ? APP_CONFIG : {};
     const value = cfg.backendUrl;
     if (value === false || value === "off") return "";
     if (typeof value === "string" && value.trim()) return value.trim().replace(/\/$/, "");
     if (typeof location === "undefined") return "";
+    if (location.protocol !== "http:" && location.protocol !== "https:") return "";
     const host = location.hostname;
     const port = location.port;
     if (host.endsWith("netlify.app") || host.endsWith("netlify.com") || port === "8888") {
       return `${location.origin}/.netlify/functions/ssot`;
     }
-    if (location.protocol === "https:" && host !== "localhost") {
-      return `${location.origin}/.netlify/functions/ssot`;
-    }
-    if (host === "localhost" || host === "127.0.0.1") {
+    if (isLocalHost(host)) {
       if (port === "8787") return `${location.origin}/api/ssot`;
       if (port === "8080" || port === "5500" || port === "3000") {
         return "http://127.0.0.1:8787/api/ssot";
       }
+      return "";
     }
-    return "";
+    // Cloudflare (or any other public host) in front of the practice server.
+    return `${location.origin}/api/ssot`;
   }
 
   function isEnabled() {
@@ -188,10 +232,12 @@ const SsotBackend = (() => {
       throw err;
     }
     live = true;
+    if (data.publicOrigin) rememberPublicOrigin(data.publicOrigin);
     return data;
   }
 
   async function hydrate() {
+    rememberCurrentOrigin();
     if (!configuredUrl()) return { ok: true, skipped: true };
     try {
       const data = await request({
@@ -248,6 +294,7 @@ const SsotBackend = (() => {
       sessionToken: token,
       ...snapshot,
     });
+    if (data && (data.users || data.assessments)) applySnapshot(data);
     return data;
   }
 
@@ -308,6 +355,11 @@ const SsotBackend = (() => {
     } catch (err) {
       console.warn("Saved screening could not sync before the email was sent:", err);
     }
+    if ((kind || "") === "invite" && !getSessionToken()) {
+      const err = new Error("Sign in again before sending the questionnaire link.");
+      err.code = "server-session";
+      throw err;
+    }
     const data = await request({
       action: "sendEmail",
       sessionToken: getSessionToken(),
@@ -338,7 +390,7 @@ const SsotBackend = (() => {
     return request({
       action: "requestPasswordReset",
       email,
-      origin: typeof location !== "undefined" ? location.origin : "",
+      origin: publicAppUrl() || (typeof location !== "undefined" ? location.origin : ""),
     });
   }
 
@@ -352,6 +404,7 @@ const SsotBackend = (() => {
 
   return {
     isEnabled,
+    publicAppUrl,
     hydrate,
     login,
     register,

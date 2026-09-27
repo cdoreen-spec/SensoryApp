@@ -16,10 +16,12 @@
   const clips = new Map();
 
   let root = null;
+  let phoneEl = null;
   let frame = null;
+  let glideOn = false;
+  let glideTarget = null;
   let lineEl = null;
   let lineText = null;
-  let scrollJob = 0;
   let sampleEl = null;
   let startEl = null;
   let endEl = null;
@@ -184,7 +186,9 @@
     root.setAttribute("aria-label", "SoulfulSensory 2-minute tour");
     root.innerHTML = `
       <div class="tour__stage">
-        <div class="tour__frame" aria-hidden="true"></div>
+        <div class="tour__phone" hidden>
+          <iframe class="tour__screen" title="SoulfulSensory on a phone"></iframe>
+        </div>
         <div class="tour__line" hidden><p></p></div>
         <p class="tour__sample" hidden>Sample profile · not a real patient</p>
         <div class="tour__start">
@@ -225,7 +229,8 @@
       </div>
     `;
     document.body.appendChild(root);
-    frame = root.querySelector(".tour__frame");
+    phoneEl = root.querySelector(".tour__phone");
+    frame = root.querySelector(".tour__screen");
     lineEl = root.querySelector(".tour__line");
     lineText = lineEl.querySelector("p");
     sampleEl = root.querySelector(".tour__sample");
@@ -281,8 +286,11 @@
   function showStart() {
     stopSession();
     group = "";
-    frame.innerHTML = "";
-    frame.className = "tour__frame";
+    glideOn = false;
+    glideTarget = null;
+    if (phoneEl) phoneEl.hidden = true;
+    root.classList.remove("is-end");
+    clearScreen();
     startEl.hidden = false;
     endEl.hidden = true;
     lineEl.hidden = true;
@@ -382,6 +390,7 @@
     };
     session = current;
     root.classList.remove("is-idle");
+    if (phoneEl) phoneEl.hidden = false;
     startEl.hidden = true;
     playBtn.textContent = "Pause";
     playBtn.setAttribute("aria-label", "Pause tour");
@@ -454,58 +463,127 @@
     setProgress(sceneOffset(index) + scene.durationMs);
   }
 
+  function screenDoc() {
+    return frame && frame.contentDocument;
+  }
+
+  function scroller() {
+    const doc = screenDoc();
+    return doc ? doc.scrollingElement || doc.documentElement : null;
+  }
+
+  function clearScreen() {
+    const doc = screenDoc();
+    if (!doc) return;
+    doc.open();
+    doc.write("");
+    doc.close();
+  }
+
+  function bodyClass(kind) {
+    if (kind === "home") return "is-home tour-screen";
+    if (kind === "questions") return "tour-screen is-completing";
+    return "tour-screen";
+  }
+
+  function writeScreen(kind, html) {
+    return new Promise((resolve) => {
+      const doc = screenDoc();
+      if (!doc) return resolve();
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      doc.open();
+      doc.write(`<!DOCTYPE html><html style="scroll-behavior:auto"><head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" />
+        <link data-tour-styles rel="stylesheet" href="styles.css?v=20260926k" />
+        <link rel="stylesheet" href="tour/tour-screen.css?v=20260926y" />
+      </head><body class="${bodyClass(kind)}"><div class="app">${html}</div></body></html>`);
+      doc.close();
+      const link = doc.querySelector("link[data-tour-styles]");
+      if (!link) return done();
+      if (link.sheet) return done();
+      link.addEventListener("load", done, { once: true });
+      link.addEventListener("error", done, { once: true });
+      window.setTimeout(done, 1500);
+    });
+  }
+
   function showScene(scene, html) {
     return new Promise((resolve) => {
       const place = () => {
         endEl.hidden = scene.kind !== "end";
         sampleEl.hidden = !scene.sample;
+        root.classList.toggle("is-end", scene.kind === "end");
+        if (phoneEl) phoneEl.hidden = scene.kind === "end";
         const switched = group !== scene.kind;
         if (scene.kind === "end") {
-          frame.innerHTML = "";
-          frame.className = "tour__frame is-end";
           group = "end";
-          frame.classList.remove("is-fading");
+          if (phoneEl) phoneEl.classList.remove("is-fading");
           applyFraction(scene, 0);
           resolve();
           return;
         }
+        const reveal = () => {
+          if (phoneEl) phoneEl.classList.remove("is-fading");
+          applyFraction(scene, 0);
+          resolve();
+        };
         if (switched) {
-          frame.innerHTML = html;
-          frame.className = `tour__frame is-${scene.kind} is-fading`;
+          glideOn = false;
+          glideTarget = null;
           group = scene.kind;
-          frame.scrollTop = 0;
-          scrollJob += 1;
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              if (!frame) return resolve();
-              frame.classList.remove("is-fading");
-              applyFraction(scene, 0);
-              resolve();
-            });
+          writeScreen(scene.kind, html).then(() => {
+            const box = scroller();
+            if (box) box.scrollTop = 0;
+            requestAnimationFrame(() => requestAnimationFrame(reveal));
           });
           return;
         }
-        frame.className = `tour__frame is-${scene.kind}`;
-        applyFraction(scene, 0);
-        resolve();
+        reveal();
       };
       const changing = Boolean(group) && group !== scene.kind;
       if (!changing || reduced) {
         place();
         return;
       }
-      frame.classList.add("is-fading");
-      window.setTimeout(place, 420);
+      if (phoneEl) phoneEl.classList.add("is-fading");
+      window.setTimeout(place, 380);
     });
   }
 
   function applyFraction(scene, fraction) {
     const at = Math.max(0, Math.min(0.999, fraction));
     if (lineEl) lineEl.hidden = true;
-    (scene.beats || []).forEach((beat, beatIndex) => {
+    (scene.beats || []).forEach((beat) => {
       if (beat.fired || at + 0.001 < beat.at) return;
-      beat.fired = true;
-      runBeat(beat, beatIndex);
+      if (beat.action === "answer") {
+        beat.fired = true;
+        markAnswer(beat.index, beat.value);
+        return;
+      }
+      const doc = screenDoc();
+      const target = beat.target && doc ? queryFirst(doc, beat.target) : null;
+      if (!target) {
+        beat.fired = true;
+        return;
+      }
+      if (beat.action === "highlight" || beat.action === "focus") {
+        doc.querySelectorAll(".tour-hot").forEach((node) => node.classList.remove("tour-hot"));
+        target.classList.add("tour-hot");
+      }
+      if (beat.action === "focus") {
+        beat.fired = true;
+        focusOn(target);
+        return;
+      }
+      if (beat.action === "highlight" || beat.action === "scroll") {
+        if (scrollTo(target)) beat.fired = true;
+      }
     });
   }
 
@@ -515,20 +593,6 @@
       if (item.at <= fraction + 0.001) chosen = item;
     });
     return chosen;
-  }
-
-  function runBeat(beat) {
-    if (beat.action === "answer") {
-      markAnswer(beat.index, beat.value);
-      return;
-    }
-    const target = beat.target ? queryFirst(frame, beat.target) : null;
-    if (!target) return;
-    if (beat.action === "highlight" || beat.action === "scroll") {
-      frame.querySelectorAll(".tour-hot").forEach((node) => node.classList.remove("tour-hot"));
-      if (beat.action === "highlight") target.classList.add("tour-hot");
-      scrollTo(target);
-    }
   }
 
   function queryFirst(scope, selector) {
@@ -541,47 +605,63 @@
   }
 
   function scrollTo(node) {
-    if (!node || !frame) return;
-    const frameBox = frame.getBoundingClientRect();
+    const box = scroller();
+    if (!node || !box || !frame) return;
+    const viewH = frame.clientHeight || box.clientHeight;
     const nodeBox = node.getBoundingClientRect();
-    const padTop = Math.max(64, frame.clientHeight * 0.18);
-    const padBottom = Math.max(80, frame.clientHeight * 0.2);
-    const topIn = nodeBox.top - frameBox.top;
-    const bottomIn = nodeBox.bottom - frameBox.top;
-    const max = Math.max(0, frame.scrollHeight - frame.clientHeight);
-    const desired = frame.scrollTop + topIn - padTop;
+    const padTop = Math.max(24, viewH * 0.1);
+    const topIn = nodeBox.top;
+    const bottomIn = nodeBox.bottom;
+    const max = Math.max(0, box.scrollHeight - viewH);
+    const desired = box.scrollTop + topIn - padTop;
     const target = Math.max(0, Math.min(desired, max));
-    const alreadyComfortable = topIn >= padTop * 0.55 && bottomIn <= frame.clientHeight - padBottom;
-    if (alreadyComfortable || Math.abs(target - frame.scrollTop) < 16) return;
+    const placed = topIn >= 8 && topIn < viewH * 0.28 && bottomIn < viewH - 8;
+    if (placed || Math.abs(target - box.scrollTop) < 8) return true;
     if (reduced) {
-      frame.scrollTop = target;
+      box.scrollTop = target;
+      return true;
+    }
+    const diff = target - box.scrollTop;
+    box.scrollTop += Math.abs(diff) < 48 ? diff : diff * 0.14;
+    return Math.abs(target - box.scrollTop) < 12;
+  }
+
+  function focusOn(node) {
+    const box = scroller();
+    if (!node || !box || !frame) return;
+    const viewH = frame.clientHeight || box.clientHeight;
+    const topIn = node.getBoundingClientRect().top;
+    if (topIn >= 8 && topIn < viewH * 0.38) return;
+    glideOn = false;
+    glideTarget = null;
+    const land = () => {
+      const live = scroller();
+      if (!live || !node) return;
+      const padTop = Math.max(20, (frame.clientHeight || live.clientHeight) * 0.08);
+      const max = Math.max(0, live.scrollHeight - (frame.clientHeight || live.clientHeight));
+      live.scrollTop = Math.max(0, Math.min(live.scrollTop + node.getBoundingClientRect().top - padTop, max));
+      if (phoneEl) phoneEl.classList.remove("is-fading");
+    };
+    if (reduced || !phoneEl) {
+      land();
       return;
     }
-    const job = ++scrollJob;
-    const from = frame.scrollTop;
-    const distance = target - from;
-    const duration = Math.min(2000, Math.max(1100, 720 + Math.abs(distance) * 0.42));
-    const start = performance.now();
-    const step = (now) => {
-      if (job !== scrollJob || !frame) return;
-      const t = Math.min(1, (now - start) / duration);
-      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      frame.scrollTop = from + distance * eased;
-      if (t < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
+    phoneEl.classList.add("is-fading");
+    window.setTimeout(land, 280);
   }
 
   function markAnswer(index, value) {
-    const questions = frame.querySelectorAll(".question-list .question");
+    const doc = screenDoc();
+    if (!doc) return;
+    const questions = doc.querySelectorAll(".question-list .question");
     const question = questions[index];
     if (!question) return;
     question.querySelectorAll("button").forEach((button) => button.classList.remove("selected"));
     const chosen = question.querySelector(`[data-answer="${value}"]`);
     if (chosen) chosen.classList.add("selected");
-    const text = frame.querySelector(".question-progress__text");
+    const text = doc.querySelector(".question-progress__text");
     if (text) text.textContent = text.textContent.replace(/^\d+/, String(index + 1));
-    const fill = frame.querySelector(".question-progress__fill");
+    const fill = doc.querySelector(".question-progress__fill");
     if (fill && questions.length) {
       fill.style.width = `${Math.round(((index + 1) / questions.length) * 100)}%`;
     }
@@ -711,7 +791,8 @@
   }
 
   function speakScene(current, scene, visual) {
-    const chunks = sentences(scene.narration);
+    const spoken = String(scene.narration || "").replace(/\s+/g, " ").trim();
+    const chunks = spoken ? [spoken] : [];
     if (!chunks.length || !window.speechSynthesis) return Promise.resolve();
     const voice = pickVoice();
     if (root && voice) root.dataset.voice = `${voice.name} (${voice.lang})`;
@@ -734,12 +815,13 @@
         const total = Math.max(1, chunks.join(" ").length);
         const utterance = new SpeechSynthesisUtterance(chunk);
         const mine = ++token;
-        utterance.rate = 0.86;
+        utterance.rate = 0.96;
         utterance.pitch = 1;
         utterance.lang = voice && voice.lang ? voice.lang : "en-ZA";
         if (voice) utterance.voice = voice;
         const started = performance.now();
-        const expected = Math.max(1200, (scene.durationMs * chunk.length) / total);
+        const words = chunk.split(" ").filter(Boolean).length;
+        const expected = Math.max(4000, words * 420);
         let watching = true;
         const follow = () => {
           if (!watching || mine !== token || !current.active || current.paused) return;
@@ -756,10 +838,6 @@
             visual.setNarration(Math.min(1, (before + chunk.length + 1) / total));
           }
           index += 1;
-          if (ok && index < chunks.length && current.active && !current.paused && !current.muted) {
-            window.setTimeout(next, 320);
-            return;
-          }
           next();
         };
         utterance.onend = () => done(true);
