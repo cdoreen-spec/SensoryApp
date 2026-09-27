@@ -3510,8 +3510,10 @@ function clearInviteSession() {
 }
 
 function isLocalAppHost(hostname) {
-  const host = String(hostname || "").toLowerCase();
-  return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+  const host = String(hostname || "").toLowerCase().replace(/^\[|\]$/g, "");
+  if (host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "0.0.0.0") return true;
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
+  return host.includes(":") && /^[0-9a-f:]+$/i.test(host);
 }
 
 function getClinicianBaseUrl() {

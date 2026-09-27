@@ -443,20 +443,41 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-function isLoopbackOrigin(value) {
+function isNumericHost(hostname) {
+  const host = String(hostname || "").toLowerCase().replace(/^\[|\]$/g, "");
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
+  return host.includes(":") && /^[0-9a-f:]+$/i.test(host);
+}
+
+function isPublishableOrigin(value) {
   try {
     const host = new URL(String(value || "")).hostname.toLowerCase();
-    return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]" || host === "0.0.0.0";
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]" || host === "0.0.0.0") {
+      return false;
+    }
+    return !isNumericHost(host);
   } catch (_) {
-    return true;
+    return false;
   }
 }
 
-function replaceLoopbackOrigin(value, origin) {
+function replacePrivateOrigin(value, origin) {
   const next = String(origin || process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
   const raw = String(value || "");
-  if (!next || isLoopbackOrigin(next) || !raw) return raw;
-  return raw.replace(/https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)(?::\d+)?/gi, next);
+  if (!isPublishableOrigin(next) || !raw) return raw;
+  return raw.replace(/https?:\/\/[^\s<>"']+/gi, (match) => {
+    try {
+      const url = new URL(match);
+      if (isPublishableOrigin(url.origin)) return match;
+      const rebuilt = new URL(next);
+      rebuilt.pathname = url.pathname;
+      rebuilt.search = url.search;
+      rebuilt.hash = url.hash;
+      return rebuilt.toString();
+    } catch (_) {
+      return match;
+    }
+  });
 }
 
 function json(status, body, origin) {
@@ -464,7 +485,7 @@ function json(status, body, origin) {
   const published = fromEnv || String(origin || "").trim().replace(/\/$/, "");
   if (
     published &&
-    !isLoopbackOrigin(published) &&
+    isPublishableOrigin(published) &&
     body &&
     typeof body === "object" &&
     !Array.isArray(body) &&
@@ -735,11 +756,11 @@ async function handleSendEmail(state, body, origin) {
   const result = await sendGmail({
     to,
     subject: body.subject,
-    message: replaceLoopbackOrigin(body.message, origin),
+    message: replacePrivateOrigin(body.message, origin),
     name: body.name,
     kind: body.kind,
-    inviteUrl: replaceLoopbackOrigin(body.inviteUrl, origin),
-    resetUrl: replaceLoopbackOrigin(body.resetUrl, origin),
+    inviteUrl: replacePrivateOrigin(body.inviteUrl, origin),
+    resetUrl: replacePrivateOrigin(body.resetUrl, origin),
     questionnaireType: body.questionnaireType,
     expiresAt: body.expiresAt,
     email: body.email || to,
@@ -843,7 +864,7 @@ async function handleRequest(body, { origin } = {}) {
     const published = fromEnv || String(origin || "").trim().replace(/\/$/, "");
     if (
       published &&
-      !isLoopbackOrigin(published) &&
+      isPublishableOrigin(published) &&
       result?.body &&
       typeof result.body === "object" &&
       !Array.isArray(result.body) &&

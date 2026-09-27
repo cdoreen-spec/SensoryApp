@@ -18,8 +18,10 @@ const SsotBackend = (() => {
   let live = null;
 
   function isLocalHost(hostname) {
-    const host = String(hostname || "").toLowerCase();
-    return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+    const host = String(hostname || "").toLowerCase().replace(/^\[|\]$/g, "");
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "0.0.0.0") return true;
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
+    return host.includes(":") && /^[0-9a-f:]+$/i.test(host);
   }
 
   function rememberPublicOrigin(origin) {
@@ -46,7 +48,11 @@ const SsotBackend = (() => {
     if (configured) return configured;
     try {
       const saved = localStorage.getItem(SSOT_PUBLIC_ORIGIN_KEY) || "";
-      if (saved) return saved.replace(/\/$/, "");
+      if (saved) {
+        const host = new URL(saved).hostname;
+        if (isLocalHost(host)) localStorage.removeItem(SSOT_PUBLIC_ORIGIN_KEY);
+        else return saved.replace(/\/$/, "");
+      }
     } catch (_) {
       /* ignore */
     }

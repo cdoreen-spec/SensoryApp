@@ -64,6 +64,28 @@ function isLoopbackHost(hostname) {
   return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]" || host === "0.0.0.0";
 }
 
+function isNumericHost(hostname) {
+  const host = String(hostname || "").toLowerCase().replace(/^\[|\]$/g, "");
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
+  return host.includes(":") && /^[0-9a-f:]+$/i.test(host);
+}
+
+function publishedOrigin() {
+  const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+  if (!fromEnv) return "";
+  try {
+    const host = new URL(fromEnv).hostname;
+    if (isLoopbackHost(host) || isNumericHost(host)) return "";
+    return fromEnv;
+  } catch (_) {
+    return "";
+  }
+}
+
+function hostnameFromHeader(value) {
+  return String(value || "").split(",")[0].trim().replace(/:\d+$/, "").toLowerCase();
+}
+
 function lanOrigin() {
   const nets = os.networkInterfaces();
   for (const list of Object.values(nets)) {
@@ -76,24 +98,34 @@ function lanOrigin() {
 }
 
 function forwardedOrigin(req) {
-  const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+  const fromEnv = publishedOrigin();
   if (fromEnv) return fromEnv;
-  const forwardedHost = String(req.headers["x-forwarded-host"] || req.headers["x-original-host"] || "")
-    .split(",")[0]
-    .trim();
+  const forwardedHost = hostnameFromHeader(req.headers["x-forwarded-host"] || req.headers["x-original-host"]);
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "https").split(",")[0].trim() || "https";
-  if (forwardedHost && !isLoopbackHost(forwardedHost.split(":")[0])) {
+  if (forwardedHost && !isLoopbackHost(forwardedHost) && !isNumericHost(forwardedHost)) {
     return `${forwardedProto}://${forwardedHost}`;
   }
   const headerOrigin = String(req.headers.origin || "").trim().replace(/\/$/, "");
   if (headerOrigin) {
     try {
-      if (!isLoopbackHost(new URL(headerOrigin).hostname)) return headerOrigin;
+      const host = new URL(headerOrigin).hostname;
+      if (!isLoopbackHost(host) && !isNumericHost(host)) return headerOrigin;
     } catch (_) {
       /* ignore */
     }
   }
-  return lanOrigin();
+  return "";
+}
+
+function redirectNumericHost(req, res) {
+  const published = publishedOrigin();
+  if (!published || (req.method !== "GET" && req.method !== "HEAD")) return false;
+  const host = hostnameFromHeader(req.headers.host);
+  if (!isNumericHost(host) && !isLoopbackHost(host)) return false;
+  const dest = new URL(req.url || "/", published);
+  res.writeHead(302, { Location: dest.toString() });
+  res.end();
+  return true;
 }
 
 function send(res, status, body, headers = {}) {
@@ -220,6 +252,7 @@ function serveStatic(req, res, url) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${HOST}:${PORT}`);
   try {
+    if (!String(url.pathname || "").startsWith("/api/") && redirectNumericHost(req, res)) return;
     if (url.pathname === "/email-preview") {
       const kind = url.searchParams.get("kind") || "invite";
       send(res, 200, previewEmailHtml(kind), { "Content-Type": "text/html; charset=utf-8" });
