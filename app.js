@@ -104,14 +104,6 @@ const state = {
   },
   patientFormError: null,
   patientFormBusy: false,
-  mockInviteForm: {
-    firstName: "",
-    surname: "",
-    email: "",
-    questionnaireType: "adult-home",
-  },
-  mockInviteError: null,
-  mockInviteBusy: false,
   createdPatient: null,
   patientSendStatus: null, // null | sending | sent | error
   patientSendError: null,
@@ -998,107 +990,6 @@ async function emailOpenReportToClinician() {
     state.dashboardNotice = classified.message;
   }
   render();
-}
-
-async function submitMockInvite(formData) {
-  if (typeof Auth === "undefined" || !Auth.createPatientAccount) return;
-  const firstName = String(formData.get("firstName") || "").trim();
-  const surname = String(formData.get("surname") || "").trim();
-  const email = String(formData.get("email") || "").trim();
-  const questionnaireType = String(formData.get("patient-questionnaire-type") || "adult-home");
-  state.mockInviteForm = { firstName, surname, email, questionnaireType };
-  state.mockInviteError = null;
-  state.mockInviteBusy = true;
-  render();
-
-  const assignment = parseQuestionnaireAssignment(questionnaireType);
-  const reasonForReferral = "Mock sensory questionnaire";
-  const phone = "0000000000";
-  const age = "30";
-  const expiresAt = addDaysIso(new Date().toISOString(), QUESTIONNAIRE_EXPIRY_DAYS);
-  const reportVisibility = readTherapistPrefs().reportVisibility;
-  const normalizedEmail = email.toLowerCase();
-  const existing =
-    typeof Auth.listUsers === "function"
-      ? Auth.listUsers().find((user) => String(user.email || "").toLowerCase() === normalizedEmail)
-      : null;
-
-  let result;
-  if (existing && existing.role !== "patient") {
-    state.mockInviteBusy = false;
-    state.mockInviteError = "That email already belongs to a therapist or admin account.";
-    render({ scrollToTop: true });
-    return;
-  }
-
-  if (existing) {
-    const updated = Auth.updateUserById(existing.id, {
-      firstName,
-      surname,
-      name: [firstName, surname].filter(Boolean).join(" "),
-      phone,
-      age,
-      questionnaireType: assignment?.respondent || existing.questionnaireType,
-      lifeContext: assignment?.lifeContext || "",
-      reasonForReferral,
-      expiresAt,
-      reportVisibility,
-    });
-    if (!updated.ok) {
-      state.mockInviteBusy = false;
-      state.mockInviteError = updated.error || "Could not refresh this mock invite.";
-      render({ scrollToTop: true });
-      return;
-    }
-    result = await Auth.resetPatientPassword(existing.id);
-  } else {
-    result = await Auth.createPatientAccount({
-      firstName,
-      surname,
-      email,
-      phone,
-      age,
-      questionnaireType,
-      reasonForReferral,
-      createdByUserId: currentAuthUser()?.id || null,
-      reportVisibility,
-      expiryDays: QUESTIONNAIRE_EXPIRY_DAYS,
-    });
-  }
-
-  state.mockInviteBusy = false;
-  if (!result?.ok) {
-    state.mockInviteError = result?.error || "Could not create the mock invite.";
-    render({ scrollToTop: true });
-    return;
-  }
-
-  const patient = {
-    ...result.user,
-    expiresAt: result.user?.expiresAt || expiresAt,
-    reportVisibility: result.user?.reportVisibility || reportVisibility,
-  };
-  createAssignedAssessment(patient);
-  const invitePassword = await passwordForPatientInvite(patient, result.password);
-  state.createdPatient = patientCredentialsPayload(
-    patient,
-    invitePassword,
-    buildAssignedPatientInviteUrl(patient)
-  );
-  state.dashboardTab = "create";
-  state.patientSendStatus = null;
-  state.patientSendError = null;
-  state.dashboardNotice = `Mock invite ready for ${assignedPatientFullName(patient)}. The report will be emailed to ${getClinicianEmail()} when they finish.`;
-  state.mockInviteForm = {
-    firstName: "",
-    surname: "",
-    email: "",
-    questionnaireType: "adult-home",
-  };
-  render({ scrollToTop: true });
-  await deliverPatientInviteEmail(state.createdPatient, {
-    noticePrefix: "Mock invite sent.",
-  });
 }
 
 async function handleSendPatientInviteEmail(details, { fromDashboard = false } = {}) {
@@ -2755,7 +2646,6 @@ const ADMIN_VIEW_AS_OPTIONS = Object.freeze([
   { id: "admin", label: "Admin" },
   { id: "therapist", label: "Therapist" },
   { id: "patient", label: "Patient" },
-  { id: "demo", label: "Demo" },
 ]);
 
 function isPlatformAdmin() {
@@ -2877,9 +2767,7 @@ function applyAdminPreview(mode) {
     state.view = "home";
     state.step = 0;
     state.showIntroModal = false;
-    return;
   }
-  enterViewerMode();
 }
 
 function copyViewerLink() {
@@ -3665,14 +3553,6 @@ function isTourLink() {
 
 function readInviteFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("viewer") === "1" || isTourLink()) {
-    state.viewerMode = true;
-    state.view = "home";
-    state.step = 0;
-    state.showIntroModal = false;
-    if (isTourLink()) state.openTourOnBoot = true;
-    return;
-  }
   if (params.get("settings") === "1" || params.get("admin") === "1") {
     state.view = "settings";
     return;
@@ -5220,7 +5100,6 @@ function renderClinicianShare() {
           <button type="button" class="btn btn-secondary" data-action="open-dashboard">Patient dashboard</button>
           <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
         </div>
-        ${renderSampleReportPreviewControls()}
       </section>
     </div>
     `;
@@ -5602,64 +5481,6 @@ function renderCreatedPatientSuccess(details) {
   `;
 }
 
-function renderMockInviteForm() {
-  const form = state.mockInviteForm || {
-    firstName: "",
-    surname: "",
-    email: "",
-    questionnaireType: "adult-home",
-  };
-  const type = form.questionnaireType || "adult-home";
-  return `
-    <section class="dashboard__panel patient-create" aria-labelledby="mock-invite-heading">
-      <h2 id="mock-invite-heading" class="dashboard__panel-title">Send a mock invite</h2>
-      <p class="prefs-lead">
-        Email someone a practice link for one sensory questionnaire. When they finish, the report summary is emailed to ${escapeHtml(getClinicianEmail())}.
-      </p>
-      <p class="prefs-hint">${
-        isLocalAppHost(new URL(getClinicianBaseUrl()).hostname)
-          ? "This link uses this computer’s address. Open the live site when you send it, so the patient can open it from their email."
-          : "The link uses the live site address, so the patient can open it from their email."
-      }</p>
-      ${
-        state.mockInviteError
-          ? `<p class="error-banner" role="alert">${escapeHtml(state.mockInviteError)}</p>`
-          : ""
-      }
-      <form class="patient-create__form" data-mock-invite>
-        <div class="patient-create__grid">
-          <label class="auth__field">
-            <span>Name</span>
-            <input type="text" name="firstName" autocomplete="given-name" required value="${escapeHtml(form.firstName)}" />
-          </label>
-          <label class="auth__field">
-            <span>Surname</span>
-            <input type="text" name="surname" autocomplete="family-name" required value="${escapeHtml(form.surname)}" />
-          </label>
-          <label class="auth__field">
-            <span>Email address</span>
-            <input type="email" name="email" autocomplete="email" required value="${escapeHtml(form.email)}" />
-          </label>
-        </div>
-        <label class="auth__field">
-          <span>Questionnaire type</span>
-          <select name="patient-questionnaire-type" required>
-            ${QUESTIONNAIRE_ASSIGNMENTS.map(
-              (option) =>
-                `<option value="${escapeHtml(option.id)}" ${type === option.id ? "selected" : ""}>${escapeHtml(option.title)}</option>`
-            ).join("")}
-          </select>
-        </label>
-        <div class="clinician__actions">
-          <button type="submit" class="btn btn-primary" ${state.mockInviteBusy ? "disabled" : ""}>
-            ${state.mockInviteBusy ? "Sending invite…" : "Send mock invite"}
-          </button>
-        </div>
-      </form>
-    </section>
-  `;
-}
-
 function renderCreatePatientForm() {
   const form = state.patientForm || emptyPatientForm();
   const type = form.questionnaireType || "adult-home";
@@ -5864,16 +5685,6 @@ function renderDashboard() {
         </div>
       </section>
 
-      ${renderViewerSharePanel()}
-
-      ${
-        isSampleReportPreviewEnabled()
-          ? `<section class="dashboard__sample-strip" aria-label="Sample report preview">
-              ${renderSampleReportPreviewControls()}
-            </section>`
-          : ""
-      }
-
       ${
         state.dashboardNotice
           ? `<p class="auth__notice dashboard__notice" role="status">${escapeHtml(state.dashboardNotice)}</p>`
@@ -5887,7 +5698,7 @@ function renderDashboard() {
             ? typeof Auth !== "undefined" && Auth.canAccessClinicianTools()
               ? state.createdPatient
                 ? renderCreatedPatientSuccess(state.createdPatient)
-                : `${renderMockInviteForm()}${renderCreatePatientForm()}`
+                : renderCreatePatientForm()
               : `<section class="dashboard__panel patient-create">
                   <h2 class="dashboard__panel-title">Sign in to add a patient</h2>
                   <p class="prefs-lead">Patient accounts can only be created by a signed-in therapist or admin.</p>
@@ -5959,11 +5770,6 @@ function renderDashboard() {
                 <div class="dashboard__empty-actions">
                   <button type="button" class="btn btn-primary" data-action="open-create-patient">Add a patient</button>
                 </div>
-                ${
-                  isSampleReportPreviewEnabled()
-                    ? `<p class="dashboard__empty-hint">Or use <strong>Skip questionnaire · sample report</strong> above to open a full report while you build the app.</p>`
-                    : ""
-                }
               </div>`
             : items.length === 0
               ? `<div class="dashboard__empty dashboard__empty--compact">
@@ -7840,33 +7646,7 @@ function renderHome() {
   const signedIn = !!currentAuthUser();
   const accountSection = patientLanding
     ? ""
-    : viewer
-      ? `
-      <section class="home-section home-viewer" aria-labelledby="viewer-heading">
-        <div class="home-tour-cta">
-          <p class="home-tour-cta__kicker">For referring therapists</p>
-          <h2 class="home-tour-cta__title">Take the 2-minute tour</h2>
-          <p class="home-tour-cta__support">New to SoulfulSensory? See how sensory profiling works in around 2 minutes.</p>
-          <div class="home-tour-cta__actions">
-            <button type="button" class="btn btn-primary home-tour-cta__play" data-action="start-tour">▶ Take the 2-minute tour</button>
-            <a class="btn btn-secondary home-tour-cta__demo" href="#profiles-heading">Explore the full demo</a>
-          </div>
-        </div>
-        <p class="home-section__eyebrow">For referring therapists</p>
-        <h2 id="viewer-heading" class="home-section__title">Demo view</h2>
-        <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
-        <p class="home-section__lead">
-          This is a walk-through of Soulful Sensory OT’s screening app — the home page patients see, the questionnaire types you can refer for, and an example of each report. Nothing you open here is saved or emailed.
-        </p>
-        ${
-          state.viewerNotice
-            ? `<p class="home-viewer__notice" role="status">${escapeHtml(state.viewerNotice)}</p>`
-            : ""
-        }
-        <p class="home-viewer__next">Scroll to <a href="#profiles-heading">questionnaire options</a> to open a sample report, or browse how the sensory pathway is introduced.</p>
-      </section>
-    `
-      : `
+    : `
       <section class="home-section home-account" aria-labelledby="account-heading">
         <p class="home-section__eyebrow">${signedIn ? "Your account" : "Get started"}</p>
         <h2 id="account-heading" class="home-section__title">${signedIn ? "Welcome back" : "Sign in"}</h2>
@@ -7902,9 +7682,7 @@ function renderHome() {
           </div>`
           }
           <a class="home-hero__scroll" href="#ot-heading">${escapeHtml(copy.inviteHomeReadMore)}</a>`
-              : viewer
-                ? `<p class="home-hero__tagline">Exploring and understanding your sensory world.</p>`
-                : `<p class="home-hero__tagline">${
+              : `<p class="home-hero__tagline">${
                     isPainPathwayEnabled()
                       ? "Gentle pathways into sensory understanding, and into living more fully with pain."
                       : "Exploring and understanding your sensory world."
@@ -7915,14 +7693,6 @@ function renderHome() {
       </section>
 
       ${accountSection}
-
-      ${
-        !patientLanding && !viewer && isSampleReportPreviewEnabled() && canAccessTherapistDashboard()
-          ? `<section class="home-section home-sample-preview" aria-label="Sample report preview">
-              ${renderSampleReportPreviewControls()}
-            </section>`
-          : ""
-      }
 
       <section class="home-section home-ot" aria-labelledby="ot-heading">
         <p class="home-section__eyebrow">About the practice</p>
@@ -7943,85 +7713,6 @@ function renderHome() {
       ${renderHomeTrail()}
 
       <section class="home-pathways" id="pathways" aria-labelledby="pathways-heading">
-        <section class="home-profiles" aria-labelledby="profiles-heading">
-          <div class="home-profiles__banner">
-            <img
-              src="assets/profile-banner-meadow.png"
-              alt=""
-              class="home-profiles__banner-image"
-              width="1376"
-              height="768"
-              decoding="async"
-            />
-            <svg class="home-profiles__tear" viewBox="0 0 1440 56" preserveAspectRatio="none" aria-hidden="true">
-              <path fill="#f6f3ec" d="M0 34c70-16 120 14 190-2 72-16 110 18 190 2 78-16 120 20 200 2 80-18 130 16 210 0 78-16 130 18 210 2 82-18 140 16 220 0 70-14 120 12 220-4V56H0Z"/>
-            </svg>
-          </div>
-          <div class="home-profiles__inner">
-            <header class="home-profiles__intro">
-              <h2 id="profiles-heading" class="home-profiles__title">Discover your sensory preferences</h2>
-              <p class="home-profiles__lead">See where you may be getting too much — or too little — sensory input, and discover practical strategies for home, work or school.</p>
-              ${
-                viewer
-                  ? `<p class="home-profiles__lead-note">Each option below includes a sample report you can open.</p>`
-                  : ""
-              }
-              <p class="home-profiles__choose">Choose the questionnaire that fits you</p>
-            </header>
-
-            <div class="home-profiles__index" aria-label="Available questionnaire options">
-              ${renderHomeProfileCard({
-                kicker: "Adult",
-                name: "For work",
-                text: "Understand the work setup that best supports your productivity, creativity and focus.",
-                image: "assets/profile-adult-work.png",
-                tour: "adult-work",
-                examples: renderViewerReportExample({ respondent: "adult", lifeContext: "work" }),
-              })}
-              ${renderHomeProfileCard({
-                kicker: "Teenager",
-                name: "For school",
-                text: "Explore how your sensory needs affect learning, attention and the classroom environment.",
-                image: "assets/profile-teen-school.png",
-                tour: "teen-school",
-                examples: renderViewerReportExample({ respondent: "teen", lifeContext: "homeSchool" }),
-              })}
-              ${renderHomeProfileCard({
-                kicker: "Adult",
-                name: "For home",
-                text: "A self-report focused on home life — rest, routines and your everyday environment.",
-                image: "assets/profile-adult-home.png",
-                tour: "adult-home",
-                examples: renderViewerReportExample({ respondent: "adult", lifeContext: "home" }),
-              })}
-              ${renderHomeProfileCard({
-                kicker: "Teenager",
-                name: "For home",
-                text: "Explore your sensory experience at home — rest, family life and the spaces you return to each day.",
-                image: "assets/profile-teen-home.png",
-                tour: "teen-home",
-                examples: renderViewerReportExample({ respondent: "teen", lifeContext: "homeSchool" }),
-              })}
-              ${renderHomeProfileCard({
-                kicker: "Parent",
-                name: "On behalf of a teenager",
-                text: "Understand your teenager’s sensory needs and how to best support them.",
-                image: "assets/profile-parent-flowers.png",
-                tour: "parent",
-                examples: renderViewerReportExample({ respondent: "parent" }),
-              })}
-              ${renderHomeProfileCard({
-                kicker: "Couple",
-                name: "With your partner",
-                text: "Complete your profiles separately, then bring them together to understand your sensory similarities and differences.",
-                image: "assets/profile-couple-view.png",
-                tour: "couple",
-                examples: `${renderViewerReportExample({ respondent: "couple", label: "View sample report" })}${renderViewerReportExample({ coupleMerge: true, label: "View combined sample report" })}`,
-              })}
-            </div>
-          </div>
-        </section>
-
         <div class="home-pathways__inner">
           ${pathwaysInner}
         </div>
@@ -14721,13 +14412,6 @@ function bindEvents() {
   }
 
   app.addEventListener("click", (e) => {
-    const tourBtn = e.target.closest("[data-action='start-tour']");
-    if (tourBtn) {
-      e.preventDefault();
-      if (window.SoulfulTour) window.SoulfulTour.open();
-      return;
-    }
-
     const languageBtn = e.target.closest("[data-language]");
     if (languageBtn) {
       const nextLanguage = languageBtn.dataset.language;
@@ -16251,13 +15935,6 @@ function bindEvents() {
   });
 
   app.addEventListener("submit", async (e) => {
-    const mockForm = e.target.closest("[data-mock-invite]");
-    if (mockForm) {
-      e.preventDefault();
-      await submitMockInvite(new FormData(mockForm));
-      return;
-    }
-
     const patientForm = e.target.closest("[data-patient-form]");
     if (patientForm) {
       e.preventDefault();
@@ -16652,11 +16329,8 @@ async function bootApp() {
     }
   }
 
-  if (isViewerMode() && isPlatformAdmin()) state.adminPreview = "demo";
-
   render();
   maybeNotifyExpiringQuestionnaires();
-  if (state.openTourOnBoot && window.SoulfulTour) window.SoulfulTour.open();
 }
 
 bootApp();

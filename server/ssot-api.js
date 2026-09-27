@@ -443,10 +443,34 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-function json(status, body) {
-  const origin = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
-  if (origin && body && typeof body === "object" && !Array.isArray(body) && body.publicOrigin == null) {
-    body.publicOrigin = origin;
+function isLoopbackOrigin(value) {
+  try {
+    const host = new URL(String(value || "")).hostname.toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]" || host === "0.0.0.0";
+  } catch (_) {
+    return true;
+  }
+}
+
+function replaceLoopbackOrigin(value, origin) {
+  const next = String(origin || process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+  const raw = String(value || "");
+  if (!next || isLoopbackOrigin(next) || !raw) return raw;
+  return raw.replace(/https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)(?::\d+)?/gi, next);
+}
+
+function json(status, body, origin) {
+  const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+  const published = fromEnv || String(origin || "").trim().replace(/\/$/, "");
+  if (
+    published &&
+    !isLoopbackOrigin(published) &&
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    body.publicOrigin == null
+  ) {
+    body.publicOrigin = published;
   }
   return { status, body };
 }
@@ -686,7 +710,7 @@ async function handlePush(state, body) {
   return json(200, { ok: true, ...patientSnapshot(state, user) });
 }
 
-async function handleSendEmail(state, body) {
+async function handleSendEmail(state, body, origin) {
   const to = normalizeEmail(body.to);
   const clinician = clinicianEmail();
   const sessionUser = getSessionUser(state, body.sessionToken);
@@ -702,20 +726,20 @@ async function handleSendEmail(state, body) {
   else if (body.kind === "password-reset") {
     const target = state.users.find((entry) => entry.email === to);
     allowed = canReceivePasswordReset(target);
-    if (!allowed) return json(200, { ok: true, sent: false });
+    if (!allowed) return json(200, { ok: true, sent: false }, origin);
   }
 
-  if (!allowed) return json(401, { ok: false, error: "You are not allowed to send this email." });
-  if (!to) return json(400, { ok: false, error: "This email is missing a recipient." });
+  if (!allowed) return json(401, { ok: false, error: "You are not allowed to send this email." }, origin);
+  if (!to) return json(400, { ok: false, error: "This email is missing a recipient." }, origin);
 
   const result = await sendGmail({
     to,
     subject: body.subject,
-    message: body.message,
+    message: replaceLoopbackOrigin(body.message, origin),
     name: body.name,
     kind: body.kind,
-    inviteUrl: body.inviteUrl,
-    resetUrl: body.resetUrl,
+    inviteUrl: replaceLoopbackOrigin(body.inviteUrl, origin),
+    resetUrl: replaceLoopbackOrigin(body.resetUrl, origin),
     questionnaireType: body.questionnaireType,
     expiresAt: body.expiresAt,
     email: body.email || to,
@@ -814,32 +838,50 @@ async function handlePeekReset(state, body) {
 }
 
 async function handleRequest(body, { origin } = {}) {
+  const finish = (result) => {
+    const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+    const published = fromEnv || String(origin || "").trim().replace(/\/$/, "");
+    if (
+      published &&
+      !isLoopbackOrigin(published) &&
+      result?.body &&
+      typeof result.body === "object" &&
+      !Array.isArray(result.body) &&
+      result.body.publicOrigin == null
+    ) {
+      result.body.publicOrigin = published;
+    }
+    return result;
+  };
+
   const action = String(body?.action || "").trim();
   if (action === "health") {
-    return json(200, {
-      ok: true,
-      gmailConfigured: gmailConfigured(),
-      from: process.env.GMAIL_USER || clinicianEmail(),
-    });
+    return finish(
+      json(200, {
+        ok: true,
+        gmailConfigured: gmailConfigured(),
+        from: process.env.GMAIL_USER || clinicianEmail(),
+      })
+    );
   }
 
   const state = await loadState();
   try {
-    if (action === "login") return await handleLogin(state, body);
-    if (action === "register") return await handleRegister(state, body);
-    if (action === "hydrate") return await handleHydrate(state, body);
-    if (action === "push") return await handlePush(state, body);
-    if (action === "sendEmail") return await handleSendEmail(state, body);
+    if (action === "login") return finish(await handleLogin(state, body));
+    if (action === "register") return finish(await handleRegister(state, body));
+    if (action === "hydrate") return finish(await handleHydrate(state, body));
+    if (action === "push") return finish(await handlePush(state, body));
+    if (action === "sendEmail") return finish(await handleSendEmail(state, body, origin));
     if (action === "requestPasswordReset") {
-      return await handleRequestPasswordReset(state, body, origin);
+      return finish(await handleRequestPasswordReset(state, body, origin));
     }
-    if (action === "peekReset") return await handlePeekReset(state, body);
-    if (action === "completeReset") return await handleCompleteReset(state, body);
-    return json(400, { ok: false, error: "Unknown request." });
+    if (action === "peekReset") return finish(await handlePeekReset(state, body));
+    if (action === "completeReset") return finish(await handleCompleteReset(state, body));
+    return finish(json(400, { ok: false, error: "Unknown request." }));
   } catch (err) {
     const message = err?.message || "The server could not complete that request.";
     const status = err?.code === "gmail-not-configured" ? 400 : 500;
-    return json(status, { ok: false, error: message, code: err?.code || null });
+    return finish(json(status, { ok: false, error: message, code: err?.code || null }));
   }
 }
 

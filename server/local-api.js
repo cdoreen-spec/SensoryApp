@@ -5,6 +5,7 @@
  */
 const http = require("http");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { handleRequest, previewEmailHtml } = require("./ssot-api");
 
@@ -14,7 +15,7 @@ process.env.SSOT_STORE_PATH =
 
 const ROOT = path.resolve(__dirname, "..");
 const PORT = Number(process.env.PORT || 8787);
-const HOST = process.env.HOST || "127.0.0.1";
+const HOST = process.env.HOST || "0.0.0.0";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -58,6 +59,22 @@ function loadDotEnv(filePath) {
   }
 }
 
+function isLoopbackHost(hostname) {
+  const host = String(hostname || "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]" || host === "0.0.0.0";
+}
+
+function lanOrigin() {
+  const nets = os.networkInterfaces();
+  for (const list of Object.values(nets)) {
+    for (const net of list || []) {
+      const ip4 = net.family === "IPv4" || net.family === 4;
+      if (ip4 && !net.internal && net.address) return `http://${net.address}:${PORT}`;
+    }
+  }
+  return `http://127.0.0.1:${PORT}`;
+}
+
 function forwardedOrigin(req) {
   const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
   if (fromEnv) return fromEnv;
@@ -65,12 +82,18 @@ function forwardedOrigin(req) {
     .split(",")[0]
     .trim();
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "https").split(",")[0].trim() || "https";
-  if (forwardedHost && !/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(forwardedHost)) {
+  if (forwardedHost && !isLoopbackHost(forwardedHost.split(":")[0])) {
     return `${forwardedProto}://${forwardedHost}`;
   }
   const headerOrigin = String(req.headers.origin || "").trim().replace(/\/$/, "");
-  if (headerOrigin && !/localhost|127\.0\.0\.1|\[::1\]/i.test(headerOrigin)) return headerOrigin;
-  return `http://${HOST}:${PORT}`;
+  if (headerOrigin) {
+    try {
+      if (!isLoopbackHost(new URL(headerOrigin).hostname)) return headerOrigin;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  return lanOrigin();
 }
 
 function send(res, status, body, headers = {}) {
@@ -106,7 +129,7 @@ async function handleApi(req, res, url) {
     return;
   }
   if (req.method === "GET") {
-    const result = await handleRequest({ action: "health" });
+    const result = await handleRequest({ action: "health" }, { origin: forwardedOrigin(req) });
     send(res, result.status, result.body, { "Content-Type": "application/json; charset=utf-8" });
     return;
   }
@@ -223,7 +246,8 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   const gmail = process.env.GMAIL_APP_PASSWORD ? "Gmail connected" : "Gmail not configured (add GMAIL_APP_PASSWORD to .env)";
-  console.log(`Soulful Sensory app: http://${HOST}:${PORT}`);
-  console.log(`API: http://${HOST}:${PORT}/api/ssot`);
+  const share = lanOrigin();
+  console.log(`Soulful Sensory app: ${share}`);
+  console.log(`Also on this computer: http://127.0.0.1:${PORT}`);
   console.log(gmail);
 });

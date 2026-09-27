@@ -48,7 +48,7 @@ const APP_CONFIG = {
    */
   questionnaireExpiryDays: 14,
   questionnaireExpiryWarningDays: 3,
-  devAllowSampleReport: true,
+  devAllowSampleReport: false,
 
   /**
    * Admin overview totals recorded card payments when this is true.
