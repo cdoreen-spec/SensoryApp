@@ -656,6 +656,16 @@ async function passwordForPatientInvite(user, fallbackPassword) {
   return synced?.temporaryPassword || fallbackPassword || user?.temporaryPassword || "";
 }
 
+async function credentialsForOutgoingInvite(details) {
+  if (!details?.userId || typeof Auth === "undefined" || !Auth.resetPatientPassword) return details;
+  const reset = await Auth.resetPatientPassword(details.userId);
+  if (!reset?.ok) {
+    return { ...details, error: reset?.error || "Could not create a new password." };
+  }
+  const password = await passwordForPatientInvite(reset.user, reset.password);
+  return patientCredentialsPayload(reset.user, password, buildAssignedPatientInviteUrl(reset.user));
+}
+
 function patientCredentialsPayload(user, password, inviteUrl) {
   const expires = user?.expiresAt
     ? formatQuestionnaireDate(user.expiresAt, "en")
@@ -861,6 +871,15 @@ function detailsFromAssessmentRecord(record) {
 }
 
 async function deliverPatientInviteEmail(details, { noticePrefix = "" } = {}) {
+  const fresh = await credentialsForOutgoingInvite(details);
+  if (fresh?.error) {
+    state.patientSendStatus = "error";
+    state.patientSendError = fresh.error;
+    render();
+    return false;
+  }
+  details = fresh || details;
+  state.createdPatient = details;
   if (!details?.email) {
     state.patientSendStatus = "error";
     state.patientSendError = "This patient does not have an email address.";
@@ -14413,7 +14432,7 @@ function bindEvents() {
     });
   }
 
-  app.addEventListener("click", (e) => {
+  app.addEventListener("click", async (e) => {
     const languageBtn = e.target.closest("[data-language]");
     if (languageBtn) {
       const nextLanguage = languageBtn.dataset.language;
@@ -15304,17 +15323,23 @@ function bindEvents() {
     }
 
     if (action === "send-patient-whatsapp") {
+      e.preventDefault();
       const details = resolvePatientInviteDetails(btn);
-      const url = details ? patientInviteWhatsAppUrl(details) : "";
+      const fresh = await credentialsForOutgoingInvite(details);
+      if (fresh?.error) {
+        state.dashboardNotice = fresh.error;
+        render();
+        return;
+      }
+      state.createdPatient = fresh;
+      const url = fresh ? patientInviteWhatsAppUrl(fresh) : "";
       if (!url) {
-        e.preventDefault();
         state.dashboardNotice = "Add a contact number to send on WhatsApp.";
         render();
         return;
       }
-      if (btn.tagName !== "A") {
-        window.open(url, "_blank", "noopener,noreferrer");
-      }
+      window.open(url, "_blank", "noopener,noreferrer");
+      render();
       return;
     }
 

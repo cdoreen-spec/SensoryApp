@@ -151,11 +151,19 @@ function sharedAccountPassword() {
 }
 
 function createTemporaryPassword() {
-  return sharedAccountPassword();
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes = new Uint8Array(12);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  const chars = Array.from(bytes, (b) => alphabet[b % alphabet.length]);
+  return `${chars.slice(0, 4).join("")}-${chars.slice(4, 8).join("")}-${chars.slice(8).join("")}`;
 }
 
 async function applySharedPassword(user, password) {
-  if (!user || user.passwordCustomized) return false;
+  if (!user || user.passwordCustomized || user.role === AUTH_ROLES.patient) return false;
   let changed = false;
   if (!user.salt) {
     user.salt = createSalt();
@@ -533,6 +541,7 @@ async function createPatientAccount({
     assessmentId: assessmentId || null,
     reportVisibility: String(reportVisibility || "").trim(),
     temporaryPassword: password,
+    passwordCustomized: true,
     salt,
     passwordHash,
     createdAt: now,
@@ -570,6 +579,7 @@ async function resetPatientPassword(userId) {
   user.salt = salt;
   user.passwordHash = await hashPassword(password, salt);
   user.temporaryPassword = password;
+  user.passwordCustomized = true;
   if (!user.inviteToken) user.inviteToken = createInviteToken();
   user.updatedAt = new Date().toISOString();
   saveUsers(users);

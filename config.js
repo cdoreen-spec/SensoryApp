@@ -30,7 +30,7 @@ const APP_CONFIG = {
    */
   showPainPathway: false,
 
-  /** Same sign-in password for admin, therapist, and patient accounts. */
+  /** Practice sign-in for the admin and therapist accounts. Each patient invite gets its own password. */
   adminName: "Cayley Alberts",
   adminEmail: "soulfulsensoryot@gmail.com",
   adminPassword: "soulfulot",

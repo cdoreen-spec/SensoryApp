@@ -126,7 +126,7 @@ function sharedAccountPassword() {
 }
 
 function applySharedPassword(user, password) {
-  if (!user || user.passwordCustomized) return false;
+  if (!user || user.passwordCustomized || user.role === ROLES.patient) return false;
   let changed = false;
   if (!user.salt) {
     user.salt = createSalt();
