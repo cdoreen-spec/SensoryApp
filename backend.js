@@ -158,6 +158,10 @@ const SsotBackend = (() => {
     return Date.parse(item?.savedAt || item?.completedAt || item?.updatedAt || item?.createdAt || 0) || 0;
   }
 
+  function assessmentIsFinished(item) {
+    return item?.status === "complete" || Boolean(item?.completedAt && item?.summary);
+  }
+
   function mergeById(existing, incoming) {
     const map = new Map();
     for (const item of existing || []) {
@@ -166,6 +170,7 @@ const SsotBackend = (() => {
     for (const item of incoming || []) {
       if (!item?.id) continue;
       const current = map.get(item.id);
+      if (current && assessmentIsFinished(current) && !assessmentIsFinished(item)) continue;
       if (!current || itemTime(item) >= itemTime(current)) map.set(item.id, item);
     }
     return [...map.values()];

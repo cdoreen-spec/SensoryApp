@@ -4189,7 +4189,9 @@ function getAdultSettingReport(lifeContext, lean, domainScores = [], language = 
     const strength = (id) => {
       const s = scoreFor(id);
       if (!s) return 0;
-      return Math.abs((s.sensitive || 0) - (s.seeking || 0)) + ((s.sensitive || 0) + (s.seeking || 0));
+      const sens = typeof s.sensitiveRate === "number" ? s.sensitiveRate : 0;
+      const seek = typeof s.seekingRate === "number" ? s.seekingRate : 0;
+      return Math.abs(sens - seek) + Math.max(sens, seek);
     };
     return strength(b.id) - strength(a.id);
   });
@@ -5748,10 +5750,11 @@ function getSensoryDietPlan(domainId, profile, language = "en", lifeContext = nu
 
 /** Rank a domain for teen cheat-sheet ordering: stronger / clearer patterns first. */
 function domainRoadmapStrength(score) {
-  const signals = (score.sensitive || 0) + (score.seeking || 0);
-  const imbalance = Math.abs((score.sensitive || 0) - (score.seeking || 0));
-  const profileBoost = score.profile === "neutral" ? 0 : 4;
-  return signals * 2 + imbalance + profileBoost + (score.scored || 0) * 0.1;
+  const sens = typeof score.sensitiveRate === "number" ? score.sensitiveRate : 0;
+  const seek = typeof score.seekingRate === "number" ? score.seekingRate : 0;
+  const imbalance = Math.abs(sens - seek);
+  const profileBoost = score.profile === "neutral" ? 0 : 0.4;
+  return imbalance * 2 + Math.max(sens, seek) + profileBoost;
 }
 
 /**
@@ -5854,25 +5857,25 @@ function getTeenCheatSheet(scores, language = "en") {
 }
 
 /**
- * Shared classification rule: compare sensitive vs seeking endorsements.
- * A clear lean (at least ~20% of answered items) is required before the
- * profile tips sensitive or seeking; otherwise it stays sensory neutral.
- * Used for both a single sense and the overall (all senses combined) score.
- *
- * `neutral` is accepted for call-site compatibility but does not decide the
- * profile — "no" answers are not votes for neutral (see scoreDomain).
+ * A pattern is named only when that side is endorsed on at least half of its
+ * own questions and leads the other side by 20 percentage points.
+ * Rates, not raw counts, so a longer list cannot outweigh a shorter one.
+ * Each call compares one sense, or the equal-weighted average of every sense.
  */
-function classifyBalance(sensitive, seeking, scored, neutral = 0) {
-  if (!scored) return { profile: "neutral", threshold: 0, diff: 0 };
+const LEAN_GAP = 0.2;
+const RATE_FLOOR = 0.5;
 
-  const diff = (sensitive || 0) - (seeking || 0);
-  const threshold = Math.max(1, Math.ceil(scored * 0.2));
+function classifyRates(sensitiveRate, seekingRate) {
+  if (typeof sensitiveRate !== "number" || typeof seekingRate !== "number") {
+    return { profile: "neutral", threshold: LEAN_GAP, diff: 0 };
+  }
 
+  const diff = sensitiveRate - seekingRate;
   let profile = "neutral";
-  if (diff >= threshold) profile = "sensitive";
-  else if (diff <= -threshold) profile = "seeking";
+  if (sensitiveRate >= RATE_FLOOR && diff >= LEAN_GAP) profile = "sensitive";
+  else if (seekingRate >= RATE_FLOOR && diff <= -LEAN_GAP) profile = "seeking";
 
-  return { profile, threshold, diff };
+  return { profile, threshold: LEAN_GAP, diff };
 }
 
 /**
@@ -5880,11 +5883,11 @@ function classifyBalance(sensitive, seeking, scored, neutral = 0) {
  * 50 = even, 100 = fully seeking. The neutral band is stretched to 30–70 so
  * the marker sits in the same zone as the classification above.
  */
-function balancePercent(sensitive, seeking, scored, threshold, neutral = 0) {
-  if (!scored || !threshold) return 50;
+function balancePercent(sensitiveRate, seekingRate) {
+  if (typeof sensitiveRate !== "number" || typeof seekingRate !== "number") return 50;
 
-  const ratio = Math.max(-1, Math.min(1, ((seeking || 0) - (sensitive || 0)) / scored));
-  const band = Math.min(0.99, threshold / scored);
+  const ratio = Math.max(-1, Math.min(1, seekingRate - sensitiveRate));
+  const band = LEAN_GAP;
 
   if (Math.abs(ratio) <= band) {
     return Math.round(50 + (ratio / band) * 20);
@@ -5895,39 +5898,82 @@ function balancePercent(sensitive, seeking, scored, threshold, neutral = 0) {
   return Math.round(ratio > 0 ? percent : 100 - percent);
 }
 
+function poleForQuestion(type) {
+  if (type === "sensitive" || type === "sensitive-if-no") return "sensitive";
+  if (type === "seeking" || type === "seeking-if-no") return "seeking";
+  if (type === "neutral") return "neutral";
+  return null;
+}
+
+function questionEndorsed(type, yes) {
+  if (type === "sensitive" || type === "seeking") return yes === true;
+  if (type === "sensitive-if-no" || type === "seeking-if-no") return yes === false;
+  return false;
+}
+
 function scoreDomain(questions, answers) {
   let sensitive = 0;
   let seeking = 0;
   let neutral = 0;
+  let sensitivePool = 0;
+  let seekingPool = 0;
   let scored = 0;
 
   questions.forEach((q, i) => {
     const answer = answers[i];
     if (answer === undefined || answer === null) return;
 
-    // Every answered item counts toward scored (for intensity / lean threshold).
-    // Only a Yes endorses a profile bucket — a No means that pattern is absent,
-    // not that the person is "sensory neutral".
+    const pole = poleForQuestion(q.type);
+    if (!pole) return;
+
     scored += 1;
     const yes = answer === true;
 
-    if (q.type === "sensitive" && yes) {
-      sensitive += 1;
-    } else if (q.type === "seeking" && yes) {
-      seeking += 1;
-    } else if (q.type === "neutral" && yes) {
-      // Preference / middle-ground items only; unused for lean classification.
-      neutral += 1;
+    if (pole === "neutral") {
+      if (yes) neutral += 1;
+      return;
+    }
+
+    if (pole === "sensitive") {
+      sensitivePool += 1;
+      if (questionEndorsed(q.type, yes)) sensitive += 1;
+    } else if (pole === "seeking") {
+      seekingPool += 1;
+      if (questionEndorsed(q.type, yes)) seeking += 1;
     }
   });
 
   if (scored === 0) {
-    return { sensitive: 0, seeking: 0, neutral: 0, profile: "neutral", scored: 0 };
+    return {
+      sensitive: 0,
+      seeking: 0,
+      neutral: 0,
+      sensitivePool: 0,
+      seekingPool: 0,
+      sensitiveRate: null,
+      seekingRate: null,
+      profile: "neutral",
+      scored: 0,
+    };
   }
 
-  const { profile } = classifyBalance(sensitive, seeking, scored, neutral);
+  const sensitiveRate = sensitivePool ? sensitive / sensitivePool : null;
+  const seekingRate = seekingPool ? seeking / seekingPool : null;
+  const { profile, threshold, diff } = classifyRates(sensitiveRate, seekingRate);
 
-  return { sensitive, seeking, neutral, profile, scored };
+  return {
+    sensitive,
+    seeking,
+    neutral,
+    sensitivePool,
+    seekingPool,
+    sensitiveRate,
+    seekingRate,
+    profile,
+    threshold,
+    diff,
+    scored,
+  };
 }
 
 function scoreAllDomains(domainAnswers, domains, language = "en", respondent = "adult") {
@@ -5947,54 +5993,75 @@ function scoreAllDomains(domainAnswers, domains, language = "en", respondent = "
   });
 }
 
+function meanRate(values) {
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
 /**
- * Adds every sensory system together into one overall score, then classifies
- * the person as a whole using the same sensitive-vs-seeking lean rule.
+ * Each sensory system counts once. The overall threshold compares the average
+ * low-threshold rate with the average high-threshold rate, using the same
+ * half-endorsed and 20-point rule as a single system.
  */
 function scoreOverall(domainScores, language = "en", respondent = "adult") {
   const profileLabels = getProfileLabels(language, respondent);
+  const scores = domainScores || [];
 
-  const totals = (domainScores || []).reduce(
+  const totals = scores.reduce(
     (acc, score) => {
-      acc.sensitive += score.sensitive || 0;
-      acc.seeking += score.seeking || 0;
-      acc.neutral += score.neutral || 0;
+      acc.sensitiveHits += score.sensitive || 0;
+      acc.seekingHits += score.seeking || 0;
+      acc.neutralHits += score.neutral || 0;
       acc.scored += score.scored || 0;
+      if (typeof score.sensitiveRate === "number") acc.sensitiveRates.push(score.sensitiveRate);
+      if (typeof score.seekingRate === "number") acc.seekingRates.push(score.seekingRate);
       if (score.profile) acc.systems[score.profile] += 1;
       return acc;
     },
     {
-      sensitive: 0,
-      seeking: 0,
-      neutral: 0,
+      sensitiveHits: 0,
+      seekingHits: 0,
+      neutralHits: 0,
       scored: 0,
+      sensitiveRates: [],
+      seekingRates: [],
       systems: { sensitive: 0, neutral: 0, seeking: 0 },
     }
   );
 
-  const { profile, threshold, diff } = classifyBalance(
-    totals.sensitive,
-    totals.seeking,
-    totals.scored,
-    totals.neutral
+  const sensitiveRate = meanRate(totals.sensitiveRates);
+  const seekingRate = meanRate(totals.seekingRates);
+  const { profile, threshold, diff } = classifyRates(sensitiveRate, seekingRate);
+  const sensitive = sensitiveRate == null ? 0 : Math.round(sensitiveRate * 100);
+  const seeking = seekingRate == null ? 0 : Math.round(seekingRate * 100);
+  const rated = scores.filter(
+    (score) => typeof score.sensitiveRate === "number" && typeof score.seekingRate === "number"
   );
-  const signals = totals.sensitive + totals.seeking;
+  const intensity = rated.length
+    ? Math.round(
+        (rated.reduce((sum, score) => sum + Math.max(score.sensitiveRate, score.seekingRate), 0) /
+          rated.length) *
+          100
+      )
+    : 0;
 
   return {
-    ...totals,
-    signals,
+    sensitive,
+    seeking,
+    neutral: totals.systems.neutral,
+    sensitiveHits: totals.sensitiveHits,
+    seekingHits: totals.seekingHits,
+    neutralHits: totals.neutralHits,
+    scored: totals.scored,
+    systems: totals.systems,
+    sensitiveRate,
+    seekingRate,
+    signals: totals.sensitiveHits + totals.seekingHits,
     profile,
     threshold,
     diff,
-    balance: balancePercent(
-      totals.sensitive,
-      totals.seeking,
-      totals.scored,
-      threshold,
-      totals.neutral
-    ),
-    // Share of answered items that flagged a sensory response either way.
-    intensity: totals.scored ? Math.round((signals / totals.scored) * 100) : 0,
+    balance: balancePercent(sensitiveRate, seekingRate),
+    intensity,
     meta: profileLabels[profile],
   };
 }

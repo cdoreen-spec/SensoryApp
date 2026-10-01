@@ -499,6 +499,47 @@ function patientHasCompletedAssignment(user) {
   );
 }
 
+function patientScreeningIsComplete(user) {
+  if (!user) return false;
+  if (user.screeningCompletedAt) return true;
+  return patientHasCompletedAssignment(user);
+}
+
+function blockCompletedScreening() {
+  if (isAdminPatientPreview()) return false;
+  const user = currentAssignedPatient();
+  if (!user || !patientScreeningIsComplete(user)) return false;
+  state.view = "home";
+  state.step = 0;
+  state.showIntroModal = false;
+  state.error = null;
+  clearSensoryDraft();
+  return true;
+}
+
+function renderAssignedScreeningComplete(copy) {
+  return `
+    <div class="home-invite-complete" role="status">
+      <p class="home-invite-complete__title">${escapeHtml(copy.inviteHomeCompleteTitle || "This screening is complete")}</p>
+      <p class="home-invite-complete__lead">${escapeHtml(
+        copy.inviteHomeCompleteLead ||
+          "You have already used this sensory screening. It cannot be taken again."
+      )}</p>
+    </div>
+  `;
+}
+
+function renderInviteStartControl(copy) {
+  const user = currentAssignedPatient();
+  if (!isAdminPatientPreview() && patientScreeningIsComplete(user)) return "";
+  if (isPatientInvite() && hasSensoryDraft()) return renderSensoryResumePanel();
+  return `
+    <div class="home-invite-start__cta">
+      <button type="button" class="btn btn-primary home-invite-start__btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
+    </div>
+  `;
+}
+
 function applyPatientAssignment(user) {
   if (!user || user.role === "admin" || user.role === "therapist") return false;
   const assignment = parseQuestionnaireAssignment(user.questionnaireType, user.lifeContext);
@@ -663,7 +704,23 @@ async function passwordForPatientInvite(user, fallbackPassword) {
   return synced?.temporaryPassword || fallbackPassword || user?.temporaryPassword || "";
 }
 
-async function credentialsForOutgoingInvite(details) {
+async function credentialsForOutgoingInvite(details, { freshPassword = false } = {}) {
+  if (!details) return null;
+  let next = { ...details };
+  if (freshPassword) {
+    if (typeof Auth === "undefined" || !Auth.resetPatientPassword || !next.userId) {
+      return { ...next, error: "This patient account is not on this device." };
+    }
+    const result = await Auth.resetPatientPassword(next.userId);
+    if (!result.ok || !result.password) {
+      return { ...next, error: result.error || "Could not create a new password." };
+    }
+    next = patientCredentialsPayload(
+      result.user,
+      result.password,
+      buildAssignedPatientInviteUrl(result.user)
+    );
+  }
   if (typeof SsotBackend !== "undefined" && SsotBackend.isEnabled() && SsotBackend.flush) {
     try {
       await SsotBackend.flush();
@@ -671,7 +728,7 @@ async function credentialsForOutgoingInvite(details) {
       console.warn("Could not save the patient before emailing the link:", err);
     }
   }
-  return { ...details, password: "" };
+  return next;
 }
 
 function patientCredentialsPayload(user, password, inviteUrl) {
@@ -713,20 +770,25 @@ function patientInviteMessage(details) {
     "An account has been created for you at Soulful Sensory OT so you can complete a sensory questionnaire.",
     "",
     "Open the link below. It signs you in. Please do not forward it.",
+    details.password ? "This password was created only for you. Please do not share it." : null,
+    details.password ? `Email: ${details.email || ""}` : null,
+    details.password ? `Password: ${details.password}` : null,
     "",
     details.expiresAt ? `This invitation expires on ${details.expiresAt}.` : `This invitation expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.`,
     "",
     "Open this link, then complete the questionnaire:",
     details.inviteUrl || "",
     "",
-    "If the link does not work, go to the Soulful Sensory OT website and sign in with the email and password above.",
+    details.password
+      ? "If the link does not work, go to the Soulful Sensory OT website and sign in with the email and password above."
+      : "If the link does not work, ask your therapist to send a new one.",
     "",
     "Kind regards,",
     "Cayley Alberts",
     "Occupational Therapist",
     "Soulful Sensory OT",
   ]
-    .filter((line) => line !== undefined)
+    .filter((line) => line != null)
     .join("\n");
 }
 
@@ -868,8 +930,8 @@ function detailsFromAssessmentRecord(record) {
   return patientCredentialsPayload(patient, "", buildAssignedPatientInviteUrl(patient));
 }
 
-async function deliverPatientInviteEmail(details, { noticePrefix = "" } = {}) {
-  const fresh = await credentialsForOutgoingInvite(details);
+async function deliverPatientInviteEmail(details, { noticePrefix = "", freshPassword = false } = {}) {
+  const fresh = await credentialsForOutgoingInvite(details, { freshPassword });
   if (fresh?.error) {
     state.patientSendStatus = "error";
     state.patientSendError = fresh.error;
@@ -944,9 +1006,9 @@ async function emailArchivedReportToClinician(record) {
     {
       heading: "Total score",
       rows: [
-        ["Sensitive / avoiding", String(summary.sensitive ?? 0)],
-        ["Sensory neutral", String(summary.neutral ?? 0)],
-        ["Sensory seeking", String(summary.seeking ?? 0)],
+        ["Low threshold", `${summary.sensitive ?? 0}%`],
+        ["Senses in the middle", String(summary.neutral ?? 0)],
+        ["High threshold", `${summary.seeking ?? 0}%`],
       ],
     },
     {
@@ -1009,7 +1071,7 @@ async function emailOpenReportToClinician() {
   render();
 }
 
-async function handleSendPatientInviteEmail(details, { fromDashboard = false } = {}) {
+async function handleSendPatientInviteEmail(details, { fromDashboard = false, freshPassword = false } = {}) {
   if (!details) {
     state.dashboardNotice = "This patient account is not on this device.";
     render();
@@ -1019,7 +1081,7 @@ async function handleSendPatientInviteEmail(details, { fromDashboard = false } =
     state.createdPatient = details;
     state.dashboardTab = "create";
   }
-  const ok = await deliverPatientInviteEmail(details);
+  const ok = await deliverPatientInviteEmail(details, { freshPassword });
   if (!ok) {
     state.createdPatient = details;
     state.dashboardTab = "create";
@@ -1046,6 +1108,7 @@ function openCreatePatientView() {
 
 function startAssignedQuestionnaire() {
   if (isAdminPatientPreview()) return false;
+  if (blockCompletedScreening()) return false;
   const user = currentAssignedPatient();
   if (!user) {
     beginInviteAccountGate();
@@ -1061,6 +1124,10 @@ function startAssignedQuestionnaire() {
   const existing = user.assessmentId
     ? readAssessments().find((item) => item.id === user.assessmentId)
     : readAssessments().find((item) => item.patientUserId === user.id);
+  if (existing && assessmentStatus(existing) === "complete") {
+    blockCompletedScreening();
+    return false;
+  }
   if (existing && assessmentStatus(existing) === "incomplete" && existing.draft) {
     applyIncompleteAssessmentRecord(existing);
     return true;
@@ -1352,6 +1419,13 @@ function assessmentStatus(item) {
   if (item.status === "incomplete") return "incomplete";
   if (item.status === "complete") return "complete";
   return item.completedAt && item.summary ? "complete" : "incomplete";
+}
+
+function assessmentIsLocked(item) {
+  if (assessmentStatus(item) === "complete") return true;
+  if (!item?.patientUserId || typeof Auth === "undefined" || !Auth.listUsers) return false;
+  const user = Auth.listUsers().find((entry) => entry.id === item.patientUserId);
+  return Boolean(user?.screeningCompletedAt);
 }
 
 function isIncompleteAssessment(item) {
@@ -2244,6 +2318,10 @@ function ensureAssessmentArchived() {
   }
 
   const record = buildAssessmentRecord();
+  if (!record.patientUserId) {
+    const previous = readAssessments().find((item) => item.id === record.id);
+    if (previous?.patientUserId) record.patientUserId = previous.patientUserId;
+  }
   const items = readAssessments().filter((item) => item.id !== record.id);
   items.unshift(record);
   writeAssessments(items.slice(0, ASSESSMENT_ARCHIVE_LIMIT));
@@ -2252,6 +2330,13 @@ function ensureAssessmentArchived() {
   persistCurrentPartnerToCoupleSession(record.id);
   clearSensoryDraft();
   clearDraftsForAssessment(record);
+  if (
+    record.patientUserId &&
+    typeof Auth !== "undefined" &&
+    Auth.markPatientScreeningComplete
+  ) {
+    Auth.markPatientScreeningComplete(record.patientUserId);
+  }
   return record.id;
 }
 
@@ -2275,6 +2360,7 @@ function draftLooksStarted(draft) {
 }
 
 function shouldPersistIncompleteProgress() {
+  if (patientScreeningIsComplete(currentAssignedPatient())) return false;
   if (state.tourCapture) return false;
   if (isAdminPatientPreview()) return false;
   if (state.sampleReportPreview || state.archiveReadOnly) return false;
@@ -2527,10 +2613,21 @@ function getDashboardQuestionnaireItems() {
     }));
   }
   mirrorOpenDraftsToAssessments();
-  const items = readAssessments().map((item) => ({
-    ...item,
-    status: assessmentStatus(item),
-  }));
+  const stored = readAssessments();
+  const finishedPatientIds = new Set(
+    stored
+      .filter((item) => item.patientUserId && assessmentIsLocked(item) && assessmentStatus(item) === "complete")
+      .map((item) => item.patientUserId)
+  );
+  const items = stored
+    .filter((item) => {
+      if (!item.patientUserId || !finishedPatientIds.has(item.patientUserId)) return true;
+      return assessmentStatus(item) === "complete";
+    })
+    .map((item) => ({
+      ...item,
+      status: assessmentIsLocked(item) ? "complete" : assessmentStatus(item),
+    }));
   const all = collectCoupleIncompleteEntries(items).concat(items);
   all.sort((a, b) => {
     const rank = (item) => {
@@ -2925,20 +3022,28 @@ function buildSampleAnswers(respondent = "adult", biasOverrides = null) {
     domains.map((domain) => {
       const bias = biasByDomain[domain.id] || "mixed";
       const answers = domain.questions.map((q, index) => {
+        const pole =
+          q.type === "sensitive" || q.type === "sensitive-if-no"
+            ? "sensitive"
+            : q.type === "seeking" || q.type === "seeking-if-no"
+              ? "seeking"
+              : "neutral";
+        let endorse = false;
         if (bias === "sensitive") {
-          if (q.type === "sensitive") return index % 5 !== 4;
-          if (q.type === "seeking") return index % 3 === 0;
-          return index % 2 === 0;
+          if (pole === "sensitive") endorse = index % 5 !== 4;
+          else if (pole === "seeking") endorse = index % 3 === 0;
+        } else if (bias === "seeking") {
+          if (pole === "seeking") endorse = index % 5 !== 4;
+          else if (pole === "sensitive") endorse = index % 3 === 0;
+        } else if (pole === "sensitive") {
+          endorse = index % 2 === 0;
+        } else if (pole === "seeking") {
+          endorse = index % 2 === 1;
+        } else {
+          return true;
         }
-        if (bias === "seeking") {
-          if (q.type === "seeking") return index % 5 !== 4;
-          if (q.type === "sensitive") return index % 3 === 0;
-          return index % 2 === 1;
-        }
-        // mixed
-        if (q.type === "sensitive") return index % 2 === 0;
-        if (q.type === "seeking") return index % 2 === 1;
-        return true;
+        const reverse = q.type === "sensitive-if-no" || q.type === "seeking-if-no";
+        return reverse ? !endorse : endorse;
       });
       return [domain.id, answers];
     })
@@ -3226,6 +3331,14 @@ function continueInviteSession() {
   state.error = null;
   state.authNotice = null;
   const assigned = currentAssignedPatient();
+  if (assigned && patientScreeningIsComplete(assigned)) {
+    applyPatientAssignment(assigned);
+    state.view = "home";
+    state.step = 0;
+    state.showIntroModal = false;
+    clearSensoryDraft();
+    return;
+  }
   if (assigned) applyPatientAssignment(assigned);
   const draft = readSensoryDraft();
   if (draft) {
@@ -4047,9 +4160,9 @@ function trailCharacterSummary(lean) {
 
 function totalScoreRows(metrics) {
   return [
-    ["Sensitive / avoiding", String(metrics?.sensitive ?? 0)],
-    ["Sensory neutral", String(metrics?.neutral ?? 0)],
-    ["Sensory seeking", String(metrics?.seeking ?? 0)],
+    ["Low threshold", `${metrics?.sensitive ?? 0}%`],
+    ["Senses in the middle", String(metrics?.neutral ?? 0)],
+    ["High threshold", `${metrics?.seeking ?? 0}%`],
   ];
 }
 
@@ -5328,7 +5441,8 @@ function renderDashboardRowActionSelect(rowId, options) {
 function renderDashboardAssessmentRow(item) {
   const summary = item.summary || {};
   const name = dashboardPatientName(item);
-  const status = assessmentStatus(item);
+  const locked = assessmentIsLocked(item);
+  const status = locked ? "complete" : assessmentStatus(item);
   const incomplete = status === "incomplete";
   const assigned = status === "assigned";
   const dateLabel = formatQuestionnaireDate(item.savedAt || item.completedAt || item.startedAt, "en");
@@ -5388,6 +5502,11 @@ function renderDashboardAssessmentRow(item) {
       <div class="dash-row__status-col">
         <span class="dash-row__col-label">Status</span>
         <span class="dash-row__status dash-row__status--${status}">${statusLabel}</span>
+        ${
+          locked
+            ? `<p class="dash-row__lock">Finished. This screening cannot be taken again.</p>`
+            : ""
+        }
       </div>
       <div class="dash-row__date">
         <span class="dash-row__col-label">${assigned ? "Created" : incomplete ? "Last saved" : "Assessed"}</span>
@@ -5413,12 +5532,11 @@ function renderDashboardAssessmentRow(item) {
         ${
           assigned
             ? renderDashboardRowActionSelect(rowId, [
-                { value: "send-patient-email", label: "Email" },
+                { value: "send-patient-email", label: "Email link" },
                 ...(whatsappPhoneDigits(summary.phone || item.demographics?.phone || "")
                   ? [{ value: "send-patient-whatsapp", label: "WhatsApp" }]
                   : []),
                 { value: "copy-patient-invite", label: "Copy link" },
-                { value: "send-patient-email-again", label: "Send again" },
                 { value: "delete-assessment", label: "Remove" },
               ])
             : incomplete
@@ -5484,13 +5602,14 @@ function renderCreatedPatientSuccess(details) {
   const sending = state.patientSendStatus === "sending";
   const sent = state.patientSendStatus === "sent";
   const failed = state.patientSendStatus === "error";
-  const whatsappUrl = patientInviteWhatsAppUrl(details);
-  const emailLabel = sending ? "Sending email…" : "Send email";
+  const whatsappReady = Boolean(patientInviteWhatsAppUrl(details));
+  const copied = state.clinicianCopyStatus === "copied";
+  const emailLabel = sending ? "Sending email…" : sent ? "Email again" : "Email";
   return `
     <section class="dashboard__panel patient-create" aria-labelledby="patient-created-heading">
-      <h2 id="patient-created-heading" class="dashboard__panel-title">Patient account created</h2>
+      <h2 id="patient-created-heading" class="dashboard__panel-title">Patient added</h2>
       <p class="prefs-lead">
-        Email is the default way to send their sign-in link. You can also send it on WhatsApp. Their ${escapeHtml(details.questionnaireType || "questionnaire")} expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days (${escapeHtml(details.expiresAt || "")}).
+        Send ${escapeHtml(details.name || "them")} their questionnaire link by email, WhatsApp, or copy it. Their ${escapeHtml(details.questionnaireType || "questionnaire")} expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days (${escapeHtml(details.expiresAt || "")}).
       </p>
       ${
         sending
@@ -5507,37 +5626,34 @@ function renderCreatedPatientSuccess(details) {
       <dl class="patient-create__details">
         <div><dt>Name</dt><dd>${escapeHtml(details.name)}</dd></div>
         <div><dt>Email</dt><dd>${escapeHtml(details.email)}</dd></div>
-        <div><dt>Sign-in</dt><dd>Private link only. No password is sent.</dd></div>
+        <div><dt>Sign-in</dt><dd>Private link. Email, WhatsApp, and copy all send this link.</dd></div>
         <div><dt>Contact number</dt><dd>${escapeHtml(details.phone || "—")}</dd></div>
         <div><dt>Age</dt><dd>${escapeHtml(details.age || "—")}</dd></div>
         <div><dt>Questionnaire</dt><dd>${escapeHtml(details.questionnaireType || "—")}</dd></div>
         <div><dt>Reason for referral</dt><dd>${escapeHtml(details.reasonForReferral || "—")}</dd></div>
       </dl>
       <div class="patient-send">
-        <div class="patient-send__main">
-          <button type="button" class="btn btn-primary" data-action="send-patient-email" ${sending ? "disabled" : ""} aria-busy="${sending ? "true" : "false"}">
+        <label class="auth__field patient-send__link">
+          <span>Questionnaire link</span>
+          <input type="text" readonly value="${escapeHtml(details.inviteUrl || "")}" aria-label="Questionnaire link" />
+        </label>
+        <div class="patient-send__actions" role="group" aria-label="Send the questionnaire link">
+          <button type="button" class="btn btn-secondary" data-action="send-patient-email" ${sending ? "disabled" : ""} aria-busy="${sending ? "true" : "false"}">
             ${emailLabel}
           </button>
-          ${
-            whatsappUrl
-              ? `<a class="btn btn-secondary" data-action="send-patient-whatsapp" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`
-              : `<button type="button" class="btn btn-secondary" disabled title="Add a contact number to send on WhatsApp">WhatsApp</button>`
-          }
-        </div>
-        <div class="patient-send__side">
-          <button type="button" class="patient-send__backup" data-action="copy-created-patient-link">
-            ${state.clinicianCopyStatus === "copied" ? "Link copied" : "Copy link"}
+          <button type="button" class="btn btn-secondary" data-action="send-patient-whatsapp" ${whatsappReady ? "" : "disabled"} ${whatsappReady ? "" : 'title="Add a contact number to send on WhatsApp"'}>
+            WhatsApp
           </button>
-          <button type="button" class="patient-send__backup" data-action="send-patient-email-again" ${sending ? "disabled" : ""}>
-            Send again
+          <button type="button" class="btn btn-secondary" data-action="copy-created-patient-link">
+            ${copied ? "Link copied" : "Copy link"}
           </button>
         </div>
       </div>
-      <p class="prefs-hint">The email includes the questionnaire link. Copy link is only a backup if they cannot find the message.</p>
+      <p class="prefs-hint">Nothing is sent until you choose one. You can email the link, open WhatsApp, or copy it.</p>
       <div class="clinician__actions">
         ${
           details.userId
-            ? `<button type="button" class="btn btn-secondary" data-action="reset-patient-password" data-user-id="${escapeHtml(details.userId)}">New link</button>`
+            ? `<button type="button" class="btn btn-secondary" data-action="reset-patient-password" data-user-id="${escapeHtml(details.userId)}">Email a new password</button>`
             : ""
         }
         <button type="button" class="btn btn-secondary" data-action="create-another-patient">Add another patient</button>
@@ -5556,7 +5672,7 @@ function renderCreatePatientForm() {
     <section class="dashboard__panel patient-create" aria-labelledby="create-patient-heading">
       <h2 id="create-patient-heading" class="dashboard__panel-title">Create a patient account</h2>
       <p class="prefs-lead">
-        The therapist creates the patient’s account and chooses the questionnaire. An invite is emailed from soulfulsensoryot@gmail.com. Every questionnaire type expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
+        Add the patient’s details and choose their questionnaire. Once the account is created, you can email the link, send it on WhatsApp, or copy it. Every questionnaire expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
       </p>
       ${
         state.patientFormError
@@ -5719,7 +5835,7 @@ function renderDashboard() {
       ? "My Preferences"
       : "Patient register";
   const lead = createTab
-    ? "Create the patient’s account, choose their questionnaire, and email them the link from soulfulsensoryot@gmail.com. Every type expires after 14 days."
+    ? "Add a patient, then email their questionnaire link, send it on WhatsApp, or copy it. Every type expires after 14 days."
     : prefsTab
       ? "Set your default report length, what patients can see, and which emails you would like to receive."
       : "Create a patient account to assign a questionnaire, then see which screenings are complete or still in progress.";
@@ -7753,9 +7869,17 @@ function renderHome() {
     ? `
           <div class="home-pathways__header">
             <p class="home-section__eyebrow home-section__eyebrow--on-forest">Your screening</p>
-            <h2 id="pathways-heading" class="home-section__title home-section__title--pathways">A gentle next step</h2>
+            <h2 id="pathways-heading" class="home-section__title home-section__title--pathways">${
+              !isAdminPatientPreview() && patientScreeningIsComplete(currentAssignedPatient())
+                ? "Screening complete"
+                : "A gentle next step"
+            }</h2>
             <p class="home-section__lead home-pathways__intro">
-              You can begin the questionnaire from the top of this page, or from the button below.
+              ${
+                !isAdminPatientPreview() && patientScreeningIsComplete(currentAssignedPatient())
+                  ? "This sensory screening has been used. It cannot be taken again."
+                  : "You can begin the questionnaire from the top of this page, or from the button below."
+              }
             </p>
           </div>
         `
@@ -7810,16 +7934,18 @@ function renderHome() {
     ? `
       <section class="home-section home-invite-start" id="start-screening" aria-labelledby="invite-start-heading">
         <p class="home-section__eyebrow">Your questionnaire</p>
-        <h2 id="invite-start-heading" class="home-section__title">${escapeHtml(copy.inviteHomeStartTitle)}</h2>
+        <h2 id="invite-start-heading" class="home-section__title">${escapeHtml(
+          !isAdminPatientPreview() && patientScreeningIsComplete(currentAssignedPatient())
+            ? copy.inviteHomeCompleteTitle || "This screening is complete"
+            : copy.inviteHomeStartTitle
+        )}</h2>
         <img src="mountain-divider.svg" alt="" class="botanical-divider mountain-divider" width="600" height="44" />
-        <p class="home-section__lead">${escapeHtml(copy.inviteHomeStartLead)}</p>
-        ${
-          invite && hasSensoryDraft()
-            ? renderSensoryResumePanel()
-            : `<div class="home-invite-start__cta">
-          <button type="button" class="btn btn-primary home-invite-start__btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
-        </div>`
-        }
+        <p class="home-section__lead">${escapeHtml(
+          !isAdminPatientPreview() && patientScreeningIsComplete(currentAssignedPatient())
+            ? copy.inviteHomeCompleteLead || "You have already used this sensory screening. It cannot be taken again."
+            : copy.inviteHomeStartLead
+        )}</p>
+        ${renderInviteStartControl(copy)}
       </section>
     `
     : "";
@@ -7855,7 +7981,9 @@ function renderHome() {
               ? `<p class="invite-banner invite-banner--hero" role="status">${escapeHtml(inviteBannerText(copy))}</p>
           <p class="home-hero__tagline">${escapeHtml(copy.inviteHomeScroll)}</p>
           ${
-            invite && hasSensoryDraft()
+            !isAdminPatientPreview() && patientScreeningIsComplete(currentAssignedPatient())
+              ? `<div class="home-hero__start">${renderAssignedScreeningComplete(copy)}</div>`
+              : invite && hasSensoryDraft()
               ? `<div class="home-hero__start">${renderSensoryResumePanel()}</div>`
               : `<div class="home-hero__start">
             <button type="button" class="btn btn-primary home-hero__start-btn" data-action="start-questionnaire">${escapeHtml(copy.inviteHomeStartCta)}</button>
@@ -7996,6 +8124,8 @@ function renderSensoryLanding() {
             <button type="button" class="btn btn-primary sensory-flow__cta-btn" data-action="viewer-open-examples">See example reports</button>
             <p class="sensory-flow__cta-note">This preview does not run a live questionnaire. Open a sample report from the home page to see what referring therapists can send patients for.</p>
           </div>`
+              : !isAdminPatientPreview() && patientScreeningIsComplete(currentAssignedPatient())
+              ? renderAssignedScreeningComplete(currentUi())
               : hasSensoryDraft()
               ? renderSensoryResumePanel()
               : `<div class="sensory-flow__cta">
@@ -8090,6 +8220,8 @@ function renderSensoryLanding() {
             ${
               isViewerMode()
                 ? `<button type="button" class="btn btn-primary sensory-flow__cta-btn" data-action="viewer-open-examples">See example reports</button>`
+                : !isAdminPatientPreview() && patientScreeningIsComplete(currentAssignedPatient())
+                ? renderAssignedScreeningComplete(currentUi())
                 : hasSensoryDraft()
                 ? renderSensoryResumePanel()
                 : `<button type="button" class="btn btn-primary sensory-flow__cta-btn" data-action="start-questionnaire">Start the sensory screening</button>`
@@ -11044,7 +11176,7 @@ function renderClassicOverallScoreCard(metrics, copy) {
     .map(
       (stat) => `
       <li class="overall-score__stat overall-score__stat--${stat.key}">
-        <span class="overall-score__stat-value">${stat.value}</span>
+        <span class="overall-score__stat-value">${stat.key === "neutral" ? stat.value : `${stat.value}%`}</span>
         <span class="overall-score__stat-label">${escapeHtml(stat.label)}</span>
       </li>`
     )
@@ -15013,6 +15145,10 @@ function bindEvents() {
     }
 
     if (action === "start-sensory") {
+      if (blockCompletedScreening()) {
+        render({ scrollToTop: true });
+        return;
+      }
       if (isAdminPatientPreview()) {
         state.view = "sensory";
         state.sensoryArea = null;
@@ -15038,12 +15174,20 @@ function bindEvents() {
     }
 
     if (action === "start-assigned-questionnaire") {
+      if (blockCompletedScreening()) {
+        render({ scrollToTop: true });
+        return;
+      }
       startAssignedQuestionnaire();
       render({ scrollToTop: true });
       return;
     }
 
     if (action === "start-questionnaire") {
+      if (blockCompletedScreening()) {
+        render({ scrollToTop: true });
+        return;
+      }
       if (isAdminPatientPreview()) {
         state.sensoryArea = btn.dataset.area || null;
         resetSensoryQuestionnaireProgress();
@@ -15074,6 +15218,10 @@ function bindEvents() {
     }
 
     if (action === "resume-questionnaire") {
+      if (blockCompletedScreening()) {
+        render({ scrollToTop: true });
+        return;
+      }
       if (inviteNeedsAccount()) {
         beginInviteAccountGate();
         render({ scrollToTop: true });
@@ -15740,7 +15888,10 @@ function bindEvents() {
         render();
         return;
       }
-      window.open(url, "_blank", "noopener,noreferrer");
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      state.dashboardNotice = opened
+        ? "WhatsApp opened with their questionnaire link. Send the message from there."
+        : "Allow pop-ups, then try WhatsApp again.";
       render();
       return;
     }
@@ -15808,24 +15959,14 @@ function bindEvents() {
 
     if (action === "reset-patient-password") {
       const userId = btn.dataset.userId;
-      if (!userId || typeof Auth === "undefined" || !Auth.resetPatientPassword) return;
-      Auth.resetPatientPassword(userId).then((result) => {
-        if (!result.ok) {
-          state.patientFormError = result.error;
-          render();
-          return;
-        }
-        state.createdPatient = patientCredentialsPayload(
-          result.user,
-          "",
-          buildAssignedPatientInviteUrl(result.user)
-        );
-        state.dashboardTab = "create";
-        state.patientSendStatus = null;
-        state.patientSendError = null;
-        state.dashboardNotice = "A new private link is ready. Send it by email. WhatsApp only says the questionnaire is ready.";
-        render({ scrollToTop: true });
-      });
+      const details =
+        state.createdPatient?.userId === userId
+          ? state.createdPatient
+          : resolvePatientInviteDetails(btn);
+      handleSendPatientInviteEmail(
+        details?.userId ? details : { ...details, userId },
+        { freshPassword: true }
+      );
       return;
     }
 
@@ -16448,16 +16589,16 @@ function bindEvents() {
       createAssignedAssessment(result.user);
       state.createdPatient = patientCredentialsPayload(
         result.user,
-        "",
+        result.password,
         buildAssignedPatientInviteUrl(result.user)
       );
       state.dashboardTab = "create";
       state.patientSendStatus = null;
       state.patientSendError = null;
-      state.dashboardNotice = `${assignedPatientFullName(result.user)} can now sign in. This questionnaire expires in ${QUESTIONNAIRE_EXPIRY_DAYS} days.`;
+      state.clinicianCopyStatus = null;
+      state.dashboardNotice = `${assignedPatientFullName(result.user)} is added. Choose email, WhatsApp, or copy to send their link.`;
       resetPatientForm();
       render({ scrollToTop: true });
-      await deliverPatientInviteEmail(state.createdPatient);
       return;
     }
 

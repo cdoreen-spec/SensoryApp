@@ -31,10 +31,11 @@ You can also open `index.html` or serve the folder with `python3 -m http.server 
 Each yes/no question is tagged as:
 
 - **Sensitive** — Yes suggests a lower threshold / avoiding pattern
+- **Sensitive if no** — the question is worded as comfort, so No suggests a lower threshold
 - **Seeking** — Yes suggests a higher threshold / seeking pattern
-- **Neutral** — Not used in scoring (preference questions)
+- **Neutral** — asked, but not used in the threshold (preference questions)
 
-For each sensory system, the app compares sensitive vs seeking counts and assigns:
+Within each sensory system the app compares the share of low-threshold questions endorsed with the share of high-threshold questions endorsed. A threshold is named only when that side is endorsed on at least half of its own questions and leads the other side by 20 percentage points. The overall reading weighs every sensory system equally, using the same rule. Raw question counts no longer decide the result.
 
 | Profile | Meaning |
 |---------|---------|

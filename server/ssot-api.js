@@ -61,6 +61,12 @@ function passwordMatches(password, salt, stored) {
     if (expected.length !== actual.length) return false;
     return crypto.timingSafeEqual(expected, actual);
   }
+  if (value.startsWith("pbkdf2:")) {
+    const expected = Buffer.from(value.slice(7), "hex");
+    const actual = crypto.pbkdf2Sync(String(password), String(salt), 120000, 32, "sha256");
+    if (expected.length !== actual.length) return false;
+    return crypto.timingSafeEqual(expected, actual);
+  }
   return legacySha256(password, salt) === value;
 }
 
@@ -104,6 +110,7 @@ function publicUser(user) {
     createdByUserId: user.createdByUserId || null,
     assessmentId: user.assessmentId || null,
     reportVisibility: user.reportVisibility || "",
+    screeningCompletedAt: user.screeningCompletedAt || null,
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt || null,
     updatedAt: user.updatedAt || null,
@@ -252,6 +259,7 @@ async function loadState() {
 }
 
 async function saveState(state) {
+  stampCompletedScreenings(state);
   pruneSessions(state);
   if (!useFileStore()) {
     const { getStore } = require("@netlify/blobs");
@@ -271,9 +279,21 @@ function mergeById(existing, incoming) {
   for (const item of incoming || []) {
     if (!item?.id) continue;
     const current = map.get(item.id);
+    if (current && isCompleteAssessment(current) && !isCompleteAssessment(item)) continue;
     if (!current || newer(item, current)) map.set(item.id, { ...current, ...item });
   }
   return [...map.values()];
+}
+
+function stampCompletedScreenings(state) {
+  const now = new Date().toISOString();
+  for (const item of state.assessments?.items || []) {
+    if (!isCompleteAssessment(item) || !item.patientUserId) continue;
+    const user = (state.users || []).find((entry) => entry.id === item.patientUserId);
+    if (!user || user.screeningCompletedAt) continue;
+    user.screeningCompletedAt = item.completedAt || now;
+    user.updatedAt = now;
+  }
 }
 
 function mergeUsers(serverUsers, localUsers) {

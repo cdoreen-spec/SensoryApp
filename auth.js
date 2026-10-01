@@ -157,6 +157,7 @@ function publicUser(user) {
     createdByUserId: user.createdByUserId || null,
     assessmentId: user.assessmentId || null,
     reportVisibility: user.reportVisibility || "",
+    screeningCompletedAt: user.screeningCompletedAt || null,
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt || null,
     updatedAt: user.updatedAt || null,
@@ -180,14 +181,23 @@ function sharedAccountPassword() {
 
 function createTemporaryPassword() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes = new Uint8Array(12);
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    crypto.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  const length = 20;
+  const limit = Math.floor(256 / alphabet.length) * alphabet.length;
+  const chars = [];
+  while (chars.length < length) {
+    const bytes = new Uint8Array(length);
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    for (const value of bytes) {
+      if (value >= limit) continue;
+      chars.push(alphabet[value % alphabet.length]);
+      if (chars.length === length) break;
+    }
   }
-  const chars = Array.from(bytes, (b) => alphabet[b % alphabet.length]);
-  return `${chars.slice(0, 4).join("")}-${chars.slice(4, 8).join("")}-${chars.slice(8).join("")}`;
+  return [0, 4, 8, 12, 16].map((start) => chars.slice(start, start + 4).join("")).join("-");
 }
 
 async function applySharedPassword(user, password) {
@@ -609,6 +619,7 @@ async function createPatientAccount({
   return {
     ok: true,
     user: publicUser(user),
+    password,
     expiryDays: days,
   };
 }
@@ -632,9 +643,22 @@ async function resetPatientPassword(userId) {
   user.passwordHash = await hashPassword(password, salt);
   delete user.temporaryPassword;
   user.passwordCustomized = true;
-  user.inviteToken = createInviteToken();
   user.updatedAt = new Date().toISOString();
   saveUsers(users);
+  return { ok: true, user: publicUser(user), password };
+}
+
+function markPatientScreeningComplete(userId) {
+  const users = getUsers();
+  const user = users.find((entry) => entry.id === userId);
+  if (!user || user.role !== AUTH_ROLES.patient) {
+    return { ok: false, error: "Patient account not found." };
+  }
+  if (!user.screeningCompletedAt) {
+    user.screeningCompletedAt = new Date().toISOString();
+    user.updatedAt = user.screeningCompletedAt;
+    saveUsers(users);
+  }
   return { ok: true, user: publicUser(user) };
 }
 
@@ -911,6 +935,7 @@ const Auth = {
   registerUser,
   createPatientAccount,
   resetPatientPassword,
+  markPatientScreeningComplete,
   setPatientAssessmentId,
   findUserByInviteToken,
   isPatientAssignmentExpired,

@@ -397,10 +397,10 @@ const QUESTIONNAIRE_UI = {
     seekingSignals: "seeking signals",
     descriptiveMap: "This is a descriptive map of the answers — not a diagnosis.",
     overallScoreLabel: "Overall score",
-    overallScoreNote: "Every question in this screening added together into one reading.",
-    overallSensitiveTotal: "Sensitive / avoiding",
-    overallNeutralTotal: "Sensory neutral",
-    overallSeekingTotal: "Sensory seeking",
+    overallScoreNote: "Each sensory system counts equally. A threshold is named only when that pattern is clearly stronger.",
+    overallSensitiveTotal: "Low threshold",
+    overallNeutralTotal: "Senses in the middle",
+    overallSeekingTotal: "High threshold",
     overallBalanceLabel: "Overall balance",
     overallSystemsLabel: "How the senses split",
     teenScoreBoardKicker: "Overall reading",
@@ -834,6 +834,8 @@ const QUESTIONNAIRE_UI = {
     inviteHomeStartLead: "The screening takes about 10–15 minutes. Your progress is saved on this device.",
     inviteHomeStartCta: "Start the sensory screening",
     inviteHomeStartNote: "Takes about 10–15 minutes · Progress is saved on this device",
+    inviteHomeCompleteTitle: "This screening is complete",
+    inviteHomeCompleteLead: "You have already used this sensory screening. It cannot be taken again.",
     review: "Review answers",
     print: "Download / print report",
     workReportKicker: "For work",
@@ -1400,10 +1402,10 @@ const QUESTIONNAIRE_UI = {
     seekingSignals: "soekende seine",
     descriptiveMap: "Dit is ’n beskrywende kaart van die antwoorde — nie ’n diagnose nie.",
     overallScoreLabel: "Algehele telling",
-    overallScoreNote: "Elke vraag in hierdie sifting saam getel in een lesing.",
-    overallSensitiveTotal: "Sensitief / vermydend",
-    overallNeutralTotal: "Sensories neutraal",
-    overallSeekingTotal: "Sensories soekend",
+    overallScoreNote: "Elke sensoriese stelsel tel ewe veel. ’n Drempel word net genoem wanneer daardie patroon duidelik sterker is.",
+    overallSensitiveTotal: "Lae drempel",
+    overallNeutralTotal: "Sintuie in die middel",
+    overallSeekingTotal: "Hoë drempel",
     overallBalanceLabel: "Algehele balans",
     overallSystemsLabel: "Hoe die sintuie verdeel",
     teenScoreBoardKicker: "Algehele lesing",
@@ -1837,6 +1839,8 @@ const QUESTIONNAIRE_UI = {
     inviteHomeStartLead: "Die sifting neem sowat 10–15 minute. Jou vordering word op hierdie toestel gestoor.",
     inviteHomeStartCta: "Begin die sensoriese sifting",
     inviteHomeStartNote: "Neem sowat 10–15 minute · Vordering word op hierdie toestel gestoor",
+    inviteHomeCompleteTitle: "Hierdie sifting is klaar",
+    inviteHomeCompleteLead: "Jy het hierdie sensoriese sifting reeds gebruik. Dit kan nie weer geneem word nie.",
     review: "Hersien antwoorde",
     print: "Aflaai / druk verslag",
     workReportKicker: "Vir werk",
@@ -2235,7 +2239,7 @@ const DOMAIN_DEFINITIONS = [
   {
     id: "auditory",
     icon: "🎧",
-    types: ["sensitive", "sensitive", "sensitive", "sensitive", "sensitive", "sensitive", "seeking", "seeking"],
+    types: ["sensitive", "sensitive", "sensitive", "sensitive", "sensitive", "sensitive", "seeking", "seeking", "seeking"],
     copy: {
       en: {
         title: "Auditory Processing",
@@ -2261,6 +2265,7 @@ const DOMAIN_DEFINITIONS = [
           "I avoid places because they are too loud or overwhelming.",
           "I enjoy background noise, such as music, TV or a podcast, while I work or relax.",
           "I often hum, sing, tap, whistle or click without really thinking about it.",
+          "I turn the volume up, or choose a place with background noise, when I need to feel more alert or settled.",
         ],
         teen: [
           "Loud or busy places at home or school can quickly feel like too much for me.",
@@ -2271,6 +2276,7 @@ const DOMAIN_DEFINITIONS = [
           "I sometimes avoid places at school or at home because they are too loud.",
           "I like having music, TV, a podcast or people talking in the background while I study, do homework or chill.",
           "I often hum, sing, tap, whistle or make clicking sounds without noticing.",
+          "I turn the volume up, or choose a place with background noise, when I need to feel more awake or settled at home or at school.",
         ],
         parent: [
           "My child becomes overwhelmed in noisy environments.",
@@ -2281,6 +2287,7 @@ const DOMAIN_DEFINITIONS = [
           "My child avoids places because they are too loud or overwhelming.",
           "My child enjoys background noise, such as music, TV or people talking, while working, playing or relaxing.",
           "My child often hums, sings, taps, whistles or clicks without seeming to notice.",
+          "My child turns the volume up, or chooses a place with background noise, when they need to feel more alert or settled.",
         ],
       },
       af: {
@@ -2293,6 +2300,7 @@ const DOMAIN_DEFINITIONS = [
           "Ek vermy plekke omdat dit te hard of oorweldigend is.",
           "Ek geniet agtergrondklank, soos musiek, TV of ’n potgooi, terwyl ek werk of ontspan.",
           "Ek neurie, sing, tik, fluit of klik dikwels sonder om werklik daarvan bewus te wees.",
+          "Ek draai die volume op, of kies ’n plek met agtergrondgeraas, wanneer ek meer wakker of bedaard wil voel.",
         ],
         teen: [
           "Harde of besige plekke by die huis of skool voel gou vir my te veel.",
@@ -2303,6 +2311,7 @@ const DOMAIN_DEFINITIONS = [
           "Ek vermy soms plekke by die skool of by die huis omdat dit te hard is.",
           "Ek hou daarvan om musiek, TV, ’n potgooi of mense se stemme in die agtergrond te hê terwyl ek leer, huiswerk doen of ontspan.",
           "Ek neurie, sing, tik, fluit of maak klikgeluide sonder dat ek dit altyd agterkom.",
+          "Ek draai die volume op, of kies ’n plek met agtergrondgeraas, wanneer ek by die huis of by die skool meer wakker of bedaard wil voel.",
         ],
         parent: [
           "My kind raak oorweldig in lawaaierige omgewings.",
@@ -2313,6 +2322,7 @@ const DOMAIN_DEFINITIONS = [
           "My kind vermy plekke omdat dit te hard of oorweldigend is.",
           "My kind geniet agtergrondklank, soos musiek, TV of mense se stemme, terwyl hulle werk, speel of ontspan.",
           "My kind neurie, sing, tik, fluit of klik dikwels sonder om dit skynbaar agter te kom.",
+          "My kind draai die volume op, of kies ’n plek met agtergrondgeraas, wanneer hulle meer wakker of bedaard wil voel.",
         ],
       },
     },
@@ -2320,7 +2330,34 @@ const DOMAIN_DEFINITIONS = [
   {
     id: "tactile",
     icon: "✋",
-    types: ["sensitive", "sensitive", "seeking", "sensitive", "sensitive", "seeking", "sensitive", "seeking", "sensitive"],
+    types: {
+      adult: [
+        "sensitive",
+        "sensitive",
+        "sensitive-if-no",
+        "sensitive",
+        "sensitive",
+        "neutral",
+        "sensitive",
+        "seeking",
+        "seeking",
+        "seeking",
+      ],
+      couple: [
+        "sensitive",
+        "sensitive",
+        "sensitive-if-no",
+        "sensitive",
+        "sensitive",
+        "neutral",
+        "sensitive",
+        "neutral",
+        "sensitive",
+        "seeking",
+        "seeking",
+        "seeking",
+      ],
+    },
     copy: {
       en: {
         title: "Tactile Processing",
@@ -2347,6 +2384,9 @@ const DOMAIN_DEFINITIONS = [
           "I dislike getting my hands messy, for example with paint, sand, glue or food.",
           "I enjoy appropriate physical affection, such as hugs, from people I trust.",
           "I avoid certain foods because their texture feels unpleasant.",
+          "I seek out textures, such as fidgeting with fabric, messy materials, or different surfaces.",
+          "Firm pressure helps me feel settled, such as a tight hug, a heavy blanket, or pressing my hands together.",
+          "I touch objects, clothing, or my own skin more often than other people seem to.",
         ],
         teen: [
           "Scratchy, tight or certain types of clothes feel uncomfortable on my skin at home and at school.",
@@ -2356,6 +2396,9 @@ const DOMAIN_DEFINITIONS = [
           "I do not like getting my hands messy with things like paint, sand, glue or food.",
           "I enjoy hugs or other appropriate touch from people I trust.",
           "I avoid some foods because I cannot stand how they feel in my mouth.",
+          "I look for textures, like fidgeting with fabric, messy materials, or different surfaces at home or at school.",
+          "Firm pressure helps me feel settled, like a tight hug, a heavy blanket, or pressing my hands together.",
+          "I touch objects, my clothes, or my own skin more often than other people seem to.",
         ],
         parent: [
           "Certain clothing textures, such as scratchy or tight-fitting fabrics, are uncomfortable for my child.",
@@ -2365,6 +2408,9 @@ const DOMAIN_DEFINITIONS = [
           "My child dislikes getting their hands messy with paint, sand, glue or food.",
           "My child enjoys appropriate physical affection, such as hugs, from people they trust.",
           "My child avoids certain foods because the texture feels unpleasant.",
+          "My child seeks out textures, such as fidgeting with fabric, messy materials, or different surfaces.",
+          "Firm pressure helps my child feel settled, such as a tight hug, a heavy blanket, or pressing their hands together.",
+          "My child touches objects, clothing, or their own skin more often than other children seem to.",
         ],
         couple: [
           "Certain clothing textures, such as scratchy or tight-fitting fabrics, are uncomfortable for me.",
@@ -2376,6 +2422,9 @@ const DOMAIN_DEFINITIONS = [
           "I avoid certain foods because their texture feels unpleasant.",
           "I like to show love to my partner through physical affection like hugs and kisses.",
           "I prefer more personal space with my partner and tend to show love in ways that are not mainly physical touch (for example words, time together, or thoughtful acts).",
+          "I seek out textures, such as fidgeting with fabric, messy materials, or different surfaces.",
+          "Firm pressure helps me feel settled, such as a tight hug, a heavy blanket, or pressing my hands together.",
+          "I touch objects, clothing, or my own skin more often than other people seem to.",
         ],
       },
       af: {
@@ -2387,6 +2436,9 @@ const DOMAIN_DEFINITIONS = [
           "Ek hou nie daarvan om my hande vuil te maak met verf, sand, gom of kos nie.",
           "Ek geniet gepaste fisieke aanraking, soos drukkies, van mense wat ek vertrou.",
           "Ek vermy sekere kosse omdat die tekstuur onaangenaam voel.",
+          "Ek soek teksture op, soos om met materiaal, morsige goed of verskillende oppervlakke te vroetel.",
+          "Ferm druk help my om bedaard te voel, soos ’n stywe drukkie, ’n swaar kombers, of om my hande teen mekaar te druk.",
+          "Ek raak meer aan voorwerpe, klere of my eie vel as wat ander mense blyk te doen.",
         ],
         teen: [
           "Krapperige, stywe of sekere soorte klere voel ongemaklik op my vel by die huis én by die skool.",
@@ -2396,6 +2448,9 @@ const DOMAIN_DEFINITIONS = [
           "Ek hou nie daarvan om my hande vuil te maak met goed soos verf, sand, gom of kos nie.",
           "Ek geniet drukkies of ander gepaste aanraking van mense wat ek vertrou.",
           "Ek vermy sekere kosse omdat ek nie hou van hoe dit in my mond voel nie.",
+          "Ek soek teksture op, soos om by die huis of by die skool met materiaal, morsige goed of verskillende oppervlakke te vroetel.",
+          "Ferm druk help my om bedaard te voel, soos ’n stywe drukkie, ’n swaar kombers, of om my hande teen mekaar te druk.",
+          "Ek raak meer aan voorwerpe, my klere of my eie vel as wat ander mense blyk te doen.",
         ],
         parent: [
           "Sekere kledingteksture, soos krapperige of styfpassende materiaal, voel vir my kind ongemaklik.",
@@ -2405,6 +2460,9 @@ const DOMAIN_DEFINITIONS = [
           "My kind hou nie daarvan om hulle hande vuil te maak met verf, sand, gom of kos nie.",
           "My kind geniet gepaste fisieke aanraking, soos drukkies, van mense wat hulle vertrou.",
           "My kind vermy sekere kosse omdat die tekstuur onaangenaam voel.",
+          "My kind soek teksture op, soos om met materiaal, morsige goed of verskillende oppervlakke te vroetel.",
+          "Ferm druk help my kind om bedaard te voel, soos ’n stywe drukkie, ’n swaar kombers, of om hulle hande teen mekaar te druk.",
+          "My kind raak meer aan voorwerpe, klere of hulle eie vel as wat ander kinders blyk te doen.",
         ],
         couple: [
           "Sekere kledingteksture, soos krapperige of styfpassende materiaal, voel vir my ongemaklik.",
@@ -2416,6 +2474,9 @@ const DOMAIN_DEFINITIONS = [
           "Ek vermy sekere kosse omdat die tekstuur onaangenaam voel.",
           "Ek hou daarvan om liefde aan my vennoot te wys deur fisieke aanraking soos drukkies en soene.",
           "Ek verkies meer persoonlike ruimte met my vennoot en is geneig om liefde te wys op maniere wat nie hoofsaaklik fisieke aanraking is nie (byvoorbeeld woorde, tyd saam, of deurdagte gebare).",
+          "Ek soek teksture op, soos om met materiaal, morsige goed of verskillende oppervlakke te vroetel.",
+          "Ferm druk help my om bedaard te voel, soos ’n stywe drukkie, ’n swaar kombers, of om my hande teen mekaar te druk.",
+          "Ek raak meer aan voorwerpe, klere of my eie vel as wat ander mense blyk te doen.",
         ],
       },
     },
@@ -2425,16 +2486,16 @@ const DOMAIN_DEFINITIONS = [
     icon: "🏃",
     types: [
       "seeking",
-      "seeking",
+      "neutral",
       "neutral",
       "seeking",
       "seeking",
+      "sensitive",
+      "sensitive",
+      "sensitive",
+      "seeking",
+      "seeking",
       "neutral",
-      "sensitive",
-      "sensitive",
-      "seeking",
-      "seeking",
-      "seeking",
     ],
     copy: {
       en: {
@@ -2542,7 +2603,32 @@ const DOMAIN_DEFINITIONS = [
   {
     id: "visual",
     icon: "👁",
-    types: ["neutral", "sensitive", "seeking", "sensitive", "sensitive", "sensitive", "seeking", "sensitive", "seeking"],
+    types: {
+      adult: [
+        "sensitive",
+        "sensitive",
+        "seeking",
+        "sensitive",
+        "sensitive",
+        "sensitive",
+        "neutral",
+        "seeking",
+        "seeking",
+      ],
+      couple: [
+        "sensitive",
+        "sensitive",
+        "seeking",
+        "sensitive",
+        "sensitive",
+        "sensitive",
+        "neutral",
+        "sensitive",
+        "sensitive-if-no",
+        "seeking",
+        "seeking",
+      ],
+    },
     copy: {
       en: {
         title: "Visual Processing",
@@ -2569,6 +2655,8 @@ const DOMAIN_DEFINITIONS = [
           "I become distracted when there is a lot happening visually around me.",
           "I feel more comfortable in dimly lit rooms.",
           "I enjoy opening curtains or blinds to let in natural light.",
+          "I look for colour, pattern, or movement around me when a space feels too plain.",
+          "Busy or brightly decorated spaces help me feel more awake than plain, quiet-looking rooms.",
         ],
         teen: [
           "I like keeping my room at home or my desk at school organised and tidy.",
@@ -2578,6 +2666,8 @@ const DOMAIN_DEFINITIONS = [
           "I get distracted when there is a lot to look at around me at home or at school.",
           "I feel more comfortable in rooms with softer or dimmer light.",
           "I like opening curtains or blinds to let natural light in.",
+          "I look for colour, pattern, or movement around me when a room at home or at school feels too plain.",
+          "Busy or brightly decorated spaces help me feel more awake than plain, quiet-looking rooms.",
         ],
         parent: [
           "My child keeps their surroundings organised and generally prefers a tidy space.",
@@ -2587,6 +2677,8 @@ const DOMAIN_DEFINITIONS = [
           "My child becomes distracted when there is a lot happening visually nearby.",
           "My child appears more comfortable in dimly lit rooms.",
           "My child enjoys natural light and opening curtains or blinds.",
+          "My child looks for colour, pattern, or movement when a space feels too plain.",
+          "Busy or brightly decorated spaces help my child feel more awake than plain, quiet-looking rooms.",
         ],
         couple: [
           "I keep my surroundings organised and generally prefer a tidy space.",
@@ -2598,6 +2690,8 @@ const DOMAIN_DEFINITIONS = [
           "I enjoy opening curtains or blinds to let in natural light.",
           "I have to have a neat, organised space at home.",
           "I am comfortable with some clutter at home.",
+          "I look for colour, pattern, or movement around me when a space feels too plain.",
+          "Busy or brightly decorated spaces help me feel more awake than plain, quiet-looking rooms.",
         ],
       },
       af: {
@@ -2609,6 +2703,8 @@ const DOMAIN_DEFINITIONS = [
           "Ek raak afgelei wanneer daar visueel baie rondom my gebeur.",
           "Ek voel gemakliker in vertrekke met dowwe lig.",
           "Ek geniet dit om gordyne of blindings oop te maak sodat natuurlike lig kan inkom.",
+          "Ek soek kleur, patrone of beweging om my wanneer ’n ruimte te kaal voel.",
+          "Besige of helder versierde ruimtes help my om meer wakker te voel as gewone, stil lykende vertrekke.",
         ],
         teen: [
           "Ek hou daarvan om my kamer by die huis of my lessenaar by die skool georganiseerd en netjies te hou.",
@@ -2618,6 +2714,8 @@ const DOMAIN_DEFINITIONS = [
           "Ek raak afgelei wanneer daar by die huis of by die skool baie rondom my is om na te kyk.",
           "Ek voel gemakliker in vertrekke met sagter of dowwer lig.",
           "Ek hou daarvan om gordyne of blindings oop te maak sodat natuurlike lig kan inkom.",
+          "Ek soek kleur, patrone of beweging om my wanneer ’n vertrek by die huis of by die skool te kaal voel.",
+          "Besige of helder versierde ruimtes help my om meer wakker te voel as gewone, stil lykende vertrekke.",
         ],
         parent: [
           "My kind hou hulle omgewing georganiseerd en verkies gewoonlik ’n netjiese ruimte.",
@@ -2627,6 +2725,8 @@ const DOMAIN_DEFINITIONS = [
           "My kind raak afgelei wanneer daar visueel baie rondom hulle gebeur.",
           "My kind lyk gemakliker in vertrekke met dowwe lig.",
           "My kind geniet natuurlike lig en om gordyne of blindings oop te maak.",
+          "My kind soek kleur, patrone of beweging wanneer ’n ruimte te kaal voel.",
+          "Besige of helder versierde ruimtes help my kind om meer wakker te voel as gewone, stil lykende vertrekke.",
         ],
         couple: [
           "Ek hou my omgewing georganiseerd en verkies gewoonlik ’n netjiese ruimte.",
@@ -2638,6 +2738,8 @@ const DOMAIN_DEFINITIONS = [
           "Ek geniet dit om gordyne of blindings oop te maak sodat natuurlike lig kan inkom.",
           "Ek moet ’n netjiese, georganiseerde ruimte by die huis hê.",
           "Ek is gemaklik met ’n bietjie rommel by die huis.",
+          "Ek soek kleur, patrone of beweging om my wanneer ’n ruimte te kaal voel.",
+          "Besige of helder versierde ruimtes help my om meer wakker te voel as gewone, stil lykende vertrekke.",
         ],
       },
     },
@@ -2730,20 +2832,25 @@ const DOMAIN_DEFINITIONS = [
   {
     id: "everyday",
     icon: "🌿",
-    types: [
-      "sensitive",
-      "seeking",
-      "sensitive",
-      "sensitive",
-      "neutral",
-      "seeking",
-      "seeking",
-      "sensitive",
-      "neutral",
-      "seeking",
-      "seeking",
-      "sensitive",
-    ],
+    types: {
+      adult: ["sensitive", "seeking", "sensitive", "sensitive", "seeking", "seeking"],
+      couple: [
+        "sensitive",
+        "seeking",
+        "sensitive",
+        "sensitive",
+        "neutral",
+        "neutral",
+        "neutral",
+        "neutral",
+        "neutral",
+        "neutral",
+        "neutral",
+        "neutral",
+        "seeking",
+        "seeking",
+      ],
+    },
     copy: {
       en: {
         title: "Everyday Sensory Moments",
@@ -2765,18 +2872,24 @@ const DOMAIN_DEFINITIONS = [
           "I enjoy being around lots of people and social activity.",
           "I prefer quieter environments and small groups to large gatherings.",
           "After spending time in a busy environment, I usually need quiet time to recharge.",
+          "I feel more awake and comfortable in busy, lively places than in places that are very quiet.",
+          "When a place feels too quiet or flat, I look for more activity, people, or things going on.",
         ],
         teen: [
           "Busy places like the school hall, shopping centres or restaurants leave me feeling tired or drained.",
           "I enjoy being around lots of people and social activity at school or at home.",
           "I prefer quiet places or spending time with one or two people instead of a big group.",
           "After a busy school day or busy time at home, I usually need some quiet time to recharge.",
+          "I feel more awake and comfortable in busy, lively places than in places that are very quiet at home or at school.",
+          "When a place feels too quiet or flat, I look for more activity, people, or things going on.",
         ],
         parent: [
           "Busy places, such as shopping centres or restaurants, leave my child feeling tired or drained.",
           "My child enjoys being around lots of people and social activity.",
           "My child prefers quieter environments and small groups to large gatherings.",
           "After spending time in a busy environment, my child usually needs quiet time to recharge.",
+          "My child feels more awake and comfortable in busy, lively places than in places that are very quiet.",
+          "When a place feels too quiet or flat, my child looks for more activity, people, or things going on.",
         ],
         couple: [
           "Busy places, such as shopping centres or restaurants, leave me feeling tired or drained.",
@@ -2791,6 +2904,8 @@ const DOMAIN_DEFINITIONS = [
           "Over the weekend I recharge best through movement or active activities.",
           "Over the weekend I recharge best by being social and around people.",
           "Over the weekend I recharge best with alone time.",
+          "I feel more awake and comfortable in busy, lively places than in places that are very quiet.",
+          "When a place feels too quiet or flat, I look for more activity, people, or things going on.",
         ],
       },
       af: {
@@ -2799,18 +2914,24 @@ const DOMAIN_DEFINITIONS = [
           "Ek geniet dit om tussen baie mense en sosiale aktiwiteit te wees.",
           "Ek verkies stiller omgewings en klein groepies bo groot byeenkomste.",
           "Nadat ek tyd in ’n besige omgewing deurgebring het, het ek gewoonlik stilte nodig om te herlaai.",
+          "Ek voel meer wakker en gemaklik op besige, lewendige plekke as op plekke wat baie stil is.",
+          "Wanneer ’n plek te stil of plat voel, soek ek meer aktiwiteit, mense of dinge wat aangaan.",
         ],
         teen: [
           "Besige plekke soos die skoolsaal, winkelsentrums of restaurante laat my moeg of uitgeput voel.",
           "Ek geniet dit om by die skool of by die huis tussen baie mense en sosiale aktiwiteit te wees.",
           "Ek verkies stil plekke of om met een of twee mense te kuier eerder as met ’n groot groep.",
           "Ná ’n besige skooldag of besige tyd by die huis het ek gewoonlik stiltetyd nodig om te herlaai.",
+          "Ek voel meer wakker en gemaklik op besige, lewendige plekke as op plekke wat by die huis of by die skool baie stil is.",
+          "Wanneer ’n plek te stil of plat voel, soek ek meer aktiwiteit, mense of dinge wat aangaan.",
         ],
         parent: [
           "Besige plekke, soos winkelsentrums of restaurante, laat my kind moeg of uitgeput voel.",
           "My kind geniet dit om tussen baie mense en sosiale aktiwiteit te wees.",
           "My kind verkies stiller omgewings en klein groepies bo groot byeenkomste.",
           "Nadat my kind tyd in ’n besige omgewing deurgebring het, het hulle gewoonlik stiltetyd nodig om te herlaai.",
+          "My kind voel meer wakker en gemaklik op besige, lewendige plekke as op plekke wat baie stil is.",
+          "Wanneer ’n plek te stil of plat voel, soek my kind meer aktiwiteit, mense of dinge wat aangaan.",
         ],
         couple: [
           "Besige plekke, soos winkelsentrums of restaurante, laat my moeg of uitgeput voel.",
@@ -2825,6 +2946,8 @@ const DOMAIN_DEFINITIONS = [
           "Oor die naweek herlaai ek die beste deur beweging of aktiewe aktiwiteite.",
           "Oor die naweek herlaai ek die beste deur sosiaal te wees en tussen mense te wees.",
           "Oor die naweek herlaai ek die beste met alleen-tyd.",
+          "Ek voel meer wakker en gemaklik op besige, lewendige plekke as op plekke wat baie stil is.",
+          "Wanneer ’n plek te stil of plat voel, soek ek meer aktiwiteit, mense of dinge wat aangaan.",
         ],
       },
     },
@@ -2873,6 +2996,12 @@ function getDemographics(language = "en", respondent = "adult") {
   return fields.map(([id, label, type, required]) => ({ id, label, type, required }));
 }
 
+function questionTypesForDomain(domain, respondent) {
+  if (Array.isArray(domain.types)) return domain.types;
+  if (respondent === "couple" && Array.isArray(domain.types.couple)) return domain.types.couple;
+  return domain.types.adult || [];
+}
+
 function getSensoryDomains(language = "en", respondent = "adult") {
   const safeLanguage = LANGUAGES.includes(language) ? language : "en";
   const safeRespondent = RESPONDENT_TYPES.includes(respondent) ? respondent : "adult";
@@ -2880,6 +3009,7 @@ function getSensoryDomains(language = "en", respondent = "adult") {
     const bank = domain.questions[safeLanguage] || domain.questions.en;
     // Couple uses adult self-report questions until couple-specific wording is added.
     const questionTexts = bank[safeRespondent] || bank.adult;
+    const types = questionTypesForDomain(domain, safeRespondent);
     return {
       id: domain.id,
       icon: domain.icon,
@@ -2889,7 +3019,7 @@ function getSensoryDomains(language = "en", respondent = "adult") {
       blurb: domain.copy[safeLanguage].blurb || "",
       questions: questionTexts.map((text, index) => ({
         text,
-        type: domain.types[index],
+        type: types[index],
       })),
     };
   });
