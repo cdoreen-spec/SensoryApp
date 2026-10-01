@@ -17,6 +17,15 @@ const state = {
   coupleHubNotice: null,
   coupleImportText: "",
   consent: [],
+  consentAge: "",
+  childAssent: "",
+  childAgreed: false,
+  parentInvolved: "",
+  consentAcceptedAt: null,
+  couplePrivacyWord: "",
+  couplePrivacyGatePartner: null,
+  couplePrivacyGateError: null,
+  couplePrivacyLegacyConfirm: false,
   sharingConsent: { parents: false, school: false, treatingTeam: false },
   demographics: { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" },
   /** ISO timestamp set when results are first shown — used on the print cover. */
@@ -181,8 +190,7 @@ const WHATSAPP_FEEDBACK_URL =
     "Hi Cayley, I've completed the sensory screening and would like to book an online or in-person feedback session for my sensory trail profile."
   );
 
-const CLINICIAN_PIN =
-  (typeof APP_CONFIG !== "undefined" && APP_CONFIG.clinicianPin) || "soulfulot";
+const CLINICIAN_PIN = "";
 const DELIVERY_PROVIDER =
   (typeof APP_CONFIG !== "undefined" && APP_CONFIG.deliveryProvider) || "gmail";
 const WEB3FORMS_KEY =
@@ -347,8 +355,7 @@ function routeAfterAuth(user) {
 
 function canAccessTherapistDashboard() {
   if (state.tourCapture) return state.tourCaptureMode === "dashboard";
-  if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) return true;
-  return Boolean(state.clinicianUnlocked);
+  return typeof Auth !== "undefined" && Auth.canAccessClinicianTools();
 }
 
 function emptyPatientForm() {
@@ -657,13 +664,14 @@ async function passwordForPatientInvite(user, fallbackPassword) {
 }
 
 async function credentialsForOutgoingInvite(details) {
-  if (!details?.userId || typeof Auth === "undefined" || !Auth.resetPatientPassword) return details;
-  const reset = await Auth.resetPatientPassword(details.userId);
-  if (!reset?.ok) {
-    return { ...details, error: reset?.error || "Could not create a new password." };
+  if (typeof SsotBackend !== "undefined" && SsotBackend.isEnabled() && SsotBackend.flush) {
+    try {
+      await SsotBackend.flush();
+    } catch (err) {
+      console.warn("Could not save the patient before emailing the link:", err);
+    }
   }
-  const password = await passwordForPatientInvite(reset.user, reset.password);
-  return patientCredentialsPayload(reset.user, password, buildAssignedPatientInviteUrl(reset.user));
+  return { ...details, password: "" };
 }
 
 function patientCredentialsPayload(user, password, inviteUrl) {
@@ -688,7 +696,6 @@ function patientCredentialsText(details) {
   return [
     `Patient: ${details.name}`,
     `Email: ${details.email}`,
-    details.password ? `Password: ${details.password}` : null,
     `Contact: ${details.phone}`,
     `Questionnaire: ${details.questionnaireType}`,
     `Expires: ${details.expiresAt}`,
@@ -705,15 +712,11 @@ function patientInviteMessage(details) {
     "",
     "An account has been created for you at Soulful Sensory OT so you can complete a sensory questionnaire.",
     "",
-    "Please open the questionnaire and use the email and password provided to access it.",
+    "Open the link below. It signs you in. Please do not forward it.",
     "",
     details.expiresAt ? `This invitation expires on ${details.expiresAt}.` : `This invitation expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.`,
     "",
-    "Sign in with:",
-    `Email: ${details.email}`,
-    details.password ? `Password: ${details.password}` : "Use the password your therapist sent you.",
-    "",
-    "Open this link, sign in, then complete the questionnaire:",
+    "Open this link, then complete the questionnaire:",
     details.inviteUrl || "",
     "",
     "If the link does not work, go to the Soulful Sensory OT website and sign in with the email and password above.",
@@ -745,9 +748,8 @@ function patientInviteWhatsAppUrl(details) {
   const firstName = String(details.name || "").trim().split(/\s+/)[0] || "there";
   const lines = [
     `Hi ${firstName}, your Soulful Sensory OT questionnaire is ready.`,
-    details.questionnaireType ? `Type: ${details.questionnaireType}.` : "",
     details.expiresAt ? `It expires on ${details.expiresAt}.` : "",
-    `Sign in with ${details.email}${details.password ? ` / ${details.password}` : ""}.`,
+    "Open this private link. It signs you in. Please do not forward it.",
     details.inviteUrl || "",
   ].filter(Boolean);
   return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join(" "))}`;
@@ -863,11 +865,7 @@ function detailsFromAssessmentRecord(record) {
         )
       : null;
   if (!patient) return null;
-  return patientCredentialsPayload(
-    patient,
-    patient.temporaryPassword,
-    buildAssignedPatientInviteUrl(patient)
-  );
+  return patientCredentialsPayload(patient, "", buildAssignedPatientInviteUrl(patient));
 }
 
 async function deliverPatientInviteEmail(details, { noticePrefix = "" } = {}) {
@@ -1541,6 +1539,8 @@ function encodeCoupleCompletionPackage(coupleId, partner) {
     idealSaturday: slot.idealSaturday || "",
     coupleWork: slot.coupleWork || null,
     summary: slot.summary || null,
+    sharingConsent: slot.sharingConsent || null,
+    privacyWordHash: slot.privacyWordHash || "",
   };
   try {
     return `SSOTC1.${btoa(unescape(encodeURIComponent(JSON.stringify(payload))))}`;
@@ -1585,10 +1585,63 @@ function applyCoupleCompletionPackage(payload, { allowForeignSession = false } =
     language: LANGUAGES.includes(payload.language) ? payload.language : "en",
     summary: payload.summary || null,
     coupleWork: normalizeCoupleWork(payload.coupleWork),
+    sharingConsent: payload.sharingConsent || session.partners[partner]?.sharingConsent || null,
+    privacyWordHash: payload.privacyWordHash || session.partners[partner]?.privacyWordHash || "",
   };
   saveCoupleSession(session);
   state.coupleId = session.id;
   return { ok: true, session, partner };
+}
+
+async function hashPrivacyWord(word) {
+  const payload = `ssot-couple-word:${String(word || "").trim().toLowerCase()}`;
+  if (typeof crypto !== "undefined" && crypto.subtle?.digest) {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+    return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  return payload;
+}
+
+function coupleUnlockStorageKey(partner) {
+  return `ssot-couple-unlock:${state.coupleId}:${partner}`;
+}
+
+function isCouplePartnerUnlocked(partner) {
+  try {
+    return sessionStorage.getItem(coupleUnlockStorageKey(partner)) === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+function unlockCouplePartner(partner) {
+  try {
+    sessionStorage.setItem(coupleUnlockStorageKey(partner), "1");
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function couplePartnersAgreedToMerge(session = null) {
+  const sess = session || (state.coupleId ? getCoupleSession(state.coupleId) : null);
+  if (!sess) return false;
+  return COUPLE_PARTNERS.every((partner) => Boolean(sess.partners?.[partner]?.sharingConsent?.partner));
+}
+
+async function saveCouplePrivacyWord() {
+  if (state.respondent !== "couple" || !state.couplePartner) return;
+  const word = String(state.couplePrivacyWord || "").trim();
+  const session = ensureCoupleSession();
+  const partner = state.couplePartner;
+  const slot = session.partners[partner] || emptyCouplePartnerSlot();
+  const privacyWordHash = word.length >= 4 ? await hashPrivacyWord(word) : slot.privacyWordHash || "";
+  session.partners[partner] = {
+    ...slot,
+    privacyWordHash,
+    sharingConsent: { ...(state.sharingConsent || {}) },
+  };
+  saveCoupleSession(session);
+  if (privacyWordHash) unlockCouplePartner(partner);
 }
 
 function persistCurrentPartnerToCoupleSession(assessmentId = null) {
@@ -1634,6 +1687,8 @@ function persistCurrentPartnerToCoupleSession(assessmentId = null) {
       })),
     },
     coupleWork: normalizeCoupleWork(state.coupleWork),
+    sharingConsent: { ...(state.sharingConsent || {}) },
+    privacyWordHash: session.partners[partner].privacyWordHash || "",
   };
   // Mirror the other partner's display name into demographics.partnerName when known.
   const other = partner === "a" ? "b" : "a";
@@ -2166,6 +2221,7 @@ function buildAssessmentRecord() {
     idealSaturday: state.idealSaturday || "",
     coupleWork: normalizeCoupleWork(state.coupleWork),
     sharingConsent: { ...(state.sharingConsent || {}) },
+    consentRecord: buildConsentRecord(),
     contactPreference: state.contactPreference,
     inviteMode: Boolean(state.inviteMode),
     patientResultsAccess: normalizeResultsAccess(state.patientResultsAccess),
@@ -2194,6 +2250,8 @@ function ensureAssessmentArchived() {
   state.viewingArchivedId = record.id;
   state.inProgressAssessmentId = null;
   persistCurrentPartnerToCoupleSession(record.id);
+  clearSensoryDraft();
+  clearDraftsForAssessment(record);
   return record.id;
 }
 
@@ -3235,6 +3293,25 @@ function reconnectStaffServerSession() {
   state.authNotice = "Sign in again so patient accounts are saved for the emailed questionnaire link.";
 }
 
+async function signInFromInviteLink() {
+  if (currentAuthUser()) {
+    continueInviteSession();
+    render();
+    return;
+  }
+  if (typeof Auth !== "undefined" && Auth.loginWithInviteToken && state.pendingInviteToken) {
+    const result = await Auth.loginWithInviteToken(state.pendingInviteToken);
+    if (result?.ok && result.user) {
+      routeAfterAuth(result.user);
+      render();
+      return;
+    }
+    state.authNotice = result?.error || "";
+  }
+  beginInviteAccountGate();
+  render();
+}
+
 function beginInviteAccountGate() {
   resetAuthForm("patient");
   const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
@@ -3247,8 +3324,8 @@ function beginInviteAccountGate() {
   state.authError = null;
   if (!state.authNotice) {
     state.authNotice = assigned
-      ? "Your therapist created an account for you. Sign in with the email and password they sent."
-      : "Sign in with the account your therapist created to begin your sensory screening.";
+      ? "Open the private link from your therapist. If it did not sign you in, ask them to send a new link."
+      : "This questionnaire link is not valid. Ask your therapist to send a new one.";
   }
 }
 
@@ -3284,9 +3361,6 @@ function getPatientResultsAccess() {
   // Full on-screen report (including printable work/school letters) is for
   // therapists previewing via clinician tools.
   if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
-    return RESULTS_ACCESS.full;
-  }
-  if (state.clinicianUnlocked) {
     return RESULTS_ACCESS.full;
   }
   return RESULTS_ACCESS.none;
@@ -3645,7 +3719,9 @@ function readInviteFromUrl() {
     state.patientResultsAccess = visibilityToResultsAccess(visibility);
     const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
     if (assigned) applyPatientAssignment(assigned);
-    if (inviteNeedsAccount()) {
+    if (state.pendingInviteToken && inviteNeedsAccount()) {
+      void signInFromInviteLink();
+    } else if (inviteNeedsAccount()) {
       beginInviteAccountGate();
     } else {
       continueInviteSession();
@@ -3724,6 +3800,11 @@ function buildSensoryDraft() {
     coupleId: state.coupleId || null,
     couplePartner: state.couplePartner || null,
     consent: Array.isArray(state.consent) ? state.consent.map(Boolean) : [],
+    consentAge: state.consentAge || "",
+    childAssent: state.childAssent || "",
+    childAgreed: Boolean(state.childAgreed),
+    parentInvolved: state.parentInvolved || "",
+    consentAcceptedAt: state.consentAcceptedAt || null,
     sharingConsent: { ...(state.sharingConsent || {}) },
     demographics: {
       name: state.demographics?.name || "",
@@ -3823,6 +3904,11 @@ function applySensoryDraft(draft) {
     state.step = findStepIndex("consent");
   }
   state.consent = Array.isArray(draft.consent) ? draft.consent.map(Boolean) : [];
+  state.consentAge = draft.consentAge || "";
+  state.childAssent = draft.childAssent || "";
+  state.childAgreed = Boolean(draft.childAgreed);
+  state.parentInvolved = draft.parentInvolved || "";
+  state.consentAcceptedAt = draft.consentAcceptedAt || null;
   if (state.respondent) {
     const emptySharing = createEmptySharingConsent(
       state.language,
@@ -4822,7 +4908,6 @@ function couplePartnerEmailSections(partner, slot, copy) {
 }
 
 function buildCoupleCombinedResultsReport(session = null) {
-  const copy = currentUi();
   const sess = ensureCoupleCombinedSubmissionShape(session || ensureCoupleSession());
   if (!bothCouplePartnersComplete(sess)) {
     throw new Error("Both partners must complete before submitting the combined report.");
@@ -4830,10 +4915,16 @@ function buildCoupleCombinedResultsReport(session = null) {
 
   const nameA = couplePartnerLabel("a", sess);
   const nameB = couplePartnerLabel("b", sess);
-  const intro = completionNoticeIntro();
+  const intro =
+    "Both partners have finished. This notice does not include scores. Open the patient register for the full profiles.";
   const sections = [
-    ...couplePartnerEmailSections("a", sess.partners.a, copy),
-    ...couplePartnerEmailSections("b", sess.partners.b, copy),
+    {
+      heading: "Completion notice",
+      rows: [
+        ["Partner 1", nameA],
+        ["Partner 2", nameB],
+      ],
+    },
   ];
 
   return {
@@ -5071,36 +5162,14 @@ function renderClinicianGate() {
     <div class="clinician">
       <section class="clinician__panel" aria-labelledby="clinician-heading">
         <p class="clinician__eyebrow">Clinician access</p>
-        <h1 id="clinician-heading" class="clinician__title">Share with a patient</h1>
+        <h1 id="clinician-heading" class="clinician__title">Sign in to continue</h1>
         <p class="clinician__lead">
-          Enter your PIN to create a patient link. Completed screenings are emailed to
-          <strong>${escapeHtml(getClinicianEmail())}</strong>.
+          The patient register stays behind your therapist or admin sign-in. A PIN does not open it.
         </p>
-        ${
-          state.clinicianPinError
-            ? `<p class="error-banner" role="alert">${escapeHtml(state.clinicianPinError)}</p>`
-            : ""
-        }
-        <label class="clinician__field">
-          <span>PIN</span>
-          <input
-            type="password"
-            name="clinician-pin"
-            data-clinician-pin
-            autocomplete="current-password"
-            value="${escapeHtml(state.clinicianPinInput)}"
-            placeholder="Enter clinician PIN"
-          />
-        </label>
         <div class="clinician__actions">
-          <button type="button" class="btn btn-primary" data-action="clinician-unlock">Unlock</button>
+          <button type="button" class="btn btn-primary" data-action="open-login">Sign in</button>
           <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
         </div>
-        <p class="clinician__hint">
-          Prefer accounts?
-          <button type="button" class="auth__text-btn" data-action="open-login">Sign in as therapist/admin</button>
-          — or use the PIN from <code>config.js</code> (<code>clinicianPin</code>).
-        </p>
       </section>
     </div>
   `;
@@ -5148,7 +5217,7 @@ function renderClinician() {
   if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
     return renderClinicianShare();
   }
-  return state.clinicianUnlocked ? renderClinicianShare() : renderClinicianGate();
+  return renderClinicianGate();
 }
 
 function respondentLabel(respondent) {
@@ -5370,42 +5439,18 @@ function renderDashboardAssessmentRow(item) {
 }
 
 function renderDashboardGate() {
-  const adminEmail =
-    (typeof APP_CONFIG !== "undefined" && APP_CONFIG.adminEmail) || getClinicianEmail();
   return `
     <div class="clinician">
       <section class="clinician__panel" aria-labelledby="dashboard-gate-heading">
         <p class="clinician__eyebrow">Therapist access</p>
         <h1 id="dashboard-gate-heading" class="clinician__title">Patient dashboard</h1>
         <p class="clinician__lead">
-          Unlock with your clinician PIN, or sign in as admin / therapist to see complete and incomplete screenings.
+          Sign in as admin or therapist to see screenings. The register is not opened with a PIN.
         </p>
-        ${
-          state.clinicianPinError
-            ? `<p class="error-banner" role="alert">${escapeHtml(state.clinicianPinError)}</p>`
-            : ""
-        }
-        <label class="clinician__field">
-          <span>Clinician PIN</span>
-          <input
-            type="password"
-            name="clinician-pin"
-            data-clinician-pin
-            autocomplete="current-password"
-            value="${escapeHtml(state.clinicianPinInput)}"
-            placeholder="Enter clinician PIN"
-          />
-        </label>
         <div class="clinician__actions">
-          <button type="button" class="btn btn-primary" data-action="clinician-unlock">Unlock dashboard</button>
-          <button type="button" class="btn btn-secondary" data-action="open-login">Sign in</button>
+          <button type="button" class="btn btn-primary" data-action="open-login">Sign in</button>
           <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
         </div>
-        <p class="clinician__hint">
-          Admin sign-in: <strong>${escapeHtml(adminEmail)}</strong> — password <strong>soulfulot</strong>.
-          Clinician PIN is also <strong>soulfulot</strong>.
-          New therapist accounts need approval in Settings before they can sign in.
-        </p>
       </section>
     </div>
   `;
@@ -5462,7 +5507,7 @@ function renderCreatedPatientSuccess(details) {
       <dl class="patient-create__details">
         <div><dt>Name</dt><dd>${escapeHtml(details.name)}</dd></div>
         <div><dt>Email</dt><dd>${escapeHtml(details.email)}</dd></div>
-        <div><dt>Password</dt><dd><code>${escapeHtml(details.password || "Already used — create a new password if needed")}</code></dd></div>
+        <div><dt>Sign-in</dt><dd>Private link only. No password is sent.</dd></div>
         <div><dt>Contact number</dt><dd>${escapeHtml(details.phone || "—")}</dd></div>
         <div><dt>Age</dt><dd>${escapeHtml(details.age || "—")}</dd></div>
         <div><dt>Questionnaire</dt><dd>${escapeHtml(details.questionnaireType || "—")}</dd></div>
@@ -5492,7 +5537,7 @@ function renderCreatedPatientSuccess(details) {
       <div class="clinician__actions">
         ${
           details.userId
-            ? `<button type="button" class="btn btn-secondary" data-action="reset-patient-password" data-user-id="${escapeHtml(details.userId)}">New password</button>`
+            ? `<button type="button" class="btn btn-secondary" data-action="reset-patient-password" data-user-id="${escapeHtml(details.userId)}">New link</button>`
             : ""
         }
         <button type="button" class="btn btn-secondary" data-action="create-another-patient">Add another patient</button>
@@ -6198,8 +6243,6 @@ function renderSignup() {
   }
 
   const role = form.role === "therapist" && therapistOk ? "therapist" : "patient";
-  const sharedPassword =
-    (typeof APP_CONFIG !== "undefined" && APP_CONFIG.adminPassword) || "soulfulot";
 
   return renderAuthShell({
     eyebrow: invite ? "Patient invite" : "Account",
@@ -6246,10 +6289,13 @@ function renderSignup() {
         </label>
         <label class="auth__field">
           <span>Password</span>
-          <input type="text" name="password" data-auth-field="password" autocomplete="new-password" required minlength="8" readonly value="${escapeHtml(sharedPassword)}" />
+          <input type="password" name="password" data-auth-field="password" autocomplete="new-password" required minlength="8" value="${escapeHtml(form.password)}" />
         </label>
-        <input type="hidden" name="confirmPassword" value="${escapeHtml(sharedPassword)}" />
-        <p class="auth__hint">Admin, therapist, and patient accounts all use this password.</p>
+        <label class="auth__field">
+          <span>Confirm password</span>
+          <input type="password" name="confirmPassword" data-auth-field="confirmPassword" autocomplete="new-password" required minlength="8" value="${escapeHtml(form.confirmPassword || "")}" />
+        </label>
+        <p class="auth__hint">Choose your own password. Patient questionnaire links do not include a password.</p>
         <div class="auth__actions">
           <button type="submit" class="btn btn-primary" ${state.authBusy ? "disabled" : ""}>
             ${state.authBusy ? "Creating…" : "Create account & sign in"}
@@ -6476,6 +6522,18 @@ function renderSettingsAppPanel() {
         <input type="text" name="practiceName" value="${escapeHtml(settings.practiceName || "")}" />
       </label>
       <label class="auth__field">
+        <span>Practice address</span>
+        <input type="text" name="practiceAddress" value="${escapeHtml(settings.practiceAddress || "")}" placeholder="Street address shown on the privacy notice" />
+      </label>
+      <label class="auth__field">
+        <span>Information officer</span>
+        <input type="text" name="informationOfficer" value="${escapeHtml(settings.informationOfficer || "")}" />
+      </label>
+      <label class="auth__field">
+        <span>Information officer email</span>
+        <input type="email" name="informationOfficerEmail" value="${escapeHtml(settings.informationOfficerEmail || "")}" />
+      </label>
+      <label class="auth__field">
         <span>Clinician results email</span>
         <input type="email" name="clinicianEmail" value="${escapeHtml(settings.clinicianEmail || "")}" required />
       </label>
@@ -6495,10 +6553,49 @@ function renderSettingsAppPanel() {
         <input type="checkbox" name="requireTherapistApproval" ${settings.requireTherapistApproval !== false ? "checked" : ""} />
         <span>Require admin approval for new therapists</span>
       </label>
-      <p class="auth__hint">Accounts are stored in this browser. Change your admin password in <code>config.js</code> before sharing this device, then clear site data only if you intentionally want a fresh seed.</p>
+      <p class="auth__hint">Staff sign-in uses the password set on the server. Patient links do not include a password. Adult records stay at least six years after the last contact. A child’s record stays until at least age 21.</p>
       <div class="auth__actions">
         <button type="submit" class="btn btn-primary">Save settings</button>
       </div>
+    </form>
+    ${renderPrivacyRequestLog()}
+  `;
+}
+
+function renderPrivacyRequestLog() {
+  const settings = typeof getSettings === "function" ? getSettings() : {};
+  const requests = Array.isArray(settings.privacyRequests) ? settings.privacyRequests : [];
+  const rows = requests
+    .map(
+      (item) =>
+        `<li>${escapeHtml(item.recordedAt || "")} · ${escapeHtml(item.type || "")} · ${escapeHtml(item.person || "")} · ${escapeHtml(item.note || "")}</li>`
+    )
+    .join("");
+  return `
+    <form class="settings-app" data-privacy-request-form>
+      <h3 class="consent-subheading">Privacy requests</h3>
+      <p class="auth__hint">Record a request for a copy, a correction, an objection, or deletion. Keep the clinical record until the retention period in the privacy notice, then delete it.</p>
+      <label class="auth__field">
+        <span>Person</span>
+        <input type="text" name="person" required />
+      </label>
+      <label class="auth__field">
+        <span>Request</span>
+        <select name="type">
+          <option value="access">Access</option>
+          <option value="correction">Correction</option>
+          <option value="objection">Objection</option>
+          <option value="deletion">Deletion</option>
+        </select>
+      </label>
+      <label class="auth__field">
+        <span>Note</span>
+        <input type="text" name="note" />
+      </label>
+      <div class="auth__actions">
+        <button type="submit" class="btn btn-secondary">Save request</button>
+      </div>
+      ${rows ? `<ul class="privacy-request-log">${rows}</ul>` : ""}
     </form>
   `;
 }
@@ -6719,6 +6816,21 @@ function renderSharingPermissionsSummary() {
   `;
 }
 
+function consentAgeNumber() {
+  const value = Number(String(state.consentAge || "").trim());
+  return Number.isFinite(value) ? value : null;
+}
+
+function couplePrivacyWordOk() {
+  if ((state.respondent || "") !== "couple") return true;
+  if (String(state.couplePrivacyWord || "").trim().length >= 4) return true;
+  const slot =
+    state.coupleId && state.couplePartner
+      ? getCoupleSession(state.coupleId)?.partners?.[state.couplePartner]
+      : null;
+  return Boolean(slot?.privacyWordHash);
+}
+
 function hasAllRequiredConsent() {
   const consentItems = getConsentItems(state.language, state.respondent || "adult");
   const requiredSharing = getSharingConsentItems(
@@ -6726,10 +6838,51 @@ function hasAllRequiredConsent() {
     state.respondent || "adult",
     state.lifeContext
   ).filter((item) => item.required);
-  return (
-    consentItems.every((_, i) => Boolean(state.consent[i])) &&
-    requiredSharing.every((item) => Boolean(state.sharingConsent?.[item.id]))
-  );
+  if (!consentItems.every((_, i) => Boolean(state.consent[i]))) return false;
+  if (!requiredSharing.every((item) => Boolean(state.sharingConsent?.[item.id]))) return false;
+  if (state.respondent === "teen" || state.respondent === "parent") {
+    const age = consentAgeNumber();
+    if (age === null || age < 0 || age > 120) return false;
+    if (state.respondent === "teen" && age < 12) return false;
+    if (state.respondent === "teen" && state.parentInvolved !== "yes" && state.parentInvolved !== "no") {
+      return false;
+    }
+    if (state.respondent === "parent" && age < 12 && state.childAssent !== "yes" && state.childAssent !== "too-young") {
+      return false;
+    }
+    if (state.respondent === "parent" && age >= 12 && !state.childAgreed) return false;
+  }
+  return couplePrivacyWordOk();
+}
+
+function buildConsentRecord() {
+  const language = state.language || "en";
+  const respondent = state.respondent || "adult";
+  const statements = getConsentItems(language, respondent).map((text, index) => ({
+    text,
+    accepted: Boolean(state.consent[index]),
+  }));
+  const sharing = getSharingConsentItems(language, respondent, state.lifeContext).map((item) => ({
+    id: item.id,
+    text: item.label,
+    accepted: Boolean(state.sharingConsent?.[item.id]),
+  }));
+  return {
+    noticeVersion: typeof CONSENT_NOTICE_VERSION === "string" ? CONSENT_NOTICE_VERSION : "2026-10-01",
+    acceptedAt: state.consentAcceptedAt || new Date().toISOString(),
+    language,
+    respondent,
+    statements,
+    sharing,
+    ageAtConsent: state.consentAge || "",
+    childAssent: state.childAssent || "",
+    childAgreed: Boolean(state.childAgreed),
+    parentInvolved: state.parentInvolved || "",
+    notice: getPrivacyNoticeParagraphs(language, {
+      respondent,
+      lifeContext: state.lifeContext,
+    }),
+  };
 }
 
 function submissionStatusMessage(copy = currentUi()) {
@@ -6850,7 +7003,14 @@ function canOfferWorkReport() {
 }
 
 function canOfferSchoolReport() {
+  if (state.respondent === "parent") return true;
   return state.respondent === "teen" && (state.lifeContext === "school" || state.lifeContext === "homeSchool");
+}
+
+function settingReportBlockedReason() {
+  if (canOfferWorkReport() && !state.sharingConsent?.employer) return "employer";
+  if (canOfferSchoolReport() && !state.sharingConsent?.school) return "school";
+  return "";
 }
 
 function canOfferSettingReport() {
@@ -9039,8 +9199,41 @@ function renderCouplePartnerCard(partner, session, copy) {
   `;
 }
 
+function renderCouplePrivacyGate() {
+  const copy = currentUi();
+  const partner = state.couplePrivacyGatePartner;
+  const slot = getCoupleSession(state.coupleId)?.partners?.[partner];
+  const legacy = !slot?.privacyWordHash;
+  return renderShell(
+    `
+      ${state.couplePrivacyGateError ? `<div class="error-banner" role="alert">${escapeHtml(state.couplePrivacyGateError)}</div>` : ""}
+      <span class="section-tag">${escapeHtml(copy.coupleHubTag)}</span>
+      <h2 class="step-title">${escapeHtml(copy.couplePrivacyGateTitle)}</h2>
+      <p class="step-desc">${escapeHtml(legacy ? copy.couplePrivacyGateLegacy : copy.couplePrivacyGateBody)}</p>
+      ${
+        legacy
+          ? `<label class="consent-item">
+              <input type="checkbox" data-couple-privacy-legacy ${state.couplePrivacyLegacyConfirm ? "checked" : ""} />
+              <span>${escapeHtml(copy.couplePrivacyGateLegacyConfirm)}</span>
+            </label>`
+          : `<div class="field">
+              <label for="couple-privacy-unlock">${escapeHtml(copy.couplePrivacyWordLabel)}</label>
+              <input id="couple-privacy-unlock" type="password" data-couple-privacy-unlock autocomplete="current-password" placeholder="${escapeHtml(copy.couplePrivacyGatePlaceholder)}" />
+            </div>`
+      }
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" data-action="couple-privacy-cancel">${escapeHtml(copy.couplePrivacyGateCancel)}</button>
+        <button type="button" class="btn btn-primary" data-action="couple-privacy-unlock">${escapeHtml(copy.couplePrivacyGateSubmit)}</button>
+      </div>
+    `,
+    renderProgress(),
+    { stepType: "coupleHub" }
+  );
+}
+
 function renderCoupleHub() {
   const copy = currentUi();
+  if (state.couplePrivacyGatePartner) return renderCouplePrivacyGate();
   const session = ensureCoupleSession();
   const bothDone = bothCouplePartnersComplete(session);
   if (state.coupleShowMerge && bothDone) {
@@ -10004,6 +10197,77 @@ function renderConsent() {
     })
     .join("");
 
+  const age = consentAgeNumber();
+  const ageField =
+    state.respondent === "teen" || state.respondent === "parent"
+      ? `
+      <div class="field">
+        <label for="consent-age">${escapeHtml(
+          state.respondent === "parent" ? copy.consentAgeLabelParent : copy.consentAgeLabel
+        )}</label>
+        <input id="consent-age" type="number" min="0" max="120" data-consent-age value="${escapeHtml(
+          state.consentAge || ""
+        )}" />
+      </div>`
+      : "";
+  const teenParent =
+    state.respondent === "teen" && age !== null && age >= 12
+      ? `
+      <fieldset class="consent-choice">
+        <legend>${escapeHtml(copy.consentParentInvolvedLegend)}</legend>
+        <label class="consent-item">
+          <input type="radio" name="parent-involved" data-parent-involved value="yes" ${
+            state.parentInvolved === "yes" ? "checked" : ""
+          } />
+          <span>${escapeHtml(copy.consentParentInvolvedYes)}</span>
+        </label>
+        <label class="consent-item">
+          <input type="radio" name="parent-involved" data-parent-involved value="no" ${
+            state.parentInvolved === "no" ? "checked" : ""
+          } />
+          <span>${escapeHtml(copy.consentParentInvolvedNo)}</span>
+        </label>
+      </fieldset>`
+      : "";
+  const parentAssent =
+    state.respondent === "parent" && age !== null && age < 12
+      ? `
+      <fieldset class="consent-choice">
+        <legend>${escapeHtml(copy.consentAssentLegend)}</legend>
+        <label class="consent-item">
+          <input type="radio" name="child-assent" data-child-assent value="yes" ${
+            state.childAssent === "yes" ? "checked" : ""
+          } />
+          <span>${escapeHtml(copy.consentAssentYes)}</span>
+        </label>
+        <label class="consent-item">
+          <input type="radio" name="child-assent" data-child-assent value="too-young" ${
+            state.childAssent === "too-young" ? "checked" : ""
+          } />
+          <span>${escapeHtml(copy.consentAssentTooYoung)}</span>
+        </label>
+      </fieldset>`
+      : "";
+  const parentChildConsent =
+    state.respondent === "parent" && age !== null && age >= 12
+      ? `
+      <label class="consent-item">
+        <input type="checkbox" data-child-agreed ${state.childAgreed ? "checked" : ""} />
+        <span>${escapeHtml(copy.consentChildAgreed)}</span>
+      </label>`
+      : "";
+  const coupleWord =
+    state.respondent === "couple"
+      ? `
+      <div class="field">
+        <label for="couple-privacy-word">${escapeHtml(copy.couplePrivacyWordLabel)}</label>
+        <input id="couple-privacy-word" type="password" autocomplete="new-password" data-couple-privacy-word value="${escapeHtml(
+          state.couplePrivacyWord || ""
+        )}" />
+        <p class="consent-sharing__desc">${escapeHtml(copy.couplePrivacyWordHint)}</p>
+      </div>`
+      : "";
+
   const gateNotice = (placement) => `
       <aside
         class="consent-disclaimer"
@@ -10024,6 +10288,11 @@ function renderConsent() {
       <p class="step-desc">${escapeHtml(consentDesc)}</p>
       ${gateNotice("top")}
       <p class="consent-privacy-note">${escapeHtml(copy.consentPrivacyNote)}</p>
+      ${ageField}
+      ${teenParent}
+      ${parentAssent}
+      ${parentChildConsent}
+      ${coupleWord}
       <h3 class="consent-subheading">${escapeHtml(copy.consentRequiredHeading)}</h3>
       <div class="consent-list">${required}</div>
       <div class="consent-sharing">
@@ -10987,6 +11256,12 @@ function renderMatchedTrailDescription(metrics, pageEntry) {
     </section>`;
 }
 
+function renderDunnCitation(copy, variant = "full") {
+  const text = variant === "short" ? copy.dunnCitationShort : copy.dunnCitation;
+  if (!text) return "";
+  return `<p class="report-citation">${escapeHtml(text)}</p>`;
+}
+
 function renderMatchedTrailReveal(metrics, pageEntry) {
   if (!shouldShowTrailProfile()) return "";
 
@@ -11033,8 +11308,23 @@ function renderMatchedTrailReveal(metrics, pageEntry) {
           <p class="teen-crew__hero-summary">${escapeHtml(you.summary)}</p>
           ${you.body ? `<p class="teen-crew__hero-body">${escapeHtml(you.body)}</p>` : ""}
         </div>
+        ${
+          Array.isArray(you.traits) && you.traits.length
+            ? `<div class="trail-profile__traits teen-crew__match-traits">
+                <p class="trail-profile__traits-title">${escapeHtml(
+                  state.respondent === "teen"
+                    ? copy.teenCrewTraitsTitleTeen || copy.teenCrewTraitsTitle
+                    : copy.teenCrewTraitsTitle
+                )}</p>
+                <ul class="trail-profile__traits-list">
+                  ${you.traits.map((trait) => `<li>${escapeHtml(trait)}</li>`).join("")}
+                </ul>
+              </div>`
+            : ""
+        }
       </article>
 
+      ${renderDunnCitation(copy)}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>`;
@@ -11303,6 +11593,7 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
         <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
         ${renderOverallScoreCard(metrics, copy)}
         ${scoresVisual}
+        ${renderDunnCitation(copy, "short")}
       </div>
       ${reportPageNumberHtml(copy, pageEntry?.page)}
     </section>`;
@@ -11331,6 +11622,7 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
       <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
       ${canOfferWorkReport() ? "" : renderOverallScoreCard(metrics, copy)}
       ${scoresVisual}
+      ${renderDunnCitation(copy, "short")}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
@@ -12566,6 +12858,7 @@ function renderInterpretGlossary(copy, pageEntry) {
       <ul class="interpret-glossary__list">
         ${parts.join("")}
       </ul>
+      ${renderDunnCitation(copy)}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>
@@ -12809,6 +13102,7 @@ function renderScoreTable(scores, plan) {
         ${cards}
       </div>
       <p class="score-table__legend">${escapeHtml(copy.thresholdLegend)}</p>
+      ${renderDunnCitation(copy, "short")}
     </section>
   `;
 }
@@ -12981,6 +13275,15 @@ function renderWorkScoreScaleChart(rows, overall, reportCopy, uiCopy) {
 
 function renderWorkReport(scores) {
   if (!canOfferSettingReport()) return "";
+  const blocked = settingReportBlockedReason();
+  if (blocked) {
+    const copy = currentUi();
+    const message = blocked === "employer" ? copy.sharingBlockedEmployer : copy.sharingBlockedSchool;
+    return `
+      <section class="work-report results-contact" aria-live="polite">
+        <p class="work-report__ask-desc">${escapeHtml(message)}</p>
+      </section>`;
+  }
 
   const reportCopy = getSettingReportCopy();
   const uiCopy = currentUi();
@@ -14208,9 +14511,40 @@ function validateStep() {
   }
 
   if (step.type === "consent") {
+    if (state.respondent === "teen" || state.respondent === "parent") {
+      const age = consentAgeNumber();
+      if (age === null) {
+        state.error = copy.consentAgeRequired;
+        return false;
+      }
+      if (state.respondent === "teen" && age < 12) {
+        state.error = copy.consentTeenTooYoung;
+        return false;
+      }
+      if (state.respondent === "teen" && state.parentInvolved !== "yes" && state.parentInvolved !== "no") {
+        state.error = copy.consentParentInvolvedRequired;
+        return false;
+      }
+      if (state.respondent === "parent" && age < 12 && state.childAssent !== "yes" && state.childAssent !== "too-young") {
+        state.error = copy.consentAssentRequired;
+        return false;
+      }
+      if (state.respondent === "parent" && age >= 12 && !state.childAgreed) {
+        state.error = copy.consentChildAgreed;
+        return false;
+      }
+    }
+    if (!couplePrivacyWordOk()) {
+      state.error = copy.couplePrivacyWordRequired;
+      return false;
+    }
     if (!hasAllRequiredConsent()) {
       state.error = copy.requiredConsent;
       return false;
+    }
+    state.consentAcceptedAt = state.consentAcceptedAt || new Date().toISOString();
+    if (state.respondent === "teen" || state.respondent === "parent") {
+      state.demographics.age = String(state.consentAge || "").trim();
     }
   }
 
@@ -14475,6 +14809,12 @@ function bindEvents() {
           state.coupleHubNotice = null;
         }
         state.consent = getConsentItems(state.language, nextRespondent).map(() => false);
+        state.consentAge = "";
+        state.childAssent = "";
+        state.childAgreed = false;
+        state.parentInvolved = "";
+        state.consentAcceptedAt = null;
+        state.couplePrivacyWord = "";
         state.sharingConsent = createEmptySharingConsent(
           state.language,
           nextRespondent,
@@ -14822,7 +15162,7 @@ function bindEvents() {
     }
 
     if (action === "print-work-report") {
-      if (!canOfferSettingReport()) return;
+      if (!canOfferSettingReport() || settingReportBlockedReason()) return;
       ensureWorkReportDefaults();
       const needsOpen = !state.showWorkReport;
       state.showWorkReport = true;
@@ -15021,7 +15361,15 @@ function bindEvents() {
     if (action === "couple-start") {
       const partner = btn.dataset.partner;
       if (!COUPLE_PARTNERS.includes(partner)) return;
-      ensureCoupleSession();
+      const slot = ensureCoupleSession().partners?.[partner];
+      if (slot?.status === "complete" && slot.answers && !isCouplePartnerUnlocked(partner)) {
+        state.couplePrivacyGatePartner = partner;
+        state.couplePrivacyGateError = null;
+        state.couplePrivacyLegacyConfirm = false;
+        render({ scrollToTop: true });
+        return;
+      }
+      state.couplePrivacyGatePartner = null;
       startCouplePartnerQuestionnaire(partner);
       saveSensoryDraft();
       render({ scrollToTop: true });
@@ -15057,6 +15405,12 @@ function bindEvents() {
     if (action === "couple-export") {
       const partner = btn.dataset.partner || state.couplePartner;
       if (!COUPLE_PARTNERS.includes(partner)) return;
+      if (!isCouplePartnerUnlocked(partner)) {
+        state.couplePrivacyGatePartner = partner;
+        state.couplePrivacyGateError = null;
+        render({ scrollToTop: true });
+        return;
+      }
       ensureCoupleSession();
       if (isCouplePathway() && state.couplePartner === partner && STEPS[state.step]?.type === "results") {
         persistCurrentPartnerToCoupleSession(state.viewingArchivedId);
@@ -15109,6 +15463,11 @@ function bindEvents() {
     }
 
     if (action === "couple-view-merge") {
+      if (!couplePartnersAgreedToMerge()) {
+        state.coupleHubNotice = currentUi().coupleMergeRefused;
+        render();
+        return;
+      }
       openCoupleHub({ showMerge: true });
       render({ scrollToTop: true });
       return;
@@ -15116,6 +15475,11 @@ function bindEvents() {
 
     if (action === "print-couple-report") {
       if (!bothCouplePartnersComplete()) return;
+      if (!couplePartnersAgreedToMerge()) {
+        state.coupleHubNotice = currentUi().coupleMergeRefused;
+        render();
+        return;
+      }
       if (!state.coupleShowMerge) {
         openCoupleHub({ showMerge: true });
         render({ scrollToTop: true });
@@ -15126,7 +15490,46 @@ function bindEvents() {
       return;
     }
 
+    if (action === "couple-privacy-cancel") {
+      state.couplePrivacyGatePartner = null;
+      state.couplePrivacyGateError = null;
+      render();
+      return;
+    }
+
+    if (action === "couple-privacy-unlock") {
+      const partner = state.couplePrivacyGatePartner;
+      const slot = getCoupleSession(state.coupleId)?.partners?.[partner];
+      if (!COUPLE_PARTNERS.includes(partner) || !slot) return;
+      if (!slot.privacyWordHash) {
+        if (!state.couplePrivacyLegacyConfirm) {
+          state.couplePrivacyGateError = currentUi().couplePrivacyGateLegacy;
+          render();
+          return;
+        }
+      } else {
+        const typed = app.querySelector("[data-couple-privacy-unlock]")?.value || "";
+        const hash = await hashPrivacyWord(typed);
+        if (hash !== slot.privacyWordHash) {
+          state.couplePrivacyGateError = currentUi().couplePrivacyGateBad;
+          render();
+          return;
+        }
+      }
+      unlockCouplePartner(partner);
+      state.couplePrivacyGatePartner = null;
+      state.couplePrivacyGateError = null;
+      startCouplePartnerQuestionnaire(partner);
+      render({ scrollToTop: true });
+      return;
+    }
+
     if (action === "couple-submit-combined" || action === "couple-retry-combined") {
+      if (!couplePartnersAgreedToMerge()) {
+        state.coupleHubNotice = currentUi().coupleMergeRefused;
+        render();
+        return;
+      }
       if (!canOfferCoupleCombinedSubmit()) return;
       ensureCoupleCombinedSubmitted({ force: action === "couple-retry-combined" });
       return;
@@ -15414,13 +15817,13 @@ function bindEvents() {
         }
         state.createdPatient = patientCredentialsPayload(
           result.user,
-          result.password,
+          "",
           buildAssignedPatientInviteUrl(result.user)
         );
         state.dashboardTab = "create";
         state.patientSendStatus = null;
         state.patientSendError = null;
-        state.dashboardNotice = "A new password is ready. Send email (default) or WhatsApp it to the patient.";
+        state.dashboardNotice = "A new private link is ready. Send it by email. WhatsApp only says the questionnaire is ready.";
         render({ scrollToTop: true });
       });
       return;
@@ -15484,21 +15887,9 @@ function bindEvents() {
     }
 
     if (action === "clinician-unlock") {
-      const input = app.querySelector("[data-clinician-pin]");
-      const pin = (input?.value || state.clinicianPinInput || "").trim();
-      state.clinicianPinInput = pin;
-      if (pin === CLINICIAN_PIN) {
-        state.clinicianUnlocked = true;
-        state.clinicianPinError = null;
-        sessionStorage.setItem(CLINICIAN_SESSION_KEY, "1");
-        initTherapistPrefs();
-        // PIN unlock from the dashboard gate should land on the dashboard.
-        if (state.view === "dashboard" || state.view === "home" || state.view === "login") {
-          state.view = "dashboard";
-        }
-      } else {
-        state.clinicianPinError = "Incorrect PIN. Check clinicianPin in config.js (default: soulfulot).";
-      }
+      state.clinicianUnlocked = false;
+      state.clinicianPinError = "Sign in with your therapist account. A PIN does not open the register.";
+      sessionStorage.removeItem(CLINICIAN_SESSION_KEY);
       render({ scrollToTop: true });
       return;
     }
@@ -15548,6 +15939,7 @@ function bindEvents() {
     }
 
     if (action === "next") {
+      const leavingConsent = STEPS[state.step]?.type === "consent";
       if (!validateStep()) {
         render();
         const errorBanner = app.querySelector(".error-banner");
@@ -15556,6 +15948,7 @@ function bindEvents() {
         }
         return;
       }
+      if (leavingConsent) await saveCouplePrivacyWord();
       moveStep(1);
       state.view = "questionnaire";
       if (STEPS[state.step]?.type === "results") {
@@ -15628,6 +16021,18 @@ function bindEvents() {
     node.click();
   });
 
+  app.addEventListener("input", (e) => {
+    if (!e.target.matches("[data-couple-privacy-word]")) return;
+    state.couplePrivacyWord = e.target.value;
+    state.consentAcceptedAt = null;
+    const nextBtn = app.querySelector('[data-action="next"]');
+    const canContinue = hasAllRequiredConsent();
+    if (nextBtn) {
+      nextBtn.disabled = !canContinue;
+      nextBtn.setAttribute("aria-disabled", canContinue ? "false" : "true");
+    }
+  });
+
   app.addEventListener("change", (e) => {
     if (e.target.matches("[data-dash-row-action]")) {
       const select = e.target;
@@ -15650,6 +16055,55 @@ function bindEvents() {
       state.authForm.role = e.target.value === "therapist" ? "therapist" : "patient";
       state.authError = null;
       render();
+      return;
+    }
+
+    if (e.target.matches("[data-consent-age]")) {
+      state.consentAge = e.target.value;
+      state.consentAcceptedAt = null;
+      state.error = null;
+      saveSensoryDraft();
+      render();
+      return;
+    }
+
+    if (e.target.matches("[data-parent-involved]")) {
+      state.parentInvolved = e.target.value;
+      state.consentAcceptedAt = null;
+      state.error = null;
+      saveSensoryDraft();
+      render();
+      return;
+    }
+
+    if (e.target.matches("[data-child-assent]")) {
+      state.childAssent = e.target.value;
+      state.consentAcceptedAt = null;
+      state.error = null;
+      saveSensoryDraft();
+      render();
+      return;
+    }
+
+    if (e.target.matches("[data-child-agreed]")) {
+      state.childAgreed = Boolean(e.target.checked);
+      state.consentAcceptedAt = null;
+      state.error = null;
+      saveSensoryDraft();
+      render();
+      return;
+    }
+
+    if (e.target.matches("[data-couple-privacy-word]")) {
+      state.couplePrivacyWord = e.target.value;
+      state.consentAcceptedAt = null;
+      state.error = null;
+      saveSensoryDraft();
+      return;
+    }
+
+    if (e.target.matches("[data-couple-privacy-legacy]")) {
+      state.couplePrivacyLegacyConfirm = Boolean(e.target.checked);
       return;
     }
 
@@ -15992,10 +16446,9 @@ function bindEvents() {
         return;
       }
       createAssignedAssessment(result.user);
-      const invitePassword = await passwordForPatientInvite(result.user, result.password);
       state.createdPatient = patientCredentialsPayload(
         result.user,
-        invitePassword,
+        "",
         buildAssignedPatientInviteUrl(result.user)
       );
       state.dashboardTab = "create";
@@ -16185,12 +16638,35 @@ function bindEvents() {
       return;
     }
 
+    const privacyForm = e.target.closest("[data-privacy-request-form]");
+    if (privacyForm) {
+      e.preventDefault();
+      const formData = new FormData(privacyForm);
+      const current = typeof getSettings === "function" ? getSettings() : {};
+      const requests = Array.isArray(current.privacyRequests) ? current.privacyRequests : [];
+      requests.unshift({
+        id: `req_${Date.now().toString(36)}`,
+        recordedAt: new Date().toISOString(),
+        person: String(formData.get("person") || "").trim(),
+        type: String(formData.get("type") || "access"),
+        note: String(formData.get("note") || "").trim(),
+      });
+      Auth.saveSettings({ privacyRequests: requests.slice(0, 200) });
+      state.settingsNotice = "Privacy request recorded. The clinical record stays until the retention period.";
+      state.settingsError = null;
+      render();
+      return;
+    }
+
     const settingsForm = e.target.closest("[data-settings-form]");
     if (settingsForm) {
       e.preventDefault();
       const formData = new FormData(settingsForm);
       Auth.saveSettings({
         practiceName: String(formData.get("practiceName") || "").trim(),
+        practiceAddress: String(formData.get("practiceAddress") || "").trim(),
+        informationOfficer: String(formData.get("informationOfficer") || "").trim(),
+        informationOfficerEmail: String(formData.get("informationOfficerEmail") || "").trim(),
         clinicianEmail: String(formData.get("clinicianEmail") || "").trim(),
         showPainPathway: formData.get("showPainPathway") === "on",
         allowPatientSignup: formData.get("allowPatientSignup") === "on",

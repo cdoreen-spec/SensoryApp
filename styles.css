@@ -5649,6 +5649,21 @@ body.is-pain-screen .site-footer {
   text-wrap: pretty;
 }
 
+.report-citation {
+  margin: 1.15rem auto 0;
+  max-width: 40rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.interpret-glossary .report-citation {
+  margin: 1rem 1.35rem 0.25rem;
+  text-align: left;
+}
+
 .results-intro--concise {
   margin-bottom: 1.35rem;
   padding: 0 0 1.2rem;
@@ -21054,4 +21069,60 @@ body.is-dashboard .site-footer {
     page-break-after: avoid;
     margin: 0;
   }
+}
+
+.privacy-notice {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(107, 144, 117, 0.35);
+  border-radius: 14px;
+  background: rgba(255, 252, 247, 0.72);
+}
+
+.privacy-notice p {
+  margin: 0 0 0.75rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.privacy-notice p:last-child {
+  margin-bottom: 0;
+}
+
+.consent-choice {
+  margin: 0 0 1.15rem;
+  padding: 0;
+  border: 0;
+}
+
+.footer-privacy {
+  margin: 0.35rem 0 0;
+}
+
+.footer-privacy button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.privacy-dialog {
+  max-width: 38rem;
+  border: 1px solid rgba(107, 144, 117, 0.4);
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem;
+}
+
+.privacy-dialog p {
+  margin: 0 0 0.75rem;
+  line-height: 1.55;
+}
+
+.privacy-request-log {
+  margin: 1rem 0 0;
+  padding-left: 1.1rem;
 }

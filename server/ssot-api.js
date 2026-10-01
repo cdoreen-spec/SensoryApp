@@ -45,7 +45,23 @@ function createSalt() {
 }
 
 function hashPassword(password, salt) {
+  const hash = crypto.scryptSync(String(password), String(salt), 32, { N: 16384, r: 8, p: 1 });
+  return `scrypt:${hash.toString("hex")}`;
+}
+
+function legacySha256(password, salt) {
   return crypto.createHash("sha256").update(`${salt}:${password}`).digest("hex");
+}
+
+function passwordMatches(password, salt, stored) {
+  const value = String(stored || "");
+  if (value.startsWith("scrypt:")) {
+    const expected = Buffer.from(value.slice(7), "hex");
+    const actual = crypto.scryptSync(String(password), String(salt), 32, { N: 16384, r: 8, p: 1 });
+    if (expected.length !== actual.length) return false;
+    return crypto.timingSafeEqual(expected, actual);
+  }
+  return legacySha256(password, salt) === value;
 }
 
 function hashResetToken(token) {
@@ -88,7 +104,6 @@ function publicUser(user) {
     createdByUserId: user.createdByUserId || null,
     assessmentId: user.assessmentId || null,
     reportVisibility: user.reportVisibility || "",
-    temporaryPassword: user.temporaryPassword || "",
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt || null,
     updatedAt: user.updatedAt || null,
@@ -122,7 +137,7 @@ function pruneSessions(state) {
 }
 
 function sharedAccountPassword() {
-  return String(process.env.ADMIN_PASSWORD || "soulfulot");
+  return String(process.env.ADMIN_PASSWORD || "").trim();
 }
 
 function applySharedPassword(user, password) {
@@ -144,13 +159,8 @@ function applySharedPassword(user, password) {
   return changed;
 }
 
-function syncSharedPasswords(state) {
-  const password = sharedAccountPassword();
-  let changed = false;
-  for (const user of state.users || []) {
-    if (applySharedPassword(user, password)) changed = true;
-  }
-  return changed;
+function syncSharedPasswords() {
+  return false;
 }
 
 function seedAdmin(state) {
@@ -158,7 +168,15 @@ function seedAdmin(state) {
   const password = sharedAccountPassword();
   const name = String(process.env.ADMIN_NAME || "Cayley Alberts");
   const existing = (state.users || []).find((user) => user.role === ROLES.admin || user.email === email);
+  let changed = false;
+  for (const user of state.users || []) {
+    if (user && user.temporaryPassword) {
+      delete user.temporaryPassword;
+      changed = true;
+    }
+  }
   if (!existing) {
+    if (password.length < 8) return changed;
     const salt = createSalt();
     state.users.push({
       id: createId("user"),
@@ -174,12 +192,10 @@ function seedAdmin(state) {
       lastLoginAt: null,
       updatedAt: null,
     });
-  } else {
-    existing.role = ROLES.admin;
-    existing.status = STATUS.active;
+    return true;
   }
-  let changed = !existing;
-  if (syncSharedPasswords(state)) changed = true;
+  existing.role = ROLES.admin;
+  existing.status = STATUS.active;
   return changed;
 }
 
@@ -520,42 +536,20 @@ function completionReport(item) {
   const summary = item.summary || {};
   const demo = item.demographics || {};
   const name = summary.patientName || summary.completerName || demo.name || "Patient";
-  const sections = [
-    {
-      heading: "Patient details",
-      rows: [
-        ["Name", name],
-        ["Email", summary.email || demo.email || ""],
-        ["Age", String(summary.age || demo.age || "")],
-        ["Questionnaire", [item.respondent, item.lifeContext].filter(Boolean).join(" · ")],
-      ],
-    },
-    {
-      heading: "Total score",
-      rows: [
-        ["Sensitive / avoiding", String(summary.sensitive ?? 0)],
-        ["Sensory neutral", String(summary.neutral ?? 0)],
-        ["Sensory seeking", String(summary.seeking ?? 0)],
-      ],
-    },
-    {
-      heading: "Overall pattern",
-      text: [summary.overallLabel, summary.leanHeadline].filter(Boolean).join(" — ") || "—",
-    },
-  ];
-  const domains = Array.isArray(summary.domainProfiles) ? summary.domainProfiles : [];
-  if (domains.length) {
-    sections.push({
-      heading: "Sense by sense",
-      rows: domains.map((domain) => [domain.title || domain.short || domain.id, domain.short || ""]),
-    });
-  }
-  const profile = summary.overallLabel ? ` — ${summary.overallLabel}` : "";
   return {
     name,
-    subject: `Completed: ${name} — Sensory screening${profile}`,
-    intro: "A sensory questionnaire has been completed. The summary below is the report. Open the patient register for the full trail profile.",
-    sections,
+    subject: `Completed: ${name} — Sensory screening`,
+    intro:
+      "A sensory questionnaire has been completed. This notice does not include scores. Open the patient register for the full profile.",
+    sections: [
+      {
+        heading: "Completion notice",
+        rows: [
+          ["Name", name],
+          ["Questionnaire", [item.respondent, item.lifeContext].filter(Boolean).join(" · ") || "Sensory screening"],
+        ],
+      },
+    ],
   };
 }
 
@@ -588,8 +582,11 @@ async function handleLogin(state, body) {
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
   const user = state.users.find((entry) => entry.email === email);
-  if (!user || hashPassword(password, user.salt) !== user.passwordHash) {
+  if (!user || !passwordMatches(password, user.salt, user.passwordHash)) {
     return json(401, { ok: false, error: "Incorrect email or password." });
+  }
+  if (!String(user.passwordHash || "").startsWith("scrypt:")) {
+    user.passwordHash = hashPassword(password, user.salt);
   }
   if (user.status === STATUS.pending) {
     return json(403, { ok: false, error: "This therapist account is awaiting admin approval." });
@@ -603,7 +600,7 @@ async function handleLogin(state, body) {
     await emailNewlyCompleted(beforeAssessments, state.assessments.items);
   }
   user.lastLoginAt = new Date().toISOString();
-  if (user.temporaryPassword) user.temporaryPassword = "";
+  if (user.temporaryPassword) delete user.temporaryPassword;
   user.updatedAt = user.lastLoginAt;
   const token = issueSession(state, user);
   await saveState(state);
@@ -611,11 +608,32 @@ async function handleLogin(state, body) {
   return json(200, { ok: true, token, user: publicUser(user), ...snapshot });
 }
 
+async function handleLoginWithInvite(state, body) {
+  const inviteToken = String(body.inviteToken || "").trim();
+  const user = (state.users || []).find((entry) => entry.inviteToken && entry.inviteToken === inviteToken);
+  if (!user || user.role !== ROLES.patient) {
+    return json(401, { ok: false, error: "This questionnaire link is not valid." });
+  }
+  if (user.status !== STATUS.active) {
+    return json(403, { ok: false, error: "This account is not active." });
+  }
+  const expires = Date.parse(user.expiresAt || "") || 0;
+  if (expires && expires < Date.now()) {
+    return json(403, { ok: false, error: "This questionnaire invitation has expired." });
+  }
+  if (user.temporaryPassword) delete user.temporaryPassword;
+  user.lastLoginAt = new Date().toISOString();
+  user.updatedAt = user.lastLoginAt;
+  const token = issueSession(state, user);
+  await saveState(state);
+  return json(200, { ok: true, token, user: publicUser(user), ...patientSnapshot(state, user) });
+}
+
 async function handleRegister(state, body) {
   const settings = { requireTherapistApproval: true, allowTherapistSignup: true, ...state.settings };
   const email = normalizeEmail(body.email);
   const name = String(body.name || "").trim();
-  const password = sharedAccountPassword();
+  const password = String(body.password || "");
   const role = body.role === ROLES.therapist ? ROLES.therapist : ROLES.patient;
   if (!name) return json(400, { ok: false, error: "Please enter your name." });
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -706,7 +724,6 @@ async function handlePush(state, body) {
   const beforeAssessments = [...(state.assessments.items || [])];
   if (isStaff(user)) {
     mergeSnapshot(state, body);
-    syncSharedPasswords(state);
     await emailNewlyCompleted(beforeAssessments, state.assessments.items);
     await saveState(state);
     return json(200, { ok: true, ...staffSnapshot(state) });
@@ -889,6 +906,7 @@ async function handleRequest(body, { origin } = {}) {
   const state = await loadState();
   try {
     if (action === "login") return finish(await handleLogin(state, body));
+    if (action === "loginWithInvite") return finish(await handleLoginWithInvite(state, body));
     if (action === "register") return finish(await handleRegister(state, body));
     if (action === "hydrate") return finish(await handleHydrate(state, body));
     if (action === "push") return finish(await handlePush(state, body));

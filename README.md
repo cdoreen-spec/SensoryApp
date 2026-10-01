@@ -69,11 +69,11 @@ Emails go out from Gmail through the practice server. Set `GMAIL_APP_PASSWORD` i
 Completed screenings are also saved in **this browser** so you can reopen and print reports later.
 
 1. **Sign in** as admin (seeded from `config.js`) or as an approved therapist — you land on the **Patient dashboard**.
-2. Or open **Therapist dashboard** on the home page / `?dashboard=1`, and unlock with the clinician PIN if needed.
+2. Or open **Therapist dashboard** on the home page / `?dashboard=1`, and sign in as admin or therapist.
 3. Each row shows the patient name, assessment date, overall pattern, and sense-by-sense chips.
 4. **View results** opens the full packet; **Download report** opens the print dialog (choose “Save as PDF” if you want a file).
 
-Note: the list lives in localStorage on this device. Use the same computer/browser where patients complete screenings (or where you open their invite links) to see them here. Emails still arrive regardless.
+Note: the patient register on the server is the clinical record. A short completion notice is emailed without scores. Resume drafts in the browser are cleared when a screening is finished.
 
 ## Send to patients (clinician invites)
 

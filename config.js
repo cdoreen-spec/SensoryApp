@@ -1,16 +1,18 @@
 /**
  * Soulful Sensory OT — delivery & clinician settings
  *
- * Change CLINICIAN_PIN before sharing the clinician link with anyone.
- * Emails are sent once from soulfulsensoryot@gmail.com through the practice
+ * Therapist tools require an admin or therapist sign-in. Set ADMIN_PASSWORD
+ * in the server environment. Emails are sent once from soulfulsensoryot@gmail.com through the practice
  * server (`npm start` locally, or the Netlify function). Patient invites
  * include the working questionnaire link — there is no FormSubmit
  * confirm-and-resend step. Set GMAIL_APP_PASSWORD in `.env` or Netlify.
  */
 const APP_CONFIG = {
   clinicianEmail: "soulfulsensoryot@gmail.com",
-  /** PIN for the clinician share page (?clinician=1). Change this. */
-  clinicianPin: "soulfulot",
+  /** Street address shown on the privacy notice. Fill this in for the practice. */
+  practiceAddress: "George",
+  informationOfficer: "Cayley Alberts",
+  informationOfficerEmail: "soulfulsensoryot@gmail.com",
   /**
    * Gmail via the practice server. Set GMAIL_USER and GMAIL_APP_PASSWORD
    * in `.env` (local) or Netlify environment variables.
@@ -30,10 +32,9 @@ const APP_CONFIG = {
    */
   showPainPathway: false,
 
-  /** Practice sign-in for the admin and therapist accounts. Each patient invite gets its own password. */
+  /** Practice sign-in. Set ADMIN_PASSWORD in the server environment. Do not put a password in this file. */
   adminName: "Cayley Alberts",
   adminEmail: "soulfulsensoryot@gmail.com",
-  adminPassword: "soulfulot",
   adminPhone: "068 901 4209",
   practiceName: "Soulful Sensory OT",
   /** Patients are created by a therapist; public self-signup stays off. */

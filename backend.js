@@ -268,6 +268,16 @@ const SsotBackend = (() => {
     }
   }
 
+  async function loginWithInvite(inviteToken) {
+    const data = await request({
+      action: "loginWithInvite",
+      inviteToken,
+    });
+    if (!data.ok) return data;
+    applySnapshot(data);
+    return { ok: true, user: data.user };
+  }
+
   async function login(email, password) {
     const data = await request({
       action: "login",
@@ -413,6 +423,7 @@ const SsotBackend = (() => {
     publicAppUrl,
     hydrate,
     login,
+    loginWithInvite,
     register,
     flush,
     noteChanged,

@@ -42,20 +42,44 @@ function createSalt() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function hashPassword(password, salt) {
+async function hashPasswordSha256(password, salt) {
   const payload = `${salt}:${password}`;
   if (typeof crypto !== "undefined" && crypto.subtle?.digest) {
     const data = new TextEncoder().encode(payload);
     const digest = await crypto.subtle.digest("SHA-256", data);
     return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
   }
-  // Fallback for non-secure contexts (file://) — still salted, not plaintext.
   let hash = 2166136261;
   for (let i = 0; i < payload.length; i += 1) {
     hash ^= payload.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
   return `fnv_${(hash >>> 0).toString(16)}`;
+}
+
+async function hashPassword(password, salt) {
+  if (typeof crypto !== "undefined" && crypto.subtle?.importKey && crypto.subtle?.deriveBits) {
+    const encoded = new TextEncoder();
+    const key = await crypto.subtle.importKey("raw", encoded.encode(String(password)), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: encoded.encode(String(salt)),
+        iterations: 120000,
+        hash: "SHA-256",
+      },
+      key,
+      256
+    );
+    return `pbkdf2:${Array.from(new Uint8Array(bits), (b) => b.toString(16).padStart(2, "0")).join("")}`;
+  }
+  return hashPasswordSha256(password, salt);
+}
+
+async function passwordMatchesLocal(password, user) {
+  const stored = String(user?.passwordHash || "");
+  if (stored.startsWith("pbkdf2:")) return (await hashPassword(password, user.salt)) === stored;
+  return (await hashPasswordSha256(password, user.salt)) === stored;
 }
 
 function normalizeEmail(email) {
@@ -73,6 +97,11 @@ function defaultSettings() {
     allowTherapistSignup: cfg.allowTherapistSignup !== false,
     requireTherapistApproval: cfg.requireTherapistApproval !== false,
     practiceName: cfg.practiceName || "Soulful Sensory OT",
+    practiceAddress: cfg.practiceAddress || "",
+    informationOfficer: cfg.informationOfficer || cfg.adminName || "Cayley Alberts",
+    informationOfficerEmail: cfg.informationOfficerEmail || cfg.clinicianEmail || "soulfulsensoryot@gmail.com",
+    informationOfficerPhone: cfg.adminPhone || "068 901 4209",
+    privacyRequests: [],
   };
 }
 
@@ -128,7 +157,6 @@ function publicUser(user) {
     createdByUserId: user.createdByUserId || null,
     assessmentId: user.assessmentId || null,
     reportVisibility: user.reportVisibility || "",
-    temporaryPassword: user.temporaryPassword || "",
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt || null,
     updatedAt: user.updatedAt || null,
@@ -147,7 +175,7 @@ function createInviteToken() {
 
 function sharedAccountPassword() {
   const cfg = authConfig();
-  return String(cfg.adminPassword || "soulfulot");
+  return String(cfg.adminPassword || "").trim();
 }
 
 function createTemporaryPassword() {
@@ -210,6 +238,7 @@ async function ensureAdminSeed() {
 
   let changed = false;
   if (!existing) {
+    if (password.length < 8) return;
     const salt = createSalt();
     const passwordHash = await hashPassword(password, salt);
     users.push({
@@ -232,12 +261,6 @@ async function ensureAdminSeed() {
     existing.status = AUTH_STATUS.active;
     existing.updatedAt = new Date().toISOString();
     changed = true;
-  }
-  for (const user of users) {
-    if (await applySharedPassword(user, password)) {
-      user.updatedAt = new Date().toISOString();
-      changed = true;
-    }
   }
   if (changed) saveUsers(users);
 }
@@ -315,7 +338,7 @@ async function registerUser({ name, email, password, role, phone = "" }) {
   const settings = getSettings();
   const normalizedEmail = normalizeEmail(email);
   const trimmedName = String(name || "").trim();
-  const trimmedPassword = sharedAccountPassword();
+  const trimmedPassword = String(password || "").trim() || sharedAccountPassword();
   const requestedRole = role === AUTH_ROLES.therapist ? AUTH_ROLES.therapist : AUTH_ROLES.patient;
 
   if (!trimmedName) return { ok: false, error: "Please enter your name." };
@@ -395,6 +418,35 @@ async function registerUser({ name, email, password, role, phone = "" }) {
   };
 }
 
+async function loginWithInviteToken(token) {
+  const inviteToken = String(token || "").trim();
+  if (!inviteToken) return { ok: false, error: "This questionnaire link is not valid." };
+  if (practiceServerReady()) {
+    try {
+      const remote = await SsotBackend.loginWithInvite(inviteToken);
+      if (!remote?.ok || !remote.user?.id) {
+        return { ok: false, error: remote?.error || "This questionnaire link is not valid." };
+      }
+      setSession(remote.user.id);
+      return { ok: true, user: remote.user };
+    } catch (err) {
+      return { ok: false, error: err?.message || "Could not reach the practice server." };
+    }
+  }
+  const user = findUserByInviteToken(inviteToken);
+  if (!user || user.role !== AUTH_ROLES.patient) {
+    return { ok: false, error: "This questionnaire link is not valid." };
+  }
+  if (isPatientAssignmentExpired(user)) {
+    return { ok: false, error: "This questionnaire invitation has expired." };
+  }
+  if (user.status !== AUTH_STATUS.active) {
+    return { ok: false, error: "This account is not active." };
+  }
+  setSession(user.id);
+  return { ok: true, user: publicUser(user) };
+}
+
 async function loginUser({ email, password }) {
   await ensureAdminSeed();
   const normalizedEmail = normalizeEmail(email);
@@ -416,9 +468,11 @@ async function loginUser({ email, password }) {
 
   if (!user) return { ok: false, error: "Incorrect email or password." };
 
-  const passwordHash = await hashPassword(trimmedPassword, user.salt);
-  if (passwordHash !== user.passwordHash) {
+  if (!(await passwordMatchesLocal(trimmedPassword, user))) {
     return { ok: false, error: "Incorrect email or password." };
+  }
+  if (!String(user.passwordHash || "").startsWith("pbkdf2:")) {
+    user.passwordHash = await hashPassword(trimmedPassword, user.salt);
   }
   if (user.status === AUTH_STATUS.pending) {
     return {
@@ -431,7 +485,7 @@ async function loginUser({ email, password }) {
   }
 
   user.lastLoginAt = new Date().toISOString();
-  if (user.temporaryPassword) user.temporaryPassword = "";
+  if (user.temporaryPassword) delete user.temporaryPassword;
   saveUsers(users);
   setSession(user.id);
   return { ok: true, user: publicUser(user) };
@@ -540,7 +594,6 @@ async function createPatientAccount({
     createdByUserId: createdByUserId || actor.id,
     assessmentId: assessmentId || null,
     reportVisibility: String(reportVisibility || "").trim(),
-    temporaryPassword: password,
     passwordCustomized: true,
     salt,
     passwordHash,
@@ -556,7 +609,6 @@ async function createPatientAccount({
   return {
     ok: true,
     user: publicUser(user),
-    password,
     expiryDays: days,
   };
 }
@@ -578,12 +630,12 @@ async function resetPatientPassword(userId) {
   const salt = createSalt();
   user.salt = salt;
   user.passwordHash = await hashPassword(password, salt);
-  user.temporaryPassword = password;
+  delete user.temporaryPassword;
   user.passwordCustomized = true;
-  if (!user.inviteToken) user.inviteToken = createInviteToken();
+  user.inviteToken = createInviteToken();
   user.updatedAt = new Date().toISOString();
   saveUsers(users);
-  return { ok: true, user: publicUser(user), password };
+  return { ok: true, user: publicUser(user) };
 }
 
 function setPatientAssessmentId(userId, assessmentId) {
@@ -863,6 +915,7 @@ const Auth = {
   findUserByInviteToken,
   isPatientAssignmentExpired,
   loginUser,
+  loginWithInviteToken,
   logoutUser,
   requestPasswordReset,
   peekPasswordReset,

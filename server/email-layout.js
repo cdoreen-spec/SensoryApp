@@ -175,15 +175,14 @@ function inviteCopy(options) {
         An account has been created for you at <strong>Soulful Sensory OT</strong> so you can complete a sensory questionnaire.
       </p>
       <p style="margin:0 0 18px;font-family:${FONTS.sans};font-size:16px;line-height:1.65;color:${COLORS.ink};">
-        Please open the questionnaire and use the email and password provided to access it.
+        Open the button below. The link signs you in. It is private to you, so do not forward it.
       </p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:${COLORS.cream};border:1px solid ${COLORS.line};border-radius:14px;">
         <tr>
           <td style="padding:18px 22px;">
-            ${headingHtml("Sign-in details")}
+            ${headingHtml("Your questionnaire")}
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               ${detailRow("Email", options.email)}
-              ${detailRow("Password", options.password || "The password your therapist sent you")}
               ${detailRow("Expires", options.expiresAt || "14 days from today")}
             </table>
           </td>

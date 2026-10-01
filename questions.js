@@ -240,25 +240,61 @@ const QUESTIONNAIRE_UI = {
     consent: "Consent",
     consentTag: "Trailhead · Before we begin",
     consentDesc:
-      "You may only continue once the required consent below has been given. You may also select who is permitted to have access to your results.",
+      "Tick each required statement to continue. Sharing boxes are optional. You may leave every one blank and still complete this screening.",
     consentDescWork:
-      "You may only continue once the required consent below has been given, including permission for Soulful Sensory OT to access your results. You may also choose whether your workplace may have access — that option is voluntary.",
-    consentRequiredHeading: "Required consent",
-    consentSharingHeading: "Who may access your results (optional)",
+      "Tick each required statement to continue. Sharing with your workplace is optional. You may leave that box blank and still complete this screening. Your care continues either way.",
+    consentRequiredHeading: "Required statements",
+    consentSharingHeading: "Who else may receive findings (optional)",
     consentSharingDesc:
-      "Select who you give permission to access your results. Under POPIA, we only share personal or health-related information with others when you give permission below, or when the law requires it. You may continue without selecting any of these options.",
-    consentSharingHeadingWork: "Who may access your results",
+      "Leave these blank if you do not want findings shared. Soulful Sensory OT still keeps your screening because you asked for it. Under POPIA we share health information with other people only when you tick a box below, when the law requires it, or to protect someone’s safety.",
+    consentSharingHeadingWork: "Workplace sharing (optional)",
     consentSharingDescWork:
-      "Soulful Sensory OT requires permission to access your results. Sharing with your workplace or employer is optional — you may leave that unticked and still continue.",
+      "If you tick the workplace box, a letter may include functional suggestions only, not your raw answers. Leave it blank and your care with Soulful Sensory OT continues.",
     consentPrivacyNote:
-      "Soulful Sensory OT processes personal information in line with the Protection of Personal Information Act 4 of 2013 (POPIA). You may request access to, correction of, or withdrawal of consent regarding your information by contacting us.",
+      "Information you share will be stored. Your results will be sent to Soulful Sensory OT, and only shared with others with given consent.",
+    consentAgeLabel: "Your age",
+    consentAgeLabelParent: "Your child’s age",
+    consentAgeRequired: "Please enter an age before you continue.",
+    consentTeenTooYoung:
+      "Someone under 12 needs a parent or legal guardian to complete the parent questionnaire. Go back and choose that option.",
+    consentAssentLegend: "Your child’s agreement",
+    consentAssentYes: "I have explained this simply, and my child is willing to take part.",
+    consentAssentTooYoung: "My child is not yet able to understand this, and I am agreeing on their behalf.",
+    consentAssentRequired: "Please record your child’s agreement before you continue.",
+    consentChildAgreed:
+      "My child is 12 or older, is mature enough to understand this screening, and has agreed to take part.",
+    consentParentInvolvedLegend: "Parent or guardian",
+    consentParentInvolvedYes: "A parent or guardian knows about this screening and is involved.",
+    consentParentInvolvedNo: "I am giving my own consent. A parent or guardian is not involved.",
+    consentParentInvolvedRequired: "Please record whether a parent or guardian is involved.",
+    couplePrivacyWordLabel: "Private word for your results",
+    couplePrivacyWordHint:
+      "Choose a word of at least 4 characters. Your partner needs it to open your individual answers. The joint report still depends on the sharing box below.",
+    couplePrivacyWordRequired: "Please choose a private word of at least 4 characters.",
+    couplePrivacyGateTitle: "Private results",
+    couplePrivacyGateBody: "Enter this partner’s private word to open their individual results.",
+    couplePrivacyGatePlaceholder: "Private word",
+    couplePrivacyGateSubmit: "Open results",
+    couplePrivacyGateCancel: "Back",
+    couplePrivacyGateBad: "That word does not match.",
+    couplePrivacyGateLegacy:
+      "This screening was saved before private words. Tick the box to confirm you are this partner, then open the results.",
+    couplePrivacyGateLegacyConfirm: "I am this partner.",
+    coupleMergeRefused:
+      "The joint report stays closed because one of you did not agree to share a comparison. Each person keeps their own screening.",
+    sharingBlockedEmployer:
+      "An employer letter is not available. Permission to share functional suggestions with the workplace was not given.",
+    sharingBlockedSchool:
+      "A school letter is not available. Permission to share findings with the school was not given.",
+    sharingBlockedTeam:
+      "Do not send findings to another clinician. That permission was not given.",
     sharingSummaryTitle: "Sharing permissions",
     sharingSummaryIntro:
       "Recorded at the start of this screening — what Soulful Sensory OT may share, and with whom.",
     sharingSummaryAllowed: "May share",
     sharingSummaryNotGiven: "Permission not given",
     sharingSummaryClinicianNote:
-      "Use this as your quick guide before discussing findings with parents, school, or other professionals.",
+      "Do not write or send a letter to anyone marked “permission not given”. A school letter, an employer letter, and a note to another clinician each need their own tick.",
     detailsTag: "About you",
     detailsTitle: "Your details",
     detailsTitleParent: "Your child’s details",
@@ -522,6 +558,10 @@ const QUESTIONNAIRE_UI = {
     scoreLeanSeekingShort: "+",
     thresholdLegend:
       "Low threshold = notices input quickly (sensitive). Medium = more typical / mixed. High threshold = needs more input (seeking).",
+    dunnCitation:
+      "The ideas of low and high sensory threshold, sensory sensitivity, and sensory seeking draw on Winnie Dunn’s Model of Sensory Processing. Dunn describes how much sensory input the nervous system needs before it responds, and four patterns: low registration, sensation seeking, sensory sensitivity, and sensation avoiding (Dunn, 1997). The Sensory Explorer, Sensory Adaptor, and Sensory Observer are Soulful Sensory OT’s own descriptive map. They are not a score on Dunn’s Sensory Profile.",
+    dunnCitationShort:
+      "Low and high threshold language draws on Winnie Dunn’s Model of Sensory Processing (Dunn, 1997). The three Sensory Trail styles are this screening’s own descriptive map, not Dunn’s four patterns.",
     settingBridgeKicker: "Next",
     settingBridgeHeading: "Where your senses meet everyday life",
     settingBridgeQuoteHome:
@@ -707,7 +747,7 @@ const QUESTIONNAIRE_UI = {
     teenCrewObserverRoleTeen:
       "Notices detail and atmosphere quickly — in learning and hobbies — and thrives with calmer spaces and steadier resets.",
     teenCrewObserverTraits: [
-      "Likes to have their own space; not bothered by missing out on events.",
+      "Likes to recharge on their own; a busy or full calendar is draining.",
       "Intuitive — picks up people’s mood and energy quickly.",
       "Needs a calm and predictable environment.",
       "Chaos or unpredictability can create anxiety.",
@@ -717,7 +757,7 @@ const QUESTIONNAIRE_UI = {
       "Needs recovery time to recharge between activities.",
     ],
     teenCrewObserverTraitsTeen: [
-      "Likes to have their own space; not bothered by missing out on events.",
+      "Likes to recharge on their own; a busy or full calendar is draining.",
       "Intuitive — picks up people’s mood and energy quickly.",
       "Needs a calm and predictable environment.",
       "Chaos or unpredictability can create anxiety.",
@@ -827,7 +867,7 @@ const QUESTIONNAIRE_UI = {
     workReportNotProvided: "Not provided",
     workReportSectionScores: "Sensory score summary",
     workReportScaleIntro:
-      "Each sense is shown on a three-part scale: low, medium and high threshold.",
+      "Each sense is shown on a three-part scale: low, medium and high threshold. This threshold language draws on Winnie Dunn’s Model of Sensory Processing (Dunn, 1997).",
     workReportScaleLow: "Low",
     workReportScaleMid: "Medium",
     workReportScaleHigh: "High",
@@ -1203,25 +1243,61 @@ const QUESTIONNAIRE_UI = {
     consent: "Toestemming",
     consentTag: "Beginpunt · Voordat ons begin",
     consentDesc:
-      "Jy kan slegs voortgaan sodra die vereiste toestemming hieronder gegee is. Jy mag ook kies wie toegang tot jou resultate mag hê.",
+      "Merk elke vereiste stelling om voort te gaan. Delingskassies is opsioneel. Jy mag almal oop los en steeds hierdie sifting voltooi.",
     consentDescWork:
-      "Jy kan slegs voortgaan sodra die vereiste toestemming hieronder gegee is, insluitend toestemming dat Soulful Sensory OT toegang tot jou resultate mag hê. Jy mag ook kies of jou werkplek toegang mag hê — daardie opsie is vrywillig.",
-    consentRequiredHeading: "Vereiste toestemming",
-    consentSharingHeading: "Wie mag toegang tot jou resultate hê (opsioneel)",
+      "Merk elke vereiste stelling om voort te gaan. Deling met jou werkplek is opsioneel. Jy mag daardie kassie oop los en steeds hierdie sifting voltooi. Jou sorg gaan voort.",
+    consentRequiredHeading: "Vereiste stellings",
+    consentSharingHeading: "Wie anders mag bevindinge ontvang (opsioneel)",
     consentSharingDesc:
-      "Kies wie jy toestemming gee om toegang tot jou resultate te hê. Kragtens POPIA deel ons persoonlike of gesondheidsverwante inligting slegs met ander wanneer jy hieronder toestemming gee, of wanneer die wet dit vereis. Jy mag voortgaan sonder om enige van hierdie opsies te kies.",
-    consentSharingHeadingWork: "Wie mag toegang tot jou resultate hê",
+      "Los hierdie oop as jy nie wil hê bevindinge gedeel word nie. Soulful Sensory OT hou steeds jou sifting omdat jy dit gevra het. Kragtens POPIA deel ons gesondheidsinligting slegs met ander mense wanneer jy ’n kassie hieronder merk, wanneer die wet dit vereis, of om iemand se veiligheid te beskerm.",
+    consentSharingHeadingWork: "Werkplekdeling (opsioneel)",
     consentSharingDescWork:
-      "Soulful Sensory OT benodig toestemming om toegang tot jou resultate te hê. Deling met jou werkplek of werkgewer is opsioneel — jy mag dit ongemerk laat en steeds voortgaan.",
+      "As jy die werkplekkassie merk, mag ’n brief slegs funksionele voorstelle bevat, nie jou rou antwoorde nie. Los dit oop en jou sorg by Soulful Sensory OT gaan voort.",
     consentPrivacyNote:
-      "Soulful Sensory OT verwerk persoonlike inligting in ooreenstemming met die Wet op die Beskerming van Persoonlike Inligting 4 van 2013 (POPIA). Jy mag toegang tot, regstelling van, of die terugtrekking van toestemming rakende jou inligting versoek deur ons te kontak.",
+      "Inligting wat jy deel, word gestoor. Jou resultate word aan Soulful Sensory OT gestuur, en slegs met ander gedeel met gegewe toestemming.",
+    consentAgeLabel: "Jou ouderdom",
+    consentAgeLabelParent: "Jou kind se ouderdom",
+    consentAgeRequired: "Voer asseblief ’n ouderdom in voordat jy voortgaan.",
+    consentTeenTooYoung:
+      "Iemand jonger as 12 het ’n ouer of wettige voog nodig om die ouer-vraelys te voltooi. Gaan terug en kies daardie opsie.",
+    consentAssentLegend: "Jou kind se instemming",
+    consentAssentYes: "Ek het dit eenvoudig verduidelik, en my kind is gewillig om deel te neem.",
+    consentAssentTooYoung: "My kind kan dit nog nie verstaan nie, en ek stem namens hulle in.",
+    consentAssentRequired: "Teken asseblief jou kind se instemming aan voordat jy voortgaan.",
+    consentChildAgreed:
+      "My kind is 12 of ouer, volwasse genoeg om hierdie sifting te verstaan, en het ingestem om deel te neem.",
+    consentParentInvolvedLegend: "Ouer of voog",
+    consentParentInvolvedYes: "’n Ouer of voog weet van hierdie sifting en is betrokke.",
+    consentParentInvolvedNo: "Ek gee my eie toestemming. ’n Ouer of voog is nie betrokke nie.",
+    consentParentInvolvedRequired: "Teken asseblief aan of ’n ouer of voog betrokke is.",
+    couplePrivacyWordLabel: "Privaat woord vir jou resultate",
+    couplePrivacyWordHint:
+      "Kies ’n woord van minstens 4 karakters. Jou maat het dit nodig om jou individuele antwoorde oop te maak. Die gesamentlike verslag hang steeds van die delingskassie hieronder af.",
+    couplePrivacyWordRequired: "Kies asseblief ’n privaat woord van minstens 4 karakters.",
+    couplePrivacyGateTitle: "Privaat resultate",
+    couplePrivacyGateBody: "Voer hierdie maat se privaat woord in om hul individuele resultate oop te maak.",
+    couplePrivacyGatePlaceholder: "Privaat woord",
+    couplePrivacyGateSubmit: "Maak resultate oop",
+    couplePrivacyGateCancel: "Terug",
+    couplePrivacyGateBad: "Daardie woord pas nie.",
+    couplePrivacyGateLegacy:
+      "Hierdie sifting is gestoor voordat privaat woorde gebruik is. Merk die kassie om te bevestig dat jy hierdie maat is, en maak dan die resultate oop.",
+    couplePrivacyGateLegacyConfirm: "Ek is hierdie maat.",
+    coupleMergeRefused:
+      "Die gesamentlike verslag bly toe omdat een van julle nie ingestem het om ’n vergelyking te deel nie. Elkeen hou hul eie sifting.",
+    sharingBlockedEmployer:
+      "’n Werkgewerbrief is nie beskikbaar nie. Toestemming om funksionele voorstelle met die werkplek te deel, is nie gegee nie.",
+    sharingBlockedSchool:
+      "’n Skoolbrief is nie beskikbaar nie. Toestemming om bevindinge met die skool te deel, is nie gegee nie.",
+    sharingBlockedTeam:
+      "Moenie bevindinge aan ’n ander klinikus stuur nie. Daardie toestemming is nie gegee nie.",
     sharingSummaryTitle: "Delingstoestemmings",
     sharingSummaryIntro:
       "Aangeteken aan die begin van hierdie sifting — wat Soulful Sensory OT mag deel, en met wie.",
     sharingSummaryAllowed: "Mag deel",
     sharingSummaryNotGiven: "Toestemming nie gegee nie",
     sharingSummaryClinicianNote:
-      "Gebruik dit as jou kitsgids voordat jy bevindinge met ouers, die skool, of ander professionele persone bespreek.",
+      "Moenie ’n brief skryf of stuur aan iemand wat as “toestemming nie gegee nie” gemerk is nie. ’n Skoolbrief, ’n werkgewerbrief, en ’n nota aan ’n ander klinikus het elk hul eie merk nodig.",
     detailsTag: "Meer besonderhede",
     detailsTitle: "Jou besonderhede",
     detailsTitleParent: "Jou kind se besonderhede",
@@ -1485,6 +1561,10 @@ const QUESTIONNAIRE_UI = {
     scoreLeanSeekingShort: "+",
     thresholdLegend:
       "Lae drempel = merk insette vinnig op (sensitief). Medium = meer tipies / gemeng. Hoë drempel = het meer insette nodig (soekend).",
+    dunnCitation:
+      "Die idees van ’n lae en hoë sensoriese drempel, sensoriese sensitiwiteit en sensories soekend steun op Winnie Dunn se model van sensoriese prosessering. Dunn beskryf hoeveel sensoriese insette die senuweestelsel nodig het voordat dit reageer, en vier patrone: lae registrasie, sensasie-soekend, sensoriese sensitiwiteit en sensasie-vermyding (Dunn, 1997). Die Sensoriese Verkenner, Sensoriese Aanpasser en Sensoriese Waarnemer is Soulful Sensory OT se eie beskrywende kaart. Dit is nie ’n telling op Dunn se Sensory Profile nie.",
+    dunnCitationShort:
+      "Lae- en hoë-drempeltaal steun op Winnie Dunn se model van sensoriese prosessering (Dunn, 1997). Die drie Sensoriese Roete-style is hierdie sifting se eie beskrywende kaart, nie Dunn se vier patrone nie.",
     settingBridgeKicker: "Volgende",
     settingBridgeHeading: "Waar jou sintuie die alledaagse lewe ontmoet",
     settingBridgeQuoteHome:
@@ -1670,7 +1750,7 @@ const QUESTIONNAIRE_UI = {
     teenCrewObserverRoleTeen:
       "Merk detail en atmosfeer vinnig — in leer en stokperdjies — en floreer met kalmer ruimtes en meer gereelde herstel.",
     teenCrewObserverTraits: [
-      "Hou daarvan om hul eie ruimte te hê; word nie gesteur deur gebeure mis te loop nie.",
+      "Hou daarvan om op hul eie te herlaai; ’n besige of vol kalender is dreinerend.",
       "Intuïtief — merk mense se stemming en energie vinnig op.",
       "Het ’n kalm en voorspelbare omgewing nodig.",
       "Chaos of onvoorspelbaarheid kan angs skep.",
@@ -1680,7 +1760,7 @@ const QUESTIONNAIRE_UI = {
       "Het hersteltyd nodig om tussen aktiwiteite te herlaai.",
     ],
     teenCrewObserverTraitsTeen: [
-      "Hou daarvan om hul eie ruimte te hê; word nie gesteur deur gebeure mis te loop nie.",
+      "Hou daarvan om op hul eie te herlaai; ’n besige of vol kalender is dreinerend.",
       "Intuïtief — merk mense se stemming en energie vinnig op.",
       "Het ’n kalm en voorspelbare omgewing nodig.",
       "Chaos of onvoorspelbaarheid kan angs skep.",
@@ -1790,7 +1870,7 @@ const QUESTIONNAIRE_UI = {
     workReportNotProvided: "Nie verskaf nie",
     workReportSectionScores: "Opsomming van sensoriese tellings",
     workReportScaleIntro:
-      "Elke sin word op ’n drieledige skaal gewys: lae, medium en hoë drempel.",
+      "Elke sin word op ’n drieledige skaal gewys: lae, medium en hoë drempel. Hierdie drempeltaal steun op Winnie Dunn se model van sensoriese prosessering (Dunn, 1997).",
     workReportScaleLow: "Laag",
     workReportScaleMid: "Medium",
     workReportScaleHigh: "Hoog",
@@ -1937,53 +2017,41 @@ const RESPONDENT_OPTIONS = {
   couple: { labelKey: "couple", descKey: "coupleDesc" },
 };
 
+const CONSENT_NOTICE_VERSION = "2026-10-01";
+
 const CONSENT_COPY = {
   en: {
     adult: {
       required: [
         "I understand that this questionnaire is a screening tool and does not constitute a diagnosis.",
-        "I understand that my responses and personal details are confidential and will be used only for clinical / assessment purposes by Soulful Sensory OT.",
-        "I understand that my personal information (including health-related information in my responses) will be collected and processed in accordance with the Protection of Personal Information Act 4 of 2013 (POPIA).",
-        "I understand that completing this questionnaire does not establish a therapeutic relationship until this has been discussed with my occupational therapist.",
-        "I consent to Soulful Sensory OT storing my information securely for assessment purposes, and I understand I may request access to, correction of, or withdrawal of consent regarding my information by contacting Soulful Sensory OT.",
-        "I understand that information will not be shared with third parties without my permission, except where disclosure is required by law or necessary to protect someone’s safety.",
+        "I understand that completing this questionnaire does not start a therapeutic relationship until this has been discussed with my occupational therapist.",
+        "I may stop at any time. I may leave every sharing box blank and still complete this screening with Soulful Sensory OT.",
+        "I understand that scoring will be explained by my occupational therapist. Results are a guide, not a label.",
       ],
       sharing: [
         {
           id: "treatingTeam",
           shortLabel: "Treating team",
-          label: "I give permission for Soulful Sensory OT to share relevant findings with my treating team (for example a GP, psychologist, or other therapists).",
+          label: "I give permission for Soulful Sensory OT to share relevant findings with my treating team (for example a GP, psychologist, or other therapists). Leave this blank and those findings stay with Soulful Sensory OT.",
         },
       ],
       sharingWork: [
         {
-          id: "soulfulSensory",
-          shortLabel: "Soulful Sensory OT",
-          label: "I give permission for Soulful Sensory OT to access and use my questionnaire results for assessment purposes.",
-          required: true,
-        },
-        {
           id: "employer",
           shortLabel: "Workplace / employer",
-          label: "I give permission for Soulful Sensory OT to share relevant findings with my workplace or employer.",
+          label: "I give permission for a workplace letter with functional suggestions only. Raw answers stay with Soulful Sensory OT. I may leave this blank and my care continues.",
         },
       ],
     },
     teen: {
       required: [
         "I understand that this questionnaire helps describe my sensory experiences but does not give me a diagnosis.",
-        "I understand that my answers and personal details will be kept confidential and used only for clinical / assessment purposes by Soulful Sensory OT.",
-        "I understand that my personal information (including health-related information in my answers) will be collected and handled in line with POPIA (South Africa’s privacy law).",
-        "I understand that a parent or guardian may need to give permission before assessment or therapy can begin.",
-        "I agree that Soulful Sensory OT may store my information securely for assessment purposes, and that I (or my parent / guardian) can ask to see, correct, or withdraw consent about this information by contacting Soulful Sensory OT.",
-        "I understand that my information will not be shared with other people without permission, except where the law requires it or someone needs protecting.",
+        "I understand that completing this questionnaire does not start therapy until that has been discussed with an occupational therapist.",
+        "I may stop at any time. I may leave every sharing box blank and still complete this screening with Soulful Sensory OT.",
+        "I understand that scoring will be explained by an occupational therapist. Results are a guide, not a label.",
+        "I am 12 or older. I understand this questionnaire and I am giving my own consent.",
       ],
       sharing: [
-        {
-          id: "soulfulSensory",
-          shortLabel: "Soulful Sensory OT",
-          label: "I give permission for Soulful Sensory OT to access and use my questionnaire results for assessment purposes.",
-        },
         {
           id: "parents",
           shortLabel: "Parent(s) / guardian(s)",
@@ -2005,16 +2073,15 @@ const CONSENT_COPY = {
       required: [
         "I understand that this questionnaire is a screening tool and does not constitute a diagnosis of my child.",
         "I confirm that I am the child’s parent or legal guardian and may provide this information.",
-        "I understand that these responses and our personal details are confidential and will be used only for clinical / assessment purposes by Soulful Sensory OT.",
-        "I understand that my child’s and my personal information (including health-related information in these responses) will be collected and processed in accordance with the Protection of Personal Information Act 4 of 2013 (POPIA).",
-        "I consent to Soulful Sensory OT storing my child’s and my contact information securely for assessment purposes, and I understand I may request access to, correction of, or withdrawal of consent regarding this information by contacting Soulful Sensory OT.",
-        "I understand that information will not be shared with third parties without my permission, except where disclosure is required by law or necessary to protect someone’s safety.",
+        "I understand that completing this questionnaire does not start a therapeutic relationship for my child until this has been discussed with an occupational therapist.",
+        "I may stop at any time. I may leave every sharing box blank and still complete this screening with Soulful Sensory OT.",
+        "I understand that scoring will be explained by an occupational therapist. Results are a guide, not a label.",
       ],
       sharing: [
         {
-          id: "soulfulSensory",
-          shortLabel: "Soulful Sensory OT",
-          label: "I give permission for Soulful Sensory OT to access and use my child’s questionnaire results for assessment purposes.",
+          id: "school",
+          shortLabel: "School (teachers / support staff)",
+          label: "I give permission for Soulful Sensory OT to share relevant findings with my child’s school (for example teachers or support staff). Without this tick, a school letter will not be created.",
         },
         {
           id: "treatingTeam",
@@ -2023,53 +2090,60 @@ const CONSENT_COPY = {
         },
       ],
     },
+    couple: {
+      required: [
+        "I understand that this questionnaire is a screening tool and does not constitute a diagnosis.",
+        "I understand that completing this questionnaire does not start a therapeutic relationship until this has been discussed with an occupational therapist.",
+        "I may stop at any time. I may leave every sharing box blank and still keep my own screening with Soulful Sensory OT.",
+        "I understand that scoring will be explained by an occupational therapist. Results are a guide, not a label.",
+        "My individual answers, scores, work answers, and Saturday reflection stay private unless I tick the partner box below.",
+      ],
+      sharing: [
+        {
+          id: "partner",
+          shortLabel: "Partner — joint report",
+          label: "I agree that my partner may see a comparison of our profiles, including scores, work answers, and the Saturday reflection. I may leave this blank and still keep my own screening.",
+        },
+        {
+          id: "treatingTeam",
+          shortLabel: "Treating team",
+          label: "I give permission for Soulful Sensory OT to share relevant findings with my treating team (for example a GP, psychologist, or other therapists).",
+        },
+      ],
+    },
   },
   af: {
     adult: {
       required: [
         "Ek verstaan dat hierdie vraelys ’n siftingsinstrument is en nie ’n diagnose bied nie.",
-        "Ek verstaan dat my antwoorde en persoonlike besonderhede vertroulik is en slegs vir kliniese / assesseringsdoeleindes deur Soulful Sensory OT gebruik sal word.",
-        "Ek verstaan dat my persoonlike inligting (insluitend gesondheidsverwante inligting in my antwoorde) ingevolge die Wet op die Beskerming van Persoonlike Inligting 4 van 2013 (POPIA) ingesamel en verwerk sal word.",
-        "Ek verstaan dat die voltooiing van hierdie vraelys nie ’n terapeutiese verhouding vestig voordat dit met my arbeidsterapeut bespreek is nie.",
-        "Ek gee toestemming dat Soulful Sensory OT my inligting veilig vir assesseringsdoeleindes mag stoor, en ek verstaan dat ek toegang tot, regstelling van, of die terugtrekking van toestemming rakende my inligting mag versoek deur Soulful Sensory OT te kontak.",
-        "Ek verstaan dat inligting nie met derdes gedeel sal word sonder my toestemming nie, behalwe waar openbaarmaking wetlik vereis word of nodig is om iemand se veiligheid te beskerm.",
+        "Ek verstaan dat die voltooiing van hierdie vraelys nie ’n terapeutiese verhouding begin voordat dit met my arbeidsterapeut bespreek is nie.",
+        "Ek mag enige tyd stop. Ek mag elke delingskassie oop los en steeds hierdie sifting by Soulful Sensory OT voltooi.",
+        "Ek verstaan dat die telling deur my arbeidsterapeut verduidelik sal word. Resultate is ’n gids, nie ’n etiket nie.",
       ],
       sharing: [
         {
           id: "treatingTeam",
           shortLabel: "Behandelingspan",
-          label: "Ek gee toestemming dat Soulful Sensory OT relevante bevindinge met my behandelingspan mag deel (byvoorbeeld ’n huisarts, sielkundige of ander terapeute).",
+          label: "Ek gee toestemming dat Soulful Sensory OT relevante bevindinge met my behandelingspan mag deel (byvoorbeeld ’n huisarts, sielkundige of ander terapeute). Los dit oop en daardie bevindinge bly by Soulful Sensory OT.",
         },
       ],
       sharingWork: [
         {
-          id: "soulfulSensory",
-          shortLabel: "Soulful Sensory OT",
-          label: "Ek gee toestemming dat Soulful Sensory OT toegang tot my vraelysresultate mag hê en dit vir assesseringsdoeleindes mag gebruik.",
-          required: true,
-        },
-        {
           id: "employer",
           shortLabel: "Werkplek / werkgewer",
-          label: "Ek gee toestemming dat Soulful Sensory OT relevante bevindinge met my werkplek of werkgewer mag deel.",
+          label: "Ek gee toestemming vir ’n werkplekbrief met slegs funksionele voorstelle. Rou antwoorde bly by Soulful Sensory OT. Ek mag dit oop los en my sorg gaan voort.",
         },
       ],
     },
     teen: {
       required: [
         "Ek verstaan dat hierdie vraelys help om my sensoriese ervarings te beskryf, maar nie vir my ’n diagnose gee nie.",
-        "Ek verstaan dat my antwoorde en persoonlike besonderhede vertroulik gehou en slegs vir kliniese / assesseringsdoeleindes deur Soulful Sensory OT gebruik sal word.",
-        "Ek verstaan dat my persoonlike inligting (insluitend gesondheidsverwante inligting in my antwoorde) volgens POPIA (Suid-Afrika se privaatheidswet) ingesamel en hanteer sal word.",
-        "Ek verstaan dat ’n ouer of voog dalk toestemming moet gee voordat assessering of terapie kan begin.",
-        "Ek stem in dat Soulful Sensory OT my inligting veilig vir assesseringsdoeleindes mag stoor, en dat ek (of my ouer / voog) kan vra om hierdie inligting te sien, te korrigeer, of toestemming terug te trek deur Soulful Sensory OT te kontak.",
-        "Ek verstaan dat my inligting nie met ander mense gedeel sal word sonder toestemming nie, behalwe waar die wet dit vereis of iemand beskerm moet word.",
+        "Ek verstaan dat die voltooiing van hierdie vraelys nie terapie begin voordat dit met ’n arbeidsterapeut bespreek is nie.",
+        "Ek mag enige tyd stop. Ek mag elke delingskassie oop los en steeds hierdie sifting by Soulful Sensory OT voltooi.",
+        "Ek verstaan dat die telling deur ’n arbeidsterapeut verduidelik sal word. Resultate is ’n gids, nie ’n etiket nie.",
+        "Ek is 12 of ouer. Ek verstaan hierdie vraelys en ek gee my eie toestemming.",
       ],
       sharing: [
-        {
-          id: "soulfulSensory",
-          shortLabel: "Soulful Sensory OT",
-          label: "Ek gee toestemming dat Soulful Sensory OT toegang tot my vraelysresultate mag hê en dit vir assesseringsdoeleindes mag gebruik.",
-        },
         {
           id: "parents",
           shortLabel: "Ouer(s) / voog(de)",
@@ -2091,16 +2165,15 @@ const CONSENT_COPY = {
       required: [
         "Ek verstaan dat hierdie vraelys ’n siftingsinstrument is en nie ’n diagnose van my kind bied nie.",
         "Ek bevestig dat ek die kind se ouer of wettige voog is en hierdie inligting mag verskaf.",
-        "Ek verstaan dat hierdie antwoorde en ons persoonlike besonderhede vertroulik is en slegs vir kliniese / assesseringsdoeleindes deur Soulful Sensory OT gebruik sal word.",
-        "Ek verstaan dat my kind se en my persoonlike inligting (insluitend gesondheidsverwante inligting in hierdie antwoorde) ingevolge die Wet op die Beskerming van Persoonlike Inligting 4 van 2013 (POPIA) ingesamel en verwerk sal word.",
-        "Ek gee toestemming dat Soulful Sensory OT my kind se inligting en my kontakbesonderhede veilig vir assesseringsdoeleindes mag stoor, en ek verstaan dat ek toegang tot, regstelling van, of die terugtrekking van toestemming rakende hierdie inligting mag versoek deur Soulful Sensory OT te kontak.",
-        "Ek verstaan dat inligting nie met derdes gedeel sal word sonder my toestemming nie, behalwe waar openbaarmaking wetlik vereis word of nodig is om iemand se veiligheid te beskerm.",
+        "Ek verstaan dat die voltooiing van hierdie vraelys nie ’n terapeutiese verhouding vir my kind begin voordat dit met ’n arbeidsterapeut bespreek is nie.",
+        "Ek mag enige tyd stop. Ek mag elke delingskassie oop los en steeds hierdie sifting by Soulful Sensory OT voltooi.",
+        "Ek verstaan dat die telling deur ’n arbeidsterapeut verduidelik sal word. Resultate is ’n gids, nie ’n etiket nie.",
       ],
       sharing: [
         {
-          id: "soulfulSensory",
-          shortLabel: "Soulful Sensory OT",
-          label: "Ek gee toestemming dat Soulful Sensory OT toegang tot my kind se vraelysresultate mag hê en dit vir assesseringsdoeleindes mag gebruik.",
+          id: "school",
+          shortLabel: "Skool (onderwysers / ondersteuning)",
+          label: "Ek gee toestemming dat Soulful Sensory OT relevante bevindinge met my kind se skool mag deel (byvoorbeeld onderwysers of ondersteuningspersoneel). Sonder hierdie merk word ’n skoolbrief nie geskep nie.",
         },
         {
           id: "treatingTeam",
@@ -2109,8 +2182,39 @@ const CONSENT_COPY = {
         },
       ],
     },
+    couple: {
+      required: [
+        "Ek verstaan dat hierdie vraelys ’n siftingsinstrument is en nie ’n diagnose bied nie.",
+        "Ek verstaan dat die voltooiing van hierdie vraelys nie ’n terapeutiese verhouding begin voordat dit met ’n arbeidsterapeut bespreek is nie.",
+        "Ek mag enige tyd stop. Ek mag elke delingskassie oop los en steeds my eie sifting by Soulful Sensory OT hou.",
+        "Ek verstaan dat die telling deur ’n arbeidsterapeut verduidelik sal word. Resultate is ’n gids, nie ’n etiket nie.",
+        "My individuele antwoorde, tellings, werkantwoorde en Saterdag-besinning bly privaat tensy ek die maat-kassie hieronder merk.",
+      ],
+      sharing: [
+        {
+          id: "partner",
+          shortLabel: "Maat — gesamentlike verslag",
+          label: "Ek stem in dat my maat ’n vergelyking van ons profiele mag sien, insluitend tellings, werkantwoorde en die Saterdag-besinning. Ek mag dit oop los en steeds my eie sifting hou.",
+        },
+        {
+          id: "treatingTeam",
+          shortLabel: "Behandelingspan",
+          label: "Ek gee toestemming dat Soulful Sensory OT relevante bevindinge met my behandelingspan mag deel (byvoorbeeld ’n huisarts, sielkundige of ander terapeute).",
+        },
+      ],
+    },
   },
 };
+
+function getPrivacyNoticeParagraphs(language = "en") {
+  return language === "af"
+    ? [
+        "Inligting wat jy deel, word gestoor. Jou resultate word aan Soulful Sensory OT gestuur, en slegs met ander gedeel met gegewe toestemming.",
+      ]
+    : [
+        "Information you share will be stored. Your results will be sent to Soulful Sensory OT, and only shared with others with given consent.",
+      ];
+}
 
 const DEMOGRAPHIC_COPY = {
   en: {
