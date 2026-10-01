@@ -6,14 +6,11 @@ const QUESTIONNAIRE_UI = {
     shellTitle: "Sensory Screening Questionnaire",
     shellSubtitle: "Understanding sensory experiences, one gentle step at a time",
     introModalTitle: "Before you begin",
-    introModalLead:
-      "In this questionnaire you will simply answer yes or no questions. You may need to generalise a little — if you are unsure, ask yourself: if I had to choose, would this be a yes or a no?",
-    introModalPurpose:
-      "The idea is to identify sensory preferences — what you (or your child) tend to prefer and how the senses respond — so we can see how best to support you going forward.",
+    introModalLead: "Answer each question yes or no.",
     introModalDisclaimer:
-      "Your sensory trail profile provides information about patterns in how you may experience and respond to sensory input. It should be interpreted alongside your individual history, environment, daily occupations and current circumstances. It is not intended to independently diagnose a medical, psychiatric or neurodevelopmental condition. Results should be interpreted by a qualified occupational therapist within the context of the individual's broader clinical presentation.",
+      "This is not a diagnosis. A qualified occupational therapist should interpret the results alongside your history, daily life, and current circumstances.",
     introModalNote:
-      "There are no right or wrong answers. It is also fine if some of your answers seem to pull in opposite directions — sensory preferences are often mixed. Take your time, and go with your first instinct.",
+      "There are no right or wrong answers. If you are unsure, go with your first instinct — mixed preferences are common.",
     introModalCta: "Got it — let’s begin",
     chooseRespondent: "Who is completing this questionnaire?",
     chooseRespondentDesc: "Choose the option that best describes you. The questions will adjust to suit your age and perspective.",
@@ -972,14 +969,11 @@ const QUESTIONNAIRE_UI = {
     shellTitle: "Sensoriese Siftingsvraelys",
     shellSubtitle: "Verstaan sensoriese ervarings, een rustige tree op ’n slag",
     introModalTitle: "Voordat jy begin",
-    introModalLead:
-      "In hierdie vraelys hoef jy net ja/nee-vrae te beantwoord. Jy sal dalk ’n bietjie moet veralgemeen — as jy onseker is, vra jouself: as ek moet kies, sou dit ’n ja of ’n nee wees?",
-    introModalPurpose:
-      "Die doel is om sensoriese voorkeure te identifiseer — wat jy (of jou kind) verkies en hoe die sintuie reageer — sodat ons kan sien hoe om jou vorentoe die beste te ondersteun.",
+    introModalLead: "Beantwoord elke vraag met ja of nee.",
     introModalDisclaimer:
-      "Jou sensoriese roete-profiel verskaf inligting oor patrone in hoe jy sensoriese insette mag ervaar en daarop mag reageer. Dit moet saam met jou individuele geskiedenis, omgewing, daaglikse okkupasies en huidige omstandighede geïnterpreteer word. Dit is nie bedoel om onafhanklik ’n mediese, psigiatriese of neuro-ontwikkelingstoestand te diagnoseer nie. Resultate moet deur ’n gekwalifiseerde arbeidsterapeut geïnterpreteer word binne die konteks van die individu se breër kliniese aanbieding.",
+      "Dit is nie ’n diagnose nie. ’n Gekwalifiseerde arbeidsterapeut moet die resultate saam met jou geskiedenis, daaglikse lewe en huidige omstandighede interpreteer.",
     introModalNote:
-      "Daar is geen regte of verkeerde antwoorde nie. Dit is ook reg as party antwoorde in teenoorgestelde rigtings lyk trek — sensoriese voorkeure is dikwels gemeng. Neem jou tyd, en volg jou eerste intuïsie.",
+      "Daar is geen regte of verkeerde antwoorde nie. As jy onseker is, volg jou eerste intuïsie — gemengde voorkeure is algemeen.",
     introModalCta: "Ek verstaan — kom ons begin",
     chooseRespondent: "Wie voltooi hierdie vraelys?",
     chooseRespondentDesc: "Kies die opsie wat jou die beste beskryf. Die vrae sal by jou ouderdom en perspektief aanpas.",

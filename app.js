@@ -8927,7 +8927,6 @@ function renderIntroModal() {
         <img src="mountain-divider.svg" alt="" class="intro-modal__divider mountain-divider" width="280" height="28" />
         <div class="intro-modal__body">
           <p>${escapeHtml(copy.introModalLead)}</p>
-          <p>${escapeHtml(copy.introModalPurpose)}</p>
           <p class="intro-modal__disclaimer">${escapeHtml(copy.introModalDisclaimer)}</p>
           <p class="intro-modal__note">${escapeHtml(copy.introModalNote)}</p>
         </div>
