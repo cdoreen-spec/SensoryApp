@@ -572,6 +572,7 @@ body.is-home .site-footer {
 }
 
 .home-hero {
+  --photo-x: 0.5;
   position: relative;
   min-height: min(92vh, 820px);
   display: flex;
@@ -583,6 +584,7 @@ body.is-home .site-footer {
     linear-gradient(90deg, rgba(17, 39, 30, 0.7) 0%, rgba(25, 52, 40, 0.52) 48%, rgba(27, 52, 52, 0.34) 100%),
     linear-gradient(180deg, rgba(25, 48, 59, 0.14) 0%, rgba(25, 54, 39, 0.22) 55%, rgba(20, 45, 32, 0.35) 78%, transparent 100%),
     url("assets/outeniqua-trail-hero.png") center / cover no-repeat;
+  background-position: calc(var(--photo-x) * 100%) center;
   color: white;
   text-align: center;
 }
@@ -609,6 +611,7 @@ body.is-home .site-footer {
 .home-hero__atmosphere {
   position: absolute;
   inset: 0;
+  container-type: size;
   pointer-events: none;
   overflow: hidden;
 }
@@ -619,16 +622,29 @@ body.is-home .site-footer {
   background: radial-gradient(ellipse 55% 48% at 18% 30%, rgba(255, 231, 178, 0.2), transparent 68%);
 }
 
+/* Follows the cover photo so the cross stays on the same ridge */
+.home-hero__photo-map {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  height: max(100cqh, calc(100cqw * 1024 / 1536));
+  aspect-ratio: 1536 / 1024;
+  width: auto;
+  left: calc((100cqw - max(100cqw, 100cqh * 1536 / 1024)) * var(--photo-x));
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
 /* Lit cross on the ridge, like the one above George */
 .george-cross {
   position: absolute;
   z-index: 1;
-  left: 71%;
-  top: 29%;
+  left: 79.5%;
+  top: 43%;
   width: 4px;
   height: 4px;
   pointer-events: none;
-  transform: translate(-50%, -30%) scale(1.35);
+  transform: translate(-50%, -18%) scale(0.725);
 }
 
 .george-cross__glow {
@@ -713,18 +729,24 @@ body.is-home .site-footer {
 }
 
 @media (max-width: 720px) {
+  .home-hero,
+  .home-contact {
+    --photo-x: 0.71;
+  }
+
   .george-cross {
-    left: 78%;
-    top: 22%;
-    transform: translate(-50%, -30%) scale(1.05);
+    transform: translate(-50%, 0) scale(0.425);
+  }
+
+  .george-cross__glow {
+    width: 72px;
+    height: 96px;
   }
 }
 
 @media (min-width: 1100px) {
   .george-cross {
-    left: 73%;
-    top: 31%;
-    transform: translate(-50%, -30%) scale(1.6);
+    transform: translate(-50%, -18%) scale(0.825);
   }
 }
 
@@ -3959,6 +3981,7 @@ body.is-pain-screen .site-footer {
 }
 
 .home-contact {
+  --photo-x: 0.5;
   position: relative;
   width: 100%;
   min-height: min(92vh, 820px);
@@ -3975,6 +3998,7 @@ body.is-pain-screen .site-footer {
     linear-gradient(90deg, rgba(17, 39, 30, 0.7) 0%, rgba(25, 52, 40, 0.52) 48%, rgba(27, 52, 52, 0.34) 100%),
     linear-gradient(180deg, rgba(25, 48, 59, 0.14) 0%, rgba(25, 54, 39, 0.22) 55%, rgba(20, 45, 32, 0.35) 78%, transparent 100%),
     url("assets/outeniqua-trail-hero.png") center / cover no-repeat;
+  background-position: calc(var(--photo-x) * 100%) center;
 }
 
 .home-contact::after {

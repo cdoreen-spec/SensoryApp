@@ -7971,9 +7971,11 @@ function renderHome() {
           <div class="home-hero__sunwash"></div>
           <div class="home-hero__ridge home-hero__ridge--far"></div>
           <div class="home-hero__ridge home-hero__ridge--near"></div>
-          <div class="george-cross">
-            <span class="george-cross__glow"></span>
-            <span class="george-cross__lamps"></span>
+          <div class="home-hero__photo-map">
+            <div class="george-cross">
+              <span class="george-cross__glow"></span>
+              <span class="george-cross__lamps"></span>
+            </div>
           </div>
         </div>
         <div class="home-hero__content">
@@ -8038,6 +8040,12 @@ function renderHome() {
           <div class="home-hero__sunwash"></div>
           <div class="home-hero__ridge home-hero__ridge--far"></div>
           <div class="home-hero__ridge home-hero__ridge--near"></div>
+          <div class="home-hero__photo-map">
+            <div class="george-cross">
+              <span class="george-cross__glow"></span>
+              <span class="george-cross__lamps"></span>
+            </div>
+          </div>
         </div>
         <div class="home-contact__content">
           <img src="assets/logo.png" alt="Soulful Sensory OT logo" class="home-hero__logo home-contact__logo" width="120" height="120" />
