@@ -312,6 +312,46 @@ function inviteNeedsAccount() {
   return isPatientInvite() && !currentAuthUser();
 }
 
+/**
+ * The sensory questionnaire on the public site opens only for a signed-in
+ * patient using the email and password their therapist sent, or for signed-in
+ * practice staff. Visitors to the homepage cannot start it anonymously.
+ */
+function hasQuestionnaireCredentialAccess() {
+  if (state.tourCapture) return true;
+  if (isAdminPatientPreview()) return true;
+  if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) return true;
+  const user = currentAuthUser();
+  return Boolean(user && user.role === "patient" && user.questionnaireType);
+}
+
+function requireEmailedQuestionnaireLogin() {
+  if (hasQuestionnaireCredentialAccess() || isViewerMode()) return false;
+  state.step = 0;
+  state.showIntroModal = false;
+  state.error = null;
+  state.authError = null;
+  state.authMode = "login";
+  const notice =
+    "Sign in with the email and password your therapist sent you to open the sensory questionnaire.";
+  if (isPatientInvite()) {
+    beginInviteAccountGate();
+    state.authNotice = notice;
+    return true;
+  }
+  const user = currentAuthUser();
+  if (user?.role === "patient") {
+    state.view = "account";
+    state.authNotice =
+      "The sensory questionnaire opens only with the email and password your therapist sent you. Ask them for a new invitation if you do not have those details.";
+    return true;
+  }
+  resetAuthForm("patient");
+  state.view = "login";
+  state.authNotice = notice;
+  return true;
+}
+
 /** After login/signup during an invite session, continue into the screening. */
 function routeAfterAuth(user) {
   if (user?.role === "admin" || user?.role === "therapist") {
@@ -6226,7 +6266,7 @@ function renderLogin() {
     title: "Sign in",
     lead: invite
       ? "Sign in with the email and password your therapist sent you."
-      : "Already have a password? Sign in to access your profile.",
+      : "Sign in with the email and password you were sent. Patients use the details from their questionnaire email.",
     body: `
       <form class="auth__form" data-auth-form="login">
         <label class="auth__field">
@@ -6454,7 +6494,7 @@ function renderAccount() {
            <button type="button" class="btn btn-secondary" data-action="open-create-patient">Add patient</button>`
         : user.questionnaireType
           ? `<button type="button" class="btn btn-primary" data-action="start-assigned-questionnaire">Start ${escapeHtml(questionnaireTypeLabel(user.questionnaireType, user.lifeContext))} questionnaire</button>`
-          : `<button type="button" class="btn btn-primary" data-action="start-sensory">Continue sensory pathway</button>`;
+          : "";
 
   return `
     <div class="auth">
@@ -6841,21 +6881,33 @@ function renderSettings() {
     return renderLogin();
   }
 
-  const tab = state.settingsTab === "users" || state.settingsTab === "settings" ? state.settingsTab : "overview";
+  const tabSetting =
+    state.settingsTab === "users" || state.settingsTab === "settings" || state.settingsTab === "test-lab"
+      ? state.settingsTab
+      : "overview";
+  const tab = tabSetting === "test-lab" && adminPreviewMode() !== "admin" ? "overview" : tabSetting;
   const title =
-    tab === "users" ? "Users" : tab === "settings" ? "App settings" : "Practice overview";
+    tab === "users"
+      ? "Users"
+      : tab === "settings"
+        ? "App settings"
+        : tab === "test-lab"
+          ? "Sensory Trail Questionnaire Test Lab"
+          : "Practice overview";
   const lead =
     tab === "users"
       ? "Approve therapists, edit roles, and manage accounts for Soulful Sensory OT."
       : tab === "settings"
         ? "Practice name, clinician email, and who can create accounts."
-        : "Live totals for patients, assessments, questionnaires, reports, revenue, and this browser’s storage.";
+        : tab === "test-lab"
+          ? "Test scoring integrity, item behaviour and classification patterns across the Sensory Trail questionnaires."
+          : "Live totals for patients, assessments, questionnaires, reports, revenue, and this browser’s storage.";
 
   return `
     <div class="settings">
       <header class="settings__header">
         <div>
-          <p class="auth__eyebrow">Admin</p>
+          <p class="auth__eyebrow">${tab === "test-lab" ? "Admin · Sensory Trail" : "Admin"}</p>
           <h1 class="settings__title">${title}</h1>
           <p class="settings__lead">${lead}</p>
         </div>
@@ -6881,17 +6933,24 @@ function renderSettings() {
         <button type="button" class="settings-tab ${tab === "overview" ? "is-active" : ""}" role="tab" aria-selected="${tab === "overview"}" data-action="settings-tab" data-tab="overview">Overview</button>
         <button type="button" class="settings-tab ${tab === "users" ? "is-active" : ""}" role="tab" aria-selected="${tab === "users"}" data-action="settings-tab" data-tab="users">Users</button>
         <button type="button" class="settings-tab ${tab === "settings" ? "is-active" : ""}" role="tab" aria-selected="${tab === "settings"}" data-action="settings-tab" data-tab="settings">App settings</button>
+        ${
+          adminPreviewMode() === "admin"
+            ? `<button type="button" class="settings-tab ${tab === "test-lab" ? "is-active" : ""}" role="tab" aria-selected="${tab === "test-lab"}" data-action="settings-tab" data-tab="test-lab">Sensory Trail</button>`
+            : ""
+        }
       </div>
 
       ${tab === "users" ? renderSettingsUserStats() : ""}
 
-      <section class="settings__panel ${tab === "overview" ? "settings__panel--overview" : ""}">
+      <section class="settings__panel ${tab === "overview" ? "settings__panel--overview" : ""} ${tab === "test-lab" ? "settings__panel--test-lab" : ""}">
         ${
-          tab === "settings"
-            ? renderSettingsAppPanel()
-            : tab === "users"
-              ? renderSettingsUsersPanel()
-              : renderSettingsOverviewPanel()
+          tab === "test-lab"
+            ? renderTestLab()
+            : tab === "settings"
+              ? renderSettingsAppPanel()
+              : tab === "users"
+                ? renderSettingsUsersPanel()
+                : renderSettingsOverviewPanel()
         }
       </section>
     </div>
@@ -7864,6 +7923,7 @@ function renderHome() {
   const invite = isPatientInvite();
   const patientLanding = invite || isAdminPatientPreview();
   const viewer = isViewerMode();
+  const questionnaireLocked = !viewer && !patientLanding && !hasQuestionnaireCredentialAccess();
 
   const pathwaysInner = patientLanding
     ? `
@@ -7889,9 +7949,11 @@ function renderHome() {
             <h2 id="pathways-heading" class="home-section__title home-section__title--pathways">Choose a pathway</h2>
             <p class="home-section__lead home-pathways__intro">
               ${
-                isPainPathwayEnabled()
-                  ? "Explore two different trails: one focused on how your senses shape daily life, and another on how pain shows up in your body."
-                  : "Your sensory journey starts here."
+                questionnaireLocked
+                  ? "The sensory questionnaire opens only after you sign in with the email and password your therapist sent you."
+                  : isPainPathwayEnabled()
+                    ? "Explore two different trails: one focused on how your senses shape daily life, and another on how pain shows up in your body."
+                    : "Your sensory journey starts here."
               }
             </p>
           </div>
@@ -7899,15 +7961,23 @@ function renderHome() {
           <div class="trail-map" role="list" aria-label="Screening pathways">
             <button type="button" class="trail-row trail-row--sensory" data-action="start-sensory" role="listitem">
               <span class="trail-row__text">
-                <span class="trail-row__cue">Click here</span>
+                <span class="trail-row__cue">${questionnaireLocked ? "Sign in required" : "Click here"}</span>
                 <span class="trail-row__top">
                   <span class="trail-row__name">Sensory questionnaire</span>
-                  <span class="trail-row__meta">${hasSensoryDraft() && !viewer ? "Saved progress" : "10–15 min"}</span>
+                  <span class="trail-row__meta">${
+                    questionnaireLocked
+                      ? "Email and password"
+                      : hasSensoryDraft() && !viewer
+                        ? "Saved progress"
+                        : "10–15 min"
+                  }</span>
                 </span>
                 <span class="trail-row__desc">${
-                  hasSensoryDraft() && !viewer
-                    ? "Continue where you left off — your progress is saved on this device."
-                    : "Explore how sound, touch, movement, light, smell and taste shape your everyday life."
+                  questionnaireLocked
+                    ? "Sign in with the email and password your therapist sent you. The questionnaire stays closed until you do."
+                    : hasSensoryDraft() && !viewer
+                      ? "Continue where you left off — your progress is saved on this device."
+                      : "Explore how sound, touch, movement, light, smell and taste shape your everyday life."
                 }</span>
               </span>
               <span class="trail-row__arrow" aria-hidden="true">→</span>
@@ -14421,6 +14491,12 @@ function syncQuestionnaireChrome() {
 
 function render({ scrollToTop = false } = {}) {
   if (!isPlatformAdmin()) state.adminPreview = "admin";
+  if (
+    (state.view === "sensory" || state.view === "questionnaire") &&
+    requireEmailedQuestionnaireLogin()
+  ) {
+    state.step = 0;
+  }
   let html;
   const isPainView =
     state.view === "pain" ||
@@ -14451,6 +14527,10 @@ function render({ scrollToTop = false } = {}) {
   document.body.classList.toggle("is-dashboard", state.view === "dashboard");
   document.body.classList.toggle("is-auth", isAuthView);
   document.body.classList.toggle("is-settings", state.view === "settings");
+  document.body.classList.toggle(
+    "is-test-lab",
+    state.view === "settings" && state.settingsTab === "test-lab"
+  );
   document.body.classList.toggle("is-viewer", isViewerMode());
   document.body.classList.toggle("has-intro-modal", Boolean(state.showIntroModal));
   ensureViewerQuery();
@@ -15098,6 +15178,11 @@ function bindEvents() {
     // Prefer attribute read for SVG nodes (more reliable than dataset in some browsers)
     const action = btn.getAttribute("data-action") || btn.dataset.action;
 
+    if (action && action.startsWith("test-lab-")) {
+      if (typeof handleTestLabClick === "function") handleTestLabClick(action, btn);
+      return;
+    }
+
     if (action === "copy-viewer-link") {
       copyViewerLink();
       return;
@@ -15157,6 +15242,10 @@ function bindEvents() {
     }
 
     if (action === "start-sensory") {
+      if (requireEmailedQuestionnaireLogin()) {
+        render({ scrollToTop: true });
+        return;
+      }
       if (blockCompletedScreening()) {
         render({ scrollToTop: true });
         return;
@@ -15186,6 +15275,10 @@ function bindEvents() {
     }
 
     if (action === "start-assigned-questionnaire") {
+      if (requireEmailedQuestionnaireLogin()) {
+        render({ scrollToTop: true });
+        return;
+      }
       if (blockCompletedScreening()) {
         render({ scrollToTop: true });
         return;
@@ -15196,6 +15289,10 @@ function bindEvents() {
     }
 
     if (action === "start-questionnaire") {
+      if (requireEmailedQuestionnaireLogin()) {
+        render({ scrollToTop: true });
+        return;
+      }
       if (blockCompletedScreening()) {
         render({ scrollToTop: true });
         return;
@@ -15230,6 +15327,10 @@ function bindEvents() {
     }
 
     if (action === "resume-questionnaire") {
+      if (requireEmailedQuestionnaireLogin()) {
+        render({ scrollToTop: true });
+        return;
+      }
       if (blockCompletedScreening()) {
         render({ scrollToTop: true });
         return;
@@ -15984,7 +16085,8 @@ function bindEvents() {
 
     if (action === "settings-tab") {
       const tab = btn.dataset.tab;
-      state.settingsTab = tab === "settings" || tab === "users" || tab === "overview" ? tab : "overview";
+      state.settingsTab =
+        tab === "settings" || tab === "users" || tab === "overview" || tab === "test-lab" ? tab : "overview";
       state.settingsNotice = null;
       state.settingsError = null;
       render();

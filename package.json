@@ -4,7 +4,8 @@
   "description": "Soulful Sensory OT screening app with Gmail invites and shared patient storage",
   "scripts": {
     "start": "node server/local-api.js",
-    "dev": "node server/local-api.js"
+    "dev": "node server/local-api.js",
+    "test": "node --test tests/scoring-engine.test.js"
   },
   "dependencies": {
     "@netlify/blobs": "^8.1.0",
