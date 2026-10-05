@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Soulful Sensory Screening Questionnaire</title>
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#6D9286" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Soulful OT" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet" />
@@ -50,12 +59,17 @@
     <p class="footer-contact">Cayley Alberts · <a href="https://wa.me/27689014209?text=Hi%20Cayley%2C%20I%27d%20like%20to%20ask%20a%20question%20or%20book%20a%20session%20with%20Soulful%20Sensory%20OT." target="_blank" rel="noopener noreferrer">068 901 4209</a> · soulfulsensoryot@gmail.com</p>
   </footer>
 
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+  </script>
   <script src="config.js?v=20261001c"></script>
   <script src="backend.js?v=20261001d"></script>
   <script src="auth.js?v=20261001d"></script>
   <script src="questions.js?v=20261001j"></script>
   <script src="scoring.js?v=20261001c"></script>
   <script src="test-lab.js?v=20261005b"></script>
-  <script src="app.js?v=20261005b"></script>
+  <script src="app.js?v=20261005c"></script>
 </body>
 </html>

@@ -313,14 +313,12 @@ function inviteNeedsAccount() {
 }
 
 /**
- * The sensory questionnaire on the public site opens only for a signed-in
- * patient using the email and password their therapist sent, or for signed-in
- * practice staff. Visitors to the homepage cannot start it anonymously.
+ * The sensory questionnaire opens only for the patient signed in with the
+ * email and password their therapist sent. A therapist or admin sign-in,
+ * and the private invite link, do not open it on their own.
  */
 function hasQuestionnaireCredentialAccess() {
   if (state.tourCapture) return true;
-  if (isAdminPatientPreview()) return true;
-  if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) return true;
   const user = currentAuthUser();
   return Boolean(user && user.role === "patient" && user.questionnaireType);
 }
@@ -348,7 +346,10 @@ function requireEmailedQuestionnaireLogin() {
   }
   resetAuthForm("patient");
   state.view = "login";
-  state.authNotice = notice;
+  state.authNotice =
+    user && (user.role === "admin" || user.role === "therapist")
+      ? "The sensory questionnaire opens only with the email and password sent to the patient. A therapist sign-in does not open it."
+      : notice;
   return true;
 }
 
@@ -809,7 +810,7 @@ function patientInviteMessage(details) {
     "",
     "An account has been created for you at Soulful Sensory OT so you can complete a sensory questionnaire.",
     "",
-    "Open the link below. It signs you in. Please do not forward it.",
+    "Open the link below, then sign in with the email and password in this message. Please do not forward it.",
     details.password ? "This password was created only for you. Please do not share it." : null,
     details.password ? `Email: ${details.email || ""}` : null,
     details.password ? `Password: ${details.password}` : null,
@@ -851,7 +852,7 @@ function patientInviteWhatsAppUrl(details) {
   const lines = [
     `Hi ${firstName}, your Soulful Sensory OT questionnaire is ready.`,
     details.expiresAt ? `It expires on ${details.expiresAt}.` : "",
-    "Open this private link. It signs you in. Please do not forward it.",
+    "Open this private link, then sign in with the email and password from your email. Please do not forward it.",
     details.inviteUrl || "",
   ].filter(Boolean);
   return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join(" "))}`;
@@ -3447,21 +3448,20 @@ function reconnectStaffServerSession() {
 }
 
 async function signInFromInviteLink() {
-  if (currentAuthUser()) {
+  const user = currentAuthUser();
+  const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
+  const samePatient =
+    user?.role === "patient" &&
+    user.questionnaireType &&
+    (!assigned || user.id === assigned.id || user.email === assigned.email);
+  if (samePatient) {
     continueInviteSession();
     render();
     return;
   }
-  if (typeof Auth !== "undefined" && Auth.loginWithInviteToken && state.pendingInviteToken) {
-    const result = await Auth.loginWithInviteToken(state.pendingInviteToken);
-    if (result?.ok && result.user) {
-      routeAfterAuth(result.user);
-      render();
-      return;
-    }
-    state.authNotice = result?.error || "";
-  }
   beginInviteAccountGate();
+  state.authNotice =
+    "Sign in with the email and password your therapist sent you to open the sensory questionnaire.";
   render();
 }
 
@@ -3477,7 +3477,7 @@ function beginInviteAccountGate() {
   state.authError = null;
   if (!state.authNotice) {
     state.authNotice = assigned
-      ? "Open the private link from your therapist. If it did not sign you in, ask them to send a new link."
+      ? "Sign in with the email and password your therapist sent you to open the sensory questionnaire."
       : "This questionnaire link is not valid. Ask your therapist to send a new one.";
   }
 }
@@ -3872,12 +3872,17 @@ function readInviteFromUrl() {
     state.patientResultsAccess = visibilityToResultsAccess(visibility);
     const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
     if (assigned) applyPatientAssignment(assigned);
-    if (state.pendingInviteToken && inviteNeedsAccount()) {
-      void signInFromInviteLink();
-    } else if (inviteNeedsAccount()) {
-      beginInviteAccountGate();
-    } else {
+    const signedInPatient = currentAuthUser();
+    const alreadySignedIn =
+      signedInPatient?.role === "patient" &&
+      signedInPatient.questionnaireType &&
+      (!assigned ||
+        signedInPatient.id === assigned.id ||
+        signedInPatient.email === assigned.email);
+    if (alreadySignedIn) {
       continueInviteSession();
+    } else {
+      void signInFromInviteLink();
     }
     return;
   }

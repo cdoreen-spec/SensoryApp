@@ -175,7 +175,7 @@ function inviteCopy(options) {
         An account has been created for you at <strong>Soulful Sensory OT</strong> so you can complete a sensory questionnaire.
       </p>
       <p style="margin:0 0 18px;font-family:${FONTS.sans};font-size:16px;line-height:1.65;color:${COLORS.ink};">
-        Open the button below, or sign in with the email and password in this message. This password was created only for you. It will not work for anyone else, so please do not share it.
+        Open the button below, then sign in with the email and password in this message. This password was created only for you. It will not work for anyone else, so please do not share it.
       </p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:${COLORS.cream};border:1px solid ${COLORS.line};border-radius:14px;">
         <tr>
@@ -189,7 +189,7 @@ function inviteCopy(options) {
           </td>
         </tr>
       </table>
-      ${ctaButton(options.inviteUrl, "Open the questionnaire")}
+      ${ctaButton(options.inviteUrl, "Sign in to the questionnaire")}
       <p style="margin:0 0 8px;font-family:${FONTS.sans};font-size:14px;line-height:1.6;color:${COLORS.muted};">
         If the button does not work, copy this link into your browser:
       </p>
