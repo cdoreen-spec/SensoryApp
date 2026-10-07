@@ -12005,35 +12005,14 @@ const SENSE_SUPPORT_IMAGES = {
   everyday: [{ src: "assets/sense-everyday.png", alt: "A calm everyday setting" }],
 };
 
-const SUPPORT_IMAGE_ADJUSTMENT_KEY = "sensory-support-image-adjustments-v1";
-const POSITIONED_SUPPORT_IMAGES = new Set(["auditory", "tactile"]);
-
-function getSupportImageAdjustment(domain) {
-  const fallback = { scale: 1, x: 0, y: 0 };
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(SUPPORT_IMAGE_ADJUSTMENT_KEY) || "{}");
-    const saved = stored?.[domain];
-    if (!saved) return fallback;
-    return {
-      scale: Math.min(2, Math.max(0.75, Number.isFinite(Number(saved.scale)) ? Number(saved.scale) : 1)),
-      x: Math.min(220, Math.max(-220, Number.isFinite(Number(saved.x)) ? Number(saved.x) : 0)),
-      y: Math.min(220, Math.max(-220, Number.isFinite(Number(saved.y)) ? Number(saved.y) : 0)),
-    };
-  } catch (_) {
-    return fallback;
-  }
-}
-
 function renderSenseSupportVisual(row, index) {
   const images = SENSE_SUPPORT_IMAGES[row.id] || [];
   if (!images.length) return "";
-  const adjustment = POSITIONED_SUPPORT_IMAGES.has(row.id) ? getSupportImageAdjustment(row.id) : null;
 
   return `
     <figure
       class="sense-support__visual${images.length > 1 ? " sense-support__visual--duo" : ""}"
       aria-label="${escapeHtml(row.shortTitle)}"
-      ${adjustment ? `style="--support-image-scale:${adjustment.scale}; --support-image-x:${adjustment.x}px; --support-image-y:${adjustment.y}px"` : ""}
     >
       ${images
         .map(
@@ -14496,8 +14475,16 @@ function syncQuestionnaireChrome() {
 
 function render({ scrollToTop = false } = {}) {
   if (!isPlatformAdmin()) state.adminPreview = "admin";
+  const viewingSavedReport = Boolean(
+    (state.archiveReadOnly || state.sampleReportPreview) && canAccessTherapistDashboard()
+  );
+  if (viewingSavedReport && state.view === "questionnaire") {
+    const resultsStep = STEPS.findIndex((step) => step.type === "results");
+    if (resultsStep >= 0) state.step = resultsStep;
+  }
   if (
     (state.view === "sensory" || state.view === "questionnaire") &&
+    !viewingSavedReport &&
     requireEmailedQuestionnaireLogin()
   ) {
     state.step = 0;
@@ -14564,7 +14551,7 @@ function render({ scrollToTop = false } = {}) {
     html = renderPainLanding();
   } else if (state.view === "sensory") {
     html = renderSensoryLanding();
-  } else if (state.view === "home" || state.step === 0) {
+  } else if (state.view === "home" || (state.step === 0 && !viewingSavedReport)) {
     state.view = "home";
     state.step = 0;
     html = renderHome();
@@ -15857,7 +15844,11 @@ function bindEvents() {
       });
       render({ scrollToTop: true });
       if (action === "download-assessment") {
-        queueMicrotask(() => printSensoryResultsPacket());
+        queueMicrotask(() => {
+          if (state.view === "questionnaire" && STEPS[state.step]?.type === "results") {
+            printSensoryResultsPacket();
+          }
+        });
       }
       return;
     }

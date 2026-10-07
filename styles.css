@@ -6249,6 +6249,7 @@ body.is-pain-screen .site-footer {
   width: 100%;
   height: 100%;
   min-width: 0;
+  min-height: 0;
   object-fit: cover;
   filter: saturate(0.92) contrast(0.98);
   transition: transform 0.45s ease, filter 0.45s ease;
@@ -6277,36 +6278,35 @@ body.is-pain-screen .site-footer {
   transform: scale(1.035);
 }
 
-.sense-support__card[data-domain="auditory"] .sense-support__visual img,
-.sense-support__card[data-domain="tactile"] .sense-support__visual img {
-  transform: translate3d(var(--support-image-x, 0px), var(--support-image-y, 0px), 0)
-    scale(var(--support-image-scale, 1));
-}
-
 .sense-support__card[data-domain="auditory"] .sense-support__visual,
 .sense-support__card[data-domain="tactile"] .sense-support__visual {
-  height: clamp(9.5rem, 21vw, 11.5rem);
-  background: linear-gradient(135deg, #dce9df, #eff5ef);
+  height: auto;
+  aspect-ratio: 1.85 / 1;
+  background: #efe8df;
 }
 
 .sense-support__card[data-domain="auditory"] .sense-support__visual img,
 .sense-support__card[data-domain="tactile"] .sense-support__visual img {
-  object-fit: contain;
-  padding: 0.55rem 1.25rem;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: cover;
+  transform: none;
 }
 
 .sense-support__card[data-domain="auditory"] .sense-support__visual img {
-  object-position: center 45%;
+  object-position: center 42%;
 }
 
 .sense-support__card[data-domain="tactile"] .sense-support__visual img {
-  object-position: center 58%;
+  object-position: center 37%;
 }
 
-.sense-support__card[data-domain="tactile"] .sense-support__visual img {
-  object-fit: cover;
-  padding: 0;
-  object-position: center 58%;
+.sense-support__card[data-domain="auditory"]:hover .sense-support__visual img,
+.sense-support__card[data-domain="tactile"]:hover .sense-support__visual img {
+  transform: none;
 }
 
 .sense-support__card[data-domain="movement"] .sense-support__visual img {
