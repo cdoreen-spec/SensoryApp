@@ -5744,7 +5744,7 @@ function renderCreatePatientForm() {
           </label>
           <label class="auth__field">
             <span>${isParent ? "Child’s age" : "Age"}</span>
-            <input type="number" name="age" data-patient-field="age" min="0" max="120" inputmode="numeric" required value="${escapeHtml(form.age)}" />
+            <input type="text" name="age" data-patient-field="age" inputmode="numeric" autocomplete="off" maxlength="3" required value="${escapeHtml(form.age)}" />
           </label>
         </div>
 
@@ -6996,9 +6996,46 @@ function renderSharingPermissionsSummary() {
   `;
 }
 
+function typedAgeDigits(raw) {
+  return String(raw ?? "").replace(/\D/g, "").slice(0, 3);
+}
+
 function consentAgeNumber() {
-  const value = Number(String(state.consentAge || "").trim());
+  const raw = String(state.consentAge || "").trim();
+  if (!raw) return null;
+  const value = Number(raw);
   return Number.isFinite(value) ? value : null;
+}
+
+/** Which extra consent questions the entered age should show. */
+function consentAgeUiKey() {
+  const age = consentAgeNumber();
+  if (state.respondent === "teen") return age !== null && age >= 12 ? "teen-parent" : "";
+  if (state.respondent === "parent") {
+    if (age === null) return "";
+    return age < 12 ? "parent-assent" : "parent-agreed";
+  }
+  return "";
+}
+
+function applyConsentAge(raw) {
+  const digits = typedAgeDigits(raw);
+  const before = consentAgeUiKey();
+  if (digits !== String(state.consentAge || "")) {
+    state.consentAge = digits;
+    state.consentAcceptedAt = null;
+    state.error = null;
+    saveSensoryDraft();
+  }
+  return { digits, structureChanged: before !== consentAgeUiKey() };
+}
+
+function refreshConsentContinueButton() {
+  const nextBtn = app.querySelector('[data-action="next"]');
+  if (!nextBtn) return;
+  const canContinue = hasAllRequiredConsent();
+  nextBtn.disabled = !canContinue;
+  nextBtn.setAttribute("aria-disabled", canContinue ? "false" : "true");
 }
 
 function couplePrivacyWordOk() {
@@ -7023,8 +7060,12 @@ function hasAllRequiredConsent() {
   if (state.respondent === "teen" || state.respondent === "parent") {
     const age = consentAgeNumber();
     if (age === null || age < 0 || age > 120) return false;
-    if (state.respondent === "teen" && age < 12) return false;
-    if (state.respondent === "teen" && state.parentInvolved !== "yes" && state.parentInvolved !== "no") {
+    if (
+      state.respondent === "teen" &&
+      age >= 12 &&
+      state.parentInvolved !== "yes" &&
+      state.parentInvolved !== "no"
+    ) {
       return false;
     }
     if (state.respondent === "parent" && age < 12 && state.childAssent !== "yes" && state.childAssent !== "too-young") {
@@ -10424,7 +10465,7 @@ function renderConsent() {
         <label for="consent-age">${escapeHtml(
           state.respondent === "parent" ? copy.consentAgeLabelParent : copy.consentAgeLabel
         )}</label>
-        <input id="consent-age" type="number" min="0" max="120" data-consent-age value="${escapeHtml(
+        <input id="consent-age" type="text" inputmode="numeric" autocomplete="off" maxlength="3" data-consent-age value="${escapeHtml(
           state.consentAge || ""
         )}" />
       </div>`
@@ -10544,9 +10585,10 @@ function renderDemographics() {
         <label for="${f.id}">${escapeHtml(f.label)}${f.required ? " *" : ""}</label>
         <input
           id="${f.id}"
-          type="${f.type}"
+          type="${f.id === "age" ? "text" : f.type}"
+          ${f.id === "age" ? 'inputmode="numeric" autocomplete="off" maxlength="3"' : ""}
           data-demo="${f.id}"
-          value="${escapeHtml(state.demographics[f.id])}"
+          value="${escapeHtml(state.demographics[f.id] || "")}"
           ${f.required ? "required" : ""}
         />
       </div>
@@ -14733,11 +14775,12 @@ function validateStep() {
         state.error = copy.consentAgeRequired;
         return false;
       }
-      if (state.respondent === "teen" && age < 12) {
-        state.error = copy.consentTeenTooYoung;
-        return false;
-      }
-      if (state.respondent === "teen" && state.parentInvolved !== "yes" && state.parentInvolved !== "no") {
+      if (
+        state.respondent === "teen" &&
+        age >= 12 &&
+        state.parentInvolved !== "yes" &&
+        state.parentInvolved !== "no"
+      ) {
         state.error = copy.consentParentInvolvedRequired;
         return false;
       }
@@ -16273,15 +16316,31 @@ function bindEvents() {
   });
 
   app.addEventListener("input", (e) => {
+    if (e.target.matches("[data-consent-age]")) {
+      const { digits, structureChanged } = applyConsentAge(e.target.value);
+      if (e.target.value !== digits) e.target.value = digits;
+      if (structureChanged) {
+        render();
+        const field = app.querySelector("[data-consent-age]");
+        if (field) {
+          field.focus();
+          const len = field.value.length;
+          try {
+            field.setSelectionRange(len, len);
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        return;
+      }
+      refreshConsentContinueButton();
+      return;
+    }
+
     if (!e.target.matches("[data-couple-privacy-word]")) return;
     state.couplePrivacyWord = e.target.value;
     state.consentAcceptedAt = null;
-    const nextBtn = app.querySelector('[data-action="next"]');
-    const canContinue = hasAllRequiredConsent();
-    if (nextBtn) {
-      nextBtn.disabled = !canContinue;
-      nextBtn.setAttribute("aria-disabled", canContinue ? "false" : "true");
-    }
+    refreshConsentContinueButton();
   });
 
   app.addEventListener("change", (e) => {
@@ -16310,11 +16369,9 @@ function bindEvents() {
     }
 
     if (e.target.matches("[data-consent-age]")) {
-      state.consentAge = e.target.value;
-      state.consentAcceptedAt = null;
-      state.error = null;
-      saveSensoryDraft();
-      render();
+      const { structureChanged } = applyConsentAge(e.target.value);
+      if (structureChanged) render();
+      else refreshConsentContinueButton();
       return;
     }
 
@@ -16405,7 +16462,13 @@ function bindEvents() {
     }
 
     if (e.target.matches("[data-demo]")) {
-      state.demographics[e.target.dataset.demo] = e.target.value;
+      const key = e.target.dataset.demo;
+      let value = e.target.value;
+      if (key === "age") {
+        value = typedAgeDigits(value);
+        if (e.target.value !== value) e.target.value = value;
+      }
+      state.demographics[key] = value;
       state.error = null;
       saveSensoryDraft();
     }
@@ -16579,7 +16642,12 @@ function bindEvents() {
       const key = e.target.dataset.patientField;
       if (!state.patientForm) state.patientForm = emptyPatientForm();
       if (key in state.patientForm) {
-        state.patientForm[key] = e.target.value;
+        let value = e.target.value;
+        if (key === "age") {
+          value = typedAgeDigits(value);
+          if (e.target.value !== value) e.target.value = value;
+        }
+        state.patientForm[key] = value;
         state.patientFormError = null;
       }
       return;
@@ -16605,7 +16673,13 @@ function bindEvents() {
     }
 
     if (e.target.matches("[data-demo]")) {
-      state.demographics[e.target.dataset.demo] = e.target.value;
+      const key = e.target.dataset.demo;
+      let value = e.target.value;
+      if (key === "age") {
+        value = typedAgeDigits(value);
+        if (e.target.value !== value) e.target.value = value;
+      }
+      state.demographics[key] = value;
       state.error = null;
       saveSensoryDraft();
       return;

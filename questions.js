@@ -255,8 +255,6 @@ const QUESTIONNAIRE_UI = {
     consentAgeLabel: "Your age",
     consentAgeLabelParent: "Your child’s age",
     consentAgeRequired: "Please enter an age before you continue.",
-    consentTeenTooYoung:
-      "Someone under 12 needs a parent or legal guardian to complete the parent questionnaire. Go back and choose that option.",
     consentAssentLegend: "Your child’s agreement",
     consentAssentYes: "I have explained this simply, and my child is willing to take part.",
     consentAssentTooYoung: "My child is not yet able to understand this, and I am agreeing on their behalf.",
@@ -1260,8 +1258,6 @@ const QUESTIONNAIRE_UI = {
     consentAgeLabel: "Jou ouderdom",
     consentAgeLabelParent: "Jou kind se ouderdom",
     consentAgeRequired: "Voer asseblief ’n ouderdom in voordat jy voortgaan.",
-    consentTeenTooYoung:
-      "Iemand jonger as 12 het ’n ouer of wettige voog nodig om die ouer-vraelys te voltooi. Gaan terug en kies daardie opsie.",
     consentAssentLegend: "Jou kind se instemming",
     consentAssentYes: "Ek het dit eenvoudig verduidelik, en my kind is gewillig om deel te neem.",
     consentAssentTooYoung: "My kind kan dit nog nie verstaan nie, en ek stem namens hulle in.",
@@ -2053,7 +2049,7 @@ const CONSENT_COPY = {
         "I understand that completing this questionnaire does not start therapy until that has been discussed with an occupational therapist.",
         "I may stop at any time. I may leave every sharing box blank and still complete this screening with Soulful Sensory OT.",
         "I understand that scoring will be explained by an occupational therapist. Results are a guide, not a label.",
-        "I am 12 or older. I understand this questionnaire and I am giving my own consent.",
+        "I understand this questionnaire and I am giving my own consent.",
       ],
       sharing: [
         {
@@ -2145,7 +2141,7 @@ const CONSENT_COPY = {
         "Ek verstaan dat die voltooiing van hierdie vraelys nie terapie begin voordat dit met ’n arbeidsterapeut bespreek is nie.",
         "Ek mag enige tyd stop. Ek mag elke delingskassie oop los en steeds hierdie sifting by Soulful Sensory OT voltooi.",
         "Ek verstaan dat die telling deur ’n arbeidsterapeut verduidelik sal word. Resultate is ’n gids, nie ’n etiket nie.",
-        "Ek is 12 of ouer. Ek verstaan hierdie vraelys en ek gee my eie toestemming.",
+        "Ek verstaan hierdie vraelys en ek gee my eie toestemming.",
       ],
       sharing: [
         {
@@ -2222,16 +2218,16 @@ function getPrivacyNoticeParagraphs(language = "en") {
 
 const DEMOGRAPHIC_COPY = {
   en: {
-    adult: [["name", "Name and surname", "text", true], ["age", "Age", "number", true], ["email", "Email", "email", true], ["occupation", "Occupation / university / college", "text", false]],
-    teen: [["name", "Name and surname", "text", true], ["age", "Age", "number", true], ["email", "Your or a parent / guardian’s email", "email", true], ["occupation", "School / grade", "text", false]],
-    parent: [["name", "Child’s name and surname", "text", true], ["age", "Child’s age", "number", true], ["parentName", "Parent / guardian name and surname", "text", true], ["email", "Parent / guardian email", "email", true], ["occupation", "School / grade", "text", false]],
-    couple: [["name", "Your name and surname", "text", true], ["age", "Your age", "number", true], ["email", "Email", "email", true]],
+    adult: [["name", "Name and surname", "text", true], ["age", "Age", "text", true], ["email", "Email", "email", true], ["occupation", "Occupation / university / college", "text", false]],
+    teen: [["name", "Name and surname", "text", true], ["age", "Age", "text", true], ["email", "Your or a parent / guardian’s email", "email", true], ["occupation", "School / grade", "text", false]],
+    parent: [["name", "Child’s name and surname", "text", true], ["age", "Child’s age", "text", true], ["parentName", "Parent / guardian name and surname", "text", true], ["email", "Parent / guardian email", "email", true], ["occupation", "School / grade", "text", false]],
+    couple: [["name", "Your name and surname", "text", true], ["age", "Your age", "text", true], ["email", "Email", "email", true]],
   },
   af: {
-    adult: [["name", "Naam en van", "text", true], ["age", "Ouderdom", "number", true], ["email", "E-posadres", "email", true], ["occupation", "Beroep / universiteit / kollege", "text", false]],
-    teen: [["name", "Naam en van", "text", true], ["age", "Ouderdom", "number", true], ["email", "Jou of ’n ouer / voog se e-posadres", "email", true], ["occupation", "Skool / graad", "text", false]],
-    parent: [["name", "Kind se naam en van", "text", true], ["age", "Kind se ouderdom", "number", true], ["parentName", "Ouer / voog se naam en van", "text", true], ["email", "Ouer / voog se e-posadres", "email", true], ["occupation", "Skool / graad", "text", false]],
-    couple: [["name", "Jou naam en van", "text", true], ["age", "Jou ouderdom", "number", true], ["email", "E-posadres", "email", true]],
+    adult: [["name", "Naam en van", "text", true], ["age", "Ouderdom", "text", true], ["email", "E-posadres", "email", true], ["occupation", "Beroep / universiteit / kollege", "text", false]],
+    teen: [["name", "Naam en van", "text", true], ["age", "Ouderdom", "text", true], ["email", "Jou of ’n ouer / voog se e-posadres", "email", true], ["occupation", "Skool / graad", "text", false]],
+    parent: [["name", "Kind se naam en van", "text", true], ["age", "Kind se ouderdom", "text", true], ["parentName", "Ouer / voog se naam en van", "text", true], ["email", "Ouer / voog se e-posadres", "email", true], ["occupation", "Skool / graad", "text", false]],
+    couple: [["name", "Jou naam en van", "text", true], ["age", "Jou ouderdom", "text", true], ["email", "E-posadres", "email", true]],
   },
 };
 
