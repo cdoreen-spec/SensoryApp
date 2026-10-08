@@ -3801,6 +3801,9 @@ function isTourLink() {
 
 function readInviteFromUrl() {
   const params = new URLSearchParams(window.location.search);
+  if (params.get("viewer") === "1") {
+    state.viewerMode = true;
+  }
   if (params.get("settings") === "1" || params.get("admin") === "1") {
     state.view = "settings";
     return;
@@ -11311,18 +11314,6 @@ function renderClassicOverallScoreCard(metrics, copy) {
     )
     .join("");
 
-  const split = ["sensitive", "neutral", "seeking"]
-    .map((key) => {
-      const count = metrics.systems[key];
-      const profileMeta = labels[key] || labels.neutral;
-      return `
-      <li class="overall-score__split-item" data-profile="${key}" style="--tag-color:${profileMeta.color}">
-        <span class="overall-score__split-count">${count}</span>
-        <span class="overall-score__split-label">${escapeHtml(profileMeta.short)}</span>
-      </li>`;
-    })
-    .join("");
-
   return `
     <div class="overall-score" data-profile="${metrics.lean}" style="--tag-color:${meta.color}">
       <div class="overall-score__head">
@@ -11348,11 +11339,6 @@ function renderClassicOverallScoreCard(metrics, copy) {
             percent: metrics.balance,
           }
         )}
-      </div>
-
-      <div class="overall-score__split">
-        <p class="overall-score__split-label-head">${escapeHtml(copy.overallSystemsLabel)}</p>
-        <ul class="overall-score__split-list">${split}</ul>
       </div>
     </div>
   `;
@@ -11809,6 +11795,76 @@ function renderBriefScoresHomeRest(copy) {
         <p>${escapeHtml(quote)}</p>
       </blockquote>
     </aside>`;
+}
+
+function renderSpecificSensoryResults(pageEntry, { compact = false } = {}) {
+  const findings = getSpecificSensoryFindings(
+    state.answers,
+    state.language,
+    state.respondent || "adult"
+  );
+  const copy = currentUi();
+  const answerLabel = (value) => {
+    if (value === true) return copy.yes || "Yes";
+    if (value === false) return copy.no || "No";
+    return findings.notAnswered;
+  };
+
+  const groups = findings.groups
+    .map((group) => {
+      const facets = group.facets
+        .map((facet) => {
+          const items = compact
+            ? ""
+            : `<ul class="specific-results__items">
+                ${facet.items
+                  .map(
+                    (entry) => `
+                  <li class="specific-results__item" data-tone="${escapeHtml(entry.tone)}">
+                    <span>${escapeHtml(entry.label)}</span>
+                    <strong>${escapeHtml(answerLabel(entry.value))}</strong>
+                  </li>`
+                  )
+                  .join("")}
+              </ul>`;
+          const score = facet.score
+            ? `<p class="specific-results__score"><span>${escapeHtml(facet.scoreLabel)}</span> <strong>${escapeHtml(facet.score)}</strong></p>`
+            : "";
+          const note =
+            !compact && facet.note
+              ? `<p class="specific-results__note">${escapeHtml(facet.note)}</p>`
+              : "";
+          return `
+            <div class="specific-results__facet" data-verdict="${escapeHtml(facet.verdict)}">
+              <h5 class="specific-results__facet-title">${escapeHtml(facet.title)}</h5>
+              <p class="specific-results__headline">${escapeHtml(facet.headline)}</p>
+              ${score}
+              ${note}
+              ${items}
+            </div>`;
+        })
+        .join("");
+      return `
+        <article class="specific-results__card" data-domain="${escapeHtml(group.id)}">
+          <header class="specific-results__card-head">
+            <span class="specific-results__icon" aria-hidden="true">${group.icon}</span>
+            <h4>${escapeHtml(group.title)}</h4>
+          </header>
+          ${facets}
+        </article>`;
+    })
+    .join("");
+
+  return `
+    <section class="profile-section profile-section--specific-results" aria-labelledby="specific-results-title"${reportPageAttrs(pageEntry)}>
+      <p class="profile-kicker">${escapeHtml(findings.kicker)}</p>
+      <h3 id="specific-results-title">${escapeHtml(findings.title)}</h3>
+      ${printMountainRule("section")}
+      <p class="profile-section__summary">${escapeHtml(findings.intro)}</p>
+      <div class="specific-results__grid">${groups}</div>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>`;
 }
 
 function renderBriefScoreSummary(scores, metrics, pageEntry) {
@@ -12521,6 +12577,12 @@ function buildReportPagePlan(copy, scores, metrics) {
   }
 
   add("report-brief-scores", copy.briefScoresTitle);
+  const specificFindings = getSpecificSensoryFindings(
+    state.answers,
+    state.language,
+    state.respondent || "adult"
+  );
+  add("report-specific-results", specificFindings.title);
   add("report-sense-support", isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle);
 
   if ((state.idealSaturday || "").trim() && !isCouplePathway() && state.respondent !== "teen") {
@@ -14063,6 +14125,8 @@ function renderResultsSummary() {
 
         ${renderShortReportSectionExtras(metrics, sections)}
 
+        ${renderSpecificSensoryResults(null, { compact: true })}
+
         ${renderTherapistInsightsSection()}
 
         <section class="results-summary__next" aria-labelledby="summary-next-title">
@@ -14440,6 +14504,7 @@ function renderResults() {
       ${renderMatchedTrailReveal(metrics, reportPageById(pagePlan, "report-trail-match"))}
       ${renderMatchedTrailDescription(metrics, reportPageById(pagePlan, "report-trail-description"))}
       ${renderBriefScoreSummary(scores, metrics, reportPageById(pagePlan, "report-brief-scores"))}
+      ${renderSpecificSensoryResults(reportPageById(pagePlan, "report-specific-results"))}
       ${renderSenseSupportGuide(scores, reportPageById(pagePlan, "report-sense-support"))}
       ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}
       ${renderCoupleWorkResults()}
@@ -17157,6 +17222,9 @@ async function bootApp() {
   }
 
   render();
+  if (window.location.hash === "#report-specific-results") {
+    document.getElementById("report-specific-results")?.scrollIntoView({ block: "start" });
+  }
   maybeNotifyExpiringQuestionnaires();
 }
 

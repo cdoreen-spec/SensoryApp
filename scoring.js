@@ -7956,5 +7956,367 @@ function buildCoupleThriveSummary(session, language = "en") {
   };
 }
 
+function specificAnswerYes(answers, index) {
+  if (!Array.isArray(answers)) return null;
+  const value = answers[index];
+  if (value === true) return true;
+  if (value === false) return false;
+  return null;
+}
+
+function specificOfCount(hits, pool, language) {
+  if (!pool) return "";
+  return language === "af" ? `${hits} van ${pool}` : `${hits} of ${pool}`;
+}
+
+/**
+ * Pulls a few everyday situations out of the combined hearing, touch and
+ * movement scores. Question indexes match the screening banks.
+ */
+function getSpecificSensoryFindings(domainAnswers, language = "en", respondent = "adult") {
+  const af = language === "af";
+  const couple = respondent === "couple";
+  const answers = domainAnswers || {};
+  const auditory = answers.auditory || [];
+  const tactile = answers.tactile || [];
+  const movement = answers.movement || [];
+
+  const text = af
+    ? {
+        kicker: "Spesifieke resultate",
+        title: "’n Nader kyk na gehoor, tas en beweging",
+        intro:
+          "Hierdie drie sisteme tel verskeie alledaagse situasies in een telling saam. Die notas hieronder haal lawaaierige omgewings, skares en nabyheid aan mense, fisieke aanraking op sy eie, en avontuur-soek uit, sodat daardie patrone nie in die totaal wegraak nie.",
+        notAnswered: "Nie beantwoord nie",
+        auditoryTitle: "Ouditief",
+        tactileTitle: "Tas",
+        movementTitle: "Beweging",
+        loudTitle: "Lawaaiige omgewings",
+        loudScore: "Lawaai-telling",
+        crowdTitle: "Skares en om tussen mense te wees",
+        crowdScore: "Situasies gemerk",
+        touchTitle: "Fisiese aanraking",
+        touchScore: "Fisiese-aanraking-telling",
+        touchNote:
+          "Net die fisieke-aanraking-vrae. Kledingteksture en voedselteksture bly in die tasstelsel-telling hierbo.",
+        thrillTitle: "Avontuur en risiko-soek",
+        thrillScore: "Avontuur-soek",
+        avoids: "Vermy",
+        seeks: "Soek",
+        unanswered: "Nie genoeg antwoorde om dit te lees nie.",
+        loudMay: "Kan in ’n lawaaierige omgewing sukkel.",
+        loudSometimes: "Lawaaiige omgewings is soms moeilik.",
+        loudClear: "’n Sukkel in lawaaierige omgewings wys nie hier nie.",
+        crowdBoth: "Kan in ’n skare sukkel en wanneer mense te naby is.",
+        crowdOnly: "Kan in ’n skare sukkel. Om naby mense te wees het nie op dieselfde manier uitgestaan nie.",
+        peopleOnly: "Kan sukkel wanneer mense te naby is. Skares het nie op dieselfde manier uitgestaan nie.",
+        crowdClear: "Skares en om tussen mense te wees wys nie hier as ’n sukkel nie.",
+        touchSensitive: "Fisiese aanraking kan ongemaklik wees.",
+        touchSeeking: "Soek fisieke aanraking.",
+        touchMixed: "Party fisiese aanraking kan moeilik wees, terwyl fermer of ekstra aanraking steeds help.",
+        touchNeutral: "Fisiese aanraking staan nie uit as iets wat vermy of gesoek word nie.",
+        thrillPresent: "Avontuur- of risiko-soek wys hier.",
+        thrillAbsent: "Avontuur- of risiko-soek wys nie hier nie.",
+        thrillUnsettled: "Party beweging, soos tol of hoogtes, voel steeds ongemaklik.",
+        thrillFast: "Vinnige of tollende beweging is steeds genotvol.",
+        loudItems: [
+          "Raak oorweldig in lawaaierige omgewings",
+          "Sukkel om te konsentreer wanneer daar baie geraas is",
+          "Vermy plekke omdat dit te hard is",
+        ],
+        crowdItems: [
+          "Gemaklik wanneer mense in persoonlike ruimte is",
+          "Ongemaklik in rye of oorvol plekke",
+        ],
+        affection: "Geniet drukkies of ander gepaste aanraking van mense wat vertrou word",
+        firm: "Ferm druk help (’n stywe drukkie, ’n swaar kombers, of hande teen mekaar)",
+        frequent: "Raak meer aan voorwerpe, klere of eie vel as ander",
+        partnerAffection: "Wys graag liefde deur fisieke aanraking soos drukkies en soene",
+        partnerSpace: "Verkies meer persoonlike ruimte, en wys liefde op maniere wat nie hoofsaaklik fisieke aanraking is nie",
+        adrenaline: "Geniet opwindende of avontuurlustige aktiwiteite wat ’n adrenalienstormloop gee",
+        fast: "Geniet tol, swaai, wieg of vinnige beweging",
+        dizzy: "Voel ongemaklik by tol, hoogtes of skielike beweging",
+        feet: "Verkies voete op die grond en vermy ritte, swaai of om opgelig te word",
+      }
+    : {
+        kicker: "Specific results",
+        title: "A closer look at hearing, touch and movement",
+        intro:
+          "These three systems add several everyday situations into one score. The notes below pull out loud environments, crowds and being around people, physical touch on its own, and thrill-seeking, so those patterns are not hidden inside the total.",
+        notAnswered: "Not answered",
+        auditoryTitle: "Auditory",
+        tactileTitle: "Touch",
+        movementTitle: "Movement",
+        loudTitle: "Loud environments",
+        loudScore: "Loud-environment score",
+        crowdTitle: "Crowds and being around people",
+        crowdScore: "Situations flagged",
+        touchTitle: "Physical touch",
+        touchScore: "Physical touch score",
+        touchNote:
+          "Only the physical-touch questions. Clothing textures and food textures stay in the touch system score above.",
+        thrillTitle: "Thrill and risk-seeking",
+        thrillScore: "Thrill-seeking",
+        avoids: "Avoids",
+        seeks: "Seeks",
+        unanswered: "Not enough answers to read this.",
+        loudMay: "May struggle in a loud environment.",
+        loudSometimes: "Loud environments are sometimes hard.",
+        loudClear: "A struggle in loud environments does not show up here.",
+        crowdBoth: "May struggle in a crowd and when people are close.",
+        crowdOnly: "May struggle in a crowd. Being close to people did not stand out in the same way.",
+        peopleOnly: "May struggle when people are close. Crowds did not stand out in the same way.",
+        crowdClear: "Crowds and being around people do not show up as a struggle here.",
+        touchSensitive: "Physical touch may be uncomfortable.",
+        touchSeeking: "Seeks physical touch.",
+        touchMixed: "Some physical touch may be hard, while firmer or extra touch still helps.",
+        touchNeutral: "Physical touch does not stand out as something to avoid or to seek.",
+        thrillPresent: "Thrill-seeking shows up.",
+        thrillAbsent: "Thrill-seeking does not show up.",
+        thrillUnsettled: "Some movement, such as spinning or heights, is still unsettling.",
+        thrillFast: "Fast or spinning movement is still enjoyable.",
+        loudItems: [
+          "Overwhelmed in noisy environments",
+          "Hard to concentrate when there is a lot of noise",
+          "Avoids places because they are too loud",
+        ],
+        crowdItems: [
+          "Comfortable when people are in personal space",
+          "Uncomfortable in queues or crowded spaces",
+        ],
+        affection: "Enjoys hugs or other appropriate affection from trusted people",
+        firm: "Firm pressure helps (a tight hug, a heavy blanket, or pressing the hands together)",
+        frequent: "Touches objects, clothing, or their own skin more often than others",
+        partnerAffection: "Likes to show love through physical affection such as hugs and kisses",
+        partnerSpace:
+          "Prefers more personal space, and shows love in ways that are not mainly physical touch",
+        adrenaline: "Enjoys exciting or adventurous activities that give an adrenaline rush",
+        fast: "Enjoys spinning, swinging, rocking or moving quickly",
+        dizzy: "Unsettled by spinning, heights or sudden changes in movement",
+        feet: "Prefers feet on the ground and avoids rides, swings or being lifted",
+      };
+
+  function item(label, value, tone) {
+    return { label, value, tone: tone || "plain" };
+  }
+
+  function read(list, index) {
+    return specificAnswerYes(list, index);
+  }
+
+  const loudSpecs = [
+    { index: 0, label: text.loudItems[0] },
+    { index: 2, label: text.loudItems[1] },
+    { index: 5, label: text.loudItems[2] },
+  ];
+  const loudItems = loudSpecs.map((spec) => {
+    const value = read(auditory, spec.index);
+    return item(spec.label, value, value === true ? "avoid" : "plain");
+  });
+  const loudAnswered = loudItems.filter((entry) => entry.value !== null);
+  const loudHits = loudAnswered.filter((entry) => entry.value === true).length;
+  let loudVerdict = "unanswered";
+  let loudHeadline = text.unanswered;
+  if (loudAnswered.length) {
+    if (loudHits === 0) {
+      loudVerdict = "clear";
+      loudHeadline = text.loudClear;
+    } else if (loudHits / loudAnswered.length >= 0.5) {
+      loudVerdict = "may-struggle";
+      loudHeadline = text.loudMay;
+    } else {
+      loudVerdict = "sometimes";
+      loudHeadline = text.loudSometimes;
+    }
+  }
+
+  const spaceValue = read(tactile, 2);
+  const crowdValue = read(tactile, 3);
+  const spaceHard = spaceValue === false;
+  const crowdHard = crowdValue === true;
+  const crowdItems = [
+    item(text.crowdItems[0], spaceValue, spaceHard ? "avoid" : "plain"),
+    item(text.crowdItems[1], crowdValue, crowdHard ? "avoid" : "plain"),
+  ];
+  let crowdVerdict = "unanswered";
+  let crowdHeadline = text.unanswered;
+  if (spaceValue !== null || crowdValue !== null) {
+    if (spaceHard && crowdHard) {
+      crowdVerdict = "crowd-and-people";
+      crowdHeadline = text.crowdBoth;
+    } else if (crowdHard) {
+      crowdVerdict = "crowd";
+      crowdHeadline = text.crowdOnly;
+    } else if (spaceHard) {
+      crowdVerdict = "people";
+      crowdHeadline = text.peopleOnly;
+    } else {
+      crowdVerdict = "clear";
+      crowdHeadline = text.crowdClear;
+    }
+  }
+  const crowdFlags = Number(spaceHard) + Number(crowdHard);
+  const crowdPool = Number(spaceValue !== null) + Number(crowdValue !== null);
+
+  const firmIndex = couple ? 10 : 8;
+  const frequentIndex = couple ? 11 : 9;
+  const touchSpecs = [
+    { index: 5, label: text.affection, role: "sensitive", flagWhen: "no" },
+    { index: firmIndex, label: text.firm, role: "seeking", flagWhen: "yes" },
+    { index: frequentIndex, label: text.frequent, role: "seeking", flagWhen: "yes" },
+  ];
+  if (couple) {
+    touchSpecs.splice(
+      1,
+      0,
+      { index: 7, label: text.partnerAffection, role: "seeking", flagWhen: "yes" },
+      { index: 8, label: text.partnerSpace, role: "sensitive", flagWhen: "yes" }
+    );
+  }
+
+  let touchSensitive = 0;
+  let touchSensitivePool = 0;
+  let touchSeeking = 0;
+  let touchSeekingPool = 0;
+  const touchItems = touchSpecs.map((spec) => {
+    const value = read(tactile, spec.index);
+    const flagged =
+      value === null ? false : spec.flagWhen === "yes" ? value === true : value === false;
+    if (value !== null && spec.role === "sensitive") {
+      touchSensitivePool += 1;
+      if (flagged) touchSensitive += 1;
+    }
+    if (value !== null && spec.role === "seeking") {
+      touchSeekingPool += 1;
+      if (flagged) touchSeeking += 1;
+    }
+    return item(spec.label, value, flagged ? (spec.role === "sensitive" ? "avoid" : "seek") : "plain");
+  });
+
+  let touchVerdict = "unanswered";
+  let touchHeadline = text.unanswered;
+  if (touchSensitivePool + touchSeekingPool > 0) {
+    const avoids = touchSensitive > 0;
+    const seeks = touchSeeking > 0;
+    if (avoids && seeks) {
+      touchVerdict = "mixed";
+      touchHeadline = text.touchMixed;
+    } else if (avoids) {
+      touchVerdict = "sensitive";
+      touchHeadline = text.touchSensitive;
+    } else if (seeks) {
+      touchVerdict = "seeking";
+      touchHeadline = text.touchSeeking;
+    } else {
+      touchVerdict = "neutral";
+      touchHeadline = text.touchNeutral;
+    }
+  }
+  const touchScoreParts = [];
+  if (touchSensitivePool) {
+    touchScoreParts.push(`${text.avoids} ${specificOfCount(touchSensitive, touchSensitivePool, language)}`);
+  }
+  if (touchSeekingPool) {
+    touchScoreParts.push(`${text.seeks} ${specificOfCount(touchSeeking, touchSeekingPool, language)}`);
+  }
+
+  const adrenaline = read(movement, 9);
+  const fast = read(movement, 8);
+  const dizzy = read(movement, 6);
+  const feet = read(movement, 7);
+  const thrillItems = [
+    item(text.adrenaline, adrenaline, adrenaline === true ? "seek" : "plain"),
+    item(text.fast, fast, fast === true ? "seek" : "plain"),
+    item(text.dizzy, dizzy, dizzy === true ? "avoid" : "plain"),
+    item(text.feet, feet, feet === true ? "avoid" : "plain"),
+  ];
+  let thrillVerdict = "unanswered";
+  let thrillHeadline = text.unanswered;
+  if (adrenaline === true) {
+    thrillVerdict = "present";
+    thrillHeadline = text.thrillPresent;
+    if (dizzy === true || feet === true) thrillHeadline = `${text.thrillPresent} ${text.thrillUnsettled}`;
+  } else if (adrenaline === false) {
+    thrillVerdict = "absent";
+    thrillHeadline = text.thrillAbsent;
+    if (fast === true) thrillHeadline = `${text.thrillAbsent} ${text.thrillFast}`;
+  }
+
+  return {
+    kicker: text.kicker,
+    title: text.title,
+    intro: text.intro,
+    notAnswered: text.notAnswered,
+    groups: [
+      {
+        id: "auditory",
+        title: text.auditoryTitle,
+        icon: "🎧",
+        facets: [
+          {
+            id: "loud",
+            title: text.loudTitle,
+            verdict: loudVerdict,
+            headline: loudHeadline,
+            scoreLabel: text.loudScore,
+            score: loudAnswered.length ? specificOfCount(loudHits, loudAnswered.length, language) : "",
+            note: "",
+            items: loudItems,
+          },
+        ],
+      },
+      {
+        id: "tactile",
+        title: text.tactileTitle,
+        icon: "✋",
+        facets: [
+          {
+            id: "crowd",
+            title: text.crowdTitle,
+            verdict: crowdVerdict,
+            headline: crowdHeadline,
+            scoreLabel: text.crowdScore,
+            score: crowdPool ? specificOfCount(crowdFlags, crowdPool, language) : "",
+            note: "",
+            items: crowdItems,
+          },
+          {
+            id: "physical-touch",
+            title: text.touchTitle,
+            verdict: touchVerdict,
+            headline: touchHeadline,
+            scoreLabel: text.touchScore,
+            score: touchScoreParts.join(" · "),
+            note: text.touchNote,
+            items: touchItems,
+            sensitive: touchSensitive,
+            sensitivePool: touchSensitivePool,
+            seeking: touchSeeking,
+            seekingPool: touchSeekingPool,
+          },
+        ],
+      },
+      {
+        id: "movement",
+        title: text.movementTitle,
+        icon: "🏃",
+        facets: [
+          {
+            id: "thrill",
+            title: text.thrillTitle,
+            verdict: thrillVerdict,
+            headline: thrillHeadline,
+            scoreLabel: text.thrillScore,
+            score:
+              adrenaline === null ? "" : adrenaline ? (af ? "Ja" : "Yes") : af ? "Nee" : "No",
+            note: "",
+            items: thrillItems,
+          },
+        ],
+      },
+    ],
+  };
+}
+
 
 

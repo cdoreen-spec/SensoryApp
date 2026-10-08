@@ -15,7 +15,7 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root, "questions.js"), "utf8"), context);
 vm.runInContext(fs.readFileSync(path.join(root, "scoring.js"), "utf8"), context);
 
-const { getSensoryDomains, scoreDomain, scoreAllDomains, scoreOverall, classifyRates, balancePercent } = context;
+const { getSensoryDomains, scoreDomain, scoreAllDomains, scoreOverall, classifyRates, balancePercent, getSpecificSensoryFindings } = context;
 
 function pole(type) {
   if (type === "sensitive" || type === "sensitive-if-no") return "sensitive";
@@ -308,4 +308,97 @@ test("domain rates cannot exceed the answered list", () => {
     assert.ok(summary.seeking <= 100);
     assert.equal(summary.profile, classifyRates(summary.sensitiveRate, summary.seekingRate).profile);
   }
+});
+
+function blankAnswers(respondent) {
+  return Object.fromEntries(
+    domains(respondent).map((domain) => [domain.id, domain.questions.map(() => false)])
+  );
+}
+
+function facet(findings, groupId, facetId) {
+  const group = findings.groups.find((entry) => entry.id === groupId);
+  return group.facets.find((entry) => entry.id === facetId);
+}
+
+test("specific results separate loud environments, crowds, physical touch and thrill-seeking", () => {
+  const answers = blankAnswers("adult");
+  answers.auditory[0] = true;
+  answers.auditory[2] = true;
+  answers.auditory[5] = false;
+  answers.tactile[2] = false;
+  answers.tactile[3] = true;
+  answers.tactile[5] = false;
+  answers.tactile[8] = true;
+  answers.tactile[9] = false;
+  answers.movement[9] = true;
+  answers.movement[6] = true;
+
+  const findings = getSpecificSensoryFindings(answers, "en", "adult");
+  const loud = facet(findings, "auditory", "loud");
+  const crowd = facet(findings, "tactile", "crowd");
+  const touch = facet(findings, "tactile", "physical-touch");
+  const thrill = facet(findings, "movement", "thrill");
+
+  assert.equal(loud.verdict, "may-struggle");
+  assert.equal(loud.score, "2 of 3");
+  assert.equal(crowd.verdict, "crowd-and-people");
+  assert.equal(crowd.score, "2 of 2");
+  assert.equal(touch.verdict, "mixed");
+  assert.equal(touch.sensitive, 1);
+  assert.equal(touch.sensitivePool, 1);
+  assert.equal(touch.seeking, 1);
+  assert.equal(touch.seekingPool, 2);
+  assert.equal(touch.score, "Avoids 1 of 1 · Seeks 1 of 2");
+  assert.match(touch.note, /Clothing textures and food textures/);
+  assert.equal(thrill.verdict, "present");
+  assert.equal(thrill.score, "Yes");
+  assert.match(thrill.headline, /still unsettling/);
+});
+
+test("a single loud-environment yes is sometimes, and no adrenaline is not thrill-seeking", () => {
+  const answers = blankAnswers("adult");
+  answers.auditory[0] = true;
+  answers.tactile[2] = true;
+  answers.tactile[5] = true;
+  answers.movement[8] = true;
+  answers.movement[9] = false;
+
+  const findings = getSpecificSensoryFindings(answers, "en", "adult");
+  assert.equal(facet(findings, "auditory", "loud").verdict, "sometimes");
+  assert.equal(facet(findings, "auditory", "loud").score, "1 of 3");
+  assert.equal(facet(findings, "tactile", "crowd").verdict, "clear");
+  assert.equal(facet(findings, "tactile", "physical-touch").verdict, "neutral");
+  assert.equal(facet(findings, "tactile", "physical-touch").score, "Avoids 0 of 1 · Seeks 0 of 2");
+  const thrill = facet(findings, "movement", "thrill");
+  assert.equal(thrill.verdict, "absent");
+  assert.equal(thrill.score, "No");
+  assert.match(thrill.headline, /still enjoyable/);
+});
+
+test("couple physical touch uses the partner questions and not the adult firm-pressure slot", () => {
+  const answers = blankAnswers("couple");
+  answers.tactile[5] = true;
+  answers.tactile[7] = true;
+  answers.tactile[8] = false;
+  answers.tactile[10] = false;
+  answers.tactile[11] = false;
+
+  const touch = facet(getSpecificSensoryFindings(answers, "en", "couple"), "tactile", "physical-touch");
+  assert.equal(touch.verdict, "seeking");
+  assert.equal(touch.seeking, 1);
+  assert.equal(touch.seekingPool, 3);
+  assert.equal(touch.sensitive, 0);
+  assert.equal(touch.sensitivePool, 2);
+  assert.equal(touch.items.length, 5);
+});
+
+test("specific results have Afrikaans headlines", () => {
+  const answers = blankAnswers("parent");
+  answers.auditory[5] = true;
+  answers.auditory[0] = true;
+  const loud = facet(getSpecificSensoryFindings(answers, "af", "parent"), "auditory", "loud");
+  assert.equal(loud.verdict, "may-struggle");
+  assert.match(loud.headline, /lawaai/i);
+  assert.equal(loud.score, "2 van 3");
 });
