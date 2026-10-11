@@ -3822,6 +3822,7 @@ function readInviteFromUrl() {
         lifeContext: params.get("context") || params.get("lifeContext") || null,
       };
     }
+    if (params.get("print") === "1") state._openPrintPreviewOnBoot = true;
     return;
   }
   if (params.get("dashboard") === "1" || params.get("patients") === "1") {
@@ -4266,9 +4267,12 @@ function completionEmailSections({ metrics, scores, demo, extraDetailRows = [] }
     sections.push({ heading: "Sensory trail character", text: character });
   }
   const registerUrl = `${getClinicianBaseUrl()}/?dashboard=1`;
+  const adultHome = state.respondent === "adult" && state.lifeContext === "home";
   sections.push({
     heading: "Full report",
-    text: `Open the patient register, then use Save or share to keep the full report on your phone or computer, or send the file by email or WhatsApp: ${registerUrl}`,
+    text: adultHome
+      ? `This adult home report can be downloaded on a computer, or on a phone where it can be sent on WhatsApp or saved. Open the patient register after this email: ${registerUrl}`
+      : `Open the patient register, then use Save or share to keep the full report on your phone or computer, or send the file by email or WhatsApp: ${registerUrl}`,
   });
   return sections;
 }
@@ -4936,6 +4940,7 @@ function updateSubmissionStatusUi() {
   if (retry) {
     retry.hidden = state.submissionStatus !== "error";
   }
+  syncAdultHomeReportFileActions();
 }
 
 function ensureResultsSubmitted({ force = false } = {}) {
@@ -5596,7 +5601,12 @@ function renderDashboardAssessmentRow(item) {
           <button type="button" class="dash-report-switch__btn${preferredLength === REPORT_LENGTH.full ? " is-preferred" : ""}" data-action="open-assessment" data-assessment-id="${rowId}">Full</button>
         </div>
         <button type="button" class="dash-row__tool" data-action="email-clinician-report" data-assessment-id="${rowId}">Send again</button>
-        <button type="button" class="dash-row__tool" data-action="download-assessment" data-assessment-id="${rowId}">Save or share</button>
+        ${
+          item.respondent === "adult" && item.lifeContext === "home"
+            ? `<button type="button" class="dash-row__tool" data-action="download-assessment" data-report-file="download" data-assessment-id="${rowId}">Download</button>
+        <button type="button" class="dash-row__tool report-file-actions__whatsapp" data-action="download-assessment" data-report-file="whatsapp" data-assessment-id="${rowId}">WhatsApp</button>`
+            : `<button type="button" class="dash-row__tool" data-action="download-assessment" data-assessment-id="${rowId}">Save or share</button>`
+        }
         <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
         }
       </div>
@@ -11299,20 +11309,23 @@ function renderClassicOverallScoreCard(metrics, copy) {
   const labels = getProfileLabels(state.language, state.respondent || "adult");
   const threshold = getThresholdMeta(metrics.lean, state.language);
   const meta = labels[metrics.lean] || labels.neutral;
+  const isHomeAdult = state.respondent === "adult" && state.lifeContext === "home";
 
-  const stats = [
-    { key: "sensitive", label: copy.overallSensitiveTotal, value: metrics.sensitive },
-    { key: "neutral", label: copy.overallNeutralTotal, value: metrics.neutral },
-    { key: "seeking", label: copy.overallSeekingTotal, value: metrics.seeking },
-  ]
-    .map(
-      (stat) => `
+  const stats = isHomeAdult
+    ? ""
+    : [
+        { key: "sensitive", label: copy.overallSensitiveTotal, value: metrics.sensitive },
+        { key: "neutral", label: copy.overallNeutralTotal, value: metrics.neutral },
+        { key: "seeking", label: copy.overallSeekingTotal, value: metrics.seeking },
+      ]
+        .map(
+          (stat) => `
       <li class="overall-score__stat overall-score__stat--${stat.key}">
         <span class="overall-score__stat-value">${stat.key === "neutral" ? stat.value : `${stat.value}%`}</span>
         <span class="overall-score__stat-label">${escapeHtml(stat.label)}</span>
       </li>`
-    )
-    .join("");
+        )
+        .join("");
 
   return `
     <div class="overall-score" data-profile="${metrics.lean}" style="--tag-color:${meta.color}">
@@ -11327,7 +11340,11 @@ function renderClassicOverallScoreCard(metrics, copy) {
         </div>
       </div>
 
-      <ul class="overall-score__stats" aria-label="${escapeHtml(copy.overallScoreLabel)}">${stats}</ul>
+      ${
+        stats
+          ? `<ul class="overall-score__stats" aria-label="${escapeHtml(copy.overallScoreLabel)}">${stats}</ul>`
+          : ""
+      }
 
       <div class="overall-score__bar">
         <p class="overall-score__bar-label">${escapeHtml(copy.overallBalanceLabel)}</p>
@@ -12765,10 +12782,45 @@ function showReportFileNotice(message) {
   host.appendChild(note);
 }
 
+function isAdultHomeReport() {
+  return state.respondent === "adult" && state.lifeContext === "home";
+}
+
+function adultHomeReportFileReady() {
+  if (!isAdultHomeReport()) return false;
+  if (state.sampleReportPreview || state.archiveReadOnly) return true;
+  return state.submissionStatus === "sent";
+}
+
+function syncAdultHomeReportFileActions() {
+  const ready = adultHomeReportFileReady();
+  document.querySelectorAll("[data-report-file-action]").forEach((button) => {
+    button.disabled = !ready || Boolean(state._reportFileBusy);
+  });
+  document.querySelectorAll("[data-report-file-pending]").forEach((note) => {
+    note.hidden = ready;
+  });
+}
+
+function renderAdultHomeReportFileActions() {
+  if (!isAdultHomeReport()) return "";
+  const ready = adultHomeReportFileReady();
+  const af = state.language === "af";
+  const pending = af
+    ? "Sodra hierdie verslag ge-e-pos is, kan jy dit hier aflaai, of dit van ’n foon op WhatsApp stuur."
+    : "Once this report has been emailed, you can download it here, or send it on WhatsApp from a phone.";
+  return `
+    <div class="report-file-actions" data-report-file-actions>
+      <button type="button" class="btn btn-primary" data-action="download-report" data-report-file-action ${ready ? "" : "disabled"}>${af ? "Laai verslag af" : "Download report"}</button>
+      <button type="button" class="btn report-file-actions__whatsapp" data-action="whatsapp-report" data-report-file-action ${ready ? "" : "disabled"}>${af ? "Stuur op WhatsApp" : "Send on WhatsApp"}</button>
+      <p class="report-file-actions__pending" data-report-file-pending ${ready ? "hidden" : ""}>${escapeHtml(pending)}</p>
+    </div>`;
+}
+
 function setReportSaveBusy(busy) {
   document
     .querySelectorAll(
-      "[data-action='print'], [data-action='download-assessment'], [data-action='print-couple-report']"
+      "[data-action='print'], [data-action='download-assessment'], [data-action='print-couple-report'], [data-report-file-action]"
     )
     .forEach((button) => {
       button.disabled = busy;
@@ -12823,19 +12875,78 @@ ${clone.outerHTML}
 </html>`;
 }
 
-async function saveOrShareSensoryReport({ couple = false } = {}) {
+async function prepareSensoryReportFile({ couple = false } = {}) {
+  const html = await buildPortableReportHtml({ couple });
+  const filename = reportDownloadFilename();
+  const file = new File([html], filename, { type: "text/html" });
+  return { html, filename, file };
+}
+
+function reportShareData(file, filename) {
+  return {
+    files: [file],
+    title: filename.replace(/\.html$/, "").replace(/-/g, " "),
+    text: "Sensory report from Soulful Sensory OT",
+  };
+}
+
+async function withSensoryReportFile(task) {
   if (state._reportFileBusy) return;
   state._reportFileBusy = true;
   setReportSaveBusy(true);
+  syncAdultHomeReportFileActions();
   try {
-    const html = await buildPortableReportHtml({ couple });
-    const filename = reportDownloadFilename();
-    const file = new File([html], filename, { type: "text/html" });
-    const shareData = {
-      files: [file],
-      title: filename.replace(/\.html$/, "").replace(/-/g, " "),
-      text: "Sensory report from Soulful Sensory OT",
-    };
+    await task();
+  } catch (err) {
+    console.error("Report file could not be prepared:", err);
+    showReportFileNotice(
+      state.language === "af"
+        ? "Die verslaglêer kon nie gereed gemaak word nie. Probeer asseblief weer."
+        : "The report file could not be prepared. Please try again."
+    );
+  } finally {
+    state._reportFileBusy = false;
+    setReportSaveBusy(false);
+    syncAdultHomeReportFileActions();
+  }
+}
+
+async function downloadSensoryReportFile({ couple = false } = {}) {
+  await withSensoryReportFile(async () => {
+    const { html, filename } = await prepareSensoryReportFile({ couple });
+    triggerReportFileDownload(new Blob([html], { type: "text/html" }), filename);
+    notifyReportDownloaded();
+    showReportFileNotice(reportFileReadyMessage(false));
+  });
+}
+
+async function shareReportOnWhatsApp({ couple = false } = {}) {
+  await withSensoryReportFile(async () => {
+    const { html, filename, file } = await prepareSensoryReportFile({ couple });
+    const shareData = reportShareData(file, filename);
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        notifyReportDownloaded();
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return;
+      }
+    }
+    triggerReportFileDownload(new Blob([html], { type: "text/html" }), filename);
+    notifyReportDownloaded();
+    showReportFileNotice(
+      state.language === "af"
+        ? "WhatsApp kan nie van hier af oopgemaak word nie. Die verslag is afgelaai — heg daardie lêer in WhatsApp aan."
+        : "WhatsApp cannot be opened from this device. The report was downloaded instead — attach that file in WhatsApp."
+    );
+  });
+}
+
+async function saveOrShareSensoryReport({ couple = false } = {}) {
+  await withSensoryReportFile(async () => {
+    const { html, filename, file } = await prepareSensoryReportFile({ couple });
+    const shareData = reportShareData(file, filename);
     if (navigator.canShare && navigator.canShare(shareData)) {
       try {
         await navigator.share(shareData);
@@ -12848,17 +12959,411 @@ async function saveOrShareSensoryReport({ couple = false } = {}) {
     triggerReportFileDownload(new Blob([html], { type: "text/html" }), filename);
     notifyReportDownloaded();
     showReportFileNotice(reportFileReadyMessage(false));
-  } catch (err) {
-    console.error("Report file could not be prepared:", err);
-    showReportFileNotice(
-      state.language === "af"
-        ? "Die verslaglêer kon nie gereed gemaak word nie. Probeer asseblief weer."
-        : "The report file could not be prepared. Please try again."
-    );
-  } finally {
-    state._reportFileBusy = false;
-    setReportSaveBusy(false);
+  });
+}
+
+function previewBlockLabel(el) {
+  if (el.classList.contains("home-profile-cover")) return "Cover";
+  const page = el.getAttribute("data-report-page");
+  const headingId = el.getAttribute("aria-labelledby");
+  const heading = headingId ? document.getElementById(headingId) : el.querySelector("h2, h3");
+  const title = heading ? heading.textContent.replace(/\s+/g, " ").trim() : "";
+  if (page && title) return `Page ${page} · ${title}`;
+  if (page) return `Page ${page}`;
+  return title || "Page";
+}
+
+function createPreviewSheet(label) {
+  const sheet = document.createElement("section");
+  sheet.className = "print-preview-sheet";
+  const tag = document.createElement("p");
+  tag.className = "print-preview-sheet__label";
+  tag.textContent = `A4 · ${label}`;
+  const page = document.createElement("div");
+  page.className = "print-preview-sheet__page";
+  sheet.append(tag, page);
+  return { sheet, page };
+}
+
+function sheetOverflows(page) {
+  return page.scrollHeight > page.clientHeight + 6;
+}
+
+function markOverflowingSheets(stack) {
+  stack.querySelectorAll(".print-preview-sheet__page").forEach((page) => {
+    if (!sheetOverflows(page)) return;
+    page.parentElement.classList.add("print-preview-sheet--overflow");
+    const warn = document.createElement("p");
+    warn.className = "print-preview-sheet__warn";
+    warn.textContent = "This content runs past the bottom of the A4 page.";
+    page.parentElement.appendChild(warn);
+  });
+}
+
+/**
+ * Place one report block on A4 sheets. A block taller than the printable
+ * page is split at its child elements so each sheet stays 210 × 297 mm.
+ */
+function appendPaginatedBlock(stack, el, label) {
+  let page = null;
+  let host = null;
+  let index = 0;
+
+  const openSheet = () => {
+    index += 1;
+    const next = createPreviewSheet(index === 1 ? label : `${label} (continues)`);
+    stack.appendChild(next.sheet);
+    page = next.page;
+    host = el.cloneNode(false);
+    if (index > 1) host.removeAttribute("id");
+    page.appendChild(host);
+  };
+
+  const sheetIsEmpty = () => ![...host.childNodes].some((node) => (
+    node.nodeType === 1 ? node.childNodes.length > 0 || node.textContent.trim().length > 0 : node.textContent.trim().length > 0
+  ));
+
+  const pack = (parent, nodes) => {
+    for (let i = 0; i < nodes.length; i += 1) {
+      const node = nodes[i];
+      parent.appendChild(node);
+      if (!sheetOverflows(page)) continue;
+      parent.removeChild(node);
+      const keepTogether = node.nodeType === 1 && [...node.classList].some((name) => name.includes("card"));
+      if (!keepTogether && node.nodeType === 1 && node.children.length > 1) {
+        const atSectionRoot = parent === host;
+        const hostBefore = host;
+        const wrap = node.cloneNode(false);
+        parent.appendChild(wrap);
+        pack(wrap, [...node.childNodes]);
+        if (!wrap.childNodes.length) wrap.remove();
+        if (host !== hostBefore) parent = atSectionRoot ? host : host.appendChild(parent.cloneNode(false));
+        continue;
+      }
+      if (parent.childNodes.length > 0 || !sheetIsEmpty()) {
+        const atSectionRoot = parent === host;
+        openSheet();
+        parent = atSectionRoot ? host : host.appendChild(parent.cloneNode(false));
+        i -= 1;
+        continue;
+      }
+      parent.appendChild(node);
+    }
+  };
+
+  openSheet();
+  pack(host, [...el.childNodes]);
+  el.remove();
+}
+
+/** Stack the report as real A4 pages (210 × 297 mm) for on-screen review. */
+function layoutA4PrintPreview() {
+  document.querySelectorAll(".print-preview-stack").forEach((node) => node.remove());
+  const blocks = [];
+  const cover = document.querySelector(".home-profile-cover");
+  if (cover) blocks.push(cover);
+  document.querySelectorAll("[data-report-page]").forEach((el) => {
+    if (cover && cover.contains(el)) return;
+    blocks.push(el);
+  });
+
+  const stack = document.createElement("div");
+  stack.className = "print-preview-stack";
+  document.body.appendChild(stack);
+  document.body.classList.add("print-preview-a4");
+  blocks.forEach((el) => appendPaginatedBlock(stack, el, previewBlockLabel(el)));
+  markOverflowingSheets(stack);
+  fillPrintPreviewGaps(stack);
+}
+
+const PRINT_PREVIEW_GAP_COPY = {
+  en: {
+    photos: [
+      {
+        src: "assets/home-life-adult.png",
+        alt: "A quiet moment at home",
+        aspect: 1024 / 682,
+        caption: "The nervous system settles in places it can predict — a familiar chair, a softer light, a quieter hour after coming through the door."
+      },
+      {
+        src: "assets/home-life-family.png",
+        alt: "Family life at home",
+        aspect: 1024 / 788,
+        caption: "A shared home holds more than one sensory pattern. What steadies one person may be too much, or too little, for someone else."
+      },
+      {
+        src: "assets/heading-conclusion-trail.png",
+        alt: "A path through the trees",
+        aspect: 1024 / 682,
+        caption: "Regulation is not the absence of sensation. It is enough of the right input, and a way back when the day has been too much."
+      }
+    ],
+    quotes: [
+      "Support works when it matches the sense that is asking for less, or for more.",
+      "There is no single right way to experience a room. The useful question is what this body needs in order to stay comfortable here.",
+      "Knowing your sensory pattern is a way of looking after the life you actually live — the evening, the people, the pace, and the rooms you come home to."
+    ]
+  },
+  af: {
+    photos: [
+      {
+        src: "assets/home-life-adult.png",
+        alt: "’n Stil oomblik by die huis",
+        aspect: 1024 / 682,
+        caption: "Die senuweestelsel kom tot rus op plekke wat dit kan voorspel — ’n bekende stoel, sagter lig, ’n stiller uur nadat jy by die deur ingestap het."
+      },
+      {
+        src: "assets/home-life-family.png",
+        alt: "Gesinslewe by die huis",
+        aspect: 1024 / 788,
+        caption: "’n Gedeelde huis hou meer as een sensoriese patroon. Wat die een persoon laat vestig, kan vir iemand anders te veel of te min wees."
+      },
+      {
+        src: "assets/heading-conclusion-trail.png",
+        alt: "’n Pad deur die bome",
+        aspect: 1024 / 682,
+        caption: "Regulering is nie die afwesigheid van sensasie nie. Dit is genoeg van die regte inset, en ’n pad terug wanneer die dag te veel was."
+      }
+    ],
+    quotes: [
+      "Ondersteuning werk wanneer dit pas by die sintuig wat om minder, of om meer, vra.",
+      "Daar is nie een regte manier om ’n vertrek te ervaar nie. Die nuttige vraag is wat hierdie liggaam nodig het om hier gemaklik te bly.",
+      "Om jou sensoriese patroon te ken, is ’n manier om na die lewe om te sien wat jy werklik leef — die aand, die mense, die tempo, en die vertrekke waar jy tuis kom."
+    ]
   }
+};
+
+function previewGapCopy() {
+  return PRINT_PREVIEW_GAP_COPY[state.language] || PRINT_PREVIEW_GAP_COPY.en;
+}
+
+function previewSheetPageNumber(label) {
+  const match = String(label || "").match(/Page\s+(\d+)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function previewEmptySpans(page) {
+  const pr = page.getBoundingClientRect();
+  const selector = "img, h2, h3, h4, h5, p, li, blockquote, figure, article, .interpret-section-banner, .specific-results__card, .sense-support__card, .profile-kicker";
+  const intervals = [];
+  page.querySelectorAll(selector).forEach((el) => {
+    if (el.closest(".report-page-number") || el.closest(".print-preview-fill")) return;
+    const r = el.getBoundingClientRect();
+    if (r.height < 8 || r.width < 8) return;
+    const top = r.top - pr.top;
+    const bottom = r.bottom - pr.top;
+    if (bottom < 0 || top > pr.height) return;
+    intervals.push([Math.max(0, top), Math.min(pr.height, bottom)]);
+  });
+  intervals.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  intervals.forEach(([start, end]) => {
+    const last = merged[merged.length - 1];
+    if (!last || start > last[1] + 4) merged.push([start, end]);
+    else last[1] = Math.max(last[1], end);
+  });
+  const spans = [];
+  let cursor = 0;
+  merged.forEach(([start, end]) => {
+    if (start - cursor > 8) spans.push({ from: cursor, to: start, size: start - cursor });
+    cursor = Math.max(cursor, end);
+  });
+  if (pr.height - cursor > 8) spans.push({ from: cursor, to: pr.height, size: pr.height - cursor });
+  return spans;
+}
+
+function fillPrintPreviewGaps(stack) {
+  if (state.respondent !== "adult" || state.lifeContext !== "home") return;
+  const copy = previewGapCopy();
+  const mm = 96 / 25.4;
+  const edge = 16 * mm;
+  const cushion = 10 * mm;
+  const bottomClear = 18 * mm;
+  let photoIndex = 0;
+  let quoteIndex = 0;
+
+  stack.querySelectorAll(".print-preview-sheet").forEach((sheet) => {
+    const label = sheet.querySelector(".print-preview-sheet__label")?.textContent || "";
+    if (previewSheetPageNumber(label) < 5) return;
+    const page = sheet.querySelector(".print-preview-sheet__page");
+    if (!page) return;
+    const tallImage = [...page.querySelectorAll("img")].some((img) => img.getBoundingClientRect().height > 280);
+
+    previewEmptySpans(page).forEach((span) => {
+      const top = span.from + cushion;
+      const bottom = Math.min(span.to - cushion, page.clientHeight - bottomClear);
+      const height = bottom - top;
+      if (height < 100) return;
+      const usePhoto = !tallImage && height >= 250 && photoIndex < copy.photos.length;
+      const fill = document.createElement("aside");
+      fill.className = `print-preview-fill ${usePhoto ? "print-preview-fill--photo" : "print-preview-fill--quote"}${!usePhoto && height < 160 ? " print-preview-fill--compact" : ""}`;
+      fill.style.top = `${top}px`;
+      fill.style.left = `${edge}px`;
+      fill.style.width = `${page.clientWidth - edge * 2}px`;
+      fill.style.height = `${height}px`;
+      if (usePhoto) {
+        const photo = copy.photos[photoIndex % copy.photos.length];
+        photoIndex += 1;
+        const img = document.createElement("img");
+        img.src = photo.src;
+        img.alt = photo.alt;
+        img.width = 1024;
+        img.height = Math.round(1024 / photo.aspect);
+        const captionRoom = 22 * mm;
+        const fullHeight = (page.clientWidth - edge * 2) / photo.aspect;
+        img.style.width = "100%";
+        if (fullHeight <= height - captionRoom) {
+          img.style.height = "auto";
+          img.style.objectFit = "contain";
+        } else {
+          img.style.height = `${Math.max(80, height - captionRoom)}px`;
+          img.style.objectFit = "cover";
+          img.style.objectPosition = "center 42%";
+        }
+        const caption = document.createElement("p");
+        caption.className = "print-preview-fill__caption";
+        caption.textContent = photo.caption;
+        fill.append(img, caption);
+      } else {
+        const text = copy.quotes[quoteIndex % copy.quotes.length];
+        quoteIndex += 1;
+        const mark = document.createElement("span");
+        mark.className = "print-preview-fill__mark";
+        mark.setAttribute("aria-hidden", "true");
+        mark.textContent = "“";
+        const quote = document.createElement("blockquote");
+        const line = document.createElement("p");
+        line.textContent = text;
+        quote.appendChild(line);
+        fill.append(mark, quote);
+      }
+      page.appendChild(fill);
+    });
+  });
+}
+
+/** On-screen A4 print layout. Used by ?print=1 so spacing can be reviewed without the print dialog. */
+async function enableOnScreenPrintPreview() {
+  document.body.classList.add("print-sensory-results");
+  if (state.respondent === "parent") document.body.classList.add("print-parent-report");
+  if (document.body.classList.contains("print-couple-merge") || state.view === "couple-hub") {
+    document.body.classList.add("print-couple-merge");
+  }
+  if (!document.getElementById("print-preview-screen")) {
+    const css = await loadReportStylesheetText();
+    const screenPrintCss = css.replaceAll("@media print", "@media screen");
+    const style = document.createElement("style");
+    style.id = "print-preview-screen";
+    style.textContent = `${screenPrintCss}
+@media screen {
+  html { background: #c5d0c8 !important; }
+  body.print-preview-a4 {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 10mm 0 18mm !important;
+    background: #c5d0c8 !important;
+    box-shadow: none !important;
+  }
+  body.print-preview-a4 #app { display: none !important; }
+  .print-preview-stack {
+    width: 210mm;
+    margin: 0 auto;
+  }
+  .print-preview-sheet {
+    width: 210mm;
+    margin: 0 0 14mm;
+  }
+  .print-preview-sheet__label {
+    margin: 0 0 3mm;
+    text-align: center;
+    font-family: "Source Sans 3", system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #244b38;
+  }
+  .print-preview-sheet__page {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    box-sizing: border-box;
+    padding: 7mm 7mm 9mm;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 14px 40px rgba(36, 75, 56, 0.22);
+  }
+  .print-preview-sheet--overflow .print-preview-sheet__page {
+    outline: 2px solid #a33b32;
+  }
+  .print-preview-sheet__warn {
+    margin: 2mm 0 0;
+    text-align: center;
+    color: #a33b32;
+    font-family: "Source Sans 3", system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .print-preview-fill {
+    position: absolute;
+    z-index: 2;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .print-preview-fill--photo img {
+    display: block;
+    max-width: 100%;
+    border-radius: 3.5mm;
+  }
+  .print-preview-fill__caption,
+  .print-preview-fill--quote p {
+    margin: 3.5mm 4mm 0;
+    max-width: 38em;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 12.5pt;
+    line-height: 1.45;
+    color: #244b38;
+  }
+  .print-preview-fill--quote {
+    padding: 4mm 8mm;
+  }
+  .print-preview-fill__mark {
+    font-family: var(--font-display, var(--font-serif));
+    font-size: 28pt;
+    line-height: 0.7;
+    color: #7b9e87;
+  }
+  .print-preview-fill--quote p {
+    margin-top: 3mm;
+    font-size: 14pt;
+    line-height: 1.5;
+  }
+  .print-preview-fill--compact {
+    padding: 0 6mm;
+  }
+  .print-preview-fill--compact .print-preview-fill__mark {
+    font-size: 18pt;
+  }
+  .print-preview-fill--compact p {
+    margin-top: 1.5mm;
+    font-size: 11.5pt;
+    line-height: 1.35;
+  }
+}
+@media print {
+  .print-preview-stack { display: none !important; }
+}`;
+    document.head.appendChild(style);
+  }
+  await waitForReportPrintImages(document);
+  layoutA4PrintPreview();
 }
 
 function printSensoryResultsPacket() {
@@ -14679,13 +15184,21 @@ function renderResults() {
               <button type="button" class="btn btn-secondary" data-action="back-dashboard">← Back to dashboard</button>
               <button type="button" class="btn btn-secondary" data-action="switch-report-basic">Preview short report</button>
               <button type="button" class="btn btn-primary" data-action="email-clinician-report">Email report</button>
-              <button type="button" class="btn btn-secondary" data-action="print">${escapeHtml(copy.print)}</button>
+              ${
+                isHomeProfile
+                  ? renderAdultHomeReportFileActions()
+                  : `<button type="button" class="btn btn-secondary" data-action="print">${escapeHtml(copy.print)}</button>`
+              }
               ${state.dashboardNotice ? `<p class="auth__notice dashboard__notice" role="status">${escapeHtml(state.dashboardNotice)}</p>` : ""}
             </div>`
           : fromViewer
             ? `<div class="results-dashboard-bar no-print">
               <button type="button" class="btn btn-secondary" data-action="back-home">← Back to questionnaires</button>
-              <button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
+              ${
+                isHomeProfile
+                  ? renderAdultHomeReportFileActions()
+                  : `<button type="button" class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>`
+              }
             </div>`
           : ""
       }
@@ -14737,7 +15250,11 @@ function renderResults() {
               ? `<button class="btn btn-secondary" data-action="back-home">← Back to questionnaires</button>`
               : `<button class="btn btn-secondary" data-action="back">${escapeHtml(copy.review)}</button>`
         }
-        <button class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>
+        ${
+          isHomeProfile
+            ? renderAdultHomeReportFileActions()
+            : `<button class="btn btn-primary" data-action="print">${escapeHtml(copy.print)}</button>`
+        }
         ${
           shouldEmailResultsToClinician() && state.submissionStatus === "error"
             ? `<button type="button" class="btn btn-secondary" data-action="retry-submit">${escapeHtml(copy.thankYouRetry)}</button>`
@@ -16148,9 +16665,12 @@ function bindEvents() {
       });
       render({ scrollToTop: true });
       if (action === "download-assessment") {
+        const reportFile = btn.dataset.reportFile || "";
         queueMicrotask(() => {
           if (state.view === "questionnaire" && STEPS[state.step]?.type === "results") {
-            saveOrShareSensoryReport();
+            if (reportFile === "download") downloadSensoryReportFile();
+            else if (reportFile === "whatsapp") shareReportOnWhatsApp();
+            else saveOrShareSensoryReport();
           }
         });
       }
@@ -16546,6 +17066,18 @@ function bindEvents() {
         saveSensoryDraft();
       }
       render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "download-report") {
+      if (!adultHomeReportFileReady()) return;
+      await downloadSensoryReportFile();
+      return;
+    }
+
+    if (action === "whatsapp-report") {
+      if (!adultHomeReportFileReady()) return;
+      await shareReportOnWhatsApp();
       return;
     }
 
@@ -17398,26 +17930,25 @@ async function bootApp() {
     const wantsCoupleMerge = Boolean(sampleBoot.coupleMerge || sampleBoot.respondent === "couple-merge");
     if (wantsCoupleMerge) {
       openSampleCoupleMergePreview();
-      if (window.history?.replaceState) {
-        const clean = new URL(window.location.href);
-        ["preview", "sample", "respondent", "pathway", "context", "lifeContext"].forEach((key) =>
-          clean.searchParams.delete(key)
-        );
-        window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
-      }
     } else {
       openSampleReportPreview(sampleBoot);
-      if (window.history?.replaceState) {
-        const clean = new URL(window.location.href);
-        ["preview", "sample", "respondent", "pathway", "context", "lifeContext"].forEach((key) =>
-          clean.searchParams.delete(key)
-        );
-        window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
-      }
+    }
+    if (window.history?.replaceState && !state._openPrintPreviewOnBoot) {
+      const clean = new URL(window.location.href);
+      ["preview", "sample", "respondent", "pathway", "context", "lifeContext"].forEach((key) =>
+        clean.searchParams.delete(key)
+      );
+      window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
     }
   }
 
   render();
+  if (state._openPrintPreviewOnBoot) {
+    delete state._openPrintPreviewOnBoot;
+    enableOnScreenPrintPreview().catch((err) => {
+      console.error("Could not open the print preview:", err);
+    });
+  }
   if (window.location.hash === "#report-specific-results") {
     document.getElementById("report-specific-results")?.scrollIntoView({ block: "start" });
   }
