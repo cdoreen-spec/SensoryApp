@@ -4194,7 +4194,7 @@ function profileLabelPlain(meta) {
 }
 
 function completionNoticeIntro() {
-  return "A sensory questionnaire has been completed. The summary below is the report. Open the patient register in the web app for the full trail profile and printable letters.";
+  return "A sensory questionnaire has been completed. The summary below is the report. Open the patient register to save the full report on your phone or computer, or send that file by email or WhatsApp.";
 }
 
 function trailCharacterSummary(lean) {
@@ -4268,7 +4268,7 @@ function completionEmailSections({ metrics, scores, demo, extraDetailRows = [] }
   const registerUrl = `${getClinicianBaseUrl()}/?dashboard=1`;
   sections.push({
     heading: "Full report",
-    text: `Open the patient register for the complete trail profile: ${registerUrl}`,
+    text: `Open the patient register, then use Save or share to keep the full report on your phone or computer, or send the file by email or WhatsApp: ${registerUrl}`,
   });
   return sections;
 }
@@ -5596,7 +5596,7 @@ function renderDashboardAssessmentRow(item) {
           <button type="button" class="dash-report-switch__btn${preferredLength === REPORT_LENGTH.full ? " is-preferred" : ""}" data-action="open-assessment" data-assessment-id="${rowId}">Full</button>
         </div>
         <button type="button" class="dash-row__tool" data-action="email-clinician-report" data-assessment-id="${rowId}">Send again</button>
-        <button type="button" class="dash-row__tool" data-action="download-assessment" data-assessment-id="${rowId}">Download</button>
+        <button type="button" class="dash-row__tool" data-action="download-assessment" data-assessment-id="${rowId}">Save or share</button>
         <button type="button" class="dash-row__remove" data-action="delete-assessment" data-assessment-id="${rowId}" title="Remove from this device">Remove</button>`
         }
       </div>
@@ -12665,6 +12665,202 @@ function waitForReportPrintImages(root = document) {
   );
 }
 
+let reportStylesheetTextPromise = null;
+
+function loadReportStylesheetText() {
+  if (!reportStylesheetTextPromise) {
+    const link = document.querySelector('link[rel="stylesheet"][href*="styles.css"]');
+    const href = link ? link.href : new URL("styles.css", window.location.href).href;
+    reportStylesheetTextPromise = fetch(href).then((response) => {
+      if (!response.ok) throw new Error("Report styles could not be loaded");
+      return response.text();
+    });
+  }
+  return reportStylesheetTextPromise;
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("Could not read image"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function inlineReportImages(root) {
+  const images = [...root.querySelectorAll("img[src]")];
+  await Promise.all(
+    images.map(async (img) => {
+      const src = img.getAttribute("src");
+      if (!src || src.startsWith("data:")) return;
+      try {
+        const response = await fetch(new URL(src, window.location.href).href);
+        if (!response.ok) return;
+        const dataUrl = await blobToDataUrl(await response.blob());
+        img.setAttribute("src", dataUrl);
+        img.removeAttribute("srcset");
+      } catch (_) {
+        /* Keep the original address if this image cannot be packed into the file. */
+      }
+    })
+  );
+}
+
+function syncReportFormValues(liveRoot, cloneRoot) {
+  const liveFields = [...liveRoot.querySelectorAll("textarea, input, select")];
+  const cloneFields = [...cloneRoot.querySelectorAll("textarea, input, select")];
+  liveFields.forEach((field, index) => {
+    const clone = cloneFields[index];
+    if (!clone) return;
+    if (field.tagName === "TEXTAREA") {
+      clone.textContent = field.value;
+      return;
+    }
+    if (field.type === "checkbox" || field.type === "radio") {
+      clone.toggleAttribute("checked", field.checked);
+      return;
+    }
+    clone.setAttribute("value", field.value);
+  });
+}
+
+function reportDownloadFilename() {
+  const raw = assessmentCompleterName() || "sensory-report";
+  const name =
+    raw
+      .replace(/[^\w\s-]+/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .slice(0, 60) || "sensory-report";
+  const date = new Date().toISOString().slice(0, 10);
+  return `${name}-sensory-report-${date}.html`;
+}
+
+function reportFileReadyMessage(shared) {
+  if (shared) return "";
+  if (state.language === "af") {
+    return "Die verslaglêer is op hierdie toestel gestoor. Maak dit oop, of heg dit aan ’n e-pos of WhatsApp.";
+  }
+  return "The report file is saved on this device. Open it, or attach it in email or WhatsApp.";
+}
+
+function showReportFileNotice(message) {
+  if (!message) return;
+  state.dashboardNotice = message;
+  const existing = document.querySelector(".report-file-notice");
+  if (existing) {
+    existing.textContent = message;
+    return;
+  }
+  const host =
+    document.querySelector(".results-dashboard-bar") ||
+    document.querySelector(".dash-board") ||
+    document.getElementById("app");
+  if (!host) return;
+  const note = document.createElement("p");
+  note.className = "auth__notice dashboard__notice report-file-notice";
+  note.setAttribute("role", "status");
+  note.textContent = message;
+  host.appendChild(note);
+}
+
+function setReportSaveBusy(busy) {
+  document
+    .querySelectorAll(
+      "[data-action='print'], [data-action='download-assessment'], [data-action='print-couple-report']"
+    )
+    .forEach((button) => {
+      button.disabled = busy;
+      if (busy) {
+        if (!button.dataset.idleLabel) button.dataset.idleLabel = button.textContent;
+        button.textContent = state.language === "af" ? "Besig…" : "Preparing…";
+      } else if (button.dataset.idleLabel) {
+        button.textContent = button.dataset.idleLabel;
+      }
+    });
+}
+
+function triggerReportFileDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+async function buildPortableReportHtml({ couple = false } = {}) {
+  const css = await loadReportStylesheetText();
+  const clone = document.body.cloneNode(true);
+  clone.querySelectorAll("script, .site-header, .page-bg, .site-footer, .results-dashboard-bar, .whatsapp-fab, #preview-bar").forEach((node) => {
+    node.remove();
+  });
+  syncReportFormValues(document.body, clone);
+  clone.classList.add("print-sensory-results");
+  if (state.respondent === "parent") clone.classList.add("print-parent-report");
+  if (couple) clone.classList.add("print-couple-merge");
+  await inlineReportImages(clone);
+  const screenPrintCss = css.replace(/@media print/g, "@media screen");
+  const fontLink = document.querySelector('link[href*="fonts.googleapis.com"]');
+  const title = reportDownloadFilename().replace(/\.html$/, "");
+  return `<!DOCTYPE html>
+<html lang="${escapeHtml(document.documentElement.lang || "en")}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)}</title>
+  ${fontLink ? `<link rel="stylesheet" href="${escapeHtml(fontLink.href)}" />` : ""}
+  <style>
+${css.replace(/<\/style/gi, "<\\/style")}
+${screenPrintCss.replace(/<\/style/gi, "<\\/style")}
+  </style>
+</head>
+${clone.outerHTML}
+</html>`;
+}
+
+async function saveOrShareSensoryReport({ couple = false } = {}) {
+  if (state._reportFileBusy) return;
+  state._reportFileBusy = true;
+  setReportSaveBusy(true);
+  try {
+    const html = await buildPortableReportHtml({ couple });
+    const filename = reportDownloadFilename();
+    const file = new File([html], filename, { type: "text/html" });
+    const shareData = {
+      files: [file],
+      title: filename.replace(/\.html$/, "").replace(/-/g, " "),
+      text: "Sensory report from Soulful Sensory OT",
+    };
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        notifyReportDownloaded();
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return;
+      }
+    }
+    triggerReportFileDownload(new Blob([html], { type: "text/html" }), filename);
+    notifyReportDownloaded();
+    showReportFileNotice(reportFileReadyMessage(false));
+  } catch (err) {
+    console.error("Report file could not be prepared:", err);
+    showReportFileNotice(
+      state.language === "af"
+        ? "Die verslaglêer kon nie gereed gemaak word nie. Probeer asseblief weer."
+        : "The report file could not be prepared. Please try again."
+    );
+  } finally {
+    state._reportFileBusy = false;
+    setReportSaveBusy(false);
+  }
+}
+
 function printSensoryResultsPacket() {
   const isParent = state.respondent === "parent";
   document.body.classList.add("print-sensory-results");
@@ -15844,10 +16040,10 @@ function bindEvents() {
       if (!state.coupleShowMerge) {
         openCoupleHub({ showMerge: true });
         render({ scrollToTop: true });
-        queueMicrotask(() => printCoupleCombinedReport());
+        queueMicrotask(() => saveOrShareSensoryReport({ couple: true }));
         return;
       }
-      printCoupleCombinedReport();
+      await saveOrShareSensoryReport({ couple: true });
       return;
     }
 
@@ -15954,7 +16150,7 @@ function bindEvents() {
       if (action === "download-assessment") {
         queueMicrotask(() => {
           if (state.view === "questionnaire" && STEPS[state.step]?.type === "results") {
-            printSensoryResultsPacket();
+            saveOrShareSensoryReport();
           }
         });
       }
@@ -16354,7 +16550,7 @@ function bindEvents() {
     }
 
     if (action === "print") {
-      printSensoryResultsPacket();
+      await saveOrShareSensoryReport();
     }
   });
 
