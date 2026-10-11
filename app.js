@@ -71,6 +71,8 @@ const state = {
   clinicianCopyStatus: null, // null | copied
   /** Therapist dashboard: viewing a saved assessment report (skip re-email). */
   viewingArchivedId: null,
+  /** Report id from a completion-email link (?report=), opened after sign-in. */
+  pendingReportId: null,
   /** Assessment id for the questionnaire currently in progress (incomplete until results). */
   inProgressAssessmentId: null,
   archiveReadOnly: false,
@@ -358,6 +360,7 @@ function routeAfterAuth(user) {
   if (user?.role === "admin" || user?.role === "therapist") {
     initTherapistPrefs();
     state.clinicianUnlocked = true;
+    if (state.pendingReportId && openReportFromEmailLink()) return;
     if (isSampleReportPreviewEnabled()) {
       try {
         const raw = sessionStorage.getItem("ssot-sample-preview");
@@ -878,6 +881,7 @@ async function sendViaGmailBackend({
   password,
   intro,
   sections,
+  reportUrl,
 }) {
   if (DELIVERY_PROVIDER === "none" || DELIVERY_PROVIDER === "web3forms") return null;
   const backendReady = typeof SsotBackend !== "undefined" && SsotBackend.isEnabled();
@@ -903,6 +907,7 @@ async function sendViaGmailBackend({
     password,
     intro,
     sections,
+    reportUrl,
   });
 }
 
@@ -1061,6 +1066,11 @@ async function emailArchivedReportToClinician(record) {
     .map((domain) => [domain.title || domain.short || domain.id, domain.short || domain.profile || "—"])
     .filter((row) => row[0]);
   if (domainRows.length) sections.push({ heading: "Sense by sense", rows: domainRows });
+  const reportUrl = buildSavedReportUrl(record.id);
+  sections.push({
+    heading: "View this report",
+    text: `View this report: ${reportUrl}`,
+  });
   const intro = completionNoticeIntro();
   const profileBit = summary.overallLabel ? ` — ${summary.overallLabel}` : "";
   state.dashboardNotice = `Sending the report to ${getClinicianEmail()}…`;
@@ -1074,6 +1084,7 @@ async function emailArchivedReportToClinician(record) {
       kind: "report",
       intro,
       sections,
+      reportUrl,
     });
     state.dashboardNotice = `Report emailed to ${getClinicianEmail()}.`;
   } catch (err) {
@@ -1103,6 +1114,7 @@ async function emailOpenReportToClinician() {
       kind: "report",
       intro: report.intro,
       sections: report.sections,
+      reportUrl: report.reportUrl,
     });
     state.dashboardNotice = `Report emailed to ${getClinicianEmail()}.`;
   } catch (err) {
@@ -3825,6 +3837,16 @@ function readInviteFromUrl() {
     if (params.get("print") === "1") state._openPrintPreviewOnBoot = true;
     return;
   }
+  const reportId = String(params.get("report") || "").trim();
+  if (reportId) {
+    state.pendingReportId = reportId;
+    state.view = "dashboard";
+    state.clinicianUnlocked = sessionStorage.getItem(CLINICIAN_SESSION_KEY) === "1";
+    if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
+      state.clinicianUnlocked = true;
+    }
+    return;
+  }
   if (params.get("dashboard") === "1" || params.get("patients") === "1") {
     state.view = "dashboard";
     state.clinicianUnlocked = sessionStorage.getItem(CLINICIAN_SESSION_KEY) === "1";
@@ -4195,7 +4217,56 @@ function profileLabelPlain(meta) {
 }
 
 function completionNoticeIntro() {
-  return "A sensory questionnaire has been completed. The summary below is the report. Open the patient register to save the full report on your phone or computer, or send that file by email or WhatsApp.";
+  return "A sensory questionnaire has been completed. The summary below is the report. The link opens this report so you can read it, save it, or send the file.";
+}
+
+function buildSavedReportUrl(assessmentId) {
+  let url;
+  try {
+    url = new URL(getClinicianBaseUrl());
+  } catch (_) {
+    url = new URL(localHostedAppUrl());
+  }
+  url.search = "";
+  url.hash = "";
+  if (assessmentId) url.searchParams.set("report", String(assessmentId));
+  else url.searchParams.set("dashboard", "1");
+  return url.toString();
+}
+
+function clearReportLinkFromUrl() {
+  if (typeof window === "undefined" || !window.history?.replaceState) return;
+  const clean = new URL(window.location.href);
+  if (!clean.searchParams.has("report")) return;
+  clean.searchParams.delete("report");
+  const next = clean.pathname + clean.search + clean.hash;
+  window.history.replaceState({}, "", next || "/");
+}
+
+function openReportFromEmailLink() {
+  const id = String(state.pendingReportId || "").trim();
+  if (!id) return false;
+  if (typeof Auth === "undefined" || !Auth.canAccessClinicianTools()) {
+    state.view = "login";
+    state.authMode = "login";
+    state.authNotice = "Sign in to view this completed report.";
+    return false;
+  }
+  initTherapistPrefs();
+  state.clinicianUnlocked = true;
+  const record = getAssessmentById(id);
+  if (!record || isIncompleteAssessment(record)) {
+    state.pendingReportId = null;
+    state.view = "dashboard";
+    state.dashboardTab = "register";
+    state.dashboardNotice =
+      "That report could not be opened from this link. It may still be syncing — check the patient register.";
+    clearReportLinkFromUrl();
+    return false;
+  }
+  state.pendingReportId = null;
+  applyAssessmentRecord(record, { reportLength: REPORT_LENGTH.full });
+  return true;
 }
 
 function trailCharacterSummary(lean) {
@@ -4248,7 +4319,7 @@ function formatCompletionEmailText(intro, sections) {
   return lines.join("\n").trim();
 }
 
-function completionEmailSections({ metrics, scores, demo, extraDetailRows = [] }) {
+function completionEmailSections({ metrics, scores, demo, extraDetailRows = [], reportUrl = "" }) {
   const pattern = [profileLabelPlain(metrics?.meta), metrics?.leanHeadline].filter(Boolean).join(" — ");
   const sections = [
     { heading: "Patient details", rows: patientDetailRows(demo, extraDetailRows) },
@@ -4266,14 +4337,16 @@ function completionEmailSections({ metrics, scores, demo, extraDetailRows = [] }
   if (character) {
     sections.push({ heading: "Sensory trail character", text: character });
   }
-  const registerUrl = `${getClinicianBaseUrl()}/?dashboard=1`;
   const adultHome = state.respondent === "adult" && state.lifeContext === "home";
-  sections.push({
-    heading: "Full report",
-    text: adultHome
-      ? `This adult home report can be downloaded on a computer, or on a phone where it can be sent on WhatsApp or saved. Open the patient register after this email: ${registerUrl}`
-      : `Open the patient register, then use Save or share to keep the full report on your phone or computer, or send the file by email or WhatsApp: ${registerUrl}`,
-  });
+  const followUp = adultHome
+    ? "This adult home report can be downloaded on a computer, or on a phone where it can be sent on WhatsApp or saved."
+    : "From that page you can save the report or send the file.";
+  if (reportUrl) {
+    sections.push({
+      heading: "View this report",
+      text: [`View this report: ${reportUrl}`, followUp].filter(Boolean).join("\n"),
+    });
+  }
   return sections;
 }
 
@@ -4295,7 +4368,8 @@ function buildResultsReport() {
     ]);
   }
   const intro = completionNoticeIntro();
-  const sections = completionEmailSections({ metrics, scores, demo, extraDetailRows });
+  const reportUrl = buildSavedReportUrl(state.viewingArchivedId || state.inProgressAssessmentId || "");
+  const sections = completionEmailSections({ metrics, scores, demo, extraDetailRows, reportUrl });
 
   const profileBit = profileLabelPlain(metrics.meta);
   const subjectCore =
@@ -4312,6 +4386,7 @@ function buildResultsReport() {
     sections,
     text: formatCompletionEmailText(intro, sections),
     subject: `Completed: ${subjectCore}`,
+    reportUrl,
   };
 }
 
@@ -4518,6 +4593,7 @@ async function sendResultsEmail(report) {
       kind: "report",
       intro: report.intro,
       sections: report.sections,
+      reportUrl: report.reportUrl,
     });
   } catch (err) {
     if (serverSynced) setCurrentReportEmailedAt(null);
@@ -5081,8 +5157,20 @@ function buildCoupleCombinedResultsReport(session = null) {
 
   const nameA = couplePartnerLabel("a", sess);
   const nameB = couplePartnerLabel("b", sess);
-  const intro =
-    "Both partners have finished. This notice does not include scores. Open the patient register for the full profiles.";
+  const partnerReports = ["a", "b"]
+    .map((partner) => {
+      const id = sess?.partners?.[partner]?.assessmentId;
+      if (!id) return null;
+      return {
+        label: partner === "b" ? "Partner 2" : "Partner 1",
+        url: buildSavedReportUrl(id),
+      };
+    })
+    .filter(Boolean);
+  const reportUrl = partnerReports[0]?.url || "";
+  const intro = partnerReports.length
+    ? "Both partners have finished. The summary below is the report. The link opens this report so you can read it, save it, or send the file."
+    : "Both partners have finished. This notice does not include scores. Open the patient register for the full profiles.";
   const sections = [
     {
       heading: "Completion notice",
@@ -5092,6 +5180,12 @@ function buildCoupleCombinedResultsReport(session = null) {
       ],
     },
   ];
+  if (partnerReports.length) {
+    sections.push({
+      heading: "View this report",
+      text: partnerReports.map((item) => `${item.label}: ${item.url}`).join("\n"),
+    });
+  }
 
   return {
     subject: `Completed: ${nameA} & ${nameB} — Combined couple sensory report`,
@@ -5101,6 +5195,7 @@ function buildCoupleCombinedResultsReport(session = null) {
     metrics: { profile: "Combined couple profile" },
     nameA,
     nameB,
+    reportUrl,
   };
 }
 
@@ -5130,6 +5225,7 @@ async function sendCoupleCombinedEmail(report) {
     kind: "report",
     intro: report.intro,
     sections: report.sections,
+    reportUrl: report.reportUrl,
   });
   if (gmail) return gmail;
 
@@ -10892,6 +10988,28 @@ function renderIdealSaturdayResults(pageEntry) {
   `;
 }
 
+function renderTeenReportClose() {
+  if (state.respondent !== "teen") return "";
+  const af = state.language === "af";
+  return `
+    <aside class="teen-report-close print-only">
+      <p class="teen-report-close__kicker">${af ? "Einde van die verslag" : "End of report"}</p>
+      <h4 class="teen-report-close__title">${af ? "Jou sensoriese roeteprofiel" : "Your sensory trail profile"}</h4>
+      <blockquote class="teen-report-close__quote">
+        <p>${
+          af
+            ? "Hierdie verslag is ’n kaart van hoe jy die dag ontmoet — by die skool en by die huis. Hou die bewegings wat help, en los die res."
+            : "This report is a map of how you meet the day — at school and at home. Keep the moves that help, and leave the rest."
+        }</p>
+      </blockquote>
+      <p class="teen-report-close__note">${
+        af
+          ? "Hierdie sifting is nie ’n diagnose nie. Die resultate is net vir leiding."
+          : "This screening does not constitute a diagnosis. Results are for guidance only."
+      }</p>
+    </aside>`;
+}
+
 function renderTeenIdealSaturdayPrintBlock() {
   if (state.respondent !== "teen" && state.respondent !== "parent") return "";
   const text = (state.idealSaturday || "").trim();
@@ -11827,7 +11945,7 @@ function renderSpecificSensoryResults(pageEntry, { compact = false } = {}) {
     return findings.notAnswered;
   };
 
-  const groups = findings.groups
+  const groupCards = findings.groups
     .map((group) => {
       const facets = group.facets
         .map((facet) => {
@@ -11861,24 +11979,56 @@ function renderSpecificSensoryResults(pageEntry, { compact = false } = {}) {
             </div>`;
         })
         .join("");
-      return `
+      return {
+        id: group.id,
+        html: `
         <article class="specific-results__card" data-domain="${escapeHtml(group.id)}">
           <header class="specific-results__card-head">
             <span class="specific-results__icon" aria-hidden="true">${group.icon}</span>
             <h4>${escapeHtml(group.title)}</h4>
           </header>
           ${facets}
-        </article>`;
-    })
-    .join("");
+        </article>`,
+      };
+    });
+  const groups = groupCards.map((group) => group.html).join("");
+  const cardHtml = (id) => groupCards.find((group) => group.id === id)?.html || "";
+  const sensePhoto = (sense, src) => `
+    <figure class="specific-results__photo specific-results__photo--${sense}">
+      <img src="${src}" alt="" />
+    </figure>`;
+  const resultsGrid =
+    state.respondent === "teen" && !compact
+      ? `
+      <div class="specific-results__grid specific-results__grid--teen">
+        ${cardHtml("auditory")}
+        ${cardHtml("tactile")}
+        ${sensePhoto("auditory", "assets/sense-auditory.png")}
+        ${cardHtml("movement")}
+        <div class="specific-results__photo-pair">
+          ${sensePhoto("tactile", "assets/support-tactile.png")}
+          ${sensePhoto("movement", "assets/couple-movement-gym.png")}
+        </div>
+      </div>`
+      : `<div class="specific-results__grid">${groups}</div>`;
+
+  const teenSheet = state.respondent === "teen" && !compact;
+  const heading = teenSheet
+    ? `
+      <div class="specific-results__banner">
+        <p class="profile-kicker">${escapeHtml(findings.kicker)}</p>
+        <h3 id="specific-results-title">${escapeHtml(findings.title)}</h3>
+      </div>`
+    : `
+      <p class="profile-kicker">${escapeHtml(findings.kicker)}</p>
+      <h3 id="specific-results-title">${escapeHtml(findings.title)}</h3>
+      ${printMountainRule("section")}`;
 
   return `
     <section class="profile-section profile-section--specific-results" aria-labelledby="specific-results-title"${reportPageAttrs(pageEntry)}>
-      <p class="profile-kicker">${escapeHtml(findings.kicker)}</p>
-      <h3 id="specific-results-title">${escapeHtml(findings.title)}</h3>
-      ${printMountainRule("section")}
+      ${heading}
       <p class="profile-section__summary">${escapeHtml(findings.intro)}</p>
-      <div class="specific-results__grid">${groups}</div>
+      ${resultsGrid}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
     </section>`;
@@ -12013,12 +12163,25 @@ function renderTeenSchoolMoveCards(rows, copy) {
         <ol class="teen-move__list">${moves}</ol>
       </article>`;
     })
-    .filter(Boolean)
-    .join("");
-  return cards ? `<div class="teen-moves__grid">${cards}</div>` : "";
+    .filter(Boolean);
+  if (!cards.length) return "";
+  const midpoint = Math.ceil(cards.length / 2);
+  const band = `
+    <figure class="teen-moves__band">
+      <img src="assets/couple-movement-walk.png" alt="A sunlit path between the school moves" width="1024" height="682" loading="eager" decoding="async" />
+    </figure>`;
+  const html = cards.length > 3
+    ? [...cards.slice(0, midpoint), band, ...cards.slice(midpoint)].join("")
+    : cards.join("");
+  return `<div class="teen-moves__grid">${html}</div>`;
 }
 
 function renderTeenHomeSupportCards(rows, copy) {
+  const visuals = [
+    { src: "assets/heading-sunlight-trail.png", alt: "A sunlit path on the way home", kind: "walker" },
+    { src: "assets/support-movement.png", alt: "People running together", kind: "runners" },
+    { src: "assets/home-helps-banner.png", alt: "A calmer setup at home", kind: "home" },
+  ];
   const cards = rows
     .map((row, index) => {
       const tips = getSenseSupportTips(row.id, row.profile, {
@@ -12053,62 +12216,80 @@ function renderTeenHomeSupportCards(rows, copy) {
           </div>
         </article>`;
     })
-    .filter(Boolean)
-    .join("");
-  return cards ? `<div class="sense-support__grid">${cards}</div>` : "";
+    .filter(Boolean);
+  if (!cards.length) return "";
+  const html = [];
+  cards.forEach((card, index) => {
+    html.push(card);
+    if ((index + 1) % 2 === 0 && index < cards.length - 1) {
+      const visual = visuals[Math.floor(index / 2) % visuals.length];
+      html.push(`
+        <figure class="teen-home-support__visual teen-home-support__visual--${visual.kind}">
+          <img src="${visual.src}" alt="${escapeHtml(visual.alt)}" width="1024" height="682" loading="eager" decoding="async" />
+        </figure>`);
+    }
+    if (index === cards.length - 1) {
+      html.push(`
+        <figure class="teen-home-support__visual teen-home-support__visual--close">
+          <img src="assets/home-helps-banner.png" alt="A quiet path at the end of the day" width="1024" height="682" loading="eager" decoding="async" />
+        </figure>`);
+    }
+  });
+  return `<div class="sense-support__grid">${html.join("")}</div>`;
 }
 
-function renderTeenSenseSupportGuide(scores, pageEntry) {
+function renderTeenSenseSupportGuide(scores, pageEntry, homePageEntry = null) {
   const copy = currentUi();
   const rows = getScoreRows(scores);
   const schoolCards = renderTeenSchoolMoveCards(rows, copy);
   const homeCards = renderTeenHomeSupportCards(rows, copy);
   if (!schoolCards && !homeCards) return "";
 
-  return `
-    <section class="profile-section profile-section--sense-support profile-section--teen-support"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
-      <div class="teen-support-sheet">
-        ${renderInterpretSectionBanner({
-          image: "assets/heading-learning-trail.png",
-          objectPosition: "center 40%",
-          kicker: copy.senseSupportKicker,
-          titleId: "sense-support-title",
-          title: copy.senseSupportTitle,
-          lead: copy.senseSupportIntroTeen || copy.senseSupportIntro,
-          variant: "forest",
-          width: 1024,
-          height: 768,
-        })}
-        ${
-          schoolCards
-            ? `
-        <div class="teen-moves">
-          <header class="teen-moves__intro">
-            <p class="teen-moves__kicker">${escapeHtml(copy.senseSupportSchoolKicker || "At school")}</p>
-            <h4 class="teen-moves__heading">${escapeHtml(copy.senseSupportSchoolTitle || "Your school moves")}</h4>
-            <p class="teen-moves__lead">${escapeHtml(copy.senseSupportSchoolLead || "")}</p>
-          </header>
-          ${schoolCards}
-        </div>`
-            : ""
-        }
+  const school = schoolCards
+    ? `
+    <section class="profile-section profile-section--sense-support profile-section--teen-support profile-section--teen-school"${reportPageAttrs(pageEntry)} aria-labelledby="sense-support-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-learning-trail.png",
+        objectPosition: "center 40%",
+        kicker: copy.senseSupportSchoolKicker || copy.senseSupportKicker,
+        titleId: "sense-support-title",
+        title: copy.senseSupportSchoolTitle || copy.senseSupportTitle,
+        lead: copy.senseSupportSchoolLead || copy.senseSupportIntroTeen || copy.senseSupportIntro,
+        variant: "forest",
+        width: 1024,
+        height: 768,
+      })}
+      <div class="teen-moves">
+        ${schoolCards}
       </div>
-      ${
-        homeCards
-          ? `
-      <div class="teen-home-support">
-        <header class="teen-home-support__intro">
-          <p class="profile-kicker">${escapeHtml(copy.senseSupportHomeChapterKicker || "At home")}</p>
-          <h4 class="teen-home-support__heading">${escapeHtml(copy.senseSupportHomeChapterTitle || "Your home setup")}</h4>
-          <p class="teen-home-support__lead">${escapeHtml(copy.senseSupportHomeChapterLead || "")}</p>
-        </header>
-        ${homeCards}
-      </div>`
-          : ""
-      }
       ${reportPageNumberHtml(copy, pageEntry?.page)}
       <div class="print-page-motif print-only" aria-hidden="true"></div>
-    </section>`;
+    </section>`
+    : "";
+
+  const home = homeCards
+    ? `
+    <section class="profile-section profile-section--sense-support profile-section--teen-support profile-section--teen-home"${reportPageAttrs(homePageEntry || pageEntry)} aria-labelledby="sense-support-home-title">
+      ${renderInterpretSectionBanner({
+        image: "assets/heading-home-trail.png",
+        objectPosition: "center 48%",
+        kicker: copy.senseSupportHomeChapterKicker || "At home",
+        titleId: "sense-support-home-title",
+        title: copy.senseSupportHomeChapterTitle || "Your home setup",
+        lead: copy.senseSupportHomeChapterLead || "",
+        variant: "forest",
+        width: 683,
+        height: 1024,
+      })}
+      <div class="teen-home-support">
+        ${homeCards}
+      </div>
+      ${reportPageNumberHtml(copy, (homePageEntry || pageEntry)?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>`
+    : "";
+
+  return `${school}${home}`;
 }
 
 const SENSE_SUPPORT_IMAGES = {
@@ -12140,7 +12321,7 @@ function renderSenseSupportVisual(row, index) {
     `;
 }
 
-function renderSenseSupportGuide(scores, pageEntry) {
+function renderSenseSupportGuide(scores, pageEntry, homePageEntry = null) {
   const copy = currentUi();
   const isParent = state.respondent === "parent";
   const isTeen = state.respondent === "teen";
@@ -12185,7 +12366,7 @@ function renderSenseSupportGuide(scores, pageEntry) {
   }
 
   if (isTeen) {
-    return renderTeenSenseSupportGuide(scores, pageEntry);
+    return renderTeenSenseSupportGuide(scores, pageEntry, homePageEntry);
   }
 
   const cards = rows
@@ -12403,14 +12584,15 @@ function renderTrailSettingInterpretations(metrics, pagePlan) {
             <article class="trail-interpret__block trail-interpret__block--support">
               <h4 class="trail-interpret__label">${escapeHtml(guide.supportLabel)}</h4>
               <ul class="trail-interpret__list">${supportItems}</ul>
-              ${renderTeenTrailSupportVisuals(settingKey)}
+              ${settingKey === "school" ? "" : renderTeenTrailSupportVisuals(settingKey)}
             </article>`
                 : ""
             }
           </div>
+          ${settingKey === "school" ? renderTeenTrailSupportVisuals(settingKey) : ""}
           ${
             settingKey === "home" || settingKey === "homeParent"
-              ? renderTeenIdealSaturdayPrintBlock()
+              ? `${renderTeenIdealSaturdayPrintBlock()}${renderTeenReportClose()}`
               : ""
           }
           ${reportPageNumberHtml(currentUi(), pageEntry?.page)}
@@ -12600,7 +12782,12 @@ function buildReportPagePlan(copy, scores, metrics) {
     state.respondent || "adult"
   );
   add("report-specific-results", specificFindings.title);
-  add("report-sense-support", isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle);
+  if (state.respondent === "teen") {
+    add("report-sense-support", copy.senseSupportSchoolTitle || copy.senseSupportTitle);
+    add("report-sense-support-home", copy.senseSupportHomeChapterTitle || "At home");
+  } else {
+    add("report-sense-support", isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle);
+  }
 
   if ((state.idealSaturday || "").trim() && !isCouplePathway() && state.respondent !== "teen") {
     add("report-ideal-saturday", copy.idealSaturdayResultsTitle);
@@ -12645,6 +12832,7 @@ function waitForReportPrintImages(root = document) {
         ".profile-section img",
         ".work-profile-cover img",
         ".home-profile-cover img",
+        ".teen-profile-cover img",
         ".report-conclusion img",
         ".print-brand img",
       ].join(", ")
@@ -12973,6 +13161,14 @@ function previewBlockLabel(el) {
   return title || "Page";
 }
 
+function appendFullCoverSheet(stack, el) {
+  const { sheet, page } = createPreviewSheet("Cover");
+  page.classList.add("print-preview-sheet__page--cover");
+  page.appendChild(el.cloneNode(true));
+  stack.appendChild(sheet);
+  el.remove();
+}
+
 function createPreviewSheet(label) {
   const sheet = document.createElement("section");
   sheet.className = "print-preview-sheet";
@@ -12987,6 +13183,17 @@ function createPreviewSheet(label) {
 
 function sheetOverflows(page) {
   return page.scrollHeight > page.clientHeight + 6;
+}
+
+function dropSparsePreviewSheets(stack) {
+  stack.querySelectorAll(".print-preview-sheet").forEach((sheet) => {
+    const page = sheet.querySelector(".print-preview-sheet__page");
+    if (!page || page.classList.contains("print-preview-sheet__page--cover")) return;
+    const hasVisual = [...page.querySelectorAll("img, svg")].some((el) => el.getBoundingClientRect().height > 48);
+    if (hasVisual) return;
+    const text = page.innerText.replace(/\s+/g, " ").trim();
+    if (/^Page \d+$/i.test(text) || text.length < 40) sheet.remove();
+  });
 }
 
 function markOverflowingSheets(stack) {
@@ -13030,7 +13237,7 @@ function appendPaginatedBlock(stack, el, label) {
       if (!sheetOverflows(page)) continue;
       parent.removeChild(node);
       const keepTogether = node.nodeType === 1 && [...node.classList].some((name) => name.includes("card"));
-      if (!keepTogether && node.nodeType === 1 && node.children.length > 1) {
+      if (!keepTogether && node.nodeType === 1 && node.children.length > 0) {
         const atSectionRoot = parent === host;
         const hostBefore = host;
         const wrap = node.cloneNode(false);
@@ -13060,8 +13267,7 @@ function appendPaginatedBlock(stack, el, label) {
 function layoutA4PrintPreview() {
   document.querySelectorAll(".print-preview-stack").forEach((node) => node.remove());
   const blocks = [];
-  const cover = document.querySelector(".home-profile-cover");
-  if (cover) blocks.push(cover);
+  const cover = document.querySelector(".teen-profile-cover, .home-profile-cover");
   document.querySelectorAll("[data-report-page]").forEach((el) => {
     if (cover && cover.contains(el)) return;
     blocks.push(el);
@@ -13071,9 +13277,40 @@ function layoutA4PrintPreview() {
   stack.className = "print-preview-stack";
   document.body.appendChild(stack);
   document.body.classList.add("print-preview-a4");
+  if (cover) {
+    if (cover.classList.contains("teen-profile-cover")) appendFullCoverSheet(stack, cover);
+    else appendPaginatedBlock(stack, cover, previewBlockLabel(cover));
+  }
   blocks.forEach((el) => appendPaginatedBlock(stack, el, previewBlockLabel(el)));
+  dropSparsePreviewSheets(stack);
   markOverflowingSheets(stack);
   fillPrintPreviewGaps(stack);
+  fitPrintPreviewToWindow();
+  bindPrintPreviewFit();
+}
+
+/** Shrink the A4 stack so one full page fits the window. Pagination stays at 210 × 297 mm. */
+function fitPrintPreviewToWindow() {
+  const stack = document.querySelector(".print-preview-stack");
+  const sheet = stack?.querySelector(".print-preview-sheet");
+  if (!stack || !sheet) return;
+  stack.style.zoom = "1";
+  const bodyStyle = getComputedStyle(document.body);
+  const padTop = parseFloat(bodyStyle.paddingTop) || 0;
+  const padBottom = parseFloat(bodyStyle.paddingBottom) || 0;
+  const availableW = Math.max(280, window.innerWidth - 36);
+  const availableH = Math.max(360, window.innerHeight - padTop - padBottom - 28);
+  const scale = Math.min(1, availableW / sheet.offsetWidth, availableH / sheet.offsetHeight);
+  stack.style.zoom = String(Math.round(scale * 1000) / 1000);
+}
+
+function bindPrintPreviewFit() {
+  if (bindPrintPreviewFit.bound) return;
+  bindPrintPreviewFit.bound = true;
+  window.addEventListener("resize", () => {
+    if (!document.body.classList.contains("print-preview-a4")) return;
+    fitPrintPreviewToWindow();
+  });
 }
 
 const PRINT_PREVIEW_GAP_COPY = {
@@ -13144,7 +13381,7 @@ function previewSheetPageNumber(label) {
 
 function previewEmptySpans(page) {
   const pr = page.getBoundingClientRect();
-  const selector = "img, h2, h3, h4, h5, p, li, blockquote, figure, article, .interpret-section-banner, .specific-results__card, .sense-support__card, .profile-kicker";
+  const selector = "img, h2, h3, h4, h5, p, li, blockquote, figure, article, .interpret-section-banner, .specific-results__card, .specific-results__photo, .sense-support__card, .profile-kicker, .teen-score, .overall-score, .school-visual, .teen-move, .trail-interpret__block, .trail-interpret__ideal-saturday, .teen-report-close, .teen-home-support__visual";
   const intervals = [];
   page.querySelectorAll(selector).forEach((el) => {
     if (el.closest(".report-page-number") || el.closest(".print-preview-fill")) return;
@@ -13172,29 +13409,109 @@ function previewEmptySpans(page) {
   return spans;
 }
 
+const TEEN_PRINT_PREVIEW_GAP_COPY = {
+  en: {
+    photos: [
+      {
+        src: "assets/heading-forest-trail.png",
+        alt: "A forest path in the sunlight",
+        aspect: 2 / 3,
+        caption: "The trail is not one speed. Some stretches need quiet, and some need a bit more life underfoot."
+      },
+      {
+        src: "assets/short-report-misty-trail.png",
+        alt: "A misty mountain path",
+        aspect: 3 / 4,
+        caption: "School and home ask for different volumes. A useful plan is one that can change between them."
+      },
+      {
+        src: "assets/heading-conclusion-trail.png",
+        alt: "Wooden steps on a green hillside",
+        aspect: 3 / 2,
+        caption: "A quieter start after the bell is not opting out. It is how the next part of the day becomes possible."
+      },
+      {
+        src: "assets/heading-sunlight-trail.png",
+        alt: "A sunlit path through dry grass",
+        aspect: 3 / 4,
+        caption: "Hearing, touch and movement each ask for their own kind of support. One plan rarely fits all three."
+      }
+    ],
+    quotes: [
+      "Support works when it matches the sense that is asking for less, or for more.",
+      "There is no single right way to sit in a classroom or walk in the door. The question is what this day needs.",
+      "Recovery is part of the plan — a short pause, a familiar corner, then the next step.",
+      "Knowing your pattern is a way of looking after the day you actually have: the lesson, the corridor, the room you come home to."
+    ]
+  },
+  af: {
+    photos: [
+      {
+        src: "assets/heading-forest-trail.png",
+        alt: "’n Bospad in die sonlig",
+        aspect: 2 / 3,
+        caption: "Die roete is nie een tempo nie. Party stukke het stilte nodig, en party het ’n bietjie meer lewe onder die voete nodig."
+      },
+      {
+        src: "assets/short-report-misty-trail.png",
+        alt: "’n Mistige bergpad",
+        aspect: 3 / 4,
+        caption: "Skool en huis vra verskillende volumes. ’n Nuttige plan is een wat tussen hulle kan verander."
+      },
+      {
+        src: "assets/heading-conclusion-trail.png",
+        alt: "Houttrappe op ’n groen hang",
+        aspect: 3 / 2,
+        caption: "’n Stiller begin ná die klok is nie om weg te bly nie. Dit is hoe die volgende deel van die dag moontlik word."
+      },
+      {
+        src: "assets/heading-sunlight-trail.png",
+        alt: "’n Sonverligte pad deur droë gras",
+        aspect: 3 / 4,
+        caption: "Gehoor, aanraking en beweging vra elkeen hul eie soort steun. Een plan pas selde by al drie."
+      }
+    ],
+    quotes: [
+      "Ondersteuning werk wanneer dit pas by die sintuig wat om minder, of om meer, vra.",
+      "Daar is nie een regte manier om in ’n klaskamer te sit of by die deur in te stap nie. Die vraag is wat hierdie dag nodig het.",
+      "Herstel is deel van die plan — ’n kort pouse, ’n bekende hoekie, dan die volgende tree.",
+      "Om jou patroon te ken, is ’n manier om na die dag om te sien wat jy werklik het: die les, die gang, die vertrek waar jy tuis kom."
+    ]
+  }
+};
+
 function fillPrintPreviewGaps(stack) {
-  if (state.respondent !== "adult" || state.lifeContext !== "home") return;
-  const copy = previewGapCopy();
+  const teen = state.respondent === "teen";
+  const adultHome = state.respondent === "adult" && state.lifeContext === "home";
+  if (!teen && !adultHome) return;
+  const copy = teen
+    ? TEEN_PRINT_PREVIEW_GAP_COPY[state.language] || TEEN_PRINT_PREVIEW_GAP_COPY.en
+    : previewGapCopy();
   const mm = 96 / 25.4;
   const edge = 16 * mm;
-  const cushion = 10 * mm;
-  const bottomClear = 18 * mm;
+  const cushion = 8 * mm;
+  const bottomClear = 16 * mm;
+  const minGap = teen ? 78 : 100;
+  const photoGap = teen ? 168 : 250;
   let photoIndex = 0;
   let quoteIndex = 0;
+  let lastPhoto = "";
 
   stack.querySelectorAll(".print-preview-sheet").forEach((sheet) => {
-    const label = sheet.querySelector(".print-preview-sheet__label")?.textContent || "";
-    if (previewSheetPageNumber(label) < 5) return;
     const page = sheet.querySelector(".print-preview-sheet__page");
-    if (!page) return;
+    if (!page || page.classList.contains("print-preview-sheet__page--cover")) return;
+    if (page.querySelector(".teen-report-close, .trail-profile__figure--overview, .trail-profile--matched, .profile-section--teen-school, .profile-section--trail-interpret[data-trail-setting='school'], .profile-section--teen-home, .specific-results__photo")) return;
+    const label = sheet.querySelector(".print-preview-sheet__label")?.textContent || "";
+    if (!teen && previewSheetPageNumber(label) < 5) return;
     const tallImage = [...page.querySelectorAll("img")].some((img) => img.getBoundingClientRect().height > 280);
+    const hasHomeVisual = Boolean(page.querySelector(".teen-home-support__visual"));
 
     previewEmptySpans(page).forEach((span) => {
       const top = span.from + cushion;
       const bottom = Math.min(span.to - cushion, page.clientHeight - bottomClear);
       const height = bottom - top;
-      if (height < 100) return;
-      const usePhoto = !tallImage && height >= 250 && photoIndex < copy.photos.length;
+      if (height < minGap) return;
+      const usePhoto = !tallImage && !hasHomeVisual && height >= photoGap;
       const fill = document.createElement("aside");
       fill.className = `print-preview-fill ${usePhoto ? "print-preview-fill--photo" : "print-preview-fill--quote"}${!usePhoto && height < 160 ? " print-preview-fill--compact" : ""}`;
       fill.style.top = `${top}px`;
@@ -13202,7 +13519,14 @@ function fillPrintPreviewGaps(stack) {
       fill.style.width = `${page.clientWidth - edge * 2}px`;
       fill.style.height = `${height}px`;
       if (usePhoto) {
-        const photo = copy.photos[photoIndex % copy.photos.length];
+        let photo = copy.photos[photoIndex % copy.photos.length];
+        let guard = 0;
+        while (photo.src === lastPhoto && guard < copy.photos.length) {
+          photoIndex += 1;
+          photo = copy.photos[photoIndex % copy.photos.length];
+          guard += 1;
+        }
+        lastPhoto = photo.src;
         photoIndex += 1;
         const img = document.createElement("img");
         img.src = photo.src;
@@ -13246,6 +13570,7 @@ function fillPrintPreviewGaps(stack) {
 async function enableOnScreenPrintPreview() {
   document.body.classList.add("print-sensory-results");
   if (state.respondent === "parent") document.body.classList.add("print-parent-report");
+  if (state.respondent === "teen") document.body.classList.add("print-teen-report");
   if (document.body.classList.contains("print-couple-merge") || state.view === "couple-hub") {
     document.body.classList.add("print-couple-merge");
   }
@@ -13261,9 +13586,10 @@ async function enableOnScreenPrintPreview() {
     width: auto !important;
     max-width: none !important;
     margin: 0 !important;
-    padding: 10mm 0 18mm !important;
+    padding: 12px 0 16px !important;
     background: #c5d0c8 !important;
     box-shadow: none !important;
+    overflow-x: hidden !important;
   }
   body.print-preview-a4 #app { display: none !important; }
   .print-preview-stack {
@@ -13293,6 +13619,31 @@ async function enableOnScreenPrintPreview() {
     overflow: hidden;
     background: #fff;
     box-shadow: 0 14px 40px rgba(36, 75, 56, 0.22);
+  }
+  .print-preview-sheet__page--cover {
+    padding: 0;
+    background: #f4efe4;
+  }
+  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover {
+    display: flex;
+    flex-direction: column;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover__hero {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover__board {
+    flex: 0 0 auto;
   }
   .print-preview-sheet--overflow .print-preview-sheet__page {
     outline: 2px solid #a33b32;
@@ -13370,8 +13721,9 @@ function printSensoryResultsPacket() {
   const isParent = state.respondent === "parent";
   document.body.classList.add("print-sensory-results");
   if (isParent) document.body.classList.add("print-parent-report");
+  if (state.respondent === "teen") document.body.classList.add("print-teen-report");
   const cleanup = () => {
-    document.body.classList.remove("print-sensory-results", "print-parent-report");
+    document.body.classList.remove("print-sensory-results", "print-parent-report", "print-teen-report");
     window.removeEventListener("afterprint", cleanup);
   };
   window.addEventListener("afterprint", cleanup);
@@ -15036,6 +15388,81 @@ function renderWorkProfileCover(copy) {
     </section>`;
 }
 
+function renderTeenProfileCover(copy) {
+  const af = state.language === "af";
+  const name = (state.demographics.name || "").trim();
+  const age = String(state.demographics.age || "").trim();
+  const grade = String(state.demographics.occupation || "").trim();
+  const dateLabel = formatQuestionnaireDate(state.completedAt, state.language);
+  const context = lifeContextLabel() || (af ? "Huis & skool" : "Home & school");
+  const detail = [age ? `${af ? "Ouderdom" : "Age"} ${age}` : "", grade].filter(Boolean).join(" · ");
+  const labels = af
+    ? { questionnaire: "Vraelys", details: "Besonderhede", date: "Datum", sharing: "Deling" }
+    : { questionnaire: "Questionnaire", details: "Details", date: "Date", sharing: "Sharing" };
+  const note = af
+    ? "Hierdie sifting is nie ’n diagnose nie. Resultate dien slegs as riglyn."
+    : "This screening does not constitute a diagnosis. Results are for guidance only.";
+  const sharing = getSharingConsentItems(state.language, "teen", state.lifeContext)
+    .map((item) => {
+      const allowed = Boolean(state.sharingConsent?.[item.id]);
+      const status = allowed
+        ? copy.sharingSummaryAllowed || (af ? "Mag deel" : "May share")
+        : copy.sharingSummaryNotGiven || (af ? "Toestemming nie gegee nie" : "Permission not given");
+      return `<li><span>${escapeHtml(item.shortLabel || item.label)}</span><strong>${escapeHtml(status)}</strong></li>`;
+    })
+    .join("");
+
+  return `
+    <section class="teen-profile-cover" aria-labelledby="profile-title">
+      <div class="teen-profile-cover__hero">
+        <img
+          src="assets/outeniqua-trail-hero.png"
+          alt=""
+          class="teen-profile-cover__image"
+          width="1536"
+          height="1024"
+          loading="eager"
+          decoding="async"
+        />
+        <div class="teen-profile-cover__veil" aria-hidden="true"></div>
+        <div class="teen-profile-cover__brand">
+          <img src="assets/logo.png" alt="" class="teen-profile-cover__logo" width="72" height="72" />
+          <div>
+            <p class="teen-profile-cover__studio">Soulful Sensory OT</p>
+            <p class="teen-profile-cover__tag">${escapeHtml(copy.interpretCoverBrandTag || (af ? "Arbeidsterapiedienste" : "Occupational Therapy Services"))}</p>
+          </div>
+        </div>
+      </div>
+      <div class="teen-profile-cover__board">
+        <p class="teen-profile-cover__kicker">${escapeHtml(af ? "Sensoriese roete-profiel" : "Sensory trail profile")}</p>
+        <h2 id="profile-title" class="teen-profile-cover__title">${escapeHtml(copy.profileTitle || (af ? "Jou sensoriese roete-profiel" : "Your sensory trail profile"))}</h2>
+        ${name ? `<p class="teen-profile-cover__name">${escapeHtml(name)}</p>` : ""}
+        <dl class="teen-profile-cover__facts">
+          <div>
+            <dt>${escapeHtml(labels.questionnaire)}</dt>
+            <dd>${escapeHtml(af ? "Tien" : "Teen")} · ${escapeHtml(context)}</dd>
+          </div>
+          ${
+            detail
+              ? `<div><dt>${escapeHtml(labels.details)}</dt><dd>${escapeHtml(detail)}</dd></div>`
+              : ""
+          }
+          ${
+            dateLabel
+              ? `<div><dt>${escapeHtml(labels.date)}</dt><dd>${escapeHtml(dateLabel)}</dd></div>`
+              : ""
+          }
+        </dl>
+        ${
+          sharing
+            ? `<div class="teen-profile-cover__sharing"><p>${escapeHtml(labels.sharing)}</p><ul>${sharing}</ul></div>`
+            : ""
+        }
+        <p class="teen-profile-cover__note">${escapeHtml(note)}</p>
+      </div>
+    </section>`;
+}
+
 function renderHomeProfileCover(copy) {
   const name = (state.demographics.name || "").trim();
   const dateLabel = formatQuestionnaireDate(state.completedAt, state.language);
@@ -15097,6 +15524,7 @@ function renderResults() {
   const fromViewer = isViewerMode() && Boolean(state.sampleReportPreview || state.archiveReadOnly);
   const pagePlan = buildReportPagePlan(copy, scores, metrics);
   const isParent = state.respondent === "parent";
+  const isTeenProfile = state.respondent === "teen";
   const isWorkProfile = state.respondent === "adult" && state.lifeContext === "work";
   const isHomeProfile = state.respondent === "adult" && state.lifeContext === "home";
 
@@ -15131,6 +15559,12 @@ function renderResults() {
       </div>
 
       ${renderSharingPermissionsSummary()}`
+    : isTeenProfile
+      ? `
+      <div class="results-intro results-intro--concise results-intro--teen" aria-labelledby="profile-title">
+        ${renderTeenProfileCover(copy)}
+        ${submissionNote}
+      </div>`
     : `
       <div class="results-intro results-intro--concise" aria-labelledby="profile-title">
         ${renderInterpretSectionBanner({
@@ -15214,7 +15648,7 @@ function renderResults() {
       ${renderMatchedTrailDescription(metrics, reportPageById(pagePlan, "report-trail-description"))}
       ${renderBriefScoreSummary(scores, metrics, reportPageById(pagePlan, "report-brief-scores"))}
       ${renderSpecificSensoryResults(reportPageById(pagePlan, "report-specific-results"))}
-      ${renderSenseSupportGuide(scores, reportPageById(pagePlan, "report-sense-support"))}
+      ${renderSenseSupportGuide(scores, reportPageById(pagePlan, "report-sense-support"), reportPageById(pagePlan, "report-sense-support-home"))}
       ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}
       ${renderCoupleWorkResults()}
       ${renderTrailSettingInterpretations(metrics, pagePlan)}
@@ -15759,6 +16193,7 @@ function bindEvents() {
         saveSensoryDraft();
         clearInviteSession();
         state.viewingArchivedId = null;
+        state.pendingReportId = null;
         state.archiveReadOnly = false;
         state.reportViewMode = null;
         state.sampleReportPreview = false;
@@ -15771,6 +16206,7 @@ function bindEvents() {
           clean.searchParams.delete("results");
           clean.searchParams.delete("dashboard");
           clean.searchParams.delete("patients");
+          clean.searchParams.delete("report");
           clean.searchParams.delete("preview");
           clean.searchParams.delete("sample");
           clean.searchParams.delete("respondent");
@@ -16290,6 +16726,7 @@ function bindEvents() {
       state.viewingArchivedId = null;
       state.archiveReadOnly = false;
       state.reportViewMode = null;
+      state.pendingReportId = null;
       state.sampleReportPreview = false;
       state.view = "home";
       state.step = 0;
@@ -16313,6 +16750,7 @@ function bindEvents() {
         clean.searchParams.delete("results");
         clean.searchParams.delete("dashboard");
         clean.searchParams.delete("patients");
+        clean.searchParams.delete("report");
         window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
       }
       render({ scrollToTop: true });
@@ -17898,6 +18336,7 @@ async function bootApp() {
   if (typeof Auth !== "undefined" && Auth.canAccessClinicianTools()) {
     initTherapistPrefs();
   }
+  if (state.pendingReportId) openReportFromEmailLink();
   if (state.view === "reset") {
     if (!state.resetToken) {
       state.authError = "This reset link is missing. Please request a new one.";

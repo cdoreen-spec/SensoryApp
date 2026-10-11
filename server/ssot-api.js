@@ -428,6 +428,7 @@ async function sendGmail({
   password,
   intro,
   sections,
+  reportUrl,
 }) {
   if (!gmailConfigured()) {
     const err = new Error(
@@ -458,6 +459,7 @@ async function sendGmail({
     password,
     intro,
     sections,
+    reportUrl,
   };
   await transporter.sendMail({
     from: `"Soulful Sensory OT" <${fromUser}>`,
@@ -552,43 +554,75 @@ function isCompleteAssessment(item) {
   return Boolean(item.completedAt && item.summary);
 }
 
-function completionReport(item) {
+function appBaseUrl(origin) {
+  const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  return String(origin || "").trim().replace(/\/$/, "");
+}
+
+function buildServerReportUrl(assessmentId, origin) {
+  const base = appBaseUrl(origin);
+  if (!base || !assessmentId) return "";
+  return `${base}/?report=${encodeURIComponent(assessmentId)}`;
+}
+
+function rewriteReportSections(sections, origin) {
+  if (!Array.isArray(sections)) return sections;
+  return sections.map((section) => {
+    if (!section || typeof section !== "object") return section;
+    const next = { ...section };
+    if (typeof next.text === "string") next.text = replacePrivateOrigin(next.text, origin);
+    return next;
+  });
+}
+
+function completionReport(item, origin) {
   const summary = item.summary || {};
   const demo = item.demographics || {};
   const name = summary.patientName || summary.completerName || demo.name || "Patient";
+  const reportUrl = buildServerReportUrl(item?.id, origin);
+  const intro = reportUrl
+    ? "A sensory questionnaire has been completed. Open the link in this email to view this report."
+    : "A sensory questionnaire has been completed. This notice does not include scores. Open the patient register for the full profile.";
+  const sections = [
+    {
+      heading: "Completion notice",
+      rows: [
+        ["Name", name],
+        ["Questionnaire", [item.respondent, item.lifeContext].filter(Boolean).join(" · ") || "Sensory screening"],
+      ],
+    },
+  ];
+  if (reportUrl) {
+    sections.push({ heading: "View this report", text: `View this report: ${reportUrl}` });
+  }
   return {
     name,
     subject: `Completed: ${name} — Sensory screening`,
-    intro:
-      "A sensory questionnaire has been completed. This notice does not include scores. Open the patient register for the full profile.",
-    sections: [
-      {
-        heading: "Completion notice",
-        rows: [
-          ["Name", name],
-          ["Questionnaire", [item.respondent, item.lifeContext].filter(Boolean).join(" · ") || "Sensory screening"],
-        ],
-      },
-    ],
+    intro,
+    reportUrl,
+    message: [intro, reportUrl ? `View this report: ${reportUrl}` : ""].filter(Boolean).join("\n\n"),
+    sections,
   };
 }
 
-async function emailNewlyCompleted(beforeItems, items) {
+async function emailNewlyCompleted(beforeItems, items, origin) {
   const before = new Map((beforeItems || []).filter((item) => item?.id).map((item) => [item.id, item]));
   for (const item of items || []) {
     if (!isCompleteAssessment(item) || item.reportEmailedAt) continue;
     const previous = before.get(item.id);
     if (previous && isCompleteAssessment(previous)) continue;
-    const report = completionReport(item);
+    const report = completionReport(item, origin);
     try {
       await sendGmail({
         to: clinicianEmail(),
         subject: report.subject,
-        message: report.intro,
+        message: report.message,
         name: report.name,
         kind: "report",
         intro: report.intro,
         sections: report.sections,
+        reportUrl: report.reportUrl,
       });
       item.reportEmailedAt = new Date().toISOString();
       console.log(`Report emailed to ${clinicianEmail()} for ${report.name}`);
@@ -598,7 +632,7 @@ async function emailNewlyCompleted(beforeItems, items) {
   }
 }
 
-async function handleLogin(state, body) {
+async function handleLogin(state, body, origin) {
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
   const user = state.users.find((entry) => entry.email === email);
@@ -617,7 +651,7 @@ async function handleLogin(state, body) {
   const beforeAssessments = [...(state.assessments.items || [])];
   if (isStaff(user) && body.localSnapshot) {
     mergeSnapshot(state, body.localSnapshot);
-    await emailNewlyCompleted(beforeAssessments, state.assessments.items);
+    await emailNewlyCompleted(beforeAssessments, state.assessments.items, origin);
   }
   user.lastLoginAt = new Date().toISOString();
   if (user.temporaryPassword) delete user.temporaryPassword;
@@ -738,13 +772,13 @@ async function handleHydrate(state, body) {
   return json(200, { ok: true, replace: false, users: [], empty: true });
 }
 
-async function handlePush(state, body) {
+async function handlePush(state, body, origin) {
   const user = getSessionUser(state, body.sessionToken);
   if (!user) return json(401, { ok: false, error: "Please sign in again." });
   const beforeAssessments = [...(state.assessments.items || [])];
   if (isStaff(user)) {
     mergeSnapshot(state, body);
-    await emailNewlyCompleted(beforeAssessments, state.assessments.items);
+    await emailNewlyCompleted(beforeAssessments, state.assessments.items, origin);
     await saveState(state);
     return json(200, { ok: true, ...staffSnapshot(state) });
   }
@@ -763,7 +797,7 @@ async function handlePush(state, body) {
     );
     state.assessments.items = mergeById(state.assessments.items, allowed);
   }
-  await emailNewlyCompleted(beforeAssessments, state.assessments.items);
+  await emailNewlyCompleted(beforeAssessments, state.assessments.items, origin);
   await saveState(state);
   return json(200, { ok: true, ...patientSnapshot(state, user) });
 }
@@ -798,12 +832,13 @@ async function handleSendEmail(state, body, origin) {
     kind: body.kind,
     inviteUrl: replacePrivateOrigin(body.inviteUrl, origin),
     resetUrl: replacePrivateOrigin(body.resetUrl, origin),
+    reportUrl: replacePrivateOrigin(body.reportUrl, origin),
     questionnaireType: body.questionnaireType,
     expiresAt: body.expiresAt,
     email: body.email || to,
     password: body.password,
     intro: body.intro,
-    sections: body.sections,
+    sections: rewriteReportSections(body.sections, origin),
   });
   return json(200, { ok: true, ...result });
 }
@@ -925,11 +960,11 @@ async function handleRequest(body, { origin } = {}) {
 
   const state = await loadState();
   try {
-    if (action === "login") return finish(await handleLogin(state, body));
+    if (action === "login") return finish(await handleLogin(state, body, origin));
     if (action === "loginWithInvite") return finish(await handleLoginWithInvite(state, body));
     if (action === "register") return finish(await handleRegister(state, body));
     if (action === "hydrate") return finish(await handleHydrate(state, body));
-    if (action === "push") return finish(await handlePush(state, body));
+    if (action === "push") return finish(await handlePush(state, body, origin));
     if (action === "sendEmail") return finish(await handleSendEmail(state, body, origin));
     if (action === "requestPasswordReset") {
       return finish(await handleRequestPasswordReset(state, body, origin));
@@ -1004,8 +1039,9 @@ function previewEmailHtml(kind = "invite") {
   };
   if (kind === "report") {
     sample.subject = "Completed: Alex — Sensory screening";
+    sample.reportUrl = "http://127.0.0.1:8787/?report=preview";
     sample.intro =
-      "A sensory questionnaire has been completed. This is a short notice — open the patient register in the web app for the full report.";
+      "A sensory questionnaire has been completed. Open the link in this email to view this report.";
     sample.sections = [
       {
         heading: "Patient details",

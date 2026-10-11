@@ -3839,6 +3839,8 @@ const TRAIL_SETTING_GUIDE = {
             "Use shared playlists or movement before deep conversation if you arrive home flat.",
             "Keep a way to add helpful input in the evening — not only rest on the sofa.",
             "Name the need kindly: “I need ten minutes to move, then I’m with you.”",
+            "Leave a ball, band, or skipping rope where you see it as you walk in.",
+            "If screens are the only thing that feels like enough, move for ten minutes before you start them.",
           ],
         },
         neutral: {
@@ -3849,6 +3851,8 @@ const TRAIL_SETTING_GUIDE = {
             "Match the first home block to the day — settle first, or activate first.",
             "Protect one lower-demand recovery stretch and one helpful sensory activity across the week.",
             "Notice whether you arrive at the next day rested or restless, and adjust the mix.",
+            "Keep a quiet kit and a wake-up kit in the same room so you can choose.",
+            "Tell the house which one you need today in one sentence, then start it.",
           ],
         },
         sensitive: {
@@ -3859,6 +3863,8 @@ const TRAIL_SETTING_GUIDE = {
             "Reduce stacked input at peak times: one sound source, softer light, clearer surfaces.",
             "Ask for space or consent around touch when already overloaded.",
             "Treat quiet and downtime as how connection becomes possible again — not as withdrawal.",
+            "Keep a lamp and one calm sound ready in the room where you recover.",
+            "Decide the first thing you do when you walk in — bag down, then quiet — so the reset is already the plan.",
           ],
         },
       },
@@ -3924,6 +3930,8 @@ const TRAIL_SETTING_GUIDE = {
             "Ask for standing options, active roles, or a walk-and-talk reset when the setup allows.",
             "Lean into active hobbies (sport, dance, drama, makerspace, outdoor time) as part of your week — not only as a reward.",
             "Teachers/family: treat “restless” as a cue for helpful input, not only a behaviour problem.",
+            "Use the stairs between lessons when you can.",
+            "Start homework with the most active bit — a sketch, a practical, or standing to plan — before the still writing.",
           ],
         },
         neutral: {
@@ -3935,6 +3943,8 @@ const TRAIL_SETTING_GUIDE = {
             "Adjust homework and hobby time after studying: settle first, or get moving first.",
             "Build a mix of interests — one more active, one calmer — so you can choose by how the day felt.",
             "Teachers/family: allow flexible supports without assuming one profile every day.",
+            "Keep one quiet tool and one movement tool in your bag, and choose after the lesson.",
+            "If the day flips halfway through, change the plan. You do not have to finish on the morning’s setting.",
           ],
         },
         sensitive: {
@@ -3946,6 +3956,8 @@ const TRAIL_SETTING_GUIDE = {
             "Plan a short quiet reset after studying before homework, practice or social plans.",
             "Choose hobbies that use your noticing strength (art, music, reading, craft, caring roles) without stacking overload.",
             "Teachers/family: reduce stacked demands after a heavy sensory day.",
+            "Ask for the instruction in writing when the room is too noisy to hold it.",
+            "Sit the next lesson out of the glare, even if that means a different chair.",
           ],
         },
       },
@@ -4005,6 +4017,8 @@ const TRAIL_SETTING_GUIDE = {
             "Gebruik gedeelde speellyste of beweging voor diep gesprek as jy plat by die huis aankom.",
             "Hou ’n manier om nuttige insette in die aand by te voeg — nie net rus op die bank nie.",
             "Noem die behoefte vriendelik: “Ek het tien minute nodig om te beweeg, dan is ek by jou.”",
+            "Los ’n bal, band of tou waar jy dit sien as jy instap.",
+            "As skerms die enigste ding is wat genoeg voel, beweeg tien minute voor jy hulle begin.",
           ],
         },
         neutral: {
@@ -4015,6 +4029,8 @@ const TRAIL_SETTING_GUIDE = {
             "Pas die eerste huisblok by die dag — eers bedaar, of eers aktiveer.",
             "Beskerm een laer-vraag herstelstuk en een nuttige sensoriese aktiwiteit oor die week.",
             "Let of jy die volgende dag uitgerus of rusteloos aankom, en pas die mengsel aan.",
+            "Hou ’n stil-stel en ’n wakker-stel in dieselfde vertrek sodat jy kan kies.",
+            "Sê vir die huis in een sin watter een jy vandag nodig het, en begin dan.",
           ],
         },
         sensitive: {
@@ -4025,6 +4041,8 @@ const TRAIL_SETTING_GUIDE = {
             "Verminder gestapelde insette op piektye: een klankbron, sagter lig, skoner oppervlaktes.",
             "Vra ruimte of toestemming rondom aanraking wanneer jy al oorlaai is.",
             "Behandel stilte en afskakeltyd as hoe verbinding weer moontlik word — nie as onttrekking nie.",
+            "Hou ’n lamp en een kalm klank gereed in die vertrek waar jy herstel.",
+            "Besluit die eerste ding wat jy doen as jy instap — sak neer, dan stil — sodat die herstel reeds die plan is.",
           ],
         },
       },
@@ -4090,6 +4108,8 @@ const TRAIL_SETTING_GUIDE = {
             "Vra staande opsies, aktiewe rolle, of ’n stap-en-praat herstel wanneer die opstelling dit toelaat.",
             "Leun op aktiewe stokperdjies (sport, dans, drama, maak-dinge, buitelewe) as deel van jou week — nie net as beloning nie.",
             "Onderwysers/familie: behandel “rusteloos” as ’n teken vir nuttige insette, nie net gedrag nie.",
+            "Gebruik die trappe tussen lesse wanneer jy kan.",
+            "Begin huiswerk met die mees aktiewe deel — ’n skets, ’n prakties, of staan om te beplan — voor die stil skryfwerk.",
           ],
         },
         neutral: {
@@ -4101,6 +4121,8 @@ const TRAIL_SETTING_GUIDE = {
             "Pas huiswerk- en stokperdjietyd ná studeer aan: eers bedaar, of eers beweeg.",
             "Bou ’n mengsel van belangstellings — een meer aktief, een kalmer — sodat jy volgens die dag kan kies.",
             "Onderwysers/familie: laat buigsame steun toe sonder om elke dag dieselfde profiel aan te neem.",
+            "Hou een stil hulpmiddel en een bewegingshulpmiddel in jou tas, en kies ná die les.",
+            "As die dag halfpad omslaan, verander die plan. Jy hoef nie op die oggend se instelling te eindig nie.",
           ],
         },
         sensitive: {
@@ -4112,6 +4134,8 @@ const TRAIL_SETTING_GUIDE = {
             "Beplan ’n kort stil herstel ná studeer voor huiswerk, oefening of sosiale planne.",
             "Kies stokperdjies wat jou waarnemingskrag gebruik (kuns, musiek, lees, handwerk, omgee-rolle) sonder om oorlading te stapel.",
             "Onderwysers/familie: verminder gestapelde eise ná ’n swaar sensoriese dag.",
+            "Vra die opdrag op skrif wanneer die kamer te lawaaierig is om dit te hou.",
+            "Sit die volgende les uit die skyn, selfs as dit ’n ander stoel beteken.",
           ],
         },
       },
@@ -5677,21 +5701,137 @@ function getSenseSupportTipList(domainId, profile, perspectiveKey, language = "e
   return Array.isArray(tips) ? tips.filter(Boolean) : [];
 }
 
+const TEEN_SUPPORT_EXTRAS = {
+  en: {
+    school: {
+      auditory: [
+        "Agree a hand signal with the teacher for when the room is too loud to follow.",
+        "Write the instruction down so you can check it once the noise drops.",
+      ],
+      tactile: [
+        "Keep a spare soft layer in your bag for the afternoon, when uniform starts to bother you.",
+        "If the chair fabric bugs you, add a jumper you can take off again.",
+      ],
+      movement: [
+        "Ten wall pushes between lessons count, even when the corridor is too busy to walk.",
+        "Use the stairs between classes when you can — the lift saves time and costs you the input.",
+      ],
+      visual: [
+        "Turn your chair a little so the busiest part of the room is out of your line of sight.",
+        "One pen colour and one open page. Close the rest before you start.",
+      ],
+      smellTaste: [
+        "A mint or something citrus at the start of a flat lesson can be enough of a lift.",
+        "If a lab or the dining hall smell is too much, three breaths at the door, then come back.",
+      ],
+      everyday: [
+        "Write only the next two steps, not the whole afternoon.",
+        "Close one lesson’s notes before you open the next.",
+      ],
+    },
+    home: {
+      auditory: [
+        "Agree a quiet first half hour that the whole house already knows about.",
+        "One speaker or the TV, not both, while you settle.",
+      ],
+      tactile: [
+        "Put tomorrow’s clothes out when you feel okay, so the morning isn’t a texture surprise.",
+        "Keep a heavy cushion on the chair where you actually do homework.",
+      ],
+      movement: [
+        "Set a ten-minute timer: move first, then open the homework.",
+        "Do one active job — bins, dog, stairs — before you sit down with a screen.",
+      ],
+      visual: [
+        "One lamp behind you, not a bright light in your eyes.",
+        "Clear only the square of desk you need. The rest can wait.",
+      ],
+      smellTaste: [
+        "Add one strong flavour you like to a plain supper.",
+        "A shower with a scent you choose can reset the evening without more noise.",
+      ],
+      everyday: [
+        "Bag down, water, sit — then decide whether you talk or start work.",
+        "Phone in another room for the first homework block.",
+      ],
+    },
+  },
+  af: {
+    school: {
+      auditory: [
+        "Stem ’n handteken met die onderwyser af vir wanneer die kamer te hard is om te volg.",
+        "Skryf die opdrag neer sodat jy dit kan nagaan wanneer die geraas sak.",
+      ],
+      tactile: [
+        "Hou ’n ekstra sagte laag in jou tas vir die middag, wanneer die uniform begin pla.",
+        "As die stoel se stof pla, sit ’n trui by wat jy weer kan uittrek.",
+      ],
+      movement: [
+        "Tien muurdrukke tussen lesse tel, selfs as die gang te besig is om te stap.",
+        "Gebruik die trappe tussen klasse wanneer jy kan — die hysbak spaar tyd en kos jou die inset.",
+      ],
+      visual: [
+        "Draai jou stoel ’n bietjie sodat die besigste deel van die kamer uit jou siglyn is.",
+        "Een penkleur en een oop bladsy. Maak die res toe voor jy begin.",
+      ],
+      smellTaste: [
+        "’n Kruisement of iets met sitrus aan die begin van ’n plat les kan genoeg wees om jou wakker te maak.",
+        "As ’n laboratorium of die eetsaal te sterk ruik, drie asemteue by die deur, kom dan terug.",
+      ],
+      everyday: [
+        "Skryf net die volgende twee stappe neer, nie die hele middag nie.",
+        "Maak een les se notas toe voor jy die volgende oopmaak.",
+      ],
+    },
+    home: {
+      auditory: [
+        "Stem ’n stil eerste halfuur af wat die hele huis reeds ken.",
+        "Een luidspreker of die TV, nie albei nie, terwyl jy bedaar.",
+      ],
+      tactile: [
+        "Sit môre se klere uit wanneer jy okay voel, sodat die oggend nie ’n tekstuurverrassing is nie.",
+        "Hou ’n swaar kussing op die stoel waar jy werklik huiswerk doen.",
+      ],
+      movement: [
+        "Stel ’n tien-minuut-timer: beweeg eers, maak dan die huiswerk oop.",
+        "Doen een aktiewe taak — vullis, hond, trappe — voor jy met ’n skerm gaan sit.",
+      ],
+      visual: [
+        "Een lamp agter jou, nie ’n helder lig in jou oë nie.",
+        "Maak net die vierkant van die lessenaar skoon wat jy nodig het. Die res kan wag.",
+      ],
+      smellTaste: [
+        "Voeg een sterk geur waarvan jy hou by ’n gewone aandete.",
+        "’n Stort met ’n geur wat jy kies, kan die aand herstel sonder meer geraas.",
+      ],
+      everyday: [
+        "Sak neer, water, sit — besluit dan of jy praat of begin werk.",
+        "Foon in ’n ander vertrek vir die eerste huiswerkblok.",
+      ],
+    },
+  },
+};
+
 function getSenseSupportTips(
   domainId,
   profile,
   { language = "en", respondent = "adult", lifeContext = null, setting = null } = {}
 ) {
   let perspectiveKey = "self";
+  let teenPlace = null;
   if (respondent === "parent") {
     perspectiveKey = "parent";
   } else if (respondent === "teen") {
-    const place = setting || (lifeContext === "home" ? "home" : "school");
-    perspectiveKey = place === "home" ? "teenHome" : "teenSchool";
+    teenPlace = setting || (lifeContext === "home" ? "home" : "school");
+    perspectiveKey = teenPlace === "home" ? "teenHome" : "teenSchool";
   } else if (lifeContext === "home") {
     perspectiveKey = "home";
   }
-  return getSenseSupportTipList(domainId, profile, perspectiveKey, language);
+  const tips = getSenseSupportTipList(domainId, profile, perspectiveKey, language);
+  if (!teenPlace || !tips.length) return tips;
+  const extraPack = TEEN_SUPPORT_EXTRAS[language] || TEEN_SUPPORT_EXTRAS.en;
+  const extra = extraPack[teenPlace]?.[domainId] || TEEN_SUPPORT_EXTRAS.en[teenPlace]?.[domainId] || [];
+  return tips.concat(extra.filter((item) => item && !tips.includes(item)));
 }
 
 /**

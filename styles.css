@@ -5312,6 +5312,168 @@ body.is-pain-screen .site-footer {
   color: var(--ink-muted);
 }
 
+.teen-profile-cover {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(54, 91, 70, 0.16);
+  border-radius: 20px;
+  background: #f4efe4;
+  box-shadow: 0 18px 40px rgba(36, 75, 56, 0.14);
+  text-align: left;
+}
+
+.teen-profile-cover__hero {
+  position: relative;
+  min-height: 22rem;
+  height: 58vh;
+  max-height: 34rem;
+  overflow: hidden;
+  background: #2d3b28;
+}
+
+.teen-profile-cover__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 46%;
+}
+
+.teen-profile-cover__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(18, 28, 16, 0.08) 0%, rgba(18, 28, 16, 0) 42%, rgba(28, 36, 22, 0.22) 100%);
+}
+
+.teen-profile-cover__brand {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.35rem 0.85rem 0.35rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(250, 252, 248, 0.94);
+}
+
+.teen-profile-cover__logo {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+}
+
+.teen-profile-cover__studio {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: #244b38;
+}
+
+.teen-profile-cover__tag {
+  margin: 0.1rem 0 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5c675e;
+}
+
+.teen-profile-cover__board {
+  padding: 1.4rem 1.5rem 1.6rem;
+  background:
+    radial-gradient(ellipse 50% 80% at 100% 0%, rgba(196, 164, 106, 0.16), transparent 62%),
+    #f7f1e6;
+}
+
+.teen-profile-cover__kicker {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5c7a62;
+}
+
+.teen-profile-cover__title {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  line-height: 1.05;
+  color: #244b38;
+}
+
+.teen-profile-cover__name {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  color: #1c2a22;
+}
+
+.teen-profile-cover__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin: 1rem 0 0;
+}
+
+.teen-profile-cover__facts div {
+  margin: 0;
+}
+
+.teen-profile-cover__facts dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5c675e;
+}
+
+.teen-profile-cover__facts dd {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: #244b38;
+}
+
+.teen-profile-cover__sharing {
+  margin-top: 1rem;
+}
+
+.teen-profile-cover__sharing p {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5c675e;
+}
+
+.teen-profile-cover__sharing ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teen-profile-cover__sharing li {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  font-size: 0.92rem;
+  color: #244b38;
+}
+
+.teen-profile-cover__note {
+  margin: 0.9rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #5c675e;
+}
+
 @media (max-width: 640px) {
   .home-profile-cover {
     grid-template-rows: minmax(16rem, auto) auto;
@@ -6518,6 +6680,22 @@ body.is-pain-screen .site-footer {
   gap: 0.9rem;
 }
 
+.teen-moves__band {
+  grid-column: 1 / -1;
+  margin: 0.1rem 0;
+  height: 4.25rem;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.teen-moves__band img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 16%;
+}
+
 .teen-move {
   position: relative;
   display: grid;
@@ -6645,6 +6823,22 @@ body.is-pain-screen .site-footer {
 
 .teen-home-support {
   margin: 0.4rem 0 0;
+}
+
+.teen-home-support__visual {
+  grid-column: 1 / -1;
+  margin: 0.2rem 0;
+  height: 9.5rem;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.teen-home-support__visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 45%;
 }
 
 .teen-home-support__intro {
@@ -8525,6 +8719,108 @@ body.is-pain-screen .site-footer {
 .specific-results__grid {
   display: grid;
   gap: 0.85rem;
+}
+
+.specific-results__grid--teen {
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+
+.specific-results__grid--teen .specific-results__card[data-domain="auditory"] {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.specific-results__grid--teen .specific-results__photo--auditory {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 9rem;
+}
+
+.specific-results__grid--teen .specific-results__card[data-domain="tactile"] {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.specific-results__grid--teen .specific-results__card[data-domain="movement"] {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.specific-results__grid--teen .specific-results__photo-pair {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.specific-results__col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.specific-results__photo {
+  position: relative;
+  margin: 0;
+  min-height: 9rem;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.specific-results__photo img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.specific-results__banner {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1.1rem 0.95rem;
+  border-radius: 16px;
+  text-align: center;
+  background: linear-gradient(145deg, #1e3d2e 0%, #2f6a4a 58%, #3d7a55 100%);
+}
+
+.specific-results__banner .profile-kicker {
+  margin: 0 0 0.25rem;
+  color: #f3ddb0;
+}
+
+.specific-results__banner h3 {
+  margin: 0;
+  color: #fffef8;
+}
+
+.specific-results__photo--auditory,
+.specific-results__photo--tactile {
+  background: #f3efe6;
+}
+
+.specific-results__photo--auditory img,
+.specific-results__photo--tactile img {
+  object-fit: contain;
+  object-position: center center;
+}
+
+.specific-results__photo--movement img {
+  object-position: center 48%;
+}
+
+.specific-results__photo-pair {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.85rem;
+  flex: 1 1 auto;
+  min-height: 14rem;
+}
+
+@media (max-width: 720px) {
+  .specific-results__grid--teen {
+    grid-template-columns: 1fr;
+  }
 }
 
 .specific-results__card {
@@ -13738,6 +14034,627 @@ body.is-pain-screen .site-footer {
     font-size: 9pt;
   }
 
+  body.print-teen-report .teen-profile-cover {
+    display: flex;
+    flex-direction: column;
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-sizing: border-box;
+    width: calc(100% + 14mm);
+    height: 273mm;
+    min-height: 273mm;
+    max-height: 273mm;
+    margin: -7mm -7mm 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    background: #f4efe4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-teen-report .teen-profile-cover__hero {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  body.print-teen-report .teen-profile-cover__board {
+    flex: 0 0 auto;
+    padding: 7mm 10mm 8mm;
+  }
+
+  body.print-teen-report .teen-profile-cover__title {
+    font-size: 22pt;
+  }
+
+  body.print-teen-report .teen-profile-cover__name {
+    font-size: 16pt;
+  }
+
+  body.print-teen-report .profile-section {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  body.print-teen-report .results-intro--teen {
+    break-after: auto;
+    page-break-after: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  body.print-teen-report .trail-profile--overview-teen .trail-profile__overview-copy {
+    display: none;
+  }
+
+  body.print-teen-report .trail-profile--overview-teen .trail-profile__figure--overview,
+  body.print-teen-report .trail-profile--matched .trail-profile__figure {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    margin: 0 auto;
+    background: transparent;
+  }
+
+  body.print-teen-report .trail-profile--overview-teen .trail-profile__figure--overview .trail-profile__image,
+  body.print-teen-report .trail-profile--matched .trail-profile__image {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 262mm;
+    object-fit: contain;
+    background: transparent;
+  }
+
+  body.print-teen-report .trail-profile--matched .trail-profile__figure {
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  body.print-teen-report .trail-profile--matched .trail-profile__image {
+    width: auto;
+    max-width: 100%;
+    height: 268mm;
+    max-height: 268mm;
+    object-fit: contain;
+    object-position: center center;
+  }
+
+  body.print-teen-report .profile-section--brief-scores > .interpret-section-banner {
+    min-height: 0;
+    max-height: 28mm;
+    margin-bottom: 2mm;
+  }
+
+  body.print-teen-report .profile-section--brief-scores .interpret-section-banner__media,
+  body.print-teen-report .profile-section--brief-scores .interpret-section-banner__image {
+    max-height: 28mm;
+  }
+
+  body.print-teen-report .profile-section--brief-scores .teen-score {
+    padding: 2mm 3mm 2.5mm;
+  }
+
+  body.print-teen-report .profile-section--brief-scores .teen-sense-balance {
+    margin-top: 12mm;
+  }
+
+  body.print-teen-report .profile-section--brief-scores .report-citation {
+    margin: 1.5mm 0 0;
+    font-size: 7.5pt;
+    line-height: 1.35;
+  }
+
+  body.print-teen-report .teen-sense-balance .school-visual__axis {
+    display: none;
+  }
+
+  body.print-teen-report .teen-sense-balance .school-visual__bars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.2mm 3.5mm;
+  }
+
+  body.print-teen-report .teen-sense-balance .school-visual__bar-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8mm;
+    padding: 1.6mm 2mm 1.8mm;
+    border-radius: 2.2mm;
+    background: #f6f1e6;
+    border: 0.4pt solid rgba(54, 91, 70, 0.16);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.print-teen-report .teen-sense-balance .school-visual__bar-status {
+    font-size: 7.5pt;
+  }
+
+  body.print-teen-report .specific-results__grid--teen {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: 3.5mm;
+  }
+
+  body.print-teen-report .specific-results__grid--teen .specific-results__card[data-domain="auditory"] {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  body.print-teen-report .specific-results__grid--teen .specific-results__photo--auditory {
+    grid-column: 1;
+    grid-row: 2;
+    height: auto;
+    min-height: 62mm;
+    background: #f3efe6;
+  }
+
+  body.print-teen-report .specific-results__grid--teen .specific-results__card[data-domain="tactile"] {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  body.print-teen-report .specific-results__grid--teen .specific-results__card[data-domain="movement"] {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  body.print-teen-report .specific-results__grid--teen .specific-results__photo-pair {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: stretch;
+    height: auto;
+    min-height: 0;
+    grid-template-rows: 1.25fr 1fr;
+  }
+
+  body.print-teen-report .specific-results__photo {
+    position: relative;
+    min-height: 28mm;
+    height: auto;
+    margin: 0;
+    border-radius: 3mm;
+    overflow: hidden;
+  }
+
+  body.print-teen-report .specific-results__photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  body.print-teen-report .specific-results__photo--auditory img,
+  body.print-teen-report .specific-results__photo--tactile img {
+    object-fit: contain;
+    object-position: center center;
+  }
+
+  body.print-teen-report .specific-results__photo--tactile {
+    background: #f3efe6;
+  }
+
+  body.print-teen-report .specific-results__photo-pair .specific-results__photo {
+    height: auto;
+    min-height: 22mm;
+  }
+
+  body.print-teen-report .specific-results__card {
+    padding: 2.2mm 2.6mm 1.5mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-teen-report .specific-results__card[data-domain="auditory"] {
+    background: #e5f3ee;
+    border-color: #2f6d5b;
+  }
+
+  body.print-teen-report .specific-results__card[data-domain="tactile"] {
+    background: #f8efe2;
+    border-color: #b8883d;
+  }
+
+  body.print-teen-report .specific-results__card[data-domain="movement"] {
+    background: #e7eef8;
+    border-color: #3d6294;
+  }
+
+  body.print-teen-report .specific-results__card-head h4 {
+    font-size: 12pt;
+  }
+
+  body.print-teen-report .specific-results__headline {
+    font-size: 9pt;
+  }
+
+  body.print-teen-report .specific-results__item {
+    font-size: 8pt;
+    padding: 0.4mm 0;
+  }
+
+  body.print-teen-report .specific-results__facet {
+    margin-bottom: 1.5mm;
+  }
+
+  body.print-teen-report .specific-results__note,
+  body.print-teen-report .specific-results__score {
+    margin: 0.4mm 0;
+    font-size: 7.5pt;
+  }
+
+  body.print-teen-report .specific-results__item strong {
+    color: #244b38;
+  }
+
+  body.print-teen-report .specific-results__item[data-tone="avoid"] strong,
+  body.print-teen-report .specific-results__item[data-tone="seek"] strong {
+    color: #8a4a42;
+  }
+
+  body.print-teen-report .profile-section--teen-school > .interpret-section-banner {
+    min-height: 0 !important;
+    height: auto;
+    max-height: none;
+    margin-bottom: 2mm;
+  }
+
+  body.print-teen-report .profile-section--teen-school > .interpret-section-banner .interpret-section-banner__content {
+    padding: 3.5mm 4mm 3mm !important;
+  }
+
+  body.print-teen-report .profile-section--teen-school .interpret-section-banner__title {
+    font-size: 14pt;
+    line-height: 1.12;
+  }
+
+  body.print-teen-report .profile-section--teen-school .interpret-section-banner__lead {
+    display: block;
+    margin-top: 0.8mm;
+    font-size: 8pt;
+    line-height: 1.25;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-moves {
+    background: transparent !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-moves__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 2.4mm;
+    row-gap: 2.2mm;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-moves__band {
+    grid-column: 1 / -1;
+    margin: 0;
+    height: 18mm;
+    border-radius: 2.5mm;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-moves__band img {
+    display: block;
+    width: 100%;
+    height: 18mm;
+    max-height: 18mm;
+    object-fit: cover;
+    object-position: center 16%;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move {
+    gap: 1.5mm;
+    padding: 2.2mm 2.1mm 1.8mm;
+    border-width: 1.5pt;
+    border-radius: 2.2mm;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__stamp {
+    display: none;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__head {
+    gap: 1.6mm;
+    padding-right: 0;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__icon {
+    width: 7.2mm;
+    height: 7.2mm;
+    font-size: 11pt;
+    border-width: 1pt;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__title {
+    font-size: 10pt;
+    line-height: 1.1;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__mode {
+    margin-top: 0.5mm;
+    padding: 0.3mm 1.4mm;
+    font-size: 6.5pt;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__label {
+    margin: 0;
+    font-size: 6.5pt;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__list {
+    gap: 1.5mm;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__list li {
+    gap: 1.1mm;
+    padding: 1.2mm 1mm;
+    border-radius: 1.4mm;
+    font-size: 7.1pt;
+    line-height: 1.25;
+  }
+
+  body.print-teen-report .profile-section--teen-school .teen-move__n {
+    width: 3.4mm;
+    height: 3.4mm;
+    margin-top: 0.15mm;
+    font-size: 6pt;
+  }
+
+  body.print-teen-report .teen-move {
+    background: #fffdf8;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-teen-report .teen-move__list li,
+  body.print-teen-report .teen-move__mode,
+  body.print-teen-report .teen-move__icon,
+  body.print-teen-report .teen-move__n {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-teen-report .teen-home-support__visual {
+    grid-column: 1 / -1;
+    margin: 1mm 0;
+    height: 32mm;
+    border-radius: 3mm;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.print-teen-report .teen-home-support__visual--walker {
+    height: 68mm;
+  }
+
+  body.print-teen-report .teen-home-support__visual--walker img {
+    object-fit: cover;
+    object-position: center 46%;
+  }
+
+  body.print-teen-report .teen-home-support__visual--runners {
+    height: 108mm;
+  }
+
+  body.print-teen-report .teen-home-support__visual--runners img {
+    object-fit: cover;
+    object-position: center 42%;
+  }
+
+  body.print-teen-report .teen-home-support__visual--close {
+    height: 118mm;
+  }
+
+  body.print-teen-report .teen-home-support__visual--close img {
+    object-fit: cover;
+    object-position: center 62%;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] > .interpret-section-banner {
+    width: 100%;
+    max-width: none;
+    min-height: 32mm;
+    margin: 0 0 4mm;
+    border-radius: 4mm;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] > .interpret-section-banner .interpret-section-banner__title {
+    font-size: 18pt;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret {
+    gap: 12mm;
+    margin-top: 0;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__block {
+    padding: 3.5mm 4mm;
+    border-radius: 3mm;
+    box-shadow: none;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__needs,
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__list li {
+    font-size: 9.5pt;
+    line-height: 1.38;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__list {
+    display: block;
+    columns: 2;
+    column-gap: 7mm;
+    padding-left: 4.5mm;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__list li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 1.8mm;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__visuals--school {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 4mm;
+    margin-top: 14mm;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__visual {
+    height: 112mm;
+    border-radius: 3.5mm;
+    border: none;
+    box-shadow: none;
+    background: #e7efe8;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__visual-image {
+    width: 100%;
+    height: 112mm;
+    max-height: none;
+    object-fit: cover;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__visual--supplies .trail-interpret__visual-image {
+    object-position: center 58%;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__visual--student .trail-interpret__visual-image {
+    object-position: center 32%;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="home"] .trail-interpret__block--needs,
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__block--needs {
+    padding: 5mm 5.5mm 5.2mm;
+    border: none;
+    border-radius: 3.5mm;
+    background:
+      linear-gradient(145deg, #1e3d2e 0%, #2f6a4a 58%, #3d7a55 100%);
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="home"] .trail-interpret__block--needs .trail-interpret__label,
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__block--needs .trail-interpret__label {
+    margin-bottom: 2mm;
+    color: #f3ddb0;
+    letter-spacing: 0.16em;
+    font-size: 8pt;
+  }
+
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="home"] .trail-interpret__needs,
+  body.print-teen-report .profile-section--trail-interpret[data-trail-setting="school"] .trail-interpret__needs {
+    color: #fffef8;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  body.print-teen-report .trail-interpret__visual--home,
+  body.print-teen-report .trail-interpret__visuals--school .trail-interpret__visual {
+    min-height: 0;
+    height: 38mm;
+    background: #e7efe8;
+  }
+
+  body.print-teen-report .trail-interpret__visual--home .trail-interpret__visual-image,
+  body.print-teen-report .trail-interpret__visuals--school .trail-interpret__visual-image {
+    width: 100%;
+    height: 38mm;
+    max-height: none;
+    min-height: 0;
+    object-fit: cover;
+    object-position: center 46%;
+  }
+
+  body.print-teen-report .trail-interpret__ideal-saturday {
+    margin-top: 2mm;
+    padding: 2mm 2.5mm;
+  }
+
+  body.print-teen-report .trail-interpret__ideal-title {
+    font-size: 11pt;
+    margin-bottom: 0.6mm;
+  }
+
+  body.print-teen-report .trail-interpret__ideal-intro {
+    font-size: 8pt;
+    margin-bottom: 1mm;
+  }
+
+  body.print-teen-report .trail-interpret__ideal-quote p {
+    font-size: 8.5pt;
+  }
+
+  body.print-teen-report .teen-report-close {
+    margin-top: 4mm;
+    padding: 5mm 6mm 5.5mm;
+    border-radius: 3mm;
+    text-align: center;
+    background:
+      radial-gradient(ellipse 70% 80% at 50% 0%, rgba(196, 164, 106, 0.2), transparent 70%),
+      #f4efe4;
+    border: 0.6pt solid rgba(54, 91, 70, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-teen-report .teen-report-close__kicker {
+    margin: 0;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5c7a62;
+  }
+
+  body.print-teen-report .teen-report-close__title {
+    margin: 1.2mm 0 0;
+    font-family: var(--font-serif);
+    font-size: 16pt;
+    color: #244b38;
+  }
+
+  body.print-teen-report .teen-report-close__quote {
+    margin: 2.5mm auto 0;
+    max-width: 150mm;
+    border: none;
+  }
+
+  body.print-teen-report .teen-report-close__quote p {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 11pt;
+    font-style: italic;
+    line-height: 1.45;
+    color: #244b38;
+  }
+
+  body.print-teen-report .teen-report-close__note {
+    margin: 3mm 0 0;
+    font-size: 8pt;
+    color: #5c675e;
+  }
+
   body.print-sensory-results .results-intro {
     break-after: avoid;
     page-break-after: avoid;
@@ -14169,6 +15086,29 @@ body.is-pain-screen .site-footer {
     color: #244b38;
     line-height: 1.18;
     margin: 1.5mm 0 2mm;
+  }
+
+  body.print-teen-report .profile-section--specific-results .specific-results__banner {
+    margin: 0 0 3.5mm;
+    padding: 3.6mm 5mm 4mm;
+    border-radius: 3.5mm;
+    text-align: center;
+    background: linear-gradient(145deg, #1e3d2e 0%, #2f6a4a 58%, #3d7a55 100%);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-teen-report .profile-section--specific-results .specific-results__banner .profile-kicker {
+    margin: 0 0 1.2mm;
+    color: #f3ddb0;
+    letter-spacing: 0.16em;
+  }
+
+  body.print-teen-report .profile-section--specific-results .specific-results__banner h3 {
+    margin: 0;
+    color: #fffef8;
+    font-size: 16pt;
+    line-height: 1.2;
   }
 
   body.print-sensory-results .profile-section:not(.profile-section--scores) .profile-section__summary {

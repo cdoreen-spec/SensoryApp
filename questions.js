@@ -643,7 +643,7 @@ const QUESTIONNAIRE_UI = {
     senseSupportIntroTeen:
       "Your senses at school and at home — more options, matched to how you scored.",
     senseSupportSchoolKicker: "At school",
-    senseSupportSchoolTitle: "Your school moves",
+    senseSupportSchoolTitle: "Moves you can make at school",
     senseSupportSchoolLead:
       "Cheat-sheet energy. Pick one move, try it for about two minutes, then check if the lesson feels easier.",
     senseSupportHomeChapterKicker: "At home",
@@ -1646,7 +1646,7 @@ const QUESTIONNAIRE_UI = {
     senseSupportIntroTeen:
       "Jou sinne by die skool en by die huis — meer opsies, pasgemaak by hoe jy getel het.",
     senseSupportSchoolKicker: "By die skool",
-    senseSupportSchoolTitle: "Jou skool-moves",
+    senseSupportSchoolTitle: "Bewegings wat jy by die skool kan maak",
     senseSupportSchoolLead:
       "Spiekkaart-energie. Kies een move, probeer dit vir ongeveer twee minute, kyk dan of die les makliker voel.",
     senseSupportHomeChapterKicker: "By die huis",

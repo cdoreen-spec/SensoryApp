@@ -53,6 +53,15 @@ function firstName(name) {
   return String(name || "there").trim().split(/\s+/)[0] || "there";
 }
 
+function textWithLinks(value) {
+  const escaped = escapeHtml(value).replace(/\n/g, "<br>");
+  return escaped.replace(/https?:\/\/[^\s<]+/g, (url) => {
+    const trimmed = url.replace(/[),.;]+$/, "");
+    const tail = url.slice(trimmed.length);
+    return `<a href="${trimmed}" style="color:${COLORS.button};word-break:break-all;">${trimmed}</a>${tail}`;
+  });
+}
+
 function paragraphHtml(text) {
   return String(text || "")
     .split(/\n{2,}/)
@@ -112,7 +121,7 @@ function sectionHtml(section) {
     })
     .join("");
   const text = section.text
-    ? `<p style="margin:${rowHtml ? "12px 0 0" : "0"};font-family:${FONTS.serif};font-size:18px;line-height:1.4;color:${COLORS.forest};">${escapeHtml(
+    ? `<p style="margin:${rowHtml ? "12px 0 0" : "0"};font-family:${FONTS.serif};font-size:18px;line-height:1.4;color:${COLORS.forest};">${textWithLinks(
         section.text
       )}</p>`
     : "";
@@ -221,11 +230,24 @@ function resetCopy(options) {
   };
 }
 
+function reportLinkBlock(url) {
+  const reportUrl = String(url || "").trim();
+  if (!reportUrl) return "";
+  return `
+      ${ctaButton(reportUrl, "View this report")}
+      <p style="margin:0 0 8px;font-family:${FONTS.sans};font-size:14px;line-height:1.6;color:${COLORS.muted};">
+        If the button does not work, copy this link into your browser:
+      </p>
+      <p style="margin:0 0 18px;font-family:${FONTS.sans};font-size:13px;line-height:1.5;color:${COLORS.button};word-break:break-all;">${escapeHtml(
+        reportUrl
+      )}</p>`;
+}
+
 function reportCopy(options) {
   const sections = parseSections(options.sections);
   const intro =
     options.intro ||
-    "A sensory questionnaire has been completed. This is a short notice — open the patient register in the web app for the full report.";
+    "A sensory questionnaire has been completed. Use the link below to view this report.";
   const sectionsMarkup = sections.map(sectionHtml).join("");
   const fallback = !sectionsMarkup && options.message ? paragraphHtml(options.message) : "";
   return {
@@ -237,6 +259,7 @@ function reportCopy(options) {
       <p style="margin:0 0 18px;font-family:${FONTS.sans};font-size:16px;line-height:1.65;color:${COLORS.ink};">${escapeHtml(
         intro
       )}</p>
+      ${reportLinkBlock(options.reportUrl)}
       ${sectionsMarkup}
       ${fallback}
     `,
