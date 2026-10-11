@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview — adult work print report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --warm: #fafcf8;
+      --cream: #f7f1e6;
+      --sage: #78927b;
+      --sage-dark: #365b46;
+      --sage-mid: #52775c;
+      --sage-light: #d2dfd1;
+      --sage-pale: #e4ece2;
+      --forest: #244b38;
+      --ink: #2a332c;
+      --ink-soft: #4a554c;
+      --gold: #b08a4a;
+      --low: #7b9e87;
+      --mid: #5b7fa6;
+      --high: #d4847c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #e6ece4;
+      color: var(--ink);
+      font-family: "Source Sans 3", system-ui, sans-serif;
+    }
+    .preview-bar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.7rem;
+      align-items: center;
+      padding: 0.7rem 1rem;
+      background: #244b38;
+      color: #fafcf8;
+    }
+    .preview-bar strong { font-family: "Libre Baskerville", Georgia, serif; font-weight: 400; }
+    .preview-bar span { opacity: 0.85; font-size: 0.88rem; }
+    .preview-bar nav { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .preview-bar a {
+      color: #fafcf8;
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      border: 1px solid rgba(250, 252, 248, 0.35);
+      border-radius: 999px;
+      padding: 0.2rem 0.55rem;
+    }
+    .stage { padding: 1.5rem 1rem 3rem; }
+    .sheet {
+      width: min(760px, 100%);
+      aspect-ratio: 210 / 297;
+      margin: 0 auto 1.75rem;
+      background: var(--warm);
+      border: 1px solid rgba(54, 91, 70, 0.18);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .sheet-label {
+      width: min(760px, 100%);
+      margin: 0 auto 0.35rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sage-dark);
+      font-weight: 700;
+    }
+    .pg {
+      position: absolute;
+      right: 5%;
+      bottom: 2.2%;
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--sage-dark);
+    }
+    .kicker {
+      margin: 0 0 0.35rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--sage-dark);
+    }
+    h2, h3 { font-family: "Libre Baskerville", Georgia, serif; color: var(--forest); font-weight: 400; margin: 0; }
+    .cover {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      height: 100%;
+    }
+    .cover__photo { position: relative; overflow: hidden; background: #dfe9df; }
+    .cover__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cover__copy {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 18% 8% 10%;
+      background:
+        radial-gradient(ellipse 90% 60% at 100% 0%, rgba(181, 204, 181, 0.35), transparent 68%),
+        linear-gradient(155deg, #fbfcf8 0%, #e9f1e8 100%);
+    }
+    .brand { position: absolute; top: 7%; left: 8%; right: 8%; display: flex; gap: 0.6rem; align-items: center; }
+    .brand img { width: 42px; height: 42px; object-fit: contain; }
+    .brand p { margin: 0; }
+    .brand strong { display: block; font-family: "Libre Baskerville", Georgia, serif; color: var(--forest); font-size: 0.95rem; }
+    .brand em { font-style: normal; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage-dark); }
+    .cover h2 { font-size: 2.15rem; line-height: 1.05; max-width: 11ch; }
+    .cover__name { margin: 1rem 0 0; font-family: "Libre Baskerville", Georgia, serif; font-size: 1.25rem; }
+    .regarding {
+      width: fit-content;
+      margin: 0.9rem 0 0;
+      padding: 0.35rem 0.7rem;
+      border-left: 3px solid var(--sage-mid);
+      background: rgba(255,255,255,0.65);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--forest);
+    }
+    .cover__date { margin: 0.7rem 0 0; color: var(--ink-soft); font-size: 0.85rem; }
+    .bleed { height: 100%; background: #f3f1ea; }
+    .bleed img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .pad { padding: 6.5% 7% 8%; display: flex; flex-direction: column; height: 100%; }
+    .match-head { text-align: center; }
+    .match-head h2 { font-size: 1.55rem; }
+    .match-head .lead { margin: 0.45rem auto 0; max-width: 38rem; color: var(--ink-soft); font-size: 0.92rem; line-height: 1.4; }
+    .portrait {
+      width: 42%;
+      margin: 0.8rem auto 0.4rem;
+      background: var(--sage-pale);
+    }
+    .portrait img { width: 100%; height: 118px; object-fit: contain; display: block; }
+    #match .portrait { margin: 0.35rem auto 0.15rem; }
+    #match .portrait img { height: 92px; }
+    #match .hero-name { font-size: 1.28rem; }
+    #match .summary { margin-top: 0.4rem; font-size: 0.84rem; line-height: 1.35; }
+    #match .traits { margin-top: 0.4rem; }
+    #match .traits li { font-size: 0.76rem; line-height: 1.25; }
+    #match .quote { padding: 0.45rem 0.7rem 0.5rem; }
+    #match .quote i { font-size: 1.1rem; }
+    #match .quote p { font-size: 0.8rem; line-height: 1.32; }
+    #match .page-foot { flex-basis: 7rem; }
+    #match .pad { padding-top: 5%; padding-bottom: 0; }
+    .you { text-align: center; margin: 0; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sage-dark); font-weight: 700; }
+    .hero-name { text-align: center; font-size: 1.45rem; margin-top: 0.15rem; }
+    .tag {
+      width: fit-content;
+      margin: 0.35rem auto 0;
+      padding: 0.15rem 0.55rem;
+      background: var(--sage-pale);
+      color: var(--forest);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .summary { margin: 0.7rem 0 0; text-align: center; font-size: 0.92rem; line-height: 1.45; }
+    .traits { margin-top: 0.7rem; }
+    .traits p { margin: 0 0 0.35rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--sage-dark); }
+    .traits ul { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 1rem; margin: 0; padding: 0; list-style: none; }
+    .traits li { font-size: 0.82rem; line-height: 1.3; padding-left: 0.7rem; position: relative; }
+    .traits li::before { content: ""; position: absolute; left: 0; top: 0.4rem; width: 0.35rem; height: 0.35rem; border-radius: 50%; background: var(--sage-mid); }
+    .quote-space {
+      flex: 1 1 auto;
+      min-height: 2.75rem;
+    }
+    #match .quote-space,
+    #scores .quote-space,
+    .sense-page .quote-space {
+      flex: 1 1 0;
+      min-height: 0.75rem;
+    }
+    #match .quote,
+    #scores .quote,
+    .sense-page .quote {
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
+    .page-foot {
+      flex: 0 0 3.5rem;
+    }
+    .quote {
+      margin-top: 0;
+      padding: 0.85rem 1rem 0.95rem;
+      background: var(--cream);
+      border-left: 4px solid var(--gold);
+    }
+    .quote i { display: block; font-family: "Libre Baskerville", Georgia, serif; font-size: 1.6rem; color: var(--gold); line-height: 1; font-style: normal; }
+    .quote p { margin: 0.15rem 0 0; font-family: "Libre Baskerville", Georgia, serif; font-size: 0.95rem; line-height: 1.45; color: var(--forest); }
+    .quote cite { display: block; margin-top: 0.35rem; font-style: normal; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sage-dark); }
+    .banner { position: relative; height: 22%; min-height: 0; overflow: hidden; flex: 0 0 auto; }
+    .banner img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
+    .banner__veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,28,22,0.15), rgba(8,16,12,0.72)); }
+    .banner__copy { position: absolute; left: 7%; right: 7%; bottom: 12%; color: #fafcf8; }
+    .banner__copy .kicker { color: rgba(232, 240, 232, 0.9); }
+    .banner__copy h2 { color: #fafcf8; font-size: 1.45rem; }
+    .banner__copy p { margin: 0.25rem 0 0; font-size: 0.82rem; line-height: 1.35; }
+    .body { padding: 3.5% 7% 8%; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .legend { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 0 0 0.7rem; padding: 0; list-style: none; font-size: 0.75rem; color: var(--forest); }
+    .sw { width: 0.7rem; height: 0.7rem; display: inline-block; margin-right: 0.3rem; vertical-align: -1px; }
+    .sw.low { background: var(--low); } .sw.mid { background: var(--mid); } .sw.high { background: var(--high); }
+    .scale { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.42rem; }
+    .scale li { display: grid; grid-template-columns: 6.2rem 1fr auto; gap: 0.45rem; align-items: center; font-size: 0.8rem; }
+    .scale li strong { color: var(--forest); }
+    .segs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; height: 1.05rem; border-radius: 999px; overflow: hidden; }
+    .segs span { opacity: 0.35; }
+    .segs span.on { opacity: 1; }
+    .segs .low { background: var(--low); } .segs .mid { background: var(--mid); } .segs .high { background: var(--high); }
+    .status { color: var(--sage-dark); font-weight: 700; font-size: 0.75rem; }
+    .scale .overall { margin-top: 0.25rem; padding-top: 0.4rem; border-top: 1.5px solid var(--sage-mid); }
+    .scale .overall strong { font-size: 0.95rem; }
+    .note { margin: 0.7rem 0 0; font-size: 0.72rem; line-height: 1.4; color: var(--ink-soft); }
+    .findings { display: grid; gap: 0.55rem; }
+    .card { border: 1px solid rgba(54, 91, 70, 0.16); padding: 0.55rem 0.7rem 0.65rem; background: #fff; }
+    .card h3 { font-size: 0.95rem; }
+    .card .domain { margin: 0 0 0.15rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage-dark); font-weight: 700; }
+    .card p { margin: 0.25rem 0 0; font-size: 0.82rem; line-height: 1.35; }
+    .card ul { margin: 0.3rem 0 0; padding: 0; list-style: none; }
+    .card li { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.75rem; padding: 0.12rem 0; border-top: 1px solid rgba(54, 91, 70, 0.1); }
+    .photo-fill { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1.15rem; min-height: 28%; align-items: stretch; }
+    .photo-fill img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-fill .quote { margin: 0; display: flex; flex-direction: column; justify-content: center; }
+    .sense { display: grid; grid-template-columns: 34% 1fr; gap: 0.8rem; align-items: stretch; min-height: 0; flex: 0 0 auto; }
+    .sense__photo { position: relative; overflow: hidden; margin: 0; background: var(--sage-pale); height: 100%; min-height: 12rem; }
+    .sense__photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; }
+    .sense h3 { font-size: 1.2rem; }
+    .band { display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.4rem; background: #e7f0e6; color: var(--forest); font-family: "Source Sans 3", sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: 3px; }
+    .phase { margin-top: 0.32rem; }
+    .phase p { margin: 0 0 0.12rem; font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--sage-dark); }
+    .phase ol { margin: 0; padding-left: 1rem; }
+    .phase li { font-size: 0.7rem; line-height: 1.28; margin: 0.08rem 0; }
+    .sense-page .banner { height: 13% !important; }
+    .sense-page .sense h3 { font-size: 1.05rem; }
+    .sense-page .sense > div > p { font-size: 0.74rem !important; }
+    .sense-page .quote { padding: 0.55rem 0.75rem 0.6rem; }
+    .sense-page .quote p { font-size: 0.82rem; }
+    .sat { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+    .sat__copy { padding: 7% 8% 4%; }
+    .sat__copy h2 { font-size: 1.7rem; margin-bottom: 0.4rem; }
+    .sat__copy .intro { margin: 0 0 0.7rem; color: var(--ink-soft); font-size: 0.9rem; }
+    .sat blockquote { margin: 0; padding: 0.8rem 0 0; border-top: 1px solid rgba(54, 91, 70, 0.2); font-family: "Libre Baskerville", Georgia, serif; font-size: 1.02rem; line-height: 1.5; color: var(--forest); }
+    .close { position: relative; min-height: 0; }
+    .close img { width: 100%; height: 100%; object-fit: cover; object-position: center 45%; display: block; }
+    .close figcaption {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 8% 8% 10%;
+      background: linear-gradient(180deg, transparent, rgba(20, 28, 16, 0.82));
+      color: #fafcf8;
+    }
+    .close figcaption p { margin: 0; font-family: "Libre Baskerville", Georgia, serif; font-size: 1rem; line-height: 1.45; }
+    .work-blocks { display: grid; gap: 0.55rem; }
+    .work-blocks article { padding: 0.55rem 0.7rem; background: #f6f9f7; border: 1px solid rgba(54, 91, 70, 0.12); }
+    .work-blocks h3 { font-size: 0.92rem; margin-bottom: 0.2rem; }
+    .work-blocks p, .work-blocks li { font-size: 0.8rem; line-height: 1.35; margin: 0.15rem 0; }
+    .work-blocks ul { margin: 0.2rem 0 0; padding-left: 1rem; }
+    .pair-well {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+    #work .body { padding-bottom: 0; }
+    .pair { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; height: 46%; max-height: 15.5rem; min-height: 8.5rem; flex: 0 0 auto; }
+    .pair img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .prose p { margin: 0 0 0.55rem; font-size: 0.92rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header class="preview-bar">
+    <strong>Preview only</strong>
+    <span>Sample adult work print. Not applied to the report yet.</span>
+    <nav>
+      <a href="#cover">Cover</a>
+      <a href="#profile">Profile</a>
+      <a href="#match">Match</a>
+      <a href="#description">Description</a>
+      <a href="#scores">Scores</a>
+      <a href="#findings">Findings</a>
+      <a href="#hearing">Senses</a>
+      <a href="#saturday">Saturday</a>
+      <a href="#work">At work</a>
+      <a href="#notes">Notes</a>
+    </nav>
+  </header>
+  <main class="stage">
+
+    <p class="sheet-label">Page 1 — Cover</p>
+    <article class="sheet" id="cover">
+      <div class="cover">
+        <div class="cover__photo"><img src="assets/front-page-sensory-trail.png" alt="" /></div>
+        <div class="cover__copy">
+          <div class="brand">
+            <img src="assets/logo.png" alt="" />
+            <p><strong>Soulful Sensory OT</strong><em>Occupational Therapy Services</em></p>
+          </div>
+          <p class="kicker">Viewpoint</p>
+          <h2>Sensory trail profile</h2>
+          <p class="cover__name">Amina Jacobs</p>
+          <p class="regarding">Regarding: work</p>
+          <p class="cover__date">11 October 2026</p>
+        </div>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 2 — Sensory trail profile</p>
+    <article class="sheet" id="profile">
+      <div class="bleed"><img src="assets/sensory-trail-profile.png" alt="The three sensory trail profiles" /></div>
+    </article>
+
+    <p class="sheet-label">Page 3 — Matched trail</p>
+    <article class="sheet" id="match">
+      <div class="pad">
+        <header class="match-head">
+          <p class="kicker">Your sensory trail character</p>
+          <h2>Your matched trail</h2>
+          <p class="lead">Based on the overall score from this screening, here is the trail style that fits these answers most closely.</p>
+        </header>
+        <figure class="portrait"><img src="assets/sensory-character-observer.png" alt="" /></figure>
+        <p class="you">You are</p>
+        <h3 class="hero-name">Sensory Observer</h3>
+        <p class="tag">Low threshold — notices input quickly</p>
+        <p class="summary">Detail, sound, and proximity register early. A busy open-plan day can fill the sensory bucket before the work itself is finished.</p>
+        <div class="traits">
+          <p>Top traits</p>
+          <ul>
+            <li>Likes to recharge on their own; a busy or full calendar is draining.</li>
+            <li>Intuitive — picks up people’s mood and energy quickly.</li>
+            <li>Needs a calm and predictable environment.</li>
+            <li>Chaos or unpredictability can create anxiety.</li>
+            <li>Likes a heads-up before events and change.</li>
+            <li>Prefers familiar activities and things they already know.</li>
+            <li>Brings a sense of calm, a listening ear, and a grounding personality.</li>
+            <li>Needs recovery time to recharge between activities.</li>
+          </ul>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>There is no right or wrong profile. Your trail is unique — this is a descriptive map, not a diagnosis.</p>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 3</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 4 — Matched trail description</p>
+    <article class="sheet" id="description">
+      <div class="bleed"><img src="assets/sensory-description-observer.png" alt="Sensory Observer description" /></div>
+    </article>
+
+    <p class="sheet-label">Page 5 — Scores</p>
+    <article class="sheet" id="scores">
+      <header class="banner">
+        <img src="assets/heading-work-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">Your sensory scores</p>
+          <h2>Results at a glance</h2>
+          <p>Each sense on a low, medium, or high threshold. Descriptive, not a diagnosis.</p>
+        </div>
+      </header>
+      <div class="body">
+        <ul class="legend">
+          <li><span class="sw low"></span><strong>Low</strong> — notices input quickly</li>
+          <li><span class="sw mid"></span><strong>Medium</strong> — typical / mixed</li>
+          <li><span class="sw high"></span><strong>High</strong> — needs more input</li>
+        </ul>
+        <ul class="scale">
+          <li><strong>Hearing</strong><div class="segs"><span class="low on"></span><span class="mid"></span><span class="high"></span></div><span class="status">Low threshold</span></li>
+          <li><strong>Touch</strong><div class="segs"><span class="low on"></span><span class="mid"></span><span class="high"></span></div><span class="status">Low threshold</span></li>
+          <li><strong>Movement</strong><div class="segs"><span class="low"></span><span class="mid on"></span><span class="high"></span></div><span class="status">Medium threshold</span></li>
+          <li><strong>Vision</strong><div class="segs"><span class="low"></span><span class="mid"></span><span class="high on"></span></div><span class="status">High threshold</span></li>
+          <li><strong>Smell &amp; taste</strong><div class="segs"><span class="low"></span><span class="mid on"></span><span class="high"></span></div><span class="status">Medium threshold</span></li>
+          <li><strong>Everyday load</strong><div class="segs"><span class="low on"></span><span class="mid"></span><span class="high"></span></div><span class="status">Low threshold</span></li>
+          <li class="overall"><strong>Overall</strong><div class="segs"><span class="low on"></span><span class="mid"></span><span class="high"></span></div><span class="status">Low threshold</span></li>
+        </ul>
+        <p class="note">Low and high threshold language draws on Winnie Dunn’s Model of Sensory Processing (Dunn, 1997). The three Sensory Trail styles are this screening’s own descriptive map.</p>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>Understanding your sensory needs is not about changing who you are — it’s about creating an environment where you can thrive.</p>
+          <cite>Soulful Sensory OT</cite>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 5</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 6 — Specific findings</p>
+    <article class="sheet" id="findings">
+      <div class="pad">
+        <p class="kicker">A closer look</p>
+        <h2 style="font-size:1.45rem;margin-bottom:0.35rem">Where input stands out</h2>
+        <p style="margin:0 0 0.7rem;color:var(--ink-soft);font-size:0.88rem">Loud environments, crowds, touch, and thrill-seeking, kept whole on the page.</p>
+        <div class="findings">
+          <article class="card">
+            <p class="domain">Hearing</p>
+            <h3>Loud environments</h3>
+            <p>Noise is noticed quickly. Open-plan sound and overlapping talk are likely to interrupt focus.</p>
+            <ul>
+              <li><span>Background office noise is distracting</span><strong>Yes</strong></li>
+              <li><span>Needs quiet to concentrate</span><strong>Yes</strong></li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="domain">Touch</p>
+            <h3>Crowds</h3>
+            <p>Busy shared spaces raise the load. An edge seat or a less crowded zone is easier to stay in.</p>
+            <ul>
+              <li><span>Uncomfortable in a crowded room</span><strong>Yes</strong></li>
+              <li><span>Prefers space around the desk</span><strong>Yes</strong></li>
+            </ul>
+          </article>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>Name the situations that fill the bucket first. The supports on the following pages are written for those moments.</p>
+        </blockquote>
+        <p class="pg">Page 6</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 7 — Specific findings, continued</p>
+    <article class="sheet" id="findings-2">
+      <div class="pad">
+        <p class="kicker">A closer look</p>
+        <h2 style="font-size:1.35rem;margin-bottom:0.6rem">Where input stands out</h2>
+        <div class="findings">
+          <article class="card">
+            <p class="domain">Touch</p>
+            <h3>Physical touch</h3>
+            <p>Unexpected contact is more tiring than it looks. Clear space agreements help.</p>
+            <ul>
+              <li><span>Dislikes being brushed past</span><strong>Yes</strong></li>
+              <li><span>Seeks firm pressure</span><strong>No</strong></li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="domain">Movement</p>
+            <h3>Thrill-seeking</h3>
+            <p>Fast, unpredictable movement is not the draw. A steady pace between meetings is easier.</p>
+            <ul>
+              <li><span>Enjoys fast rides or adrenaline</span><strong>No</strong></li>
+              <li><span>Dizzy with sudden movement</span><strong>Yes</strong></li>
+            </ul>
+          </article>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <div class="photo-fill">
+          <img src="assets/profile-adult-work.png" alt="" />
+          <blockquote class="quote">
+            <i>“</i>
+            <p>Small changes in noise, space, and pace often do more than pushing through a full bucket.</p>
+          </blockquote>
+        </div>
+        <p class="pg">Page 7</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 8 — Hearing</p>
+    <article class="sheet sense-page" id="hearing">
+      <header class="banner">
+        <img src="assets/heading-forest-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">Support by sense</p>
+          <h2>Hearing</h2>
+        </div>
+      </header>
+      <div class="body">
+        <div class="sense">
+          <figure class="sense__photo"><img src="assets/support-auditory.png" alt="" /></figure>
+          <div>
+            <h3>Hearing <span class="band">Low</span></h3>
+            <p style="margin:0.25rem 0 0;line-height:1.3">Open-plan noise, notifications, and overlapping talk can make concentration harder than the work itself.</p>
+            <div class="phase">
+              <p>Before the workday</p>
+              <ol>
+                <li>Keep a quiet buffer before the first meeting, so the day does not start already full of sound.</li>
+                <li>On a noisy commute, use noise-reducing headphones or leave a little earlier on a quieter route.</li>
+                <li>Look at the calendar the night before and place ten quiet minutes on either side of the noisiest meeting.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>During the workday</p>
+              <ol>
+                <li>Use a quieter room, a booked focus space, or a home block for work that cannot compete with the floor.</li>
+                <li>Treat noise-reducing headphones as a normal tool, and protect one or two low-interruption focus blocks.</li>
+                <li>Silence non-urgent alerts in those blocks, and step out of overlapping conversations instead of tracking all of them.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>After work</p>
+              <ol>
+                <li>Take the commute down: less audio, or none, so office sound is not still being processed on the way home.</li>
+                <li>Give the first part of the evening a low-conversation window before more talking or household noise.</li>
+                <li>After a meeting-heavy day, a short walk without headphones often clears leftover noise better than another busy room.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>A quieter start gives the nervous system room to settle before the first meeting.</p>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 8</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 9 — Touch</p>
+    <article class="sheet sense-page" id="touch">
+      <header class="banner">
+        <img src="assets/heading-forest-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">Support by sense</p>
+          <h2>Touch</h2>
+        </div>
+      </header>
+      <div class="body">
+        <div class="sense">
+          <figure class="sense__photo"><img src="assets/support-tactile.png" alt="" /></figure>
+          <div>
+            <h3>Touch <span class="band">Low</span></h3>
+            <p style="margin:0.25rem 0 0;line-height:1.3">Crowded desks, scratchy seating, and unexpected proximity can nag at attention through the day.</p>
+            <div class="phase">
+              <p>Before the workday</p>
+              <ol>
+                <li>Choose clothing and layers that stay comfortable for a full day, and pack a soft spare layer.</li>
+                <li>If the commute is crowded, leave slightly earlier or later, or stand at the edge to reduce unexpected contact.</li>
+                <li>Agree the desk setup before the day starts: an edge seat, a clear boundary, and no shared chair-back.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>During the workday</p>
+              <ol>
+                <li>Use seating with more personal space — end of a row, edge of the open plan, or a less crowded zone.</li>
+                <li>Choose a less packed meeting layout when one is available, and take a short break when proximity builds.</li>
+                <li>Treat clothing or chair discomfort early: change layer, posture, or seat before it becomes the whole afternoon.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>After work</p>
+              <ol>
+                <li>Change into comfortable clothes soon after finishing, before more contact is expected.</li>
+                <li>Use a warm shower or a quiet room as a reset after a day of being brushed past.</li>
+                <li>Ask for a little space at home first — conversation can wait until the body is no longer on guard.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>Clear agreements about space and contact make a shared office easier to stay in.</p>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 9</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 10 — Movement</p>
+    <article class="sheet sense-page" id="movement">
+      <header class="banner">
+        <img src="assets/heading-forest-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">Support by sense</p>
+          <h2>Movement</h2>
+        </div>
+      </header>
+      <div class="body">
+        <div class="sense">
+          <figure class="sense__photo"><img src="assets/support-movement.png" alt="" /></figure>
+          <div>
+            <h3>Movement <span class="band">Medium</span></h3>
+            <p style="margin:0.25rem 0 0;line-height:1.3">Some days sitting is easy. On others the body needs a change of pace before focus comes back.</p>
+            <div class="phase">
+              <p>Before the workday</p>
+              <ol>
+                <li>Notice whether the morning feels restless or already tired, and match the commute — a little more walk, or a calmer one.</li>
+                <li>Keep two or three movements under three minutes in mind before the day starts.</li>
+                <li>Leave a few spare minutes on arrival so the first task does not begin in a rush.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>During the workday</p>
+              <ol>
+                <li>Take a short movement break when restlessness shows up, rather than waiting until focus has already dropped.</li>
+                <li>Change posture across the day — sit, stand, a brief walk — instead of one unbroken seated block.</li>
+                <li>Put a small buffer between back-to-back meetings so the body can arrive before the next demand.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>After work</p>
+              <ol>
+                <li>If the day was too still, use a short walk as the check-in before the evening routine.</li>
+                <li>If the day was rushed, slow down first: a steady walk, a stretch, or both feet on the floor.</li>
+                <li>Let that reset finish before errands or plans, so the pace of work is not carried straight into the night.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>Match the movement to the morning: a short walk when the body is restless, a slower settle when the day was already rushed.</p>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 10</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 11 — Vision</p>
+    <article class="sheet sense-page" id="vision">
+      <header class="banner">
+        <img src="assets/heading-forest-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">Support by sense</p>
+          <h2>Vision</h2>
+        </div>
+      </header>
+      <div class="body">
+        <div class="sense">
+          <figure class="sense__photo"><img src="assets/support-visual.png" alt="" /></figure>
+          <div>
+            <h3>Vision <span class="band">High</span></h3>
+            <p style="margin:0.25rem 0 0;line-height:1.3">A plain desk and long dense documents can feel flat, so attention goes looking for colour, movement, or a view.</p>
+            <div class="phase">
+              <p>Before the workday</p>
+              <ol>
+                <li>Give the eyes something to lock onto before work: outdoor light on the commute, or a quick look at a visual checklist.</li>
+                <li>Set up a colour-coded list or a visual timer at the desk as you arrive.</li>
+                <li>Decide which block of the day needs the richest visual setup, and which can stay simple.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>During the workday</p>
+              <ol>
+                <li>Use colour-coded planners, timers, or checklists so attention has something clear to hold.</li>
+                <li>Keep a plant, a window, or a short look-far break after dense reading.</li>
+                <li>Place the hardest visual work in the more alert part of the day, not in the flat mid-afternoon stretch.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>After work</p>
+              <ol>
+                <li>Change the scene: outdoor light or a different room before more reading at home.</li>
+                <li>Add a little colour or movement to the evening if the desk day was visually plain.</li>
+                <li>Keep the first screen at home optional, so the eyes are not asked for another dense block straight away.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>Colour, a view, and something for the eyes to hold keep a plain desk from going flat.</p>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 11</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 12 — Smell and taste</p>
+    <article class="sheet sense-page" id="smell">
+      <header class="banner">
+        <img src="assets/heading-forest-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">Support by sense</p>
+          <h2>Smell and taste</h2>
+        </div>
+      </header>
+      <div class="body">
+        <div class="sense">
+          <figure class="sense__photo"><img src="assets/support-smell-taste.png" alt="" /></figure>
+          <div>
+            <h3>Smell and taste <span class="band">Medium</span></h3>
+            <p style="margin:0.25rem 0 0;line-height:1.3">Office scents and strong lunch flavours are usually manageable, and become intrusive on a tired or deadline-heavy day.</p>
+            <div class="phase">
+              <p>Before the workday</p>
+              <ol>
+                <li>Pack both a milder lunch and a more interesting one, so flavour can match how loaded the day already feels.</li>
+                <li>If yesterday’s scent load lingered, choose milder products before leaving home.</li>
+                <li>Notice the commute — food courts, perfume, fuel — and plan a short outdoor pause before the building if it was strong.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>During the workday</p>
+              <ol>
+                <li>Keep the option to move to fresher air or a milder lunch when smell starts to intrude.</li>
+                <li>Treat an early cue — a headache, nausea, or drifting focus — as a reason to change seat or scent, not to push on.</li>
+                <li>Use lunch as a reset: familiar flavour on a heavy day, a little more interest on a flat one.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>After work</p>
+              <ol>
+                <li>Take the commute in fresher air after a strong-smelling office.</li>
+                <li>Keep the first meal at home familiar if the day was full of scent, or a bit more flavourful if it was bland.</li>
+                <li>Open a window before stronger cooking smells, so home does not stack on top of the office.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>Flavour and scent can follow the day: milder when the load is already high, a little more interest when the day feels flat.</p>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 12</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 13 — Everyday load</p>
+    <article class="sheet sense-page" id="everyday">
+      <header class="banner">
+        <img src="assets/heading-forest-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">Support by sense</p>
+          <h2>Everyday load</h2>
+        </div>
+      </header>
+      <div class="body">
+        <div class="sense">
+          <figure class="sense__photo"><img src="assets/support-everyday.png" alt="" /></figure>
+          <div>
+            <h3>Everyday load <span class="band">Low</span></h3>
+            <p style="margin:0.25rem 0 0;line-height:1.3">It is often the pile-up — noise, light, people, and pace together — that leaves little left for the commute or for home.</p>
+            <div class="phase">
+              <p>Before the workday</p>
+              <ol>
+                <li>Keep the morning routine calmer, and start the hardest work while capacity is still highest.</li>
+                <li>Look at the stacked demands — meetings, open plan, commute — and decide in advance where one quieter buffer will sit.</li>
+                <li>Name one thing that can wait until tomorrow, so the day is not planned at full capacity before it begins.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>During the workday</p>
+              <ol>
+                <li>Put demanding thinking earlier, and keep lighter tasks for later in the day.</li>
+                <li>Protect lunch away from the desk, in a quieter place, before overload has already arrived.</li>
+                <li>Take a short sensory break when the pile-up starts — five quieter minutes — rather than at the end of the day.</li>
+              </ol>
+            </div>
+            <div class="phase">
+              <p>After work</p>
+              <ol>
+                <li>Decompress before the next demand: a quieter commute, a pause in the car, or a short buffer at the door.</li>
+                <li>Give home a low-input first stretch before conversation, chores, or more screens.</li>
+                <li>Treat recovery as part of the work plan, not whatever is left if the day allows.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="quote-space" aria-hidden="true"></div>
+        <blockquote class="quote">
+          <i>“</i>
+          <p>Recovery after work is part of the plan, not whatever is left if the day allows.</p>
+        </blockquote>
+        <div class="page-foot" aria-hidden="true"></div>
+        <p class="pg">Page 13</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 14 — Best Saturday</p>
+    <article class="sheet" id="saturday">
+      <div class="sat">
+        <div class="sat__copy">
+          <p class="kicker">Almost there</p>
+          <h2>Best Saturday</h2>
+          <p class="intro">A free-text snapshot of what an ideal day looks like — useful sensory clues beyond the scores.</p>
+          <blockquote>A slow morning with the window open and no alarm. A walk before anyone needs anything. Lunch outside, then a quiet afternoon with one task, not five. Evening with one person, low music, and an early night.</blockquote>
+        </div>
+        <figure class="close">
+          <img src="assets/heading-work-trail.png" alt="" />
+          <figcaption>
+            <p>Knowing what a good day feels like makes it easier to shape a workday that does not spend the whole bucket before lunch.</p>
+          </figcaption>
+        </figure>
+        <p class="pg" style="color:#fafcf8">Page 14</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 15 — At work</p>
+    <article class="sheet" id="work">
+      <header class="banner">
+        <img src="assets/heading-work-trail.png" alt="" />
+        <div class="banner__veil"></div>
+        <div class="banner__copy">
+          <p class="kicker">At work</p>
+          <h2>Where the senses meet the workday</h2>
+        </div>
+      </header>
+      <div class="body">
+        <div class="work-blocks">
+          <article>
+            <h3>The sensory bucket</h3>
+            <p>Every meeting, notification, and crowded walk adds to the load. When the bucket is full, focus, patience, and recovery all get harder — even if the tasks themselves are familiar.</p>
+          </article>
+          <article>
+            <h3>What helps this pattern</h3>
+            <ul>
+              <li>A quieter block for the hardest thinking.</li>
+              <li>Space around the desk, and fewer back-to-back meetings.</li>
+              <li>A planned decompress after the noisy parts of the day.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="pair-well">
+          <div class="pair">
+            <img src="assets/couple-work-desk.png" alt="" />
+            <img src="assets/couple-work-people.png" alt="" />
+          </div>
+        </div>
+        <p class="pg">Page 15</p>
+      </div>
+    </article>
+
+    <p class="sheet-label">Page 16 — Therapist notes, only when notes have been added</p>
+    <article class="sheet" id="notes">
+      <div class="pad">
+        <p class="kicker">Therapist insights</p>
+        <h2 style="font-size:1.55rem;margin-bottom:0.8rem">Notes for this report</h2>
+        <div class="prose">
+          <p>Amina manages detailed work well when the morning starts quietly. Open-plan afternoons are the point where sound and proximity stack, and the quality of the work drops even though effort stays high.</p>
+          <p>The most useful first step is one protected focus block and an edge desk, reviewed with the line manager after two weeks.</p>
+        </div>
+        <figure class="close" style="margin-top:auto;min-height:38%">
+          <img src="assets/heading-conclusion-trail.png" alt="" />
+          <figcaption>
+            <p>Noticing your sensory needs at work is how a busy day becomes something you can plan for.</p>
+          </figcaption>
+        </figure>
+        <p class="pg" style="color:#fafcf8">Page 16</p>
+      </div>
+    </article>
+
+  </main>
+</body>
+</html>
