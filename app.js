@@ -11161,10 +11161,9 @@ function renderBalanceBar(
     </div>`;
 }
 
-function renderSenseGlanceGrid(rows, copy, pageEntry) {
-  const cards = rows
-    .map(
-      (row, index) => `
+function renderSenseGlanceGrid(rows, copy, pageEntry, options = {}) {
+  const cards = rows.map(
+    (row, index) => `
       <li
         class="sense-glance__card"
         data-profile="${row.profile}"
@@ -11176,13 +11175,23 @@ function renderSenseGlanceGrid(rows, copy, pageEntry) {
         <span class="threshold-pill threshold-pill--${row.thresholdKey}">${escapeHtml(row.thresholdLabel)}</span>
         ${renderBalanceBar(row, copy, { showStatus: true, compact: true })}
       </li>`
-    )
-    .join("");
+  );
+  const splitAfter = Number(options.splitAfter) || 0;
+  if (splitAfter > 0 && cards.length > splitAfter) {
+    return `
+      <div class="sense-glance sense-glance--split">
+        <ul class="sense-glance__grid">${cards.slice(0, splitAfter).join("")}</ul>
+        <figure class="sense-glance__band">
+          <img src="${escapeHtml(options.bandSrc || "assets/parent-scores-path.jpg")}" alt="" width="1600" height="1067" />
+        </figure>
+        <ul class="sense-glance__grid">${cards.slice(splitAfter).join("")}</ul>
+      </div>`;
+  }
 
   return `
     <div class="sense-glance"${reportPageAttrs(pageEntry)}>
       <p class="sense-glance__label">${escapeHtml(copy.scoreGlanceTitle)}</p>
-      <ul class="sense-glance__grid">${cards}</ul>
+      <ul class="sense-glance__grid">${cards.join("")}</ul>
       ${reportPageNumberHtml(copy, pageEntry?.page)}
     </div>`;
 }
@@ -11993,9 +12002,9 @@ function renderSpecificSensoryResults(pageEntry, { compact = false } = {}) {
     });
   const groups = groupCards.map((group) => group.html).join("");
   const cardHtml = (id) => groupCards.find((group) => group.id === id)?.html || "";
-  const sensePhoto = (sense, src) => `
+  const sensePhoto = (sense, src, alt = "") => `
     <figure class="specific-results__photo specific-results__photo--${sense}">
-      <img src="${src}" alt="" />
+      <img src="${src}" alt="${escapeHtml(alt)}" />
     </figure>`;
   const resultsGrid =
     state.respondent === "teen" && !compact
@@ -12010,7 +12019,15 @@ function renderSpecificSensoryResults(pageEntry, { compact = false } = {}) {
           ${sensePhoto("movement", "assets/couple-movement-gym.png")}
         </div>
       </div>`
-      : `<div class="specific-results__grid">${groups}</div>`;
+      : state.respondent === "parent" && !compact
+        ? `
+      <div class="specific-results__grid specific-results__grid--parent">
+        ${cardHtml("auditory")}
+        ${cardHtml("tactile")}
+        ${cardHtml("movement")}
+        ${sensePhoto("movement", "assets/couple-movement-run.png", "Running along a country path")}
+      </div>`
+        : `<div class="specific-results__grid">${groups}</div>`;
 
   const teenSheet = state.respondent === "teen" && !compact;
   const heading = teenSheet
@@ -12055,30 +12072,16 @@ function renderBriefScoreSummary(scores, metrics, pageEntry) {
 
   if (isParent) {
     return `
-    <section class="profile-section profile-section--brief-scores parent-report-section parent-scores-sheet"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
-      <div class="parent-scores-sheet__hero">
-        <img
-          src="assets/parent-scores-path.jpg"
-          alt=""
-          class="parent-scores-sheet__hero-image"
-          width="1600"
-          height="1067"
-          loading="eager"
-          decoding="async"
-        />
-        <div class="parent-scores-sheet__hero-veil" aria-hidden="true"></div>
-        <div class="parent-scores-sheet__hero-copy">
-          <p class="parent-scores-sheet__kicker">${escapeHtml(copy.viewpoint || "")}</p>
-          <h3 id="brief-scores-title" class="parent-scores-sheet__title">${escapeHtml(kicker)}</h3>
-          <p class="parent-scores-sheet__lead">${escapeHtml(intro)}</p>
-        </div>
-      </div>
-      <div class="parent-scores-sheet__body">
-        <p class="brief-scores__headline">${escapeHtml(metrics.leanHeadline)}</p>
-        ${renderOverallScoreCard(metrics, copy)}
-        ${scoresVisual}
-        ${renderDunnCitation(copy, "short")}
-      </div>
+    <section class="profile-section profile-section--brief-scores parent-report-section parent-scores-sheet parent-scores-sheet--cards"${reportPageAttrs(pageEntry)} aria-labelledby="brief-scores-title">
+      <header class="parent-scores-sheet__heading">
+        <h3 id="brief-scores-title" class="parent-scores-sheet__title">${escapeHtml(kicker)}</h3>
+        <p class="parent-scores-sheet__lead">${escapeHtml(intro)}</p>
+      </header>
+      ${renderSenseGlanceGrid(rows, copy, null, {
+        splitAfter: 3,
+        bandSrc: "assets/parent-scores-path.jpg",
+      })}
+      ${renderDunnCitation(copy, "short")}
       ${reportPageNumberHtml(copy, pageEntry?.page)}
     </section>`;
   }
@@ -12833,6 +12836,7 @@ function waitForReportPrintImages(root = document) {
         ".work-profile-cover img",
         ".home-profile-cover img",
         ".teen-profile-cover img",
+        ".parent-report-cover img",
         ".report-conclusion img",
         ".print-brand img",
       ].join(", ")
@@ -13267,7 +13271,7 @@ function appendPaginatedBlock(stack, el, label) {
 function layoutA4PrintPreview() {
   document.querySelectorAll(".print-preview-stack").forEach((node) => node.remove());
   const blocks = [];
-  const cover = document.querySelector(".teen-profile-cover, .home-profile-cover");
+  const cover = document.querySelector(".teen-profile-cover, .home-profile-cover, .parent-report-cover");
   document.querySelectorAll("[data-report-page]").forEach((el) => {
     if (cover && cover.contains(el)) return;
     blocks.push(el);
@@ -13278,8 +13282,9 @@ function layoutA4PrintPreview() {
   document.body.appendChild(stack);
   document.body.classList.add("print-preview-a4");
   if (cover) {
-    if (cover.classList.contains("teen-profile-cover")) appendFullCoverSheet(stack, cover);
-    else appendPaginatedBlock(stack, cover, previewBlockLabel(cover));
+    if (cover.classList.contains("teen-profile-cover") || cover.classList.contains("parent-report-cover")) {
+      appendFullCoverSheet(stack, cover);
+    } else appendPaginatedBlock(stack, cover, previewBlockLabel(cover));
   }
   blocks.forEach((el) => appendPaginatedBlock(stack, el, previewBlockLabel(el)));
   dropSparsePreviewSheets(stack);
@@ -13624,7 +13629,8 @@ async function enableOnScreenPrintPreview() {
     padding: 0;
     background: #f4efe4;
   }
-  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover {
+  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover,
+  body.print-parent-report .print-preview-sheet__page--cover .parent-report-cover {
     display: flex;
     flex-direction: column;
     width: 210mm;
@@ -13636,13 +13642,15 @@ async function enableOnScreenPrintPreview() {
     border-radius: 0;
     box-shadow: none;
   }
-  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover__hero {
+  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover__hero,
+  body.print-parent-report .print-preview-sheet__page--cover .parent-report-cover__hero {
     flex: 1 1 auto;
     height: auto;
     min-height: 0;
     max-height: none;
   }
-  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover__board {
+  body.print-teen-report .print-preview-sheet__page--cover .teen-profile-cover__board,
+  body.print-parent-report .print-preview-sheet__page--cover .parent-report-cover__board {
     flex: 0 0 auto;
   }
   .print-preview-sheet--overflow .print-preview-sheet__page {
@@ -15221,106 +15229,74 @@ function renderResultsSummary() {
   );
 }
 
-function renderParentReportCover(copy, submissionNote = "") {
+function renderParentReportCover(copy) {
+  const af = state.language === "af";
   const childName = (state.demographics.name || "").trim();
   const parentName = (state.demographics.parentName || "").trim();
+  const age = String(state.demographics.age || "").trim();
+  const grade = String(state.demographics.occupation || "").trim();
   const dateLabel = formatQuestionnaireDate(state.completedAt, state.language);
-  const paragraphs = [
-    copy.parentReportIntroP1,
-    copy.parentReportIntroP2,
-    copy.parentReportIntroP3,
-  ].filter(Boolean);
-  const regarding = copy.parentReportRegarding || "Parent / child";
+  const childDetail = [childName, age ? `${af ? "Ouderdom" : "Age"} ${age}` : "", grade]
+    .filter(Boolean)
+    .join(" · ");
+  const labels = {
+    parent: copy.interpretCoverParentLabel || (af ? "Ouer / voog" : "Parent / guardian"),
+    child: af ? "Kind" : "Child",
+    date: copy.interpretCoverDateLabel || (af ? "Datum van assessering" : "Date of assessment"),
+  };
+  const note = af
+    ? "Hierdie sifting is nie ’n diagnose nie. Resultate dien slegs as riglyn."
+    : "This screening does not constitute a diagnosis. Results are for guidance only.";
 
   return `
     <section class="parent-report-cover" aria-labelledby="profile-title">
       <div class="parent-report-cover__hero">
         <img
-          src="assets/couple-intro-trail.png"
+          src="assets/outeniqua-trail-hero.png"
           alt=""
           class="parent-report-cover__hero-image"
-          width="1200"
-          height="800"
+          width="1536"
+          height="1024"
           loading="eager"
           decoding="async"
         />
         <div class="parent-report-cover__hero-veil" aria-hidden="true"></div>
         <div class="parent-report-cover__brand">
           <img src="assets/logo.png" alt="" class="parent-report-cover__logo" width="72" height="72" />
-          <div class="parent-report-cover__brand-text">
+          <div>
             <p class="parent-report-cover__studio">Soulful Sensory OT</p>
             <p class="parent-report-cover__tag">${escapeHtml(
-              copy.interpretCoverBrandTag || "Occupational Therapy Services"
+              copy.interpretCoverBrandTag || (af ? "Arbeidsterapiedienste" : "Occupational Therapy Services")
             )}</p>
           </div>
         </div>
-        <div class="parent-report-cover__hero-copy">
-          <p class="parent-report-cover__kicker">${escapeHtml(copy.viewpoint || "")}</p>
-          <h2 id="profile-title" class="parent-report-cover__title">${escapeHtml(
-            copy.parentReportIntroTitle || copy.profileTitleParent || copy.profileTitle
-          )}</h2>
+      </div>
+      <div class="parent-report-cover__board">
+        <p class="parent-report-cover__kicker">${escapeHtml(af ? "Sensoriese roete-profiel" : "Sensory trail profile")}</p>
+        <h2 id="profile-title" class="parent-report-cover__title">${escapeHtml(
+          copy.profileTitleParent || (af ? "Jou kind se sensoriese roete-profiel" : "Your child’s sensory trail profile")
+        )}</h2>
+        ${
+          parentName
+            ? `<p class="parent-report-cover__who">${escapeHtml(labels.parent)}</p>
+               <p class="parent-report-cover__name">${escapeHtml(parentName)}</p>`
+            : ""
+        }
+        <dl class="parent-report-cover__facts">
           ${
-            copy.parentReportIntroLead
-              ? `<p class="parent-report-cover__lead">${escapeHtml(copy.parentReportIntroLead)}</p>`
+            childDetail
+              ? `<div><dt>${escapeHtml(labels.child)}</dt><dd>${escapeHtml(childDetail)}</dd></div>`
               : ""
           }
-        </div>
+          ${
+            dateLabel
+              ? `<div><dt>${escapeHtml(labels.date)}</dt><dd>${escapeHtml(dateLabel)}</dd></div>`
+              : ""
+          }
+        </dl>
+        <p class="parent-report-cover__note">${escapeHtml(note)}</p>
       </div>
-      <div class="parent-report-cover__sheet">
-        <div class="parent-report-cover__identity">
-          <div class="parent-report-cover__who">
-            ${
-              childName
-                ? `<p class="parent-report-cover__label">${escapeHtml(
-                    copy.interpretCoverPreparedFor || "Prepared for"
-                  )}</p>
-              <p class="parent-report-cover__name">${escapeHtml(childName)}</p>`
-                : ""
-            }
-            ${
-              parentName
-                ? `<p class="parent-report-cover__parent"><span>${escapeHtml(
-                    copy.interpretCoverParentLabel || "Parent / guardian"
-                  )}</span> ${escapeHtml(parentName)}</p>`
-                : ""
-            }
-          </div>
-          <div class="parent-report-cover__facts">
-            <p class="parent-report-cover__regarding">${escapeHtml(regarding)}</p>
-            ${dateLabel ? `<p class="parent-report-cover__date">${escapeHtml(dateLabel)}</p>` : ""}
-            ${
-              copy.profileTitleParent
-                ? `<p class="parent-report-cover__profile">${escapeHtml(copy.profileTitleParent)}</p>`
-                : ""
-            }
-          </div>
-        </div>
-        <div class="parent-report-cover__reading">
-          <figure class="parent-report-cover__portrait">
-            <img
-              src="assets/home-life-family.png"
-              alt=""
-              class="parent-report-cover__portrait-image"
-              width="1024"
-              height="682"
-              loading="eager"
-              decoding="async"
-            />
-          </figure>
-          <div class="parent-report-cover__body">
-            ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
-            ${
-              copy.descriptiveMap
-                ? `<p class="parent-report-cover__disclaimer">${escapeHtml(copy.descriptiveMap)}</p>`
-                : ""
-            }
-          </div>
-        </div>
-        ${renderSharingPermissionsSummary()}
-        ${submissionNote}
-      </div>
-    </section>
-  `;
+    </section>`;
 }
 
 function renderParentHomeVisuals() {
@@ -15542,7 +15518,7 @@ function renderResults() {
         : "";
 
   const introBlock = isParent
-    ? renderParentReportCover(copy, submissionNote)
+    ? `${renderParentReportCover(copy)}${submissionNote}`
     : isWorkProfile
       ? `
       <div class="results-intro results-intro--concise results-intro--work" aria-labelledby="profile-title">

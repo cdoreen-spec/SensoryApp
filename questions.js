@@ -623,7 +623,7 @@ const QUESTIONNAIRE_UI = {
     briefScoresIntro:
       "A quick view of the overall pattern and how each sense leaned. This is descriptive, not a diagnosis.",
     briefScoresIntroParent:
-      "A quick view of the overall pattern and how each sense leaned. This is descriptive, not a diagnosis.",
+      "Each score shows how that sense tends to respond for your child — noticing input quickly, sitting in the middle, or looking for more. The cards read one sense at a time. This is a guide, not a diagnosis.",
     briefScoresHomeQuote:
       "Home is where your nervous system spends much of its time recovering. Understanding your sensory preferences allows you to intentionally create spaces and routines that promote calm, comfort, and emotional wellbeing.",
     trailInterpretSectionLabel: "Interpretation",
@@ -1626,7 +1626,7 @@ const QUESTIONNAIRE_UI = {
     briefScoresIntro:
       "’n Vinnige blik op die algehele patroon en hoe elke sintuig geneig het. Dit is beskrywend, nie ’n diagnose nie.",
     briefScoresIntroParent:
-      "’n Vinnige blik op die algehele patroon en hoe elke sintuig geneig het. Dit is beskrywend, nie ’n diagnose nie.",
+      "Elke telling wys hoe daardie sintuig vir jou kind geneig is om te reageer — insette vinnig opmerk, in die middel sit, of na meer soek. Die kaartjies lees een sintuig op ’n slag. Dit is ’n gids, nie ’n diagnose nie.",
     briefScoresHomeQuote:
       "Die huis is waar jou senuweestelsel die meeste van sy tyd herstel. As jy jou sensoriese voorkeure verstaan, kan jy doelbewus ruimtes en roetines skep wat kalmte, gemak en emosionele welstand bevorder.",
     trailInterpretSectionLabel: "Interpretasie",
