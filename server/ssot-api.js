@@ -285,10 +285,19 @@ function mergeById(existing, incoming) {
   return [...map.values()];
 }
 
+function coupleSessionBothComplete(state, coupleId) {
+  const session = state.coupleSessions?.sessions?.[coupleId];
+  if (!session) return false;
+  return ["a", "b"].every(
+    (partner) => session.partners?.[partner]?.status === "complete" && session.partners[partner].answers
+  );
+}
+
 function stampCompletedScreenings(state) {
   const now = new Date().toISOString();
   for (const item of state.assessments?.items || []) {
     if (!isCompleteAssessment(item) || !item.patientUserId) continue;
+    if (item.respondent === "couple" && !coupleSessionBothComplete(state, item.coupleId)) continue;
     const user = (state.users || []).find((entry) => entry.id === item.patientUserId);
     if (!user || user.screeningCompletedAt) continue;
     user.screeningCompletedAt = item.completedAt || now;
@@ -323,6 +332,36 @@ function mergeUsers(serverUsers, localUsers) {
   return [...map.values()];
 }
 
+function mergeCoupleSessions(existing, incoming) {
+  const merged = { ...(existing || {}) };
+  for (const [id, session] of Object.entries(incoming || {})) {
+    if (!session || typeof session !== "object") continue;
+    const current = merged[id];
+    if (!current) {
+      merged[id] = session;
+      continue;
+    }
+    const partners = { ...(current.partners || {}) };
+    for (const key of ["a", "b"]) {
+      const cur = current.partners?.[key];
+      const inc = session.partners?.[key];
+      if (!inc) continue;
+      if (cur?.status === "complete" && inc.status !== "complete") continue;
+      partners[key] = { ...(cur || {}), ...inc };
+    }
+    const currentTime = Date.parse(current.updatedAt || 0) || 0;
+    const incomingTime = Date.parse(session.updatedAt || 0) || 0;
+    merged[id] = {
+      ...current,
+      ...session,
+      partners,
+      createdAt: current.createdAt || session.createdAt,
+      updatedAt: new Date(Math.max(currentTime, incomingTime)).toISOString(),
+    };
+  }
+  return merged;
+}
+
 function mergeSnapshot(state, snapshot) {
   if (!snapshot || typeof snapshot !== "object") return state;
   if (Array.isArray(snapshot.users)) state.users = mergeUsers(state.users, snapshot.users);
@@ -336,7 +375,7 @@ function mergeSnapshot(state, snapshot) {
     snapshot.coupleSessions?.sessions ||
     (snapshot.coupleSessions && !snapshot.coupleSessions.version ? snapshot.coupleSessions : null);
   if (incomingSessions && typeof incomingSessions === "object") {
-    state.coupleSessions.sessions = { ...state.coupleSessions.sessions, ...incomingSessions };
+    state.coupleSessions.sessions = mergeCoupleSessions(state.coupleSessions.sessions, incomingSessions);
   }
   const incomingPayments = Array.isArray(snapshot.payments)
     ? snapshot.payments
@@ -610,6 +649,8 @@ async function emailNewlyCompleted(beforeItems, items, origin) {
   const before = new Map((beforeItems || []).filter((item) => item?.id).map((item) => [item.id, item]));
   for (const item of items || []) {
     if (!isCompleteAssessment(item) || item.reportEmailedAt) continue;
+    // Couple results are emailed once, when the last partner submits the combined report.
+    if (item.respondent === "couple") continue;
     const previous = before.get(item.id);
     if (previous && isCompleteAssessment(previous)) continue;
     const report = completionReport(item, origin);
@@ -796,6 +837,21 @@ async function handlePush(state, body, origin) {
       (item) => item && (item.patientUserId === user.id || item.id === user.assessmentId)
     );
     state.assessments.items = mergeById(state.assessments.items, allowed);
+  }
+  const incomingSessions =
+    body.coupleSessions?.sessions ||
+    (body.coupleSessions && !body.coupleSessions.version ? body.coupleSessions : null);
+  if (incomingSessions && typeof incomingSessions === "object") {
+    const allowedSessions = {};
+    for (const [id, session] of Object.entries(incomingSessions)) {
+      if (!session || typeof session !== "object") continue;
+      const ownsSession = session.patientUserId === user.id;
+      const ownsAssessment = (state.assessments.items || []).some(
+        (item) => item && item.coupleId === id && item.patientUserId === user.id
+      );
+      if (ownsSession || ownsAssessment) allowedSessions[id] = session;
+    }
+    state.coupleSessions.sessions = mergeCoupleSessions(state.coupleSessions.sessions, allowedSessions);
   }
   await emailNewlyCompleted(beforeAssessments, state.assessments.items, origin);
   await saveState(state);

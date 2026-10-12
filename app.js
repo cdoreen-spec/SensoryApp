@@ -536,8 +536,16 @@ function isAssignedQuestionnaireExpired(user = currentAssignedPatient()) {
   return Number.isFinite(expires) && expires < Date.now();
 }
 
+function isCouplePatientRecord(user) {
+  if (!user) return false;
+  const assignment = parseQuestionnaireAssignment(user.questionnaireType, user.lifeContext);
+  return assignment?.respondent === "couple" || user.questionnaireType === "couple";
+}
+
 function patientHasCompletedAssignment(user) {
   if (!user?.id) return false;
+  // One couple partner finishing is not the end of the shared invitation.
+  if (isCouplePatientRecord(user)) return false;
   return readAssessments().some(
     (item) => item.patientUserId === user.id && assessmentStatus(item) === "complete"
   );
@@ -545,6 +553,7 @@ function patientHasCompletedAssignment(user) {
 
 function patientScreeningIsComplete(user) {
   if (!user) return false;
+  if (isCouplePatientRecord(user)) return Boolean(user.screeningCompletedAt);
   if (user.screeningCompletedAt) return true;
   return patientHasCompletedAssignment(user);
 }
@@ -1178,6 +1187,11 @@ function startAssignedQuestionnaire() {
     ? readAssessments().find((item) => item.id === user.assessmentId)
     : readAssessments().find((item) => item.patientUserId === user.id);
   if (existing && assessmentStatus(existing) === "complete") {
+    if (isCouplePatientRecord(user) && !patientScreeningIsComplete(user)) {
+      applyPatientAssignment(user);
+      openCoupleHub({ coupleId: existing.coupleId || state.coupleId || undefined });
+      return true;
+    }
     blockCompletedScreening();
     return false;
   }
@@ -1596,6 +1610,10 @@ function getCoupleSession(id) {
 function saveCoupleSession(session) {
   if (isAdminPatientPreview()) return session || null;
   if (!session?.id) return null;
+  const user = currentAuthUser();
+  if (user?.role === "patient" && user.id && !session.patientUserId) {
+    session.patientUserId = user.id;
+  }
   session.updatedAt = new Date().toISOString();
   const sessions = readCoupleSessionsMap();
   sessions[session.id] = session;
@@ -2386,7 +2404,8 @@ function ensureAssessmentArchived() {
   if (
     record.patientUserId &&
     typeof Auth !== "undefined" &&
-    Auth.markPatientScreeningComplete
+    Auth.markPatientScreeningComplete &&
+    (record.respondent !== "couple" || bothCouplePartnersComplete())
   ) {
     Auth.markPatientScreeningComplete(record.patientUserId);
   }
@@ -3380,10 +3399,103 @@ function renderSampleReportBanner() {
  * After invite auth: open the homepage so patients can read the practice info
  * first, then start from the bottom. Resume a saved draft into the questionnaire.
  */
+function couplePartnerFromLocation() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const coupleId = String(params.get("couple") || "").trim();
+    const partner = String(params.get("partner") || "").toLowerCase();
+    if (!coupleId || !COUPLE_PARTNERS.includes(partner)) return null;
+    return {
+      coupleId,
+      partner,
+      aName: params.get("aName") || "",
+      bName: params.get("bName") || "",
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function coupleMergeFromLocation() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("merge") !== "1") return null;
+    const coupleId = String(params.get("couple") || "").trim();
+    if (!coupleId) return null;
+    return {
+      coupleId,
+      aName: params.get("aName") || "",
+      bName: params.get("bName") || "",
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/** After sign-in, a merge link opens the combined couple report. */
+function openCoupleMergeFromLocation() {
+  const pending = coupleMergeFromLocation();
+  if (!pending) return false;
+  const user = currentAuthUser();
+  if (!user || user.role !== "patient" || !isCouplePatientRecord(user)) return false;
+  let session = getCoupleSession(pending.coupleId);
+  if (!session) {
+    session = createCoupleSession({
+      id: pending.coupleId,
+      partnerAName: pending.aName,
+      partnerBName: pending.bName,
+    });
+  } else {
+    if (pending.aName && !session.partners.a.label) session.partners.a.label = pending.aName;
+    if (pending.bName && !session.partners.b.label) session.partners.b.label = pending.bName;
+  }
+  if (!session.patientUserId) session.patientUserId = user.id;
+  saveCoupleSession(session);
+  state.respondent = "couple";
+  state.assignedRespondent = "couple";
+  applyPatientAssignment(user);
+  openCoupleHub({
+    coupleId: pending.coupleId,
+    showMerge: bothCouplePartnersComplete(session),
+  });
+  return true;
+}
+
+/** After sign-in, a partner link opens that partner's questionnaire on this device. */
+function openCouplePartnerFromLocation() {
+  const pending = couplePartnerFromLocation();
+  if (!pending) return false;
+  const user = currentAuthUser();
+  if (!user || user.role !== "patient" || !isCouplePatientRecord(user)) return false;
+  let session = getCoupleSession(pending.coupleId);
+  if (!session) {
+    session = createCoupleSession({
+      id: pending.coupleId,
+      partnerAName: pending.aName,
+      partnerBName: pending.bName,
+    });
+  } else {
+    if (pending.aName && !session.partners.a.label) session.partners.a.label = pending.aName;
+    if (pending.bName && !session.partners.b.label) session.partners.b.label = pending.bName;
+  }
+  if (!session.patientUserId) session.patientUserId = user.id;
+  saveCoupleSession(session);
+  state.coupleId = pending.coupleId;
+  state.respondent = "couple";
+  state.assignedRespondent = "couple";
+  applyPatientAssignment(user);
+  startCouplePartnerQuestionnaire(pending.partner);
+  state.view = "questionnaire";
+  return true;
+}
+
 function continueInviteSession() {
   state.error = null;
   state.authNotice = null;
   const assigned = currentAssignedPatient();
+  if (assigned) applyPatientAssignment(assigned);
+  if (openCoupleMergeFromLocation()) return;
+  if (openCouplePartnerFromLocation()) return;
   if (assigned && patientScreeningIsComplete(assigned)) {
     applyPatientAssignment(assigned);
     state.view = "home";
@@ -3929,7 +4041,9 @@ function readInviteFromUrl() {
     state.coupleId = coupleId;
     state.respondent = "couple";
     state.view = "questionnaire";
-    if (COUPLE_PARTNERS.includes(partner)) {
+    if (params.get("merge") === "1" && bothCouplePartnersComplete(session)) {
+      openCoupleHub({ coupleId, showMerge: true });
+    } else if (COUPLE_PARTNERS.includes(partner)) {
       startCouplePartnerQuestionnaire(partner);
     } else {
       openCoupleHub({ coupleId });
@@ -9889,6 +10003,17 @@ function renderCoupleMergeIntro(copy) {
           ${paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
         </div>
       </div>
+      <figure class="couple-merge-intro__scene" aria-hidden="true">
+        <img
+          src="assets/home-closing-trail.jpg"
+          alt=""
+          class="couple-merge-intro__scene-image"
+          width="1024"
+          height="1536"
+          loading="eager"
+          decoding="async"
+        />
+      </figure>
     </section>
   `;
 }
@@ -9920,6 +10045,17 @@ function renderCoupleWorkMergeSummaries(sess, copy) {
         copy.coupleCompareWorkIntro || copy.coupleWorkDesc || ""
       )}</p>
       <div class="couple-work-merge-grid">${cards}</div>
+      <figure class="couple-work-merge-scene" aria-hidden="true">
+        <img
+          src="assets/home-scores-trail.jpg"
+          alt=""
+          class="couple-work-merge-scene__image"
+          width="1024"
+          height="639"
+          loading="eager"
+          decoding="async"
+        />
+      </figure>
     </section>
   `;
 }
@@ -9929,61 +10065,88 @@ function renderCoupleMerge(session = null) {
   const sess = session || ensureCoupleSession();
   const nameA = couplePartnerLabel("a", sess);
   const nameB = couplePartnerLabel("b", sess);
-  const cards = COUPLE_PARTNERS.map((partner) => {
+  const scoreProfiles = COUPLE_PARTNERS.map((partner) => {
     const slot = sess.partners[partner];
-    const name = couplePartnerLabel(partner, sess);
-    const { crewId, character, lean, balance, color } = couplePartnerCrewProfile(slot, copy);
-    const domains = (slot.summary?.domainProfiles || [])
-      .map(
-        (d) =>
-          `<li><span>${escapeHtml(d.title || d.id)}</span><strong>${escapeHtml(d.short || "—")}</strong></li>`
-      )
-      .join("");
-    return `
-      <article class="couple-merge-card couple-partner--${partner}" data-crew="${escapeHtml(crewId)}">
-        <header class="couple-merge-card__header">
-          <figure class="couple-merge-card__portrait" aria-hidden="true">
-            ${teenCrewCharacterArt(crewId, `couple-merge-${partner}`)}
-          </figure>
-          <div class="couple-merge-card__identity">
-            <h3 class="couple-merge-card__name">${escapeHtml(name)}</h3>
-            <div class="couple-merge-card__scale">
-              ${renderBalanceBar(
-                {
-                  profile: lean || "neutral",
-                  color: color || "#5b7fa6",
-                  shortTitle: name,
-                },
-                copy,
-                {
-                  showStatus: false,
-                  compact: true,
-                  percent: balance,
+    const { character } = couplePartnerCrewProfile(slot, copy);
+    return {
+      partner,
+      name: couplePartnerLabel(partner, sess),
+      character: character?.name || "",
+      overall: slot.summary?.overallLabel || "—",
+      domains: slot.summary?.domainProfiles || [],
+    };
+  });
+  const scoreDomainsA = scoreProfiles[0].domains;
+  const scoreDomainsB = scoreProfiles[1].domains;
+  const scoreDomainBById = new Map(scoreDomainsB.map((domain) => [domain.id || domain.title, domain]));
+  const scoreDomainSource = scoreDomainsA.length ? scoreDomainsA : scoreDomainsB;
+  const scoreRows = scoreDomainSource
+    .map((domain, index) => {
+      const match =
+        scoreDomainBById.get(domain.id || domain.title) || scoreDomainsB[index] || {};
+      const left = scoreDomainsA.length ? domain : match;
+      const right = scoreDomainsA.length ? match : domain;
+      return {
+        title: (scoreDomainsA.length ? domain : match).title || domain.title || domain.id,
+        a: left.short || "—",
+        b: right.short || "—",
+      };
+    })
+    .filter((row) => row.title);
+  const scoreCompare = `
+    <div class="couple-score-compare">
+      <table class="couple-score-compare__table">
+        <thead>
+          <tr>
+            <th scope="col" class="couple-score-compare__sense">${escapeHtml(copy.scoreColSense || "Sensory system")}</th>
+            ${scoreProfiles
+              .map(
+                (profile) => `
+              <th scope="col" class="couple-partner--${profile.partner}">
+                <span class="couple-score-compare__name">
+                  <span class="couple-partner-dot" aria-hidden="true"></span>
+                  ${escapeHtml(profile.name)}
+                </span>
+                ${
+                  profile.character
+                    ? `<span class="couple-score-compare__role">${escapeHtml(profile.character)}</span>`
+                    : ""
                 }
-              )}
-            </div>
-            <p class="couple-merge-card__character">${escapeHtml(character.name)}</p>
-            ${
-              character.tag
-                ? `<p class="couple-merge-card__character-tag">${escapeHtml(character.tag)}</p>`
-                : ""
-            }
-          </div>
-        </header>
-        <p class="couple-merge-card__overall">${escapeHtml(slot.summary?.overallLabel || "—")}</p>
-        <p class="couple-merge-card__lean">${escapeHtml(slot.summary?.leanHeadline || "")}</p>
-        <ul class="couple-merge-card__domains">${domains}</ul>
-        <button type="button" class="btn btn-secondary btn--compact no-print" data-action="couple-start" data-partner="${partner}">
-          ${escapeHtml(copy.coupleViewResults)}
-        </button>
-      </article>
-    `;
-  }).join("");
-
-  const colorKey = `
-    <div class="couple-color-key" aria-label="${escapeHtml(copy.coupleCompareTogether)}">
-      <span class="couple-color-key__item couple-partner--a"><span class="couple-partner-dot" aria-hidden="true"></span>${escapeHtml(nameA)}</span>
-      <span class="couple-color-key__item couple-partner--b"><span class="couple-partner-dot" aria-hidden="true"></span>${escapeHtml(nameB)}</span>
+              </th>`
+              )
+              .join("")}
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="couple-score-compare__overall">
+            <th scope="row">${escapeHtml(copy.overallPattern || "Overall")}</th>
+            ${scoreProfiles
+              .map(
+                (profile) =>
+                  `<td class="couple-partner--${profile.partner}">${escapeHtml(profile.overall)}</td>`
+              )
+              .join("")}
+          </tr>
+          ${scoreRows
+            .map(
+              (row) => `
+            <tr>
+              <th scope="row">${escapeHtml(row.title)}</th>
+              <td class="couple-partner--a">${escapeHtml(row.a)}</td>
+              <td class="couple-partner--b">${escapeHtml(row.b)}</td>
+            </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>
+      <div class="couple-score-compare__actions no-print">
+        ${COUPLE_PARTNERS.map(
+          (partner) =>
+            `<button type="button" class="btn btn-secondary btn--compact" data-action="couple-start" data-partner="${partner}">${escapeHtml(
+              couplePartnerLabel(partner, sess)
+            )} · ${escapeHtml(copy.coupleViewResults)}</button>`
+        ).join("")}
+      </div>
     </div>
   `;
 
@@ -10263,6 +10426,17 @@ function renderCoupleMerge(session = null) {
                 </div>`
               : ""
           }
+          <figure class="couple-work-partners-scene" aria-hidden="true">
+            <img
+              src="assets/heading-viewpoint-forest.png"
+              alt=""
+              class="couple-work-partners-scene__image"
+              width="1024"
+              height="682"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
         </div>
       </section>`
     : "";
@@ -10306,12 +10480,26 @@ function renderCoupleMerge(session = null) {
                           </ul>
                         </div>`
                       : "";
+                    const gapPhoto =
+                      area.id === "touch"
+                        ? `<figure class="couple-conflict-gap" aria-hidden="true">
+                            <img
+                              src="assets/heading-work-trail.png"
+                              alt=""
+                              class="couple-conflict-gap__image"
+                              width="1024"
+                              height="768"
+                              loading="eager"
+                              decoding="async"
+                            />
+                          </figure>`
+                        : "";
                     return `
                   <article class="couple-conflict-card couple-conflict-card--${escapeHtml(area.id || "general")}">
                     <h4 class="couple-conflict-card__title">${escapeHtml(area.title)}</h4>
                     <p class="couple-conflict-card__text">${escapeHtml(area.text)}</p>
                     ${tipsHtml}
-                  </article>`;
+                  </article>${gapPhoto}`;
                   })
                   .join("")}
               </div>`
@@ -10390,21 +10578,57 @@ function renderCoupleMerge(session = null) {
   return renderShell(
     `
       ${renderSampleReportBanner()}
-      <section class="couple-merge-cover" aria-labelledby="couple-merge-title">
-        ${renderInterpretSectionBanner({
-          image: "assets/couple-report-banner.png",
-          objectPosition: "center 72%",
-          kicker: copy.coupleHubTag,
-          titleId: "couple-merge-title",
-          title: copy.coupleMergeTitle,
-          lead: copy.coupleMergeDesc,
-          variant: "couple",
-          titleTag: "h2",
-          width: 1024,
-          height: 682,
-        })}
-        ${colorKey}
-        <div class="couple-merge-grid">${cards}</div>
+      <section class="couple-report-cover" aria-labelledby="couple-merge-title">
+        <div class="couple-report-cover__hero">
+          <img
+            src="assets/couple-report-banner.png"
+            alt=""
+            class="couple-report-cover__image"
+            width="1024"
+            height="682"
+            loading="eager"
+            decoding="async"
+          />
+          <div class="couple-report-cover__veil" aria-hidden="true"></div>
+          <div class="couple-report-cover__brand">
+            <img src="assets/logo.png" alt="" class="couple-report-cover__logo" width="72" height="72" />
+            <div>
+              <p class="couple-report-cover__studio">Soulful Sensory OT</p>
+              <p class="couple-report-cover__tag">${escapeHtml(
+                copy.interpretCoverBrandTag || "Occupational Therapy Services"
+              )}</p>
+            </div>
+          </div>
+        </div>
+        <div class="couple-report-cover__board">
+          <p class="couple-report-cover__kicker">${escapeHtml(copy.coupleHubTag)}</p>
+          <h2 id="couple-merge-title" class="couple-report-cover__title">${escapeHtml(copy.coupleMergeTitle)}</h2>
+          <p class="couple-report-cover__names">
+            <span class="couple-report-cover__partner couple-partner--a">
+              <span class="couple-partner-dot" aria-hidden="true"></span>
+              ${escapeHtml(nameA)}
+            </span>
+            <span class="couple-report-cover__join" aria-hidden="true">&amp;</span>
+            <span class="couple-report-cover__partner couple-partner--b">
+              <span class="couple-partner-dot" aria-hidden="true"></span>
+              ${escapeHtml(nameB)}
+            </span>
+          </p>
+        </div>
+      </section>
+      <section class="couple-merge-cover">
+        ${scoreCompare}
+        <figure class="couple-merge-cover__scene" aria-hidden="true">
+          <img
+            src="assets/heading-forest-trail.png"
+            alt=""
+            class="couple-merge-cover__scene-image"
+            width="1024"
+            height="1536"
+            loading="eager"
+            decoding="async"
+          />
+        </figure>
       </section>
       ${renderCoupleMergeIntro(copy)}
       ${compareHtml}
@@ -10414,7 +10638,7 @@ function renderCoupleMerge(session = null) {
       ${parentingCompareHtml}
       ${renderCoupleWorkMergeSummaries(sess, copy)}
       ${renderTherapistInsightsSection()}
-      <figure class="couple-closing-quote">
+      <figure class="couple-closing-quote couple-closing-quote--merge">
         <span class="couple-closing-quote__mark" aria-hidden="true">“</span>
         <blockquote class="couple-closing-quote__text">
           <p>${escapeHtml(copy.coupleClosingQuote)}</p>
@@ -12837,6 +13061,12 @@ function waitForReportPrintImages(root = document) {
         ".home-profile-cover img",
         ".teen-profile-cover img",
         ".parent-report-cover img",
+        ".couple-report-cover img",
+        ".couple-merge-cover__scene img",
+        ".couple-merge-intro__scene img",
+        ".couple-work-partners-scene img",
+        ".couple-conflict-gap img",
+        ".couple-work-merge-scene img",
         ".report-conclusion img",
         ".print-brand img",
       ].join(", ")
@@ -18357,6 +18587,7 @@ async function bootApp() {
     }
   }
 
+  openCoupleMergeFromLocation();
   render();
   if (state._openPrintPreviewOnBoot) {
     delete state._openPrintPreviewOnBoot;
