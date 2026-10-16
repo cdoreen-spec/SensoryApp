@@ -136,6 +136,8 @@ const state = {
     role: "patient",
   },
   resetToken: null,
+  pendingSignInToken: null,
+  signInLinkUrl: null,
   settingsTab: "overview", // overview | users | settings
   settingsFilter: "all", // all | patient | therapist | admin | pending
   settingsSearch: "",
@@ -3997,6 +3999,15 @@ function readInviteFromUrl() {
     state.view = "forgot";
     return;
   }
+  if (params.get("signin")) {
+    state.pendingSignInToken = String(params.get("signin") || "").trim();
+    state.view = "signin-link";
+    state.authBusy = true;
+    state.authError = null;
+    state.authNotice = null;
+    state.signInLinkUrl = null;
+    return;
+  }
   if (params.get("reset")) {
     state.view = "reset";
     state.resetToken = String(params.get("reset") || "").trim();
@@ -4864,6 +4875,14 @@ async function sendClinicianNotification({ subject, message, name, fields = {} }
   throw new Error("Email delivery is disabled in config.js");
 }
 
+function buildSignInLinkUrl(token) {
+  const url = new URL(window.location.href);
+  url.hash = "";
+  url.search = "";
+  url.searchParams.set("signin", token);
+  return url.toString();
+}
+
 function buildPasswordResetUrl(token) {
   const url = new URL(getClinicianBaseUrl());
   url.searchParams.set("reset", token);
@@ -5561,6 +5580,7 @@ function renderClinicianGate() {
         </p>
         <div class="clinician__actions">
           <button type="button" class="btn btn-primary" data-action="open-login">Sign in</button>
+          <button type="button" class="btn btn-secondary" data-action="open-signin-link">Email me a sign-in link</button>
           <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
         </div>
       </section>
@@ -5852,6 +5872,7 @@ function renderDashboardGate() {
         </p>
         <div class="clinician__actions">
           <button type="button" class="btn btn-primary" data-action="open-login">Sign in</button>
+          <button type="button" class="btn btn-secondary" data-action="open-signin-link">Email me a sign-in link</button>
           <button type="button" class="btn btn-secondary" data-action="back-home">Back to home</button>
         </div>
       </section>
@@ -6288,10 +6309,12 @@ function resetAuthForm(role = "patient") {
 
 function clearAuthResetParams() {
   state.resetToken = null;
+  state.pendingSignInToken = null;
   if (!window.history?.replaceState) return;
   const clean = new URL(window.location.href);
   clean.searchParams.delete("reset");
   clean.searchParams.delete("forgot");
+  clean.searchParams.delete("signin");
   window.history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
 }
 
@@ -6382,7 +6405,8 @@ function syncAccountChrome() {
     state.view === "login" ||
     state.view === "signup" ||
     state.view === "forgot" ||
-    state.view === "reset";
+    state.view === "reset" ||
+    state.view === "signin-link";
 
   if (isViewerMode()) {
     const canExit = typeof Auth !== "undefined" && Auth.canAccessClinicianTools();
@@ -6538,8 +6562,12 @@ function renderLogin() {
       ? `<p class="auth__switch">Your therapist creates your account. If you do not have a password yet, ask them to send your sign-in details.</p>`
       : `
       <p class="auth__switch">
+        <button type="button" class="auth__text-btn" data-action="open-signin-link">Email me a sign-in link</button>
+      </p>
+      <p class="auth__switch">
         <button type="button" class="auth__text-btn" data-action="open-forgot">Forgot your password?</button>
       </p>
+      <p class="auth__hint">The sign-in link opens your therapist account from your email. This browser keeps that sign-in for 14 days.</p>
       ${
         getLiveSettings().allowTherapistSignup !== false
           ? `<p class="auth__switch">
@@ -6549,6 +6577,56 @@ function renderLogin() {
           : ""
       }
     `,
+  });
+}
+
+function renderSignInLink() {
+  const form = state.authForm;
+  const link = state.signInLinkUrl;
+  if (state.authBusy && state.pendingSignInToken) {
+    return renderAuthShell({
+      eyebrow: "Therapist account",
+      title: "Signing you in",
+      lead: "Opening your therapist account from this link.",
+      body: `<p class="auth__notice" role="status">Signing you in…</p>`,
+    });
+  }
+  if (link) {
+    return renderAuthShell({
+      eyebrow: "Therapist account",
+      title: "Your sign-in link",
+      lead: "Open this link to sign in. It works once and expires in 24 hours. This browser then stays signed in for 14 days.",
+      body: `
+        <p class="auth__link-box">
+          <a href="${escapeHtml(link)}">${escapeHtml(link)}</a>
+        </p>
+        <div class="auth__actions">
+          <a class="btn btn-primary" href="${escapeHtml(link)}">Open sign-in link</a>
+          <button type="button" class="btn btn-secondary" data-action="open-login">Back to sign in</button>
+        </div>
+      `,
+      footer: `<p class="auth__hint">On the published site this link arrives in your inbox. It is shown here so you can see how it works on this computer.</p>`,
+    });
+  }
+  return renderAuthShell({
+    eyebrow: "Therapist account",
+    title: "Email me a sign-in link",
+    lead: "Enter the email on your therapist account. We will send a one-time link. Open it and you are signed in.",
+    body: `
+      <form class="auth__form" data-auth-form="signin-link">
+        <label class="auth__field">
+          <span>Email</span>
+          <input type="email" name="email" data-auth-field="email" autocomplete="email" required value="${escapeHtml(form.email)}" />
+        </label>
+        <div class="auth__actions">
+          <button type="submit" class="btn btn-primary" ${state.authBusy ? "disabled" : ""}>
+            ${state.authBusy ? "Sending…" : "Email sign-in link"}
+          </button>
+          <button type="button" class="btn btn-secondary" data-action="open-login">Back to sign in</button>
+        </div>
+      </form>
+    `,
+    footer: `<p class="auth__hint">Patient questionnaire passwords stay as they are. This link is only for a therapist or admin account.</p>`,
   });
 }
 
@@ -16118,6 +16196,7 @@ function render({ scrollToTop = false } = {}) {
     state.view === "signup" ||
     state.view === "forgot" ||
     state.view === "reset" ||
+    state.view === "signin-link" ||
     state.view === "settings" ||
     state.view === "account" ||
     state.view === "dashboard";
@@ -16158,6 +16237,8 @@ function render({ scrollToTop = false } = {}) {
     html = renderLogin();
   } else if (state.view === "forgot") {
     html = renderForgotPassword();
+  } else if (state.view === "signin-link") {
+    html = renderSignInLink();
   } else if (state.view === "reset") {
     html = renderResetPassword();
   } else if (state.view === "signup") {
@@ -16498,7 +16579,17 @@ function bindEvents() {
         state.authNotice = null;
         state.authForm.password = "";
         state.authForm.confirmPassword = "";
+        state.signInLinkUrl = null;
         state.view = "forgot";
+        render({ scrollToTop: true });
+      } else if (action === "open-signin-link") {
+        state.authError = null;
+        state.authNotice = null;
+        state.authForm.password = "";
+        state.authForm.confirmPassword = "";
+        state.signInLinkUrl = null;
+        state.pendingSignInToken = null;
+        state.view = "signin-link";
         render({ scrollToTop: true });
       } else if (action === "open-account") {
         state.view = currentAuthUser() ? "account" : "login";
@@ -17150,7 +17241,20 @@ function bindEvents() {
       state.authNotice = null;
       state.authForm.password = "";
       state.authForm.confirmPassword = "";
+      state.signInLinkUrl = null;
       state.view = "forgot";
+      render({ scrollToTop: true });
+      return;
+    }
+
+    if (action === "open-signin-link") {
+      state.authError = null;
+      state.authNotice = null;
+      state.authForm.password = "";
+      state.authForm.confirmPassword = "";
+      state.signInLinkUrl = null;
+      state.pendingSignInToken = null;
+      state.view = "signin-link";
       render({ scrollToTop: true });
       return;
     }
@@ -18459,6 +18563,61 @@ function bindEvents() {
       return;
     }
 
+    const signInLinkForm = e.target.closest('[data-auth-form="signin-link"]');
+    if (signInLinkForm) {
+      e.preventDefault();
+      const formData = new FormData(signInLinkForm);
+      state.authForm.email = String(formData.get("email") || "");
+      state.authBusy = true;
+      state.authError = null;
+      state.authNotice = null;
+      state.signInLinkUrl = null;
+      render();
+      const result = await Auth.requestSignInLink({ email: state.authForm.email });
+      if (!result.ok) {
+        state.authBusy = false;
+        state.authError = result.error;
+        render({ scrollToTop: true });
+        return;
+      }
+      const link = result.signInUrl || (result.token ? buildSignInLinkUrl(result.token) : "");
+      if (result.sent && result.token && !result.emailed && link) {
+        try {
+          await sendViaGmailBackend({
+            to: result.email,
+            subject: "Sign in to Soulful Sensory OT",
+            name: result.name,
+            kind: "sign-in-link",
+            resetUrl: link,
+            message: [
+              `Hello ${result.name || "there"},`,
+              "",
+              "Use this link to sign in to your Soulful Sensory OT therapist account. You do not need a password.",
+              "",
+              link,
+              "",
+              "This link works once and expires in 24 hours. If you did not ask for it, you can ignore this email.",
+            ].join("\n"),
+          });
+          result.emailed = true;
+        } catch (err) {
+          console.warn("Sign-in link email was not sent:", err);
+        }
+      }
+      state.authBusy = false;
+      if (link) {
+        state.signInLinkUrl = link;
+        state.authNotice = result.emailed
+          ? "This link is also on its way to your inbox."
+          : "Your sign-in link is ready below.";
+      } else {
+        state.authNotice =
+          "If that email belongs to a therapist or admin account, a sign-in link is on its way. It works once and expires in 24 hours.";
+      }
+      render({ scrollToTop: true });
+      return;
+    }
+
     const resetForm = e.target.closest('[data-auth-form="reset"]');
     if (resetForm) {
       e.preventDefault();
@@ -18708,6 +18867,28 @@ async function bootApp() {
     initTherapistPrefs();
   }
   if (state.pendingReportId) openReportFromEmailLink();
+  if (state.pendingSignInToken && typeof Auth !== "undefined") {
+    const token = state.pendingSignInToken;
+    state.pendingSignInToken = null;
+    try {
+      const result = await Auth.completeSignInLink(token);
+      state.authBusy = false;
+      if (!result.ok) {
+        state.authError = result.error;
+        state.view = "signin-link";
+        clearAuthResetParams();
+      } else {
+        clearAuthResetParams();
+        routeAfterAuth(result.user);
+      }
+    } catch (err) {
+      console.error("Could not open sign-in link:", err);
+      state.authBusy = false;
+      state.authError = "This sign-in link could not be opened. Please request a new one.";
+      state.view = "signin-link";
+      clearAuthResetParams();
+    }
+  }
   if (state.view === "reset") {
     if (!state.resetToken) {
       state.authError = "This reset link is missing. Please request a new one.";

@@ -16884,6 +16884,27 @@ body:not(.is-home) .account-chrome__link {
   background: rgba(54, 91, 70, 0.08);
 }
 
+.auth__link-box {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: rgba(54, 91, 70, 0.08);
+  border: 1px solid rgba(54, 91, 70, 0.16);
+}
+
+.auth__link-box a {
+  color: var(--forest);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.auth__actions a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .account-meta {
   display: grid;
   gap: 0.75rem;

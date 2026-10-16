@@ -275,10 +275,38 @@ function noticeCopy(options) {
   };
 }
 
+function signInCopy(options) {
+  const url = options.resetUrl || options.inviteUrl || "";
+  return {
+    eyebrow: "Therapist account",
+    title: "Sign in to Soulful Sensory OT",
+    hero: "Your sign-in link",
+    bodyHtml: `
+      <p style="margin:0 0 16px;font-family:${FONTS.serif};font-size:22px;line-height:1.35;color:${COLORS.forest};">Dear ${escapeHtml(
+        firstName(options.name)
+      )},</p>
+      <p style="margin:0 0 16px;font-family:${FONTS.sans};font-size:16px;line-height:1.65;color:${COLORS.ink};">
+        Use the button below to sign in to your Soulful Sensory OT therapist account. You do not need a password.
+      </p>
+      ${ctaButton(url, "Sign in")}
+      <p style="margin:0 0 8px;font-family:${FONTS.sans};font-size:14px;line-height:1.6;color:${COLORS.muted};">
+        If the button does not work, copy this link into your browser:
+      </p>
+      <p style="margin:0 0 18px;font-family:${FONTS.sans};font-size:13px;line-height:1.5;color:${COLORS.button};word-break:break-all;">${escapeHtml(
+        url
+      )}</p>
+      <p style="margin:0;font-family:${FONTS.sans};font-size:14px;line-height:1.6;color:${COLORS.muted};">
+        This link works once and expires in 24 hours. If you did not ask for it, you can ignore this email.
+      </p>
+    `,
+  };
+}
+
 function contentFor(options) {
   const kind = String(options.kind || "").toLowerCase();
   if (kind === "invite") return inviteCopy(options);
   if (kind === "password-reset") return resetCopy(options);
+  if (kind === "sign-in-link") return signInCopy(options);
   if (kind === "report") return reportCopy(options);
   return noticeCopy(options);
 }

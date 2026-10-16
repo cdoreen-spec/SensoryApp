@@ -288,27 +288,55 @@ function saveSettings(partial) {
   return next;
 }
 
-function getSession() {
+const STAFF_SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+
+function isStaffRole(role) {
+  return role === AUTH_ROLES.therapist || role === AUTH_ROLES.admin;
+}
+
+function readSessionRecord(storage) {
   try {
-    const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
+    const raw = storage.getItem(AUTH_SESSION_KEY);
     if (!raw) return null;
     const session = JSON.parse(raw);
     if (!session?.userId) return null;
+    if (session.expiresAt) {
+      const expires = Date.parse(session.expiresAt);
+      if (!Number.isFinite(expires) || expires < Date.now()) {
+        storage.removeItem(AUTH_SESSION_KEY);
+        return null;
+      }
+    }
     return session;
   } catch (_) {
     return null;
   }
 }
 
-function setSession(userId) {
-  sessionStorage.setItem(
-    AUTH_SESSION_KEY,
-    JSON.stringify({ userId, startedAt: new Date().toISOString() })
-  );
+function getSession() {
+  return readSessionRecord(localStorage) || readSessionRecord(sessionStorage);
+}
+
+function setSession(userId, role) {
+  const user = getUsers().find((entry) => entry.id === userId);
+  const staff = isStaffRole(role || user?.role);
+  const record = {
+    userId,
+    startedAt: new Date().toISOString(),
+    expiresAt: staff ? new Date(Date.now() + STAFF_SESSION_TTL_MS).toISOString() : null,
+  };
+  if (staff) {
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(record));
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    return;
+  }
+  sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(record));
+  localStorage.removeItem(AUTH_SESSION_KEY);
 }
 
 function clearSession() {
   sessionStorage.removeItem(AUTH_SESSION_KEY);
+  localStorage.removeItem(AUTH_SESSION_KEY);
 }
 
 function getCurrentUser() {
@@ -713,6 +741,10 @@ async function hashResetToken(token) {
   return hashPassword(String(token || ""), "ssot-reset");
 }
 
+async function hashSignInToken(token) {
+  return hashPassword(String(token || ""), "ssot-signin");
+}
+
 function canReceivePasswordReset(user) {
   if (!user) return false;
   if (user.status !== AUTH_STATUS.active) return false;
@@ -810,6 +842,107 @@ async function completePasswordReset({ token, password }) {
   user.updatedAt = new Date().toISOString();
   saveUsers(users);
   clearSession();
+  return { ok: true, user: publicUser(user) };
+}
+
+/**
+ * Emails a one-time sign-in link for an active therapist or admin account.
+ * A matching patient account is ignored. Unknown emails still return ok.
+ */
+async function requestSignInLink({ email }) {
+  await ensureAdminSeed();
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { ok: false, error: "Please enter a valid email address." };
+  }
+  if (practiceServerReady()) {
+    try {
+      const remote = await SsotBackend.requestSignInLink(normalizedEmail);
+      if (!remote?.ok) {
+        return { ok: false, error: remote?.error || "Could not create a sign-in link." };
+      }
+      return remote;
+    } catch (err) {
+      return { ok: false, error: err?.message || "Could not reach the practice server." };
+    }
+  }
+
+  const users = getUsers();
+  const user =
+    users.find((entry) => entry.email === normalizedEmail && entry.role !== AUTH_ROLES.patient) ||
+    users.find((entry) => entry.email === normalizedEmail);
+  if (!canReceivePasswordReset(user)) {
+    return { ok: true, sent: false };
+  }
+
+  const token = createResetToken();
+  user.signInTokenHash = await hashSignInToken(token);
+  user.signInTokenExpiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();
+  user.updatedAt = new Date().toISOString();
+  saveUsers(users);
+  return {
+    ok: true,
+    sent: true,
+    emailed: false,
+    token,
+    email: user.email,
+    name: user.name,
+  };
+}
+
+async function findUserBySignInToken(token) {
+  const raw = String(token || "").trim();
+  if (!raw) return null;
+  const tokenHash = await hashSignInToken(raw);
+  const users = getUsers();
+  const user = users.find((entry) => entry.signInTokenHash && entry.signInTokenHash === tokenHash);
+  if (!user) return null;
+  const expires = Date.parse(user.signInTokenExpiresAt || "");
+  if (!Number.isFinite(expires) || expires < Date.now()) {
+    return { expired: true, user };
+  }
+  return { expired: false, user };
+}
+
+async function completeSignInLink(token) {
+  const raw = String(token || "").trim();
+  if (!raw) {
+    return { ok: false, error: "This sign-in link is invalid or has already been used." };
+  }
+  if (practiceServerReady()) {
+    try {
+      const remote = await SsotBackend.completeSignInLink(raw);
+      if (!remote?.ok || !remote.user?.id) {
+        return {
+          ok: false,
+          error: remote?.error || "This sign-in link is invalid or has already been used.",
+        };
+      }
+      setSession(remote.user.id, remote.user.role);
+      return { ok: true, user: remote.user };
+    } catch (err) {
+      return { ok: false, error: err?.message || "Could not reach the practice server." };
+    }
+  }
+
+  const match = await findUserBySignInToken(raw);
+  if (!match || match.expired || !canReceivePasswordReset(match.user)) {
+    return {
+      ok: false,
+      error: match?.expired
+        ? "This sign-in link has expired. Please request a new one."
+        : "This sign-in link is invalid or has already been used.",
+    };
+  }
+  const users = getUsers();
+  const user = users.find((entry) => entry.id === match.user.id);
+  if (!user) return { ok: false, error: "This sign-in link is invalid or has already been used." };
+  user.signInTokenHash = null;
+  user.signInTokenExpiresAt = null;
+  user.lastLoginAt = new Date().toISOString();
+  user.updatedAt = user.lastLoginAt;
+  saveUsers(users);
+  setSession(user.id, user.role);
   return { ok: true, user: publicUser(user) };
 }
 
@@ -972,6 +1105,8 @@ const Auth = {
   requestPasswordReset,
   peekPasswordReset,
   completePasswordReset,
+  requestSignInLink,
+  completeSignInLink,
   listUsers,
   getUserStats,
   updateUserById,

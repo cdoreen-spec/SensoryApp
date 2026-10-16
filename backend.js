@@ -93,7 +93,27 @@ const SsotBackend = (() => {
     return Boolean(configuredUrl());
   }
 
+  const STAFF_SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+
+  function readPersistedSessionToken() {
+    try {
+      const raw = localStorage.getItem(SSOT_BACKEND_SESSION_KEY);
+      if (!raw || raw[0] !== "{") return "";
+      const parsed = JSON.parse(raw);
+      const expires = Date.parse(parsed?.expiresAt || "");
+      if (!parsed?.token || !Number.isFinite(expires) || expires < Date.now()) {
+        localStorage.removeItem(SSOT_BACKEND_SESSION_KEY);
+        return "";
+      }
+      return String(parsed.token);
+    } catch (_) {
+      return "";
+    }
+  }
+
   function getSessionToken() {
+    const persisted = readPersistedSessionToken();
+    if (persisted) return persisted;
     try {
       return sessionStorage.getItem(SSOT_BACKEND_SESSION_KEY) || "";
     } catch (_) {
@@ -101,10 +121,27 @@ const SsotBackend = (() => {
     }
   }
 
-  function setSessionToken(token) {
+  function setSessionToken(token, options = {}) {
+    const persist = options.persist === true;
     try {
-      if (token) sessionStorage.setItem(SSOT_BACKEND_SESSION_KEY, token);
-      else sessionStorage.removeItem(SSOT_BACKEND_SESSION_KEY);
+      if (!token) {
+        sessionStorage.removeItem(SSOT_BACKEND_SESSION_KEY);
+        localStorage.removeItem(SSOT_BACKEND_SESSION_KEY);
+        return;
+      }
+      if (persist) {
+        localStorage.setItem(
+          SSOT_BACKEND_SESSION_KEY,
+          JSON.stringify({
+            token,
+            expiresAt: new Date(Date.now() + STAFF_SESSION_TTL_MS).toISOString(),
+          })
+        );
+        sessionStorage.removeItem(SSOT_BACKEND_SESSION_KEY);
+        return;
+      }
+      sessionStorage.setItem(SSOT_BACKEND_SESSION_KEY, token);
+      localStorage.removeItem(SSOT_BACKEND_SESSION_KEY);
     } catch (_) {
       /* ignore */
     }
@@ -222,7 +259,12 @@ const SsotBackend = (() => {
       if (snapshot.settings && replace) {
         writeJson(SSOT_SETTINGS_KEY, snapshot.settings);
       }
-      if (snapshot.token) setSessionToken(snapshot.token);
+      if (snapshot.token) {
+        const role = snapshot.user?.role;
+        setSessionToken(snapshot.token, {
+          persist: role === "therapist" || role === "admin",
+        });
+      }
     } finally {
       applying = false;
     }
@@ -425,6 +467,21 @@ const SsotBackend = (() => {
     return request({ action: "completeReset", token, password });
   }
 
+  async function requestSignInLink(email) {
+    return request({
+      action: "requestSignInLink",
+      email,
+      origin: typeof location !== "undefined" ? location.origin : "",
+    });
+  }
+
+  async function completeSignInLink(token) {
+    const data = await request({ action: "completeSignInLink", token });
+    if (!data.ok) return data;
+    applySnapshot(data);
+    return { ok: true, user: data.user };
+  }
+
   return {
     isEnabled,
     publicAppUrl,
@@ -438,6 +495,8 @@ const SsotBackend = (() => {
     requestPasswordReset,
     peekReset,
     completeReset,
+    requestSignInLink,
+    completeSignInLink,
     clearSession,
     getSessionToken,
     lastError: () => lastError,

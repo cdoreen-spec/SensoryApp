@@ -74,6 +74,10 @@ function hashResetToken(token) {
   return hashPassword(String(token || ""), "ssot-reset");
 }
 
+function hashSignInToken(token) {
+  return hashPassword(String(token || ""), "ssot-signin");
+}
+
 function createSessionToken() {
   return crypto.randomBytes(24).toString("hex");
 }
@@ -612,6 +616,12 @@ function buildResetUrl(token, origin) {
   return `${base}/?reset=${encodeURIComponent(token)}`;
 }
 
+function buildSignInUrl(token, origin) {
+  const base = String(origin || process.env.APP_ORIGIN || "").replace(/\/$/, "");
+  if (!base) return "";
+  return `${base}/?signin=${encodeURIComponent(token)}`;
+}
+
 function isCompleteAssessment(item) {
   if (!item) return false;
   if (item.status === "complete") return true;
@@ -900,7 +910,7 @@ async function handleSendEmail(state, body, origin) {
   else if (to === clinician && (body.kind === "report" || (sessionUser && sessionUser.role === ROLES.patient) || inviteUser)) {
     allowed = true;
   }
-  else if (body.kind === "password-reset") {
+  else if (body.kind === "password-reset" || body.kind === "sign-in-link") {
     const target =
       state.users.find((entry) => entry.email === to && entry.role !== ROLES.patient) ||
       state.users.find((entry) => entry.email === to);
@@ -1019,7 +1029,90 @@ async function handlePeekReset(state, body) {
   return json(200, { ok: true, user: publicUser(user) });
 }
 
-async function handleRequest(body, { origin } = {}) {
+async function handleRequestSignInLink(state, body, origin, options = {}) {
+  const email = normalizeEmail(body.email);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return json(400, { ok: false, error: "Please enter a valid email address." });
+  }
+  const user =
+    state.users.find((entry) => entry.email === email && entry.role !== ROLES.patient) ||
+    state.users.find((entry) => entry.email === email);
+  if (!canReceivePasswordReset(user)) {
+    return json(200, { ok: true, sent: false });
+  }
+  const token = crypto.randomBytes(32).toString("hex");
+  user.signInTokenHash = hashSignInToken(token);
+  user.signInTokenExpiresAt = new Date(Date.now() + RESET_TTL_MS).toISOString();
+  user.updatedAt = new Date().toISOString();
+  await saveState(state);
+  const signInUrl = buildSignInUrl(token, body.origin || origin);
+  let emailed = false;
+  if (gmailConfigured() && signInUrl) {
+    try {
+      await sendGmail({
+        to: user.email,
+        subject: "Sign in to Soulful Sensory OT",
+        name: user.name,
+        kind: "sign-in-link",
+        resetUrl: signInUrl,
+        message: [
+          `Hello ${user.name || "there"},`,
+          "",
+          "Use this link to sign in to your Soulful Sensory OT therapist account. You do not need a password.",
+          "",
+          signInUrl,
+          "",
+          "This link works once and expires in 24 hours. If you did not ask for it, you can ignore this email.",
+        ].join("\n"),
+      });
+      emailed = true;
+    } catch (err) {
+      console.error(`Sign-in link email failed: ${err.message}`);
+    }
+  }
+  const payload = {
+    ok: true,
+    sent: true,
+    emailed,
+    email: user.email,
+    name: user.name,
+  };
+  if (!emailed || options.allowSignInPreview === true) {
+    payload.token = token;
+    payload.signInUrl = signInUrl;
+  }
+  return json(200, payload);
+}
+
+async function handleCompleteSignInLink(state, body) {
+  const token = String(body.token || "").trim();
+  if (!token) {
+    return json(400, { ok: false, error: "This sign-in link is invalid or has already been used." });
+  }
+  const tokenHash = hashSignInToken(token);
+  const user = state.users.find((entry) => entry.signInTokenHash && entry.signInTokenHash === tokenHash);
+  if (!user || !canReceivePasswordReset(user)) {
+    return json(400, { ok: false, error: "This sign-in link is invalid or has already been used." });
+  }
+  const expires = Date.parse(user.signInTokenExpiresAt || "") || 0;
+  if (!expires || expires < Date.now()) {
+    return json(400, { ok: false, error: "This sign-in link has expired. Please request a new one." });
+  }
+  user.signInTokenHash = null;
+  user.signInTokenExpiresAt = null;
+  user.lastLoginAt = new Date().toISOString();
+  user.updatedAt = user.lastLoginAt;
+  const sessionToken = issueSession(state, user);
+  await saveState(state);
+  return json(200, {
+    ok: true,
+    token: sessionToken,
+    user: publicUser(user),
+    ...staffSnapshot(state),
+  });
+}
+
+async function handleRequest(body, { origin, allowSignInPreview } = {}) {
   const finish = (result) => {
     const fromEnv = String(process.env.APP_ORIGIN || "").trim().replace(/\/$/, "");
     const published = fromEnv || String(origin || "").trim().replace(/\/$/, "");
@@ -1058,6 +1151,10 @@ async function handleRequest(body, { origin } = {}) {
     if (action === "requestPasswordReset") {
       return finish(await handleRequestPasswordReset(state, body, origin));
     }
+    if (action === "requestSignInLink") {
+      return finish(await handleRequestSignInLink(state, body, origin, { allowSignInPreview }));
+    }
+    if (action === "completeSignInLink") return finish(await handleCompleteSignInLink(state, body));
     if (action === "peekReset") return finish(await handlePeekReset(state, body));
     if (action === "completeReset") return finish(await handleCompleteReset(state, body));
     return finish(json(400, { ok: false, error: "Unknown request." }));
@@ -1122,7 +1219,10 @@ function previewEmailHtml(kind = "invite") {
     password: "Trail-example",
     expiresAt: "23 September 2026",
     inviteUrl: "http://127.0.0.1:8787/?invite=1",
-    resetUrl: "http://127.0.0.1:8787/?reset=preview",
+    resetUrl:
+      kind === "sign-in-link"
+        ? "http://127.0.0.1:8787/?signin=preview"
+        : "http://127.0.0.1:8787/?reset=preview",
     message:
       "Hello Alex,\n\nYour occupational therapist has created an account for you to complete a sensory questionnaire.",
   };

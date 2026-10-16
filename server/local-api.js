@@ -178,7 +178,11 @@ async function handleApi(req, res, url) {
     send(res, 400, { ok: false, error: "Invalid JSON" }, { "Content-Type": "application/json; charset=utf-8" });
     return;
   }
-  const result = await handleRequest(payload, { origin: forwardedOrigin(req) });
+  const requestHost = String(req.headers.host || "").split(":")[0].toLowerCase();
+  const result = await handleRequest(payload, {
+    origin: forwardedOrigin(req),
+    allowSignInPreview: requestHost === "localhost" || requestHost === "127.0.0.1" || requestHost === "::1",
+  });
   if (payload.action === "sendEmail" || result.status >= 400) {
     console.log(
       `${payload.action || "request"} ${result.status}${result.body?.error ? ` — ${result.body.error}` : ""}${
