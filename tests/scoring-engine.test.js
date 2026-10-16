@@ -21,6 +21,7 @@ function pole(type) {
   if (type === "sensitive" || type === "sensitive-if-no") return "sensitive";
   if (type === "seeking" || type === "seeking-if-no") return "seeking";
   if (type === "neutral") return "neutral";
+  if (type === "context") return "context";
   return null;
 }
 
@@ -75,28 +76,28 @@ const observerBoundary = {
   adult: {
     auditory: { sensitive: 3, seeking: 0 },
     tactile: { sensitive: 3, seeking: 0 },
-    movement: { sensitive: 2, seeking: 0 },
+    movement: { sensitive: 3, seeking: 0 },
     visual: { sensitive: 3, seeking: 0 },
-    smellTaste: { sensitive: 2, seeking: 0 },
-    everyday: { sensitive: 1, seeking: 0 },
+    smellTaste: { sensitive: 3, seeking: 0 },
+    everyday: { sensitive: 3, seeking: 0 },
   },
   couple: {
     auditory: { sensitive: 3, seeking: 0 },
     tactile: { sensitive: 4, seeking: 0 },
-    movement: { sensitive: 2, seeking: 0 },
+    movement: { sensitive: 3, seeking: 0 },
     visual: { sensitive: 4, seeking: 0 },
-    smellTaste: { sensitive: 2, seeking: 0 },
-    everyday: { sensitive: 1, seeking: 0 },
+    smellTaste: { sensitive: 3, seeking: 0 },
+    everyday: { sensitive: 3, seeking: 0 },
   },
 };
 
 const explorerBoundary = {
-  auditory: { sensitive: 0, seeking: 2 },
-  tactile: { sensitive: 0, seeking: 1 },
+  auditory: { sensitive: 0, seeking: 3 },
+  tactile: { sensitive: 0, seeking: 3 },
   movement: { sensitive: 0, seeking: 3 },
-  visual: { sensitive: 0, seeking: 1 },
-  smellTaste: { sensitive: 0, seeking: 2 },
-  everyday: { sensitive: 0, seeking: 2 },
+  visual: { sensitive: 0, seeking: 3 },
+  smellTaste: { sensitive: 0, seeking: 3 },
+  everyday: { sensitive: 0, seeking: 3 },
 };
 
 test("published pairs name Observer, Explorer, or Adaptor exactly", () => {
@@ -139,8 +140,16 @@ test("adult, teen, and parent use one item map; couple is longer; Afrikaans keep
       });
     }
   }
-  assert.equal(domains("adult").reduce((sum, domain) => sum + domain.questions.length, 0), 53);
-  assert.equal(domains("couple").reduce((sum, domain) => sum + domain.questions.length, 0), 65);
+  assert.equal(domains("adult").reduce((sum, domain) => sum + domain.questions.length, 0), 77);
+  assert.equal(domains("couple").reduce((sum, domain) => sum + domain.questions.length, 0), 88);
+  for (const respondent of ["adult", "teen", "parent", "couple"]) {
+    domains(respondent).forEach((domain) => {
+      const sensitive = domain.questions.filter((question) => pole(question.type) === "sensitive").length;
+      const seeking = domain.questions.filter((question) => pole(question.type) === "seeking").length;
+      assert.ok(sensitive >= 6, `${respondent} ${domain.id} sensitive ${sensitive}`);
+      assert.ok(seeking >= 6, `${respondent} ${domain.id} seeking ${seeking}`);
+    });
+  }
 });
 
 test("strong Observer and strong Explorer are named for every questionnaire", () => {
@@ -186,16 +195,16 @@ test("the Observer line is one Auditory endorsement wide", () => {
   for (const respondent of ["adult", "teen", "parent"]) {
     const onLine = overall(respondent, fromPlan(respondent, observerBoundary.adult));
     assert.equal(onLine.profile, "sensitive", respondent);
-    assert.equal(onLine.sensitive, 52, respondent);
+    assert.equal(onLine.sensitive, 50, respondent);
     assert.equal(onLine.seeking, 0, respondent);
-    assert.ok(Math.abs(onLine.sensitiveRate - 31 / 60) < 1e-12);
+    assert.ok(Math.abs(onLine.sensitiveRate - 0.5) < 1e-12);
     const plan = Object.fromEntries(
       Object.entries(observerBoundary.adult).map(([id, counts]) => [id, { ...counts }])
     );
     plan.auditory.sensitive = 2;
     const below = overall(respondent, fromPlan(respondent, plan));
     assert.equal(below.profile, "neutral", respondent);
-    assert.equal(below.sensitive, 49, respondent);
+    assert.equal(below.sensitive, 47, respondent);
     plan.auditory.sensitive = 4;
     const above = overall(respondent, fromPlan(respondent, plan));
     assert.equal(above.profile, "sensitive", respondent);
@@ -217,13 +226,13 @@ test("the Explorer line is one Auditory endorsement wide", () => {
   for (const respondent of ["adult", "teen", "parent", "couple"]) {
     const onLine = overall(respondent, fromPlan(respondent, explorerBoundary));
     assert.equal(onLine.profile, "seeking", respondent);
-    assert.equal(onLine.seeking, 52, respondent);
+    assert.equal(onLine.seeking, 50, respondent);
     assert.equal(onLine.sensitive, 0, respondent);
     const plan = Object.fromEntries(Object.entries(explorerBoundary).map(([id, counts]) => [id, { ...counts }]));
-    plan.auditory.seeking = 1;
+    plan.auditory.seeking = 2;
     const below = overall(respondent, fromPlan(respondent, plan));
     assert.equal(below.profile, "neutral", respondent);
-    plan.auditory.seeking = 3;
+    plan.auditory.seeking = 4;
     const above = overall(respondent, fromPlan(respondent, plan));
     assert.equal(above.profile, "seeking", respondent);
   }
@@ -283,6 +292,27 @@ test("a neutral item does not change either rate", () => {
   assert.equal(endorsed.seeking, declined.seeking);
   assert.equal(endorsed.profile, declined.profile);
   assert.equal(endorsed.profile, "neutral");
+});
+
+test("couple recharge answers do not change the everyday score", () => {
+  const everyday = domains("couple").find((domain) => domain.id === "everyday");
+  const contextIndexes = everyday.questions
+    .map((question, index) => (question.type === "context" ? index : -1))
+    .filter((index) => index >= 0);
+  assert.equal(contextIndexes.join(","), "4,5,6,7,8,9,10,11");
+  const quiet = everyday.questions.map(() => false);
+  const answered = quiet.slice();
+  contextIndexes.forEach((index) => {
+    answered[index] = true;
+  });
+  const without = scoreDomain(everyday.questions, quiet);
+  const withContext = scoreDomain(everyday.questions, answered);
+  assert.equal(withContext.sensitive, without.sensitive);
+  assert.equal(withContext.seeking, without.seeking);
+  assert.equal(withContext.sensitivePool, without.sensitivePool);
+  assert.equal(withContext.seekingPool, without.seekingPool);
+  assert.equal(withContext.profile, without.profile);
+  assert.equal(withContext.scored, without.scored);
 });
 
 test("reverse scoring counts No, and a non-boolean is treated as No", () => {

@@ -53,6 +53,7 @@ function labPole(type) {
   if (type === "sensitive" || type === "sensitive-if-no") return "sensitive";
   if (type === "seeking" || type === "seeking-if-no") return "seeking";
   if (type === "neutral") return "neutral";
+  if (type === "context") return "context";
   return null;
 }
 
@@ -188,29 +189,29 @@ const LAB_BOUNDARY_OBSERVER = {
   standard: {
     auditory: { sensitive: 3, seeking: 0 },
     tactile: { sensitive: 3, seeking: 0 },
-    movement: { sensitive: 2, seeking: 0 },
+    movement: { sensitive: 3, seeking: 0 },
     visual: { sensitive: 3, seeking: 0 },
-    smellTaste: { sensitive: 2, seeking: 0 },
-    everyday: { sensitive: 1, seeking: 0 },
+    smellTaste: { sensitive: 3, seeking: 0 },
+    everyday: { sensitive: 3, seeking: 0 },
   },
   couple: {
     auditory: { sensitive: 3, seeking: 0 },
     tactile: { sensitive: 4, seeking: 0 },
-    movement: { sensitive: 2, seeking: 0 },
+    movement: { sensitive: 3, seeking: 0 },
     visual: { sensitive: 4, seeking: 0 },
-    smellTaste: { sensitive: 2, seeking: 0 },
-    everyday: { sensitive: 1, seeking: 0 },
+    smellTaste: { sensitive: 3, seeking: 0 },
+    everyday: { sensitive: 3, seeking: 0 },
   },
 };
 
 const LAB_BOUNDARY_EXPLORER = {
   standard: {
-    auditory: { sensitive: 0, seeking: 2 },
-    tactile: { sensitive: 0, seeking: 1 },
+    auditory: { sensitive: 0, seeking: 3 },
+    tactile: { sensitive: 0, seeking: 3 },
     movement: { sensitive: 0, seeking: 3 },
-    visual: { sensitive: 0, seeking: 1 },
-    smellTaste: { sensitive: 0, seeking: 2 },
-    everyday: { sensitive: 0, seeking: 2 },
+    visual: { sensitive: 0, seeking: 3 },
+    smellTaste: { sensitive: 0, seeking: 3 },
+    everyday: { sensitive: 0, seeking: 3 },
   },
 };
 
@@ -334,7 +335,7 @@ const LAB_CASES = [
   {
     id: "boundary-observer",
     name: "Observer / Adaptor boundary",
-    blurb: "The overall Observer average sits just above 50%. The Explorer average is 0%. Everyday stays under the 50% floor on its own.",
+    blurb: "Each scored side is endorsed on half of its own questions. The overall Observer average is 50%, and the Explorer average is 0%.",
     build: "plan",
     plans: LAB_BOUNDARY_OBSERVER,
     expectedProfile: "sensitive",
@@ -345,22 +346,22 @@ const LAB_CASES = [
       movement: "sensitive",
       visual: "sensitive",
       smellTaste: "sensitive",
-      everyday: "neutral",
+      everyday: "sensitive",
     },
   },
   {
     id: "boundary-explorer",
     name: "Adaptor / Explorer boundary",
-    blurb: "The overall Explorer average sits just above 50%. The Observer average is 0%. Touch and visual stay under the floor on their own because one endorsement is not half of a three-item list.",
+    blurb: "Each scored side is endorsed on half of its own questions. The overall Explorer average is 50%, and the Observer average is 0%.",
     build: "plan",
     plans: LAB_BOUNDARY_EXPLORER,
     expectedProfile: "seeking",
     expectedPattern: "Explorer",
     domains: {
       auditory: "seeking",
-      tactile: "neutral",
+      tactile: "seeking",
       movement: "seeking",
-      visual: "neutral",
+      visual: "seeking",
       smellTaste: "seeking",
       everyday: "seeking",
     },
@@ -368,7 +369,7 @@ const LAB_CASES = [
   {
     id: "exact-floor",
     name: "Exactly on a threshold",
-    blurb: "Auditory is endorsed on exactly 3 of 6 Observer items, which is the 50% floor, and on no Explorer items. The other senses are unendorsed, so the overall average is not on that floor. An exact 20-point gap is not available inside a single sense with these list lengths.",
+    blurb: "Auditory is endorsed on exactly 3 of 6 Observer items, which is the 50% floor, and on no Explorer items. The other senses are unendorsed, so the overall average is not on that floor. An exact 20-point gap still falls between two answers, because six items move about 17 points each.",
     build: "plan",
     plans: {
       shared: {
@@ -409,7 +410,7 @@ const LAB_CASES = [
       movement: "sensitive",
       visual: "sensitive",
       smellTaste: "sensitive",
-      everyday: "neutral",
+      everyday: "sensitive",
     },
   },
   {
@@ -426,7 +427,7 @@ const LAB_CASES = [
       movement: "sensitive",
       visual: "sensitive",
       smellTaste: "sensitive",
-      everyday: "neutral",
+      everyday: "sensitive",
     },
   },
   {
@@ -448,18 +449,17 @@ const LAB_CASES = [
     expectedProfile: "neutral",
     expectedPattern: "Adaptor by the arithmetic only",
     concern:
-      "Alternating Yes and No has no clinical target. The locked result is Adaptor. Adult, teen, and parent show about 48% Observer and 52% Explorer, so the 20-point lead is missed. If that arithmetic changes, this row fails. It stays on review because the pattern itself is not a meaningful expected style.",
+      "Alternating Yes and No has no clinical target. The locked result is Adaptor. Adult, teen, and parent show about 47% Observer and 53% Explorer, so the 20-point lead is missed. If that arithmetic changes, this row fails. It stays on review because the pattern itself is not a meaningful expected style.",
   },
   {
     id: "random",
     name: "Fixed random pattern",
     blurb: "One repeatable Yes/No pattern from seed 20261005. The same seed always builds the same answers.",
     build: "random",
-    expectedProfile: "seeking",
-    expectedByRespondent: { couple: "neutral" },
+    expectedProfile: "neutral",
     expectedPattern: "Locked arithmetic, not a clinical target",
     concern:
-      "Seed 20261005 has no clinical target. Adult, teen, and parent average about 39% Observer and 83% Explorer, which clears the Explorer rule. Couple averages about 56% and 59%, a gap of about 4 points, so the rule returns Adaptor. A change in those results is a fail. The row stays on review because a coin-toss pattern is not an expected sensory style.",
+      "Seed 20261005 has no clinical target. Adult, teen, and parent average about 56% Observer and 53% Explorer, a gap of about 3 points, so the rule returns Adaptor. Couple averages about 47% and 53%. A change in those results is a fail. The row stays on review because a coin-toss pattern is not an expected sensory style.",
   },
   {
     id: "few-extremes",
@@ -916,13 +916,22 @@ function labIntegrity(respondent, audit, cases) {
     status: dupes.length ? "warning" : "pass",
     detail: dupes.length ? dupes.length + " items repeat wording." : "No exact repeated wording in this questionnaire.",
   });
+  const context = audit.filter((row) => row.type === "context");
+  const expectedScored = audit.length - context.length;
   const full = cases.find((row) => row.spec.id === "all-yes");
-  const expectedScored = audit.length;
   const scored = full && full.pack ? full.pack.overall.scored : 0;
   checks.push({
-    name: "Every question reaches the scorer",
+    name: "Every scored question reaches the scorer",
     status: scored === expectedScored ? "pass" : "fail",
-    detail: "All Yes scored " + scored + " of " + expectedScored + " questions.",
+    detail: context.length
+      ? "All Yes scored " +
+        scored +
+        " of " +
+        expectedScored +
+        " scored questions. " +
+        context.length +
+        " recharge questions are kept for the couple comparison and left out of the sensory score."
+      : "All Yes scored " + scored + " of " + expectedScored + " questions.",
   });
   const overMax = (cases || []).some((row) => {
     if (!row.pack) return false;
@@ -1882,7 +1891,7 @@ function labRenderThresholds(report) {
       return '<article class="test-lab-note"><h4>' + labEscape(domain.title) + "</h4>" + strips + "</article>";
     })
     .join("") +
-    '<p class="test-lab-muted">These strips are one sense at a time, with the other pole unanswered in the scoring sense. The overall label is the average of the six senses and can tell a different story. Exact 20-point gaps are often impossible because lists of 3, 4, 5, or 6 items do not land on 0.20.</p>';
+    '<p class="test-lab-muted">These strips are one sense at a time, with the other pole unanswered in the scoring sense. The overall label is the average of the six senses and can tell a different story. A list of six items moves about 17 points per answer, so an exact 20-point gap still falls between two answers.</p>';
 }
 
 function labRenderCompare(bundle) {

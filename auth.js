@@ -244,7 +244,9 @@ async function ensureAdminSeed() {
   const password = sharedAccountPassword();
   const name = String(cfg.adminName || "Cayley Alberts");
   const users = getUsers();
-  const existing = users.find((u) => u.role === AUTH_ROLES.admin || u.email === email);
+  const existing = users.find(
+    (u) => u.role === AUTH_ROLES.admin || (u.email === email && u.role !== AUTH_ROLES.patient)
+  );
 
   let changed = false;
   if (!existing) {
@@ -341,6 +343,23 @@ function canAccessClinicianTools() {
 function findUserByEmail(email) {
   const normalized = normalizeEmail(email);
   return getUsers().find((u) => u.email === normalized) || null;
+}
+
+function findStaffByEmail(email) {
+  const normalized = normalizeEmail(email);
+  return getUsers().find((u) => u.email === normalized && u.role !== AUTH_ROLES.patient) || null;
+}
+
+/** When several accounts share an email, the matching password chooses the questionnaire. */
+function pickLoginAccount(authenticated) {
+  if (!authenticated.length) return null;
+  const staff = authenticated.filter((u) => u.role !== AUTH_ROLES.patient);
+  const pool = staff.length ? staff : authenticated;
+  const active = pool.filter((u) => u.status === AUTH_STATUS.active);
+  const ranked = (active.length ? active : pool)
+    .slice()
+    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  return ranked[0] || null;
 }
 
 async function registerUser({ name, email, password, role, phone = "" }) {
@@ -474,13 +493,15 @@ async function loginUser({ email, password }) {
     }
   }
   const users = getUsers();
-  const user = users.find((u) => u.email === normalizedEmail);
+  const candidates = users.filter((u) => u.email === normalizedEmail);
+  if (!candidates.length) return { ok: false, error: "Incorrect email or password." };
 
-  if (!user) return { ok: false, error: "Incorrect email or password." };
-
-  if (!(await passwordMatchesLocal(trimmedPassword, user))) {
-    return { ok: false, error: "Incorrect email or password." };
+  const authenticated = [];
+  for (const candidate of candidates) {
+    if (await passwordMatchesLocal(trimmedPassword, candidate)) authenticated.push(candidate);
   }
+  const user = pickLoginAccount(authenticated);
+  if (!user) return { ok: false, error: "Incorrect email or password." };
   if (!String(user.passwordHash || "").startsWith("pbkdf2:")) {
     user.passwordHash = await hashPassword(trimmedPassword, user.salt);
   }
@@ -525,6 +546,7 @@ function resolveQuestionnaireAssignment(type, lifeContext = "") {
 
 /**
  * Therapist/admin creates a patient account and assigns a questionnaire.
+ * The same email can be used again, including for a different questionnaire.
  * Does not sign in as the patient. All questionnaire types expire after `expiryDays`.
  */
 async function createPatientAccount({
@@ -575,8 +597,11 @@ async function createPatientAccount({
     return { ok: false, error: "Please enter a valid age." };
   }
   if (!trimmedReason) return { ok: false, error: "Please enter the reason for referral." };
-  if (findUserByEmail(normalizedEmail)) {
-    return { ok: false, error: "An account with this email already exists." };
+  if (findStaffByEmail(normalizedEmail)) {
+    return {
+      ok: false,
+      error: "This email is used for a therapist or admin sign-in. Use the email the questionnaire should be sent to.",
+    };
   }
 
   const password = createTemporaryPassword();
@@ -707,7 +732,9 @@ async function requestPasswordReset({ email }) {
   }
 
   const users = getUsers();
-  const user = users.find((entry) => entry.email === normalizedEmail);
+  const user =
+    users.find((entry) => entry.email === normalizedEmail && entry.role !== AUTH_ROLES.patient) ||
+    users.find((entry) => entry.email === normalizedEmail);
   if (!canReceivePasswordReset(user)) {
     return { ok: true, sent: false };
   }

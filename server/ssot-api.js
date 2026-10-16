@@ -174,7 +174,9 @@ function seedAdmin(state) {
   const email = normalizeEmail(process.env.ADMIN_EMAIL || "soulfulsensoryot@gmail.com");
   const password = sharedAccountPassword();
   const name = String(process.env.ADMIN_NAME || "Cayley Alberts");
-  const existing = (state.users || []).find((user) => user.role === ROLES.admin || user.email === email);
+  const existing = (state.users || []).find(
+    (user) => user.role === ROLES.admin || (user.email === email && user.role !== ROLES.patient)
+  );
   let changed = false;
   for (const user of state.users || []) {
     if (user && user.temporaryPassword) {
@@ -305,31 +307,54 @@ function stampCompletedScreenings(state) {
   }
 }
 
+function isPatientUser(user) {
+  return user?.role === ROLES.patient;
+}
+
+/**
+ * Patient questionnaires may share an email. Each invite stays its own account.
+ * Therapist and admin emails stay unique so practice sign-in is not overwritten.
+ */
 function mergeUsers(serverUsers, localUsers) {
   const map = new Map();
-  const emails = new Map();
+  const staffByEmail = new Map();
   for (const user of serverUsers || []) {
     if (!user?.id) continue;
     map.set(user.id, user);
-    if (user.email) emails.set(normalizeEmail(user.email), user.id);
+    if (!isPatientUser(user) && user.email) staffByEmail.set(normalizeEmail(user.email), user.id);
   }
   for (const user of localUsers || []) {
     if (!user?.id) continue;
     const email = normalizeEmail(user.email);
-    const existingId = map.has(user.id) ? user.id : emails.get(email);
+    let existingId = map.has(user.id) ? user.id : null;
+    if (!existingId && !isPatientUser(user) && email) existingId = staffByEmail.get(email) || null;
     if (existingId) {
       const current = map.get(existingId);
       if (newer(user, current)) {
         const merged = { ...current, ...user, id: existingId };
+        if (isPatientUser(merged) && !isPatientUser(current)) continue;
         map.set(existingId, merged);
-        if (merged.email) emails.set(normalizeEmail(merged.email), existingId);
+        if (!isPatientUser(merged) && merged.email) {
+          staffByEmail.set(normalizeEmail(merged.email), existingId);
+        }
       }
       continue;
     }
     map.set(user.id, user);
-    if (email) emails.set(email, user.id);
+    if (!isPatientUser(user) && email) staffByEmail.set(email, user.id);
   }
   return [...map.values()];
+}
+
+function pickLoginAccount(authenticated) {
+  if (!authenticated.length) return null;
+  const staff = authenticated.filter((user) => !isPatientUser(user));
+  const pool = staff.length ? staff : authenticated;
+  const active = pool.filter((user) => user.status === STATUS.active);
+  const ranked = (active.length ? active : pool)
+    .slice()
+    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  return ranked[0] || null;
 }
 
 function mergeCoupleSessions(existing, incoming) {
@@ -676,8 +701,12 @@ async function emailNewlyCompleted(beforeItems, items, origin) {
 async function handleLogin(state, body, origin) {
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
-  const user = state.users.find((entry) => entry.email === email);
-  if (!user || !passwordMatches(password, user.salt, user.passwordHash)) {
+  const candidates = state.users.filter((entry) => entry.email === email);
+  const authenticated = candidates.filter((entry) =>
+    passwordMatches(password, entry.salt, entry.passwordHash)
+  );
+  const user = pickLoginAccount(authenticated);
+  if (!user) {
     return json(401, { ok: false, error: "Incorrect email or password." });
   }
   if (!String(user.passwordHash || "").startsWith("scrypt:")) {
@@ -872,7 +901,9 @@ async function handleSendEmail(state, body, origin) {
     allowed = true;
   }
   else if (body.kind === "password-reset") {
-    const target = state.users.find((entry) => entry.email === to);
+    const target =
+      state.users.find((entry) => entry.email === to && entry.role !== ROLES.patient) ||
+      state.users.find((entry) => entry.email === to);
     allowed = canReceivePasswordReset(target);
     if (!allowed) return json(200, { ok: true, sent: false }, origin);
   }
@@ -904,7 +935,9 @@ async function handleRequestPasswordReset(state, body, origin) {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json(400, { ok: false, error: "Please enter a valid email address." });
   }
-  const user = state.users.find((entry) => entry.email === email);
+  const user =
+    state.users.find((entry) => entry.email === email && entry.role !== ROLES.patient) ||
+    state.users.find((entry) => entry.email === email);
   if (!canReceivePasswordReset(user)) {
     return json(200, { ok: true, sent: false });
   }
@@ -1127,5 +1160,6 @@ module.exports = {
   handleRequest,
   netlifyHandler,
   previewEmailHtml,
+  mergeUsers,
 };
 

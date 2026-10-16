@@ -6066,6 +6066,7 @@ function poleForQuestion(type) {
   if (type === "sensitive" || type === "sensitive-if-no") return "sensitive";
   if (type === "seeking" || type === "seeking-if-no") return "seeking";
   if (type === "neutral") return "neutral";
+  if (type === "context") return "context";
   return null;
 }
 
@@ -6084,11 +6085,12 @@ function scoreDomain(questions, answers) {
   let scored = 0;
 
   questions.forEach((q, i) => {
+    const pole = poleForQuestion(q.type);
+    // Couple recharge items are stored for the comparison narrative only.
+    if (!pole || pole === "context") return;
+
     const answer = answers[i];
     if (answer === undefined || answer === null) return;
-
-    const pole = poleForQuestion(q.type);
-    if (!pole) return;
 
     scored += 1;
     const yes = answer === true;

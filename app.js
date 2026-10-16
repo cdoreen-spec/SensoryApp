@@ -82,6 +82,8 @@ const state = {
   sampleReportPreview: false,
   /** Public demo walkthrough for other therapists (?viewer=1). */
   viewerMode: false,
+  questionPreview: false,
+  previewRespondent: "adult",
   /** Open the narrated tour once the page is ready (?tour=1). */
   openTourOnBoot: false,
   /**
@@ -971,16 +973,23 @@ async function sendPatientInviteEmail(details) {
   );
 }
 
+function patientAccountForAssessment(record) {
+  if (!record || typeof Auth === "undefined" || !Auth.listUsers) return null;
+  const users = Auth.listUsers();
+  const byId = users.find((user) => record.patientUserId && user.id === record.patientUserId);
+  if (byId) return byId;
+  const email = String(record.summary?.email || record.demographics?.email || "")
+    .trim()
+    .toLowerCase();
+  if (!email) return null;
+  const matches = users.filter(
+    (user) => user.role === "patient" && String(user.email || "").trim().toLowerCase() === email
+  );
+  return matches.length === 1 ? matches[0] : null;
+}
+
 function detailsFromAssessmentRecord(record) {
-  if (!record) return null;
-  const patient =
-    typeof Auth !== "undefined"
-      ? Auth.listUsers().find(
-          (u) =>
-            u.id === record.patientUserId ||
-            (u.email && u.email === (record.summary?.email || record.demographics?.email))
-        )
-      : null;
+  const patient = patientAccountForAssessment(record);
   if (!patient) return null;
   return patientCredentialsPayload(patient, "", buildAssignedPatientInviteUrl(patient));
 }
@@ -3571,13 +3580,16 @@ function reconnectStaffServerSession() {
   state.authNotice = "Sign in again so patient accounts are saved for the emailed questionnaire link.";
 }
 
+function signedInPatientMatchesInvite(user, assigned) {
+  return Boolean(
+    user?.role === "patient" && user.questionnaireType && (!assigned || user.id === assigned.id)
+  );
+}
+
 async function signInFromInviteLink() {
   const user = currentAuthUser();
   const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
-  const samePatient =
-    user?.role === "patient" &&
-    user.questionnaireType &&
-    (!assigned || user.id === assigned.id || user.email === assigned.email);
+  const samePatient = signedInPatientMatchesInvite(user, assigned);
   if (samePatient) {
     continueInviteSession();
     render();
@@ -3925,8 +3937,18 @@ function isTourLink() {
 
 function readInviteFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("viewer") === "1") {
+  if (params.get("viewer") === "1" || params.get("read") === "questions") {
     state.viewerMode = true;
+  }
+  if (params.get("read") === "questions") {
+    state.questionPreview = true;
+    state.view = "question-preview";
+    const respondent = params.get("respondent");
+    if (respondent === "adult" || respondent === "teen" || respondent === "parent" || respondent === "couple") {
+      state.previewRespondent = respondent;
+    }
+    if (params.get("lang") === "af") state.language = "af";
+    return;
   }
   if (params.get("settings") === "1" || params.get("admin") === "1") {
     state.view = "settings";
@@ -4011,12 +4033,7 @@ function readInviteFromUrl() {
     const assigned = lookupAssignedPatientByToken(state.pendingInviteToken);
     if (assigned) applyPatientAssignment(assigned);
     const signedInPatient = currentAuthUser();
-    const alreadySignedIn =
-      signedInPatient?.role === "patient" &&
-      signedInPatient.questionnaireType &&
-      (!assigned ||
-        signedInPatient.id === assigned.id ||
-        signedInPatient.email === assigned.email);
+    const alreadySignedIn = signedInPatientMatchesInvite(signedInPatient, assigned);
     if (alreadySignedIn) {
       continueInviteSession();
     } else {
@@ -5940,7 +5957,7 @@ function renderCreatePatientForm() {
     <section class="dashboard__panel patient-create" aria-labelledby="create-patient-heading">
       <h2 id="create-patient-heading" class="dashboard__panel-title">Create a patient account</h2>
       <p class="prefs-lead">
-        Add the patient’s details and choose their questionnaire. Once the account is created, you can email the link, send it on WhatsApp, or copy it. Every questionnaire expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
+        Add the patient’s details and choose their questionnaire. The same email can be used again, including for a different questionnaire such as parent and teen, or adult and couple. Once the account is created, you can email the link, send it on WhatsApp, or copy it. Every questionnaire expires after ${QUESTIONNAIRE_EXPIRY_DAYS} days.
       </p>
       ${
         state.patientFormError
@@ -11012,6 +11029,140 @@ function domainNatureAccent(domainId) {
   `;
 }
 
+const QUESTION_PREVIEW = [
+  {
+    id: "auditory",
+    items: [
+      { kind: "rewritten", index: 1 },
+      { kind: "rewritten", index: 3 },
+      { kind: "rewritten", index: 4 },
+      { kind: "new", index: 9 },
+      { kind: "new", index: 10 },
+      { kind: "new", index: 11 },
+    ],
+  },
+  {
+    id: "tactile",
+    items: [
+      { kind: "new", index: { adult: 10, couple: 12 } },
+      { kind: "new", index: { adult: 11, couple: 13 } },
+      { kind: "new", index: { adult: 12, couple: 14 } },
+    ],
+  },
+  {
+    id: "movement",
+    items: [
+      { kind: "new", index: 11 },
+      { kind: "new", index: 12 },
+      { kind: "new", index: 13 },
+      { kind: "new", index: 14 },
+    ],
+  },
+  {
+    id: "visual",
+    items: [
+      { kind: "new", index: 9, respondents: ["adult", "teen", "parent"] },
+      { kind: "new", index: { adult: 10, couple: 11 } },
+      { kind: "new", index: { adult: 11, couple: 12 } },
+      { kind: "new", index: { adult: 12, couple: 13 } },
+    ],
+  },
+  {
+    id: "smellTaste",
+    items: [
+      { kind: "new", index: 8 },
+      { kind: "new", index: 9 },
+      { kind: "new", index: 10 },
+      { kind: "new", index: 11 },
+    ],
+  },
+  {
+    id: "everyday",
+    items: [
+      { kind: "new", index: { adult: 6, couple: 14 } },
+      { kind: "new", index: { adult: 7, couple: 15 } },
+      { kind: "new", index: { adult: 8, couple: 16 } },
+      { kind: "new", index: { adult: 9, couple: 17 } },
+      { kind: "new", index: { adult: 10, couple: 18 } },
+      { kind: "new", index: { adult: 11, couple: 19 } },
+    ],
+  },
+];
+
+function previewQuestionIndex(item, respondent) {
+  if (typeof item.index === "number") return item.index;
+  if (respondent === "couple" && typeof item.index.couple === "number") return item.index.couple;
+  return item.index.adult;
+}
+
+function renderQuestionPreview() {
+  const respondent = state.previewRespondent || "adult";
+  const language = state.language === "af" ? "af" : "en";
+  const domains = Object.fromEntries(getSensoryDomains(language, respondent).map((domain) => [domain.id, domain]));
+  const respondents = [
+    ["adult", "Adult"],
+    ["teen", "Teen"],
+    ["parent", "Parent"],
+    ["couple", "Couple"],
+  ];
+  const filters = respondents
+    .map(
+      ([id, label]) =>
+        `<button type="button" class="question-preview__filter${respondent === id ? " is-active" : ""}" data-preview-respondent="${id}" aria-pressed="${respondent === id}">${label}</button>`
+    )
+    .join("");
+  const sections = QUESTION_PREVIEW.map((group) => {
+    const domain = domains[group.id];
+    if (!domain) return "";
+    const questions = group.items
+      .filter((item) => !item.respondents || item.respondents.includes(respondent))
+      .map((item) => {
+        const question = domain.questions[previewQuestionIndex(item, respondent)];
+        if (!question) return "";
+        const pole = poleForQuestion(question.type);
+        const poleLabel = pole === "seeking" ? "Seeking" : pole === "sensitive" ? "Sensitive" : "Not scored";
+        const kindLabel = item.kind === "rewritten" ? "Rewritten" : "New";
+        return `
+          <article class="question-preview__item">
+            <p class="question-preview__meta">
+              <span class="question-preview__badge question-preview__badge--${item.kind}">${kindLabel}</span>
+              <span class="question-preview__badge question-preview__badge--${pole || "plain"}">${poleLabel}</span>
+            </p>
+            <p class="question-text">${escapeHtml(question.text)}</p>
+          </article>
+        `;
+      })
+      .join("");
+    if (!questions) return "";
+    return `
+      <section class="question-preview__sense">
+        <h3 class="question-preview__sense-title">${domain.icon} ${escapeHtml(domain.title)}</h3>
+        ${questions}
+      </section>
+    `;
+  }).join("");
+  const recharge =
+    respondent === "couple"
+      ? `<aside class="answer-context-note" aria-label="Not part of the sensory score">
+          <p class="answer-context-note__label">Not part of the sensory score</p>
+          <p>The eight “how I recharge” questions in Everyday are unchanged. On the couple questionnaire they now sit under a note saying they are for the profile comparison and do not change the everyday sensory score.</p>
+        </aside>`
+      : "";
+
+  return renderShell(
+    `
+      <span class="section-tag">Reading preview</span>
+      <h2 class="step-title">Questions added or rewritten</h2>
+      <p class="step-desc">These are the questions that changed so each side of a sense has six distinct items. Questions that stayed the same are not listed. Switch the form and the language to read each wording.</p>
+      <div class="question-preview__filters" role="group" aria-label="Questionnaire">${filters}</div>
+      ${recharge}
+      <div class="question-preview">${sections}</div>
+    `,
+    "",
+    { stepType: "domain" }
+  );
+}
+
 function renderDomain(domain) {
   const copy = currentUi();
   const answers = state.answers[domain.id];
@@ -11023,7 +11174,15 @@ function renderDomain(domain) {
   const questions = domain.questions
     .map((q, i) => {
       const val = answers[i];
+      const contextNote =
+        q.type === "context" && domain.questions[i - 1]?.type !== "context"
+          ? `<aside class="answer-context-note" aria-label="${escapeHtml(copy.contextScoreNoteLabel)}">
+              <p class="answer-context-note__label">${escapeHtml(copy.contextScoreNoteLabel)}</p>
+              <p>${escapeHtml(copy.contextScoreNote)}</p>
+            </aside>`
+          : "";
       return `
+        ${contextNote}
         <div class="question">
           <p class="question-text">${escapeHtml(q.text)}</p>
           <div class="yes-no" role="group" aria-label="${escapeHtml(copy.answerAria)} ${i + 1}">
@@ -15987,7 +16146,9 @@ function render({ scrollToTop = false } = {}) {
   document.body.classList.toggle("has-intro-modal", Boolean(state.showIntroModal));
   ensureViewerQuery();
 
-  if (state.view === "settings") {
+  if (state.questionPreview) {
+    html = renderQuestionPreview();
+  } else if (state.view === "settings") {
     html = renderSettings();
   } else if (state.view === "dashboard") {
     html = renderDashboard();
@@ -16445,6 +16606,13 @@ function bindEvents() {
   }
 
   app.addEventListener("click", async (e) => {
+    const previewRespondentBtn = e.target.closest("[data-preview-respondent]");
+    if (previewRespondentBtn) {
+      state.previewRespondent = previewRespondentBtn.dataset.previewRespondent || "adult";
+      render({ scrollToTop: true });
+      return;
+    }
+
     const languageBtn = e.target.closest("[data-language]");
     if (languageBtn) {
       const nextLanguage = languageBtn.dataset.language;
@@ -17503,10 +17671,7 @@ function bindEvents() {
       const assessmentId = btn.dataset.assessmentId;
       const record = getAssessmentById(assessmentId);
       if (!record) return;
-      const patient =
-        typeof Auth !== "undefined"
-          ? Auth.listUsers().find((u) => u.id === record.patientUserId || (u.email && u.email === (record.summary?.email || record.demographics?.email)))
-          : null;
+      const patient = patientAccountForAssessment(record);
       if (!patient) {
         state.dashboardNotice = "This patient account is not on this device.";
         render();

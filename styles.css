@@ -4350,6 +4350,113 @@ body.is-pain-screen .site-footer {
   font-weight: 500;
 }
 
+.answer-context-note {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.4rem 0 1rem;
+  padding: 0.95rem 1.05rem 1rem;
+  border: 1.5px solid rgba(123, 158, 135, 0.55);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(247, 250, 246, 0.98) 0%, rgba(226, 236, 228, 0.9) 100%);
+  color: #244b38;
+}
+
+.answer-context-note__label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #3d6b52;
+}
+
+.answer-context-note p:last-child {
+  margin: 0;
+  font-size: 0.97rem;
+  line-height: 1.55;
+  font-weight: 500;
+}
+
+.question-preview__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+}
+
+.question-preview__filter {
+  border: 1.5px solid rgba(61, 107, 82, 0.35);
+  background: #fff;
+  color: #244b38;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.question-preview__filter.is-active {
+  background: #3d6b52;
+  border-color: #3d6b52;
+  color: #f7faf6;
+}
+
+.question-preview {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.question-preview__sense-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.question-preview__item {
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(36, 75, 56, 0.12);
+}
+
+.question-preview__item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.question-preview__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.35rem;
+}
+
+.question-preview__badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: #e7efe9;
+  color: #244b38;
+}
+
+.question-preview__badge--new {
+  background: #e5f0e4;
+  color: #245c34;
+}
+
+.question-preview__badge--rewritten {
+  background: #f4ead4;
+  color: #7a5a1e;
+}
+
+.question-preview__badge--seeking {
+  background: #f8e6e3;
+  color: #8a4d46;
+}
+
 .ideal-saturday__hint {
   margin: 0 0 0.85rem;
   max-width: 40rem;
