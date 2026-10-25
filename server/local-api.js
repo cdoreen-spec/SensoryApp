@@ -234,6 +234,7 @@ async function handleTourAudio(req, res, url) {
 function serveStatic(req, res, url) {
   let relative = decodeURIComponent(url.pathname || "/");
   if (relative === "/" || relative === "/tour" || relative === "/tour/") relative = "/index.html";
+  if (relative === "/snapshot" || relative === "/snapshot/") relative = "/snapshot/index.html";
   const filePath = path.resolve(ROOT, `.${relative}`);
   if (!filePath.startsWith(ROOT + path.sep) && filePath !== ROOT) {
     send(res, 403, "Forbidden");
