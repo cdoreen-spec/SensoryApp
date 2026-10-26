@@ -178,7 +178,23 @@ h3{font-size:1.08rem}
 .tip::before{content:counter(tip);position:absolute;left:.9rem;top:.85rem;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--forest);color:#fff;font-size:.85rem;font-weight:700;display:flex;align-items:center;justify-content:center}
 .tip strong{display:block;color:var(--forest);font-size:.86rem;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.15rem}
 
-.teaser{margin-top:1.6rem;border-radius:16px;overflow:hidden;color:#fff;background:linear-gradient(115deg,rgba(21,50,39,.94),rgba(38,68,70,.86)),url("https://sensoryapp.streblainnovations.com/assets/home-helps-banner.png") center/cover}
+.why{margin:1rem 0 0;padding:.85rem 1rem;border-radius:14px;background:#f6f3ec;border:1px solid var(--border);border-left:4px solid var(--sage-mid);color:var(--ink-soft);font-size:1rem}
+.why b{display:block;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#4f6f58;margin-bottom:.2rem}
+.chip-star{display:inline-flex;align-items:center;gap:.3rem;font-size:.82rem;font-weight:700;padding:.15rem .6rem;border-radius:999px;background:var(--forest);color:#fff}
+.stop--hi .stop__icon{background:var(--forest);color:#fff;border-color:var(--forest)}
+.stop--lock{opacity:.92}
+.stop--lock .stop__icon{border-style:dashed;border-color:rgba(82,119,92,.45);color:#6f8574;background:#f3f6f1}
+.stop--lock .stop__name{color:#5b6e60}
+.stop__sub{display:flex;align-items:center;gap:.35rem;margin-top:.1rem;font-size:.86rem;color:var(--ink-muted)}
+.stop__sub svg{flex:none}
+.stop--hi .stop__sub{color:var(--ink-soft)}
+.stop__row{display:flex;align-items:center;min-height:44px}
+.stop__row>div{flex:1}
+.balanced{margin:1rem 0 0;padding:1rem;border-radius:14px;background:var(--sage-pale);color:var(--sage-dark);font-weight:600;text-align:center}
+.tip--lock{background:#f3f6f1;border-style:dashed;color:var(--ink-soft);padding-left:3.1rem}
+.tip--lock::before{content:"";background:#8aa08f url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14' height='9' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center/14px no-repeat}
+.gap{margin:1.6rem 0 0;padding:0 .2rem;font-family:var(--font-serif);font-size:1.12rem;line-height:1.5;color:var(--forest);text-align:center}
+.teaser{margin-top:1.2rem;border-radius:16px;overflow:hidden;color:#fff;background:linear-gradient(115deg,rgba(21,50,39,.94),rgba(38,68,70,.86)),url("https://sensoryapp.streblainnovations.com/assets/home-helps-banner.png") center/cover}
 .teaser__in{padding:1.4rem 1.25rem}
 .teaser h3{color:#fff;font-size:1.2rem}
 .teaser .kicker{color:#cfe0cf}
@@ -266,7 +282,7 @@ h3{font-size:1.08rem}
     { sense: "touch", dir: "a",
       work: "Scratchy or tight clothes bother me more than they seem to bother others.",
       couple: "An unexpected touch can make me pull away, even from my partner.",
-      child: "My child is bothered by the feel of their uniform, like labels or socks." },
+      child: "My child is bothered by how their uniform feels and may get irritated by labels, socks or seams." },
     { sense: "taste", dir: "s",
       work: "I reach for strong flavours, like spicy or sour snacks, to keep me going through the day.",
       couple: "I love bold flavours, like spicy food or rich coffee.",
@@ -385,6 +401,28 @@ h3{font-size:1.08rem}
     couple: "Compare notes: what leaves each of you full, and what leaves you empty? Small swaps in your evenings can make a big difference.",
     child: "Keep a simple note for a week of when your child is settled and when they're overwhelmed. It helps the teacher, and it helps the full screening."
   };
+
+  var WHY = {
+    work: {
+      observer: "When a draining day goes unnoticed, it can show up as a 3pm crash, a short fuse or trouble focusing, and it is easy to blame yourself instead of the environment.",
+      adaptor: "Because you cope, your limits are easy to miss until a long week leaves you flat or frazzled. Knowing your patterns helps you plan before that happens.",
+      explorer: "Needing more input is easy to mistake for distraction or restlessness. Knowing what actually helps you can make focus much easier."
+    },
+    couple: {
+      observer: "When you run low on energy for noise and busyness, it can look like distance or irritability to your partner, when you are really just recharging.",
+      adaptor: "Because you flex so easily, your own needs can slip off the radar, and that is when tiredness and tension tend to build quietly.",
+      explorer: "When one of you wants stimulation and the other wants calm, it can feel like a clash of personalities. Often it is a difference in sensory needs."
+    },
+    child: {
+      observer: "When a child is overloaded, it often shows up as meltdowns, exhaustion after school or refusing to go, rather than saying what is too much.",
+      adaptor: "Because they cope most days, a hard day can seem to come from nowhere. It helps to know what quietly tips them over.",
+      explorer: "Restlessness is often a child\u2019s body asking for more input, not \u201cnot trying\u201d, and it is easily mistaken for poor behaviour."
+    }
+  };
+  var SN = { sound: "sound", touch: "touch", sight: "sight and light", move: "movement", taste: "smell and taste", body: "body signals" };
+  function listJoin(a) { return a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
+  var LOCK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  var STAR = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 6.6L21 9.3l-5.2 4.3L17.5 21 12 17.3 6.5 21l1.7-7.4L3 9.3l6.6-.7L12 2Z"/></svg>';
 
   var state = { step: "welcome", ctx: null, idx: 0, answers: [] };
   var app = document.getElementById("app");
@@ -527,18 +565,15 @@ h3{font-size:1.08rem}
     var overall = sum <= -8 ? "observer" : (sum >= 8 ? "explorer" : "adaptor");
     return { senses: senses, sum: sum, overall: overall };
   }
-  function pickTips(res) {
-    var ctx = state.ctx;
-    var ranked = res.senses.slice().filter(function (s) { return s.lean !== 0; })
-      .sort(function (a, b) { return Math.abs(b.lean) - Math.abs(a.lean); });
-    var tips = [];
-    ranked.forEach(function (s) {
-      if (tips.length >= 3) return;
-      var dir = s.lean < 0 ? "down" : "up";
-      tips.push({ title: SENSES[s.key].name + (dir === "down" ? ": turn it down" : ": turn it up"), text: TIPS[s.key][dir][ctx] });
-    });
-    if (tips.length < 3) tips.push({ title: "Find your balance", text: BALANCED_TIP[ctx] });
-    return tips.slice(0, 3);
+  // Lite: rank senses by strength (stable, so ties keep the original sense order)
+  function liteRank(res) {
+    return res.senses.slice().sort(function (x, y) { return Math.abs(y.lean) - Math.abs(x.lean); });
+  }
+  function liteHighlights(res) {
+    var r = liteRank(res).filter(function (x) { return Math.abs(x.lean) >= 2; });
+    var hi = r.slice(0, 2);
+    if (r.length > 2 && Math.abs(r[2].lean) === Math.abs(r[1].lean)) hi.push(r[2]);
+    return hi;
   }
 
   function renderResults() {
@@ -546,22 +581,38 @@ h3{font-size:1.08rem}
     var headline = (child ? "Your child is a " : "You\u2019re a ") + ch.name;
     var where = { work: "at work", couple: "at home", child: "at school" }[ctx];
     var lean = { observer: "Observer", adaptor: "Adaptor", explorer: "Explorer" };
-    var stops = res.senses.map(function (s) {
-      var pct = Math.round(((s.lean + 4) / 8) * 84 + 8); // keep marker inside the track
-      return '<li class="stop"><span class="stop__icon">' + icon(s.key, 22) + '</span><div>' +
-        '<div class="stop__head"><span class="stop__name">' + esc(SENSES[s.key].name) + '</span><span class="stop__lean lean-' + s.zone + '">Sensory ' + lean[s.zone] + '</span></div>' +
-        '<div class="track" aria-hidden="true"><span class="track__marker" style="left:' + pct + '%"></span></div>' +
-        '<div class="track__labels" aria-hidden="true"><span>Observer</span><span>Adaptor</span><span>Explorer</span></div></div></li>';
-    }).join("");
-    var zones = res.senses.map(function (s) { return s.zone; });
-    var mixed = zones.indexOf("observer") > -1 && zones.indexOf("explorer") > -1;
-    var tips = pickTips(res).map(function (t) { return '<li class="tip"><strong>' + esc(t.title) + '</strong>' + esc(t.text) + '</li>'; }).join("");
+    var hi = liteHighlights(res), hiKeys = hi.map(function (x) { return x.key; });
+    var balancedMiddle = hi.length === 0;
+    function row(x, isHi) {
+      return '<li class="stop ' + (isHi ? 'stop--hi' : 'stop--lock') + '"><span class="stop__icon">' + icon(x.key, 22) + '</span>' +
+        '<div class="stop__row"><div><div class="stop__head"><span class="stop__name">' + esc(SENSES[x.key].name) + '</span>' +
+        (isHi ? '<span class="chip-star">' + STAR + 'Stands out for you</span>' : '') + '</div>' +
+        (isHi ? '' : '<div class="stop__sub">' + LOCK + '<span>Explored in your full screening</span></div>') +
+        '</div></div></li>';
+    }
+    var stops = hi.map(function (x) { return row(x, true); }).join("") +
+      res.senses.filter(function (x) { return hiKeys.indexOf(x.key) < 0; }).map(function (x) { return row(x, false); }).join("");
+    var ranked = liteRank(res).filter(function (x) { return x.lean !== 0; });
+    var tipHtml, lockTip;
+    if (balancedMiddle) {
+      tipHtml = '<li class="tip"><strong>A first step for your day</strong>' + esc(BALANCED_TIP[ctx]) + '</li>';
+      lockTip = "Your tips for all six senses are in your full screening";
+    } else {
+      var top = ranked[0], dir = top.lean < 0 ? "down" : "up";
+      tipHtml = '<li class="tip"><strong>A first step for ' + esc(SN[top.key]) + '</strong>' + esc(TIPS[top.key][dir][ctx]) + '</li>';
+      var others = ranked.slice(1, 4).map(function (x) { return SN[x.key]; });
+      lockTip = others.length ? "Your tips for " + listJoin(others) + " are in your full screening" : "Your tips for your other senses are in your full screening";
+    }
+    tipHtml += '<li class="tip tip--lock">' + esc(lockTip) + '</li>';
     var adds = [
-      child ? "Ideas you can share with your child\u2019s teacher to support them in class"
-            : (ctx === "couple" ? "Both of your profiles side by side, so you can see where your needs meet and where they clash"
-                                : "A work setup and burnout plan that fits you"),
+      "All six senses in detail",
+      child ? "Tools and strategies for each sense, to support your child at school and at home" : "Tools and strategies for each sense, to support you",
+      "A detailed written report",
       "A conversation with Occupational Therapist Cayley about what your results mean for everyday life"
     ].map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
+    var gap = child
+      ? "Every child\u2019s sensory needs look different at school and at home, and the full screening shows what to do about it."
+      : "Your snapshot shows where to look. The full screening shows what to do about it.";
     var who = child ? "my child at school" : CONTEXTS[ctx].label;
     var msg = "Hi Cayley, I just did the free Sensory Snapshot (" + who + ") and got " + ch.name + ". I'd like to find out about the full Soulful Sensory Screening.";
     var shareLabel = CONTEXTS[ctx].share;
@@ -576,20 +627,20 @@ h3{font-size:1.08rem}
           '<h2 id="t-res" data-focus>' + esc(headline) + '</h2>' +
           '<span class="res-tag">' + esc(ch.tag) + '</span>' +
           '<p class="res-summary">' + esc(SUMMARY[res.overall][ctx]) + '</p>' +
+          '<p class="why"><b>Why this matters</b>' + esc(WHY[ctx][res.overall]) + '</p>' +
         '</div></div>' +
         '<div class="card-body" style="padding-top:0">' +
-          '<div class="section"><h3>' + PEAKS + (child ? 'Your child\u2019s trail, sense by sense' : 'Your trail, sense by sense') + '</h3>' +
-            '<p class="small" style="margin:.4rem 0 0">Each marker shows where ' + (child ? 'your child sits' : 'you sit') + ' for each sense ' + where + ':</p>' + LEGEND +
+          '<div class="section"><h3>' + PEAKS + (child ? 'What stands out for your child' : 'What stands out for you') + '</h3>' +
+            (balancedMiddle
+              ? '<p class="balanced">Your senses sit in a balanced middle</p><p class="small" style="margin:.6rem 0 0">Your full screening shows how each sense plays out day to day.</p>'
+              : '<p class="small" style="margin:.4rem 0 0">These ' + (hi.length === 2 ? 'two senses' : 'three senses') + ' stood out most ' + where + '. The rest are waiting in your full screening.</p>') +
             '<ul class="trailmap">' + stops + '</ul>' +
-            (mixed ? '<p class="mixed">' + (child ? 'Your child\u2019s' : 'Your') + ' trail has a bit of both: some senses get turned down and others turned up. That\u2019s very common, and the full screening explains it in detail.</p>' : '') +
           '</div>' +
-          '<div class="section"><h3>' + PEAKS + '3 things to try ' + where + '</h3><ol class="tips">' + tips + '</ol></div>' +
+          '<div class="section"><h3>' + PEAKS + 'One thing to try ' + where + '</h3><ol class="tips">' + tipHtml + '</ol></div>' +
+          '<p class="gap">' + esc(gap) + '</p>' +
           '<aside class="teaser" aria-labelledby="t-full"><div class="teaser__in">' +
-            '<p class="kicker">This was just a sneak peek</p><h3 id="t-full">The full screening goes much further</h3>' +
+            '<p class="kicker">This was just a sneak peek</p><h3 id="t-full">What the full screening gives you that this free snapshot can\u2019t</h3>' +
             '<ul>' + adds + '</ul>' +
-            '<p class="cta-lead">' + esc(child
-              ? "For an in-depth screening of your child\u2019s sensory needs, click below to WhatsApp or email Occupational Therapist Cayley and purchase the full sensory screening \u2013 with tools and sensory strategies to support your child in each sensory system, together with a detailed report."
-              : "For an in-depth screening of your sensory needs, click below to WhatsApp or email Occupational Therapist Cayley and purchase your full sensory screening \u2013 with tools and sensory strategies to support you in each sensory system, together with a detailed report.") + '</p>' +
             '<div class="actions">' +
               '<a class="btn btn-wa btn-block" href="' + waLink(msg) + '" target="_blank" rel="noopener noreferrer"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>WhatsApp Cayley</a>' +
               '<a class="btn btn-secondary btn-block" href="' + mailLink("Full sensory screening with Occupational Therapist Cayley – from the Sensory Snapshot", msg) + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>Email Cayley</a>' +
