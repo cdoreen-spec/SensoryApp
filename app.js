@@ -3971,6 +3971,7 @@ function readInviteFromUrl() {
       };
     }
     if (params.get("print") === "1") state._openPrintPreviewOnBoot = true;
+    if (params.get("saved") === "1") state._openSavedReportPreview = true;
     return;
   }
   const reportId = String(params.get("report") || "").trim();
@@ -13504,6 +13505,32 @@ function triggerReportFileDownload(blob, filename) {
   window.setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+/** Screen layout for the saved report file. The report is composed at 760px; on a wide
+ *  monitor that column sits on the left. Scale it to the window so fullscreen uses the whole screen. */
+function reportDownloadScreenFitCss() {
+  return `
+@media screen and (min-width: 761px) {
+  html {
+    overflow-x: hidden;
+    background: #fff;
+  }
+  body.report-file-screen {
+    width: 760px;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    zoom: calc(100vw / 760px);
+  }
+  body.report-file-screen .app {
+    width: 760px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+`;
+}
+
 async function buildPortableReportHtml({ couple = false } = {}) {
   const css = await loadReportStylesheetText();
   const clone = document.body.cloneNode(true);
@@ -13511,8 +13538,9 @@ async function buildPortableReportHtml({ couple = false } = {}) {
     node.remove();
   });
   syncReportFormValues(document.body, clone);
-  clone.classList.add("print-sensory-results");
+  clone.classList.add("print-sensory-results", "report-file-screen");
   if (state.respondent === "parent") clone.classList.add("print-parent-report");
+  if (state.respondent === "teen") clone.classList.add("print-teen-report");
   if (couple) clone.classList.add("print-couple-merge");
   await inlineReportImages(clone);
   const screenPrintCss = css.replace(/@media print/g, "@media screen");
@@ -13528,6 +13556,7 @@ async function buildPortableReportHtml({ couple = false } = {}) {
   <style>
 ${css.replace(/<\/style/gi, "<\\/style")}
 ${screenPrintCss.replace(/<\/style/gi, "<\\/style")}
+${reportDownloadScreenFitCss()}
   </style>
 </head>
 ${clone.outerHTML}
@@ -18924,7 +18953,7 @@ async function bootApp() {
     } else {
       openSampleReportPreview(sampleBoot);
     }
-    if (window.history?.replaceState && !state._openPrintPreviewOnBoot) {
+    if (window.history?.replaceState && !state._openPrintPreviewOnBoot && !state._openSavedReportPreview) {
       const clean = new URL(window.location.href);
       ["preview", "sample", "respondent", "pathway", "context", "lifeContext"].forEach((key) =>
         clean.searchParams.delete(key)
@@ -18935,6 +18964,19 @@ async function bootApp() {
 
   openCoupleMergeFromLocation();
   render();
+  if (state._openSavedReportPreview) {
+    delete state._openSavedReportPreview;
+    const couple = Boolean(state.coupleShowMerge);
+    buildPortableReportHtml({ couple })
+      .then((html) => {
+        document.open();
+        document.write(html);
+        document.close();
+      })
+      .catch((err) => {
+        console.error("Could not open the saved report preview:", err);
+      });
+  }
   if (state._openPrintPreviewOnBoot) {
     delete state._openPrintPreviewOnBoot;
     enableOnScreenPrintPreview().catch((err) => {
