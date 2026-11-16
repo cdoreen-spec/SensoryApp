@@ -413,6 +413,7 @@ const SsotBackend = (() => {
     intro,
     sections,
     reportUrl,
+    summaryRecords,
   }) {
     try {
       await flush();
@@ -442,6 +443,7 @@ const SsotBackend = (() => {
       intro,
       sections,
       reportUrl,
+      summaryRecords,
     });
     if (!data.ok) {
       const err = new Error(data.error || "Gmail could not send the email.");

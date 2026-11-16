@@ -4,7 +4,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["server/**", "assets/email/**", "tour/tour-config.js"]
+  included_files = ["server/**", "assets/email/**", "tour/tour-config.js", "questions.js", "scoring.js"]
   external_node_modules = ["nodemailer", "@netlify/blobs"]
 
 [[redirects]]

@@ -259,6 +259,11 @@ function reportCopy(options) {
       <p style="margin:0 0 18px;font-family:${FONTS.sans};font-size:16px;line-height:1.65;color:${COLORS.ink};">${escapeHtml(
         intro
       )}</p>
+      ${
+        options.summaryAttached
+          ? `<p style="margin:0 0 18px;font-family:${FONTS.sans};font-size:16px;line-height:1.65;color:${COLORS.ink};">A one-page summary is attached, with the sensory cards, Best Saturday, and the separate yes and no answers.</p>`
+          : ""
+      }
       ${reportLinkBlock(options.reportUrl)}
       ${sectionsMarkup}
       ${fallback}

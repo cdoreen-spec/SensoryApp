@@ -18,6 +18,7 @@ const STATUS = Object.freeze({
 });
 
 const { buildEmailHtml, emailAttachments } = require("./email-layout");
+const { therapistSummaryAttachment } = require("./therapist-summary");
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const RESET_TTL_MS = 24 * 60 * 60 * 1000;
 const DATA_DIR = path.join(__dirname, "..", "data");
@@ -497,6 +498,7 @@ async function sendGmail({
   intro,
   sections,
   reportUrl,
+  summaryRecords,
 }) {
   if (!gmailConfigured()) {
     const err = new Error(
@@ -514,6 +516,17 @@ async function sendGmail({
       pass: String(process.env.GMAIL_APP_PASSWORD).replace(/\s+/g, ""),
     },
   });
+  let summaryFile = null;
+  if ((kind || "") === "report") {
+    try {
+      summaryFile = therapistSummaryAttachment(summaryRecords);
+    } catch (err) {
+      console.error(`Therapist summary attachment failed: ${err.message}`);
+    }
+  }
+  const summaryNote = summaryFile
+    ? "A one-page therapist summary is attached."
+    : "";
   const template = {
     kind: kind || "",
     subject,
@@ -528,15 +541,16 @@ async function sendGmail({
     intro,
     sections,
     reportUrl,
+    summaryAttached: Boolean(summaryFile),
   };
   await transporter.sendMail({
     from: `"Soulful Sensory OT" <${fromUser}>`,
     to,
     replyTo: clinicianEmail(),
     subject: String(subject || "Soulful Sensory OT"),
-    text: String(message || ""),
+    text: [String(message || "").trim(), summaryNote].filter(Boolean).join("\n\n"),
     html: buildEmailHtml(template),
-    attachments: emailAttachments(),
+    attachments: [...emailAttachments(), ...(summaryFile ? [summaryFile] : [])],
   });
   return { provider: "gmail", to, name: name || "" };
 }
@@ -699,6 +713,7 @@ async function emailNewlyCompleted(beforeItems, items, origin) {
         intro: report.intro,
         sections: report.sections,
         reportUrl: report.reportUrl,
+        summaryRecords: [item],
       });
       item.reportEmailedAt = new Date().toISOString();
       console.log(`Report emailed to ${clinicianEmail()} for ${report.name}`);
@@ -897,6 +912,18 @@ async function handlePush(state, body, origin) {
   return json(200, { ok: true, ...patientSnapshot(state, user) });
 }
 
+function summaryRecordsForEmail(state, body) {
+  const incoming = Array.isArray(body.summaryRecords) ? body.summaryRecords : [];
+  return incoming.map((record) => {
+    const id = String(record?.id || "").trim();
+    const stored = id
+      ? (state.assessments?.items || []).find((entry) => entry && entry.id === id)
+      : null;
+    if (stored && stored.answers) return stored;
+    return record;
+  });
+}
+
 async function handleSendEmail(state, body, origin) {
   const to = normalizeEmail(body.to);
   const clinician = clinicianEmail();
@@ -936,6 +963,7 @@ async function handleSendEmail(state, body, origin) {
     password: body.password,
     intro: body.intro,
     sections: rewriteReportSections(body.sections, origin),
+    summaryRecords: summaryRecordsForEmail(state, body),
   });
   return json(200, { ok: true, ...result });
 }

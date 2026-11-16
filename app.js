@@ -5473,6 +5473,7 @@ async function sendCoupleCombinedEmail(report) {
     intro: report.intro,
     sections: report.sections,
     reportUrl: report.reportUrl,
+    summaryRecords: coupleSummaryRecords(),
   });
   if (gmail) return gmail;
 
