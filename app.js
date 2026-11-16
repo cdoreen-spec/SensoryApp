@@ -31,6 +31,8 @@ const state = {
   /** ISO timestamp set when results are first shown — used on the print cover. */
   completedAt: null,
   answers: Object.fromEntries(SENSORY_DOMAIN_IDS.map((id) => [id, []])),
+  /** Free-text note on whether sensory preferences have changed over recent years. */
+  sensoryChange: "",
   /** Free-text closing reflection (ideal Saturday). */
   idealSaturday: "",
   /** Couple-only work & lifestyle section (after sensory questions). */
@@ -183,6 +185,7 @@ const STEPS = [
   ...SENSORY_DOMAIN_IDS.map((domainId) => ({ type: "domain", domainId })),
   { type: "idealSaturday" },
   { type: "coupleWork" },
+  { type: "sensoryChange" },
   { type: "results" },
 ];
 
@@ -675,6 +678,7 @@ function createAssignedAssessment(user) {
     },
     reasonForReferral: user.reasonForReferral || "",
     answers: emptyAnswers(),
+    sensoryChange: "",
     idealSaturday: "",
     coupleWork: emptyCoupleWork(),
     sharingConsent: {},
@@ -895,6 +899,7 @@ async function sendViaGmailBackend({
   intro,
   sections,
   reportUrl,
+  summaryRecords,
 }) {
   if (DELIVERY_PROVIDER === "none" || DELIVERY_PROVIDER === "web3forms") return null;
   const backendReady = typeof SsotBackend !== "undefined" && SsotBackend.isEnabled();
@@ -921,7 +926,62 @@ async function sendViaGmailBackend({
     intro,
     sections,
     reportUrl,
+    summaryRecords,
   });
+}
+
+function summaryRecordForEmail(record) {
+  if (!record || !record.answers) return null;
+  return {
+    id: record.id || "",
+    respondent: record.respondent || "adult",
+    language: record.language || "en",
+    lifeContext: record.lifeContext || "",
+    completedAt: record.completedAt || "",
+    idealSaturday: record.idealSaturday || "",
+    answers: record.answers,
+    demographics: {
+      name: record.demographics?.name || "",
+      parentName: record.demographics?.parentName || "",
+    },
+    summary: {
+      patientName: record.summary?.patientName || "",
+      completerName: record.summary?.completerName || "",
+    },
+  };
+}
+
+function summaryRecordsForOpenReport() {
+  const id = state.viewingArchivedId || state.inProgressAssessmentId;
+  const stored = id ? getAssessmentById(id) : null;
+  const source = stored?.answers ? stored : buildAssessmentRecord();
+  const payload = summaryRecordForEmail(source);
+  return payload ? [payload] : [];
+}
+
+function coupleSummaryRecords(session) {
+  const sess = session || (state.coupleId ? getCoupleSession(state.coupleId) : null);
+  if (!sess?.partners) return [];
+  return ["a", "b"]
+    .map((partner) => {
+      const slot = sess.partners[partner] || {};
+      const stored = slot.assessmentId ? getAssessmentById(slot.assessmentId) : null;
+      const source = stored?.answers
+        ? stored
+        : {
+            id: slot.assessmentId || "",
+            respondent: "couple",
+            language: slot.language || state.language || "en",
+            lifeContext: "",
+            completedAt: slot.completedAt || "",
+            idealSaturday: slot.idealSaturday || "",
+            answers: slot.answers,
+            demographics: slot.demographics || { name: slot.label || "" },
+            summary: { patientName: slot.label || slot.demographics?.name || "" },
+          };
+      return summaryRecordForEmail(source);
+    })
+    .filter(Boolean);
 }
 
 async function sendPatientInviteEmail(details) {
@@ -1105,6 +1165,7 @@ async function emailArchivedReportToClinician(record) {
       intro,
       sections,
       reportUrl,
+      summaryRecords: [summaryRecordForEmail(record)].filter(Boolean),
     });
     state.dashboardNotice = `Report emailed to ${getClinicianEmail()}.`;
   } catch (err) {
@@ -1135,6 +1196,7 @@ async function emailOpenReportToClinician() {
       intro: report.intro,
       sections: report.sections,
       reportUrl: report.reportUrl,
+      summaryRecords: summaryRecordsForOpenReport(),
     });
     state.dashboardNotice = `Report emailed to ${getClinicianEmail()}.`;
   } catch (err) {
@@ -1560,6 +1622,7 @@ function emptyCouplePartnerSlot(label = "") {
     completedAt: null,
     demographics: null,
     answers: null,
+    sensoryChange: "",
     idealSaturday: "",
     language: "en",
     summary: null,
@@ -1692,6 +1755,7 @@ function encodeCoupleCompletionPackage(coupleId, partner) {
     language: slot.language || "en",
     demographics: slot.demographics,
     answers: slot.answers,
+    sensoryChange: slot.sensoryChange || "",
     idealSaturday: slot.idealSaturday || "",
     coupleWork: slot.coupleWork || null,
     summary: slot.summary || null,
@@ -1737,6 +1801,7 @@ function applyCoupleCompletionPackage(payload, { allowForeignSession = false } =
     completedAt: payload.completedAt || new Date().toISOString(),
     demographics: payload.demographics || null,
     answers: cloneAnswers(payload.answers),
+    sensoryChange: payload.sensoryChange || "",
     idealSaturday: payload.idealSaturday || "",
     language: LANGUAGES.includes(payload.language) ? payload.language : "en",
     summary: payload.summary || null,
@@ -1829,6 +1894,7 @@ function persistCurrentPartnerToCoupleSession(assessmentId = null) {
       partnerName: state.demographics?.partnerName || "",
     },
     answers: cloneAnswers(state.answers),
+    sensoryChange: state.sensoryChange || "",
     idealSaturday: state.idealSaturday || "",
     language: state.language,
     summary: {
@@ -1900,6 +1966,7 @@ function startCouplePartnerQuestionnaire(partner) {
       partnerName: slot.demographics?.partnerName || "",
     };
     state.answers = cloneAnswers(slot.answers);
+    state.sensoryChange = slot.sensoryChange || "";
     state.idealSaturday = slot.idealSaturday || "";
     state.coupleWork = normalizeCoupleWork(slot.coupleWork);
     state.language = LANGUAGES.includes(slot.language) ? slot.language : state.language;
@@ -1971,6 +2038,7 @@ function startCouplePartnerQuestionnaire(partner) {
     partnerName: couplePartnerLabel(partner === "a" ? "b" : "a", session),
   };
   state.answers = emptyAnswers();
+  state.sensoryChange = "";
   state.idealSaturday = "";
   state.coupleWork = emptyCoupleWork();
   state.contactPreference = null;
@@ -2178,7 +2246,7 @@ function renderCoupleWork() {
 
       <div class="actions">
         <button type="button" class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
-        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(copy.seeResults || copy.continue)}</button>
+        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(copy.continue)}</button>
       </div>
     `,
     renderProgress(),
@@ -2374,6 +2442,7 @@ function buildAssessmentRecord() {
     },
     reasonForReferral: state.workReport?.reasonForReferral || "",
     answers: cloneAnswers(state.answers),
+    sensoryChange: state.sensoryChange || "",
     idealSaturday: state.idealSaturday || "",
     coupleWork: normalizeCoupleWork(state.coupleWork),
     sharingConsent: { ...(state.sharingConsent || {}) },
@@ -2435,7 +2504,10 @@ function draftLooksStarted(draft) {
   const parentName = String(draft.demographics?.parentName || "").trim();
   const stepType = STEPS[draft.step]?.type;
   const reachedQuestions =
-    stepType === "domain" || stepType === "idealSaturday" || stepType === "coupleWork";
+    stepType === "domain" ||
+    stepType === "sensoryChange" ||
+    stepType === "idealSaturday" ||
+    stepType === "coupleWork";
   const answeredSomething = SENSORY_DOMAIN_IDS.some((id) =>
     (draft.answers?.[id] || []).some((value) => typeof value === "boolean")
   );
@@ -2506,6 +2578,7 @@ function incompleteRecordFromDraft(draft, id, existing = null) {
     },
     reasonForReferral: existing?.reasonForReferral || "",
     answers: cloneAnswers(draft.answers),
+    sensoryChange: draft.sensoryChange || "",
     idealSaturday: draft.idealSaturday || "",
     coupleWork: normalizeCoupleWork(draft.coupleWork),
     sharingConsent: { ...(draft.sharingConsent || {}) },
@@ -2745,6 +2818,7 @@ function applyIncompleteAssessmentRecord(record) {
     sharingConsent: record.sharingConsent,
     demographics: record.demographics,
     answers: record.answers,
+    sensoryChange: record.sensoryChange,
     idealSaturday: record.idealSaturday,
     coupleWork: record.coupleWork,
     contactPreference: record.contactPreference,
@@ -2833,6 +2907,7 @@ function applyAssessmentRecord(record, options = {}) {
     partnerName: record.demographics?.partnerName || "",
   };
   state.answers = cloneAnswers(record.answers);
+  state.sensoryChange = record.sensoryChange || "";
   state.idealSaturday = record.idealSaturday || "";
   state.coupleWork = normalizeCoupleWork(record.coupleWork);
   state.sharingConsent = { ...(record.sharingConsent || {}) };
@@ -2875,6 +2950,7 @@ function exitArchivedReport() {
   state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" };
   state.completedAt = null;
   state.answers = emptyAnswers();
+  state.sensoryChange = "";
   state.idealSaturday = "";
   state.coupleWork = emptyCoupleWork();
   state.contactPreference = null;
@@ -3223,6 +3299,10 @@ function buildSampleAssessmentRecord(options = {}) {
     lifeContext,
     demographics,
     answers,
+    sensoryChange:
+      respondent === "parent"
+        ? "Crowded places used to be fine, but over the last few years busy, loud settings have become much harder. Noise sensitivity has increased, and thrill-seeking activities are enjoyed less than before."
+        : "Busy, social places used to feel enjoyable. Over the last few years noise has become more tiring, crowded settings are harder to stay in, and high-intensity activities are sought less often.",
     idealSaturday:
       respondent === "teen"
         ? "Sleep in, then mountain biking with friends, loud music in the afternoon, and a chill evening with a series and snacks — no rush, just what feels good."
@@ -3277,6 +3357,8 @@ function buildSampleCouplePartnerSlot(partner, profile) {
       partnerName,
     },
     answers,
+    sensoryChange:
+      "Loud social settings used to feel easy. Over the last few years they have become more tiring, while quieter time together is needed more often.",
     idealSaturday: "",
     language: "en",
     summary: {
@@ -3952,6 +4034,16 @@ function readInviteFromUrl() {
     if (params.get("lang") === "af") state.language = "af";
     return;
   }
+  if (params.get("preview") === "sensory-change") {
+    state.viewerMode = true;
+    state.view = "questionnaire";
+    state.showIntroModal = false;
+    const respondent = params.get("respondent");
+    state.respondent = ["adult", "teen", "parent", "couple"].includes(respondent) ? respondent : "adult";
+    if (params.get("lang") === "af") state.language = "af";
+    state.step = findStepIndex("sensoryChange");
+    return;
+  }
   if (params.get("settings") === "1" || params.get("admin") === "1") {
     state.view = "settings";
     return;
@@ -4142,6 +4234,7 @@ function buildSensoryDraft() {
       partnerName: state.demographics?.partnerName || "",
     },
     answers: cloneAnswers(state.answers),
+    sensoryChange: state.sensoryChange || "",
     idealSaturday: state.idealSaturday || "",
     coupleWork: normalizeCoupleWork(state.coupleWork),
     sensoryArea: state.sensoryArea,
@@ -4261,6 +4354,7 @@ function applySensoryDraft(draft) {
     partnerName: draft.demographics?.partnerName || "",
   };
   state.answers = cloneAnswers(draft.answers);
+  state.sensoryChange = draft.sensoryChange || "";
   state.idealSaturday = draft.idealSaturday || "";
   state.coupleWork = normalizeCoupleWork(draft.coupleWork);
   state.sensoryArea = draft.sensoryArea || null;
@@ -4305,6 +4399,7 @@ function resetSensoryQuestionnaireProgress() {
   state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" };
   state.completedAt = null;
   state.answers = emptyAnswers();
+  state.sensoryChange = "";
   state.idealSaturday = "";
   state.coupleWork = emptyCoupleWork();
   state.contactPreference = null;
@@ -4737,6 +4832,7 @@ async function sendResultsEmail(report) {
       intro: report.intro,
       sections: report.sections,
       reportUrl: report.reportUrl,
+      summaryRecords: summaryRecordsForOpenReport(),
     });
   } catch (err) {
     if (serverSynced) setCurrentReportEmailedAt(null);
@@ -10733,6 +10829,7 @@ function renderCoupleMerge(session = null) {
       ${thriveCompareHtml}
       ${parentingCompareHtml}
       ${renderCoupleWorkMergeSummaries(sess, copy)}
+      ${renderCoupleSensoryChangeMerge(sess, copy)}
       ${renderTherapistInsightsSection()}
       <figure class="couple-closing-quote couple-closing-quote--merge">
         <span class="couple-closing-quote__mark" aria-hidden="true">“</span>
@@ -11326,6 +11423,103 @@ function renderDomain(domain) {
   );
 }
 
+function sensoryChangeCopy(copy = currentUi()) {
+  const respondent = state.respondent || "adult";
+  const prompt =
+    respondent === "parent"
+      ? copy.sensoryChangePromptParent
+      : respondent === "teen"
+        ? copy.sensoryChangePromptTeen
+        : copy.sensoryChangePromptAdult;
+  return {
+    title: copy.sensoryChangeTitle,
+    prompt,
+    hint: copy.sensoryChangeHint,
+    placeholder: copy.sensoryChangePlaceholder,
+  };
+}
+
+function renderSensoryChange() {
+  const copy = currentUi();
+  const fields = sensoryChangeCopy(copy);
+  return renderShell(
+    `
+      ${state.error ? `<div class="error-banner">${escapeHtml(state.error)}</div>` : ""}
+      <span class="section-tag">${escapeHtml(copy.sensoryChangeTag)}</span>
+      <header class="domain-heading">
+        <div class="domain-heading__text">
+          <h2 class="step-title domain-heading__title">${escapeHtml(fields.title)}</h2>
+          <p class="step-desc domain-heading__desc">${escapeHtml(fields.prompt)}</p>
+        </div>
+        <div class="domain-accent" aria-hidden="true">
+          ${domainNatureAccent("everyday")}
+        </div>
+      </header>
+      <p class="ideal-saturday__hint">${escapeHtml(fields.hint)}</p>
+      <label class="ideal-saturday__label" for="sensory-change">
+        <span class="visually-hidden">${escapeHtml(fields.title)}</span>
+        <textarea
+          id="sensory-change"
+          class="ideal-saturday__input"
+          data-sensory-change
+          rows="8"
+          placeholder="${escapeHtml(fields.placeholder)}"
+        >${escapeHtml(state.sensoryChange || "")}</textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
+        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(copy.seeResults || copy.continue)}</button>
+      </div>
+    `,
+    renderProgress(),
+    { stepType: "sensoryChange" }
+  );
+}
+
+function renderSensoryChangeResults(pageEntry) {
+  const text = (state.sensoryChange || "").trim();
+  if (!text) return "";
+  const copy = currentUi();
+  return `
+    <section class="profile-section ideal-saturday-results sensory-change-results"${reportPageAttrs(pageEntry)} aria-labelledby="sensory-change-results-title">
+      <p class="profile-kicker">${escapeHtml(copy.sensoryChangeTag)}</p>
+      <h3 id="sensory-change-results-title">${escapeHtml(copy.sensoryChangeResultsTitle)}</h3>
+      ${printMountainRule("section")}
+      <p class="profile-section__summary ideal-saturday-results__intro">${escapeHtml(copy.sensoryChangeResultsIntro)}</p>
+      <blockquote class="ideal-saturday-results__quote">
+        <p>${escapeHtml(text)}</p>
+      </blockquote>
+      ${reportPageNumberHtml(copy, pageEntry?.page)}
+      <div class="print-page-motif print-only" aria-hidden="true"></div>
+    </section>
+  `;
+}
+
+function renderCoupleSensoryChangeMerge(sess, copy) {
+  const cards = COUPLE_PARTNERS.map((partner) => {
+    const text = String(sess.partners?.[partner]?.sensoryChange || "").trim();
+    if (!text) return "";
+    const name = couplePartnerLabel(partner, sess);
+    return `
+      <article class="couple-work-merge-card couple-partner--${partner}">
+        <h4 class="couple-work-merge__name">
+          <span class="couple-partner-dot" aria-hidden="true"></span>
+          <span class="couple-partner-name">${escapeHtml(name)}</span>
+        </h4>
+        <p class="couple-work-merge__line">${escapeHtml(text)}</p>
+      </article>
+    `;
+  }).join("");
+  if (!cards.trim()) return "";
+  return `
+    <section class="couple-work-merge-print sensory-change-merge">
+      <h3 class="couple-compare__title">${escapeHtml(copy.sensoryChangeResultsTitle)}</h3>
+      <p class="couple-compare__intro">${escapeHtml(copy.sensoryChangeResultsIntro)}</p>
+      <div class="couple-work-merge-grid">${cards}</div>
+    </section>
+  `;
+}
+
 function idealSaturdayCopy(copy = currentUi()) {
   const respondent = state.respondent || "adult";
   if (respondent === "teen") {
@@ -11381,9 +11575,7 @@ function renderIdealSaturday() {
       </label>
       <div class="actions">
         <button type="button" class="btn btn-secondary" data-action="back">${escapeHtml(copy.back)}</button>
-        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(
-          isCouplePathway() ? copy.continue : copy.seeResults || copy.continue
-        )}</button>
+        <button type="button" class="btn btn-primary" data-action="next">${escapeHtml(copy.continue)}</button>
       </div>
     `,
     renderProgress(),
@@ -13252,6 +13444,10 @@ function buildReportPagePlan(copy, scores, metrics) {
     add("report-sense-support-home", copy.senseSupportHomeChapterTitle || "At home");
   } else {
     add("report-sense-support", isParent ? copy.senseSupportTitleParent : copy.senseSupportTitle);
+  }
+
+  if ((state.sensoryChange || "").trim()) {
+    add("report-sensory-change", copy.sensoryChangeResultsTitle);
   }
 
   if ((state.idealSaturday || "").trim() && !isCouplePathway() && state.respondent !== "teen") {
@@ -16121,6 +16317,7 @@ function renderResults() {
       ${renderBriefScoreSummary(scores, metrics, reportPageById(pagePlan, "report-brief-scores"))}
       ${renderSpecificSensoryResults(reportPageById(pagePlan, "report-specific-results"))}
       ${renderSenseSupportGuide(scores, reportPageById(pagePlan, "report-sense-support"), reportPageById(pagePlan, "report-sense-support-home"))}
+      ${renderSensoryChangeResults(reportPageById(pagePlan, "report-sensory-change"))}
       ${renderIdealSaturdayResults(reportPageById(pagePlan, "report-ideal-saturday"))}
       ${renderCoupleWorkResults()}
       ${renderTrailSettingInterpretations(metrics, pagePlan)}
@@ -16335,7 +16532,7 @@ function render({ scrollToTop = false } = {}) {
       case "idealSaturday":
         if (!needsIdealSaturday()) {
           moveStep(1);
-          html = needsCoupleWork() ? renderCoupleWork() : renderResults();
+          html = needsCoupleWork() ? renderCoupleWork() : renderSensoryChange();
         } else {
           html = renderIdealSaturday();
         }
@@ -16343,10 +16540,13 @@ function render({ scrollToTop = false } = {}) {
       case "coupleWork":
         if (!needsCoupleWork()) {
           moveStep(1);
-          html = renderResults();
+          html = renderSensoryChange();
         } else {
           html = renderCoupleWork();
         }
+        break;
+      case "sensoryChange":
+        html = renderSensoryChange();
         break;
       case "results":
         try {
@@ -16790,6 +16990,7 @@ function bindEvents() {
         state.demographics = { name: "", age: "", email: "", occupation: "", parentName: "", partnerName: "" };
         state.completedAt = null;
         state.answers = emptyAnswers();
+        state.sensoryChange = "";
         state.idealSaturday = "";
         state.coupleWork = emptyCoupleWork();
         state.contactPreference = null;
@@ -18218,6 +18419,12 @@ function bindEvents() {
       }
     }
 
+    if (e.target.matches("[data-sensory-change]")) {
+      state.sensoryChange = e.target.value;
+      state.error = null;
+      saveSensoryDraft();
+    }
+
     if (e.target.matches("[data-ideal-saturday]")) {
       state.idealSaturday = e.target.value;
       state.error = null;
@@ -18442,6 +18649,13 @@ function bindEvents() {
         state.error = null;
         saveSensoryDraft();
       }
+      return;
+    }
+
+    if (e.target.matches("[data-sensory-change]")) {
+      state.sensoryChange = e.target.value;
+      state.error = null;
+      saveSensoryDraft();
       return;
     }
 

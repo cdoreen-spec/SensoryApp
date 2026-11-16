@@ -325,6 +325,20 @@ const QUESTIONNAIRE_UI = {
     validEmail: "Please enter a valid email address.",
     answerAll: "Please answer all questions before continuing",
     unanswered: "is unanswered",
+    sensoryChangeTag: "Over time",
+    sensoryChangeTitle: "Changes in sensory preferences",
+    sensoryChangePromptAdult:
+      "Over the last few years, have any of your sensory preferences changed? For example, you may have become more or less sensitive to noise and sound. You may have enjoyed busy, social and loud places before, and now prefer not to be in a crowd — or the other way around. You may also have liked thrill-seeking activities and now seek them less, or you may enjoy them more than you used to. Please describe any changes you have noticed.",
+    sensoryChangePromptTeen:
+      "Over the last few years, have any of your sensory preferences changed? For example, you may have become more or less sensitive to noise and sound. You may have enjoyed busy, social and loud places before, and now prefer not to be in a crowd — or the other way around. You may also have liked thrill-seeking activities and now seek them less, or you may enjoy them more than you used to. Please describe any changes you have noticed.",
+    sensoryChangePromptParent:
+      "Over the last few years, have any of your child’s sensory preferences changed? For example, your child may have become more or less sensitive to noise and sound. They may have enjoyed busy, social and loud places before, and now prefer not to be in a crowd — or the other way around. They may also have liked thrill-seeking activities and now seek them less, or they may enjoy them more than they used to. Please describe any changes you have noticed.",
+    sensoryChangeHint:
+      "Write in your own words. If you have not noticed a change, you can say so.",
+    sensoryChangePlaceholder: "Describe any changes you have noticed…",
+    sensoryChangeResultsTitle: "Sensory preferences over time",
+    sensoryChangeResultsIntro:
+      "What was shared about whether sensory preferences have shifted over the last few years.",
     idealSaturdayTag: "Almost there",
     idealSaturdayTitle: "One last reflection",
     idealSaturdayTitleTeen: "One last question",
@@ -1331,6 +1345,20 @@ const QUESTIONNAIRE_UI = {
     validEmail: "Voer asseblief ’n geldige e-posadres in.",
     answerAll: "Beantwoord asseblief al die vrae voordat jy voortgaan",
     unanswered: "is onbeantwoord",
+    sensoryChangeTag: "Oor tyd",
+    sensoryChangeTitle: "Veranderinge in sensoriese voorkeure",
+    sensoryChangePromptAdult:
+      "Het enige van jou sensoriese voorkeure oor die afgelope paar jaar verander? Byvoorbeeld, jy is dalk meer of minder sensitief vir geraas en klank. Jy het dalk voorheen besige, sosiale en harde plekke geniet, en verkies nou om nie in ’n skare te wees nie — of andersom. Jy het dalk ook sensasie-soekende aktiwiteite geniet en soek dit nou minder, of jy geniet dit nou meer as voorheen. Beskryf asseblief enige veranderinge wat jy opgemerk het.",
+    sensoryChangePromptTeen:
+      "Het enige van jou sensoriese voorkeure oor die afgelope paar jaar verander? Byvoorbeeld, jy is dalk meer of minder sensitief vir geraas en klank. Jy het dalk voorheen besige, sosiale en harde plekke geniet, en verkies nou om nie in ’n skare te wees nie — of andersom. Jy het dalk ook sensasie-soekende aktiwiteite geniet en soek dit nou minder, of jy geniet dit nou meer as voorheen. Beskryf asseblief enige veranderinge wat jy opgemerk het.",
+    sensoryChangePromptParent:
+      "Het enige van jou kind se sensoriese voorkeure oor die afgelope paar jaar verander? Byvoorbeeld, jou kind is dalk meer of minder sensitief vir geraas en klank. Hulle het dalk voorheen besige, sosiale en harde plekke geniet, en verkies nou om nie in ’n skare te wees nie — of andersom. Hulle het dalk ook sensasie-soekende aktiwiteite geniet en soek dit nou minder, of hulle geniet dit nou meer as voorheen. Beskryf asseblief enige veranderinge wat jy opgemerk het.",
+    sensoryChangeHint:
+      "Skryf in jou eie woorde. As jy geen verandering opgemerk het nie, kan jy dit sê.",
+    sensoryChangePlaceholder: "Beskryf enige veranderinge wat jy opgemerk het…",
+    sensoryChangeResultsTitle: "Sensoriese voorkeure oor tyd",
+    sensoryChangeResultsIntro:
+      "Wat gedeel is oor of sensoriese voorkeure oor die afgelope paar jaar verander het.",
     idealSaturdayTag: "Amper klaar",
     idealSaturdayTitle: "Een laaste nadenke",
     idealSaturdayTitleTeen: "Een laaste vraag",
